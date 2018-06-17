@@ -1,5 +1,5 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>com.github.alex1304</groupId>
@@ -9,9 +9,9 @@
 
 	<name>ultimategdbot</name>
 	<url>http://maven.apache.org</url>
-  
+
 	<description>An awesome Discord bot for Geometry Dash players!</description>
-  
+
 	<licenses>
 		<license>
 			<name>MIT License</name>
@@ -19,7 +19,7 @@
 			<distribution>repo</distribution>
 		</license>
 	</licenses>
-	
+
 	<developers>
 		<developer>
 			<name>Alex1304</name>
@@ -35,10 +35,18 @@
 	</scm>
 
 	<properties>
-	  <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<hibernate.connection.provider_class>org.hibernate.hikaricp.internal.HikariCPConnectionProvider</hibernate.connection.provider_class>
+		<hibernate.hikari.minimumIdle>5</hibernate.hikari.minimumIdle>
+		<hibernate.hikari.maximumPoolSize>10</hibernate.hikari.maximumPoolSize>
+		<hibernate.hikari.idleTimeout>30000</hibernate.hikari.idleTimeout>
+		<hibernate.hikari.dataSourceClassName>com.mysql.jdbc.jdbc2.optional.MysqlDataSource</hibernate.hikari.dataSourceClassName>
+		<hibernate.hikari.dataSource.url>jdbc:mysql://localhost/ultimategdbot</hibernate.hikari.dataSource.url>
+		<hibernate.hikari.dataSource.user>root</hibernate.hikari.dataSource.user>
+		<hibernate.hikari.dataSource.password>root</hibernate.hikari.dataSource.password>
 	</properties>
-	
-	
+
+
 	<distributionManagement>
 		<snapshotRepository>
 			<id>ossrh</id>
@@ -49,8 +57,14 @@
 			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
 		</repository>
 	</distributionManagement>
-	
+
 	<build>
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+				<filtering>true</filtering>
+			</resource>
+		</resources>
 		<plugins>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
@@ -81,6 +95,30 @@
 					<releaseProfiles>release</releaseProfiles>
 					<goals>deploy</goals>
 				</configuration>
+			</plugin>
+			<plugin>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<configuration>
+					<archive>
+						<manifest>
+							<mainClass>com.github.alex1304.ultimategdbot.App</mainClass>
+						</manifest>
+					</archive>
+					<descriptorRefs>
+						<descriptorRef>jar-with-dependencies</descriptorRef>
+					</descriptorRefs>
+					<finalName>ultimategdbot</finalName>
+					<appendAssemblyId>false</appendAssemblyId>
+				</configuration>
+				<executions>
+					<execution>
+						<id>make-assembly</id>
+						<phase>package</phase>
+						<goals>
+							<goal>single</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>
@@ -133,13 +171,38 @@
 			</build>
 		</profile>
 	</profiles>
-	
+
 	<dependencies>
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<version>4.12</version>
 			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.discord4j</groupId>
+			<artifactId>Discord4J</artifactId>
+			<version>2.10.1</version>
+		</dependency>
+		<dependency>
+			<groupId>mysql</groupId>
+			<artifactId>mysql-connector-java</artifactId>
+			<version>5.1.6</version>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-simple</artifactId>
+			<version>1.7.25</version>
+		</dependency>
+		<dependency>
+			<groupId>com.zaxxer</groupId>
+			<artifactId>HikariCP</artifactId>
+			<version>3.1.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.hibernate</groupId>
+			<artifactId>hibernate-hikaricp</artifactId>
+			<version>5.3.0.Final</version>
 		</dependency>
 	</dependencies>
 </project>
