@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-lazy="false">
+  <class name="com.github.alex1304.ultimategdbot.dbentities.GuildSettings" table="guild_settings">
+    <id name="guildID" type="long" column="guild_id">
+      <generator class="native"/>
+    </id>
+    <property name="roleAwardedLevels" type="long" column="role_awarded_levels" />
+    <property name="channelAwardedLevels" type="long" column="channel_awarded_levels" />
+    <property name="roleGDModerators" type="long" column="role_gd_moderators" />
+    <property name="channelGDModerators" type="long" column="channel_gd_moderators" />
+    <property name="roleTimelyLevels" type="long" column="role_timely_levels" />
+    <property name="channelTimelyLevels" type="long" column="channel_timely_levels" />
+    <property name="channelBotAnnouncements" type="long" column="channel_bot_announcements" />
+    <property name="tagEveryoneOnBotAnnouncement" type="boolean" column="tag_everyone_on_bot_announcement" />
+  </class>
+</hibernate-mapping>

@@ -44,6 +44,19 @@
 		<hibernate.hikari.dataSource.url>jdbc:mysql://localhost/ultimategdbot</hibernate.hikari.dataSource.url>
 		<hibernate.hikari.dataSource.user>root</hibernate.hikari.dataSource.user>
 		<hibernate.hikari.dataSource.password>root</hibernate.hikari.dataSource.password>
+		
+		<!-- The properties below must be given as arguments on build -->
+		<ultimategdbot.client.id></ultimategdbot.client.id>
+		<ultimategdbot.client.token></ultimategdbot.client.token>
+		<ultimategdbot.hierarchy.owner_id></ultimategdbot.hierarchy.owner_id>
+		<ultimategdbot.hierarchy.official_guild_id></ultimategdbot.hierarchy.official_guild_id>
+		<ultimategdbot.hierarchy.moderator_role_id></ultimategdbot.hierarchy.moderator_role_id>
+		<ultimategdbot.hierarchy.betatester_role_id></ultimategdbot.hierarchy.betatester_role_id>
+		<ultimategdbot.gd_account.id></ultimategdbot.gd_account.id>
+		<ultimategdbot.gd_account.password></ultimategdbot.gd_account.password>
+		<ultimategdbot.prefix.full></ultimategdbot.prefix.full>
+		<ultimategdbot.prefix.canonical></ultimategdbot.prefix.canonical>
+		<ultimategdbot.release.channel></ultimategdbot.release.channel>
 	</properties>
 
 
@@ -101,7 +114,7 @@
 				<configuration>
 					<archive>
 						<manifest>
-							<mainClass>com.github.alex1304.ultimategdbot.App</mainClass>
+							<mainClass>com.github.alex1304.ultimategdbot.core.Main</mainClass>
 						</manifest>
 					</archive>
 					<descriptorRefs>
