@@ -1,10 +1,12 @@
 package com.github.alex1304.ultimategdbot.core;
 
-import com.github.alex1304.ultimategdbot.utils.BotUtils;
-
 import sx.blah.discord.api.events.EventSubscriber;
 import sx.blah.discord.handle.impl.events.ReadyEvent;
 import sx.blah.discord.handle.impl.events.guild.GuildCreateEvent;
+import sx.blah.discord.handle.impl.events.guild.GuildLeaveEvent;
+import sx.blah.discord.handle.obj.ActivityType;
+import sx.blah.discord.handle.obj.StatusType;
+import sx.blah.discord.util.RequestBuffer;
 
 /**
  * Contains methods to handle Discord Events
@@ -18,13 +20,15 @@ public class DiscordEvents {
 	@EventSubscriber
 	public void onReady(ReadyEvent event) {
 		try {
-			Main.resolveContextProps();
+			RequestBuffer.request(() -> {
+				UltimateGDBot.client().changePresence(StatusType.IDLE, ActivityType.PLAYING, "No commands available");
+			});
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.exit(1);
 		}
 		
-		BotUtils.log("Bot started!");
+		UltimateGDBot.logInfo("Bot started!");
 		isReady = true;
 	}
 	
@@ -33,7 +37,15 @@ public class DiscordEvents {
 		if (!isReady)
 			return;
 		
-		BotUtils.log("New guild joined: " + event.getGuild().getName() + " (" + event.getGuild().getLongID() + ")");
+		UltimateGDBot.logInfo("New guild joined: " + event.getGuild().getName() + " (" + event.getGuild().getLongID() + ")");
+	}
+	
+	@EventSubscriber
+	public void onGuildLeft(GuildLeaveEvent event) {
+		if (!isReady)
+			return;
+		
+		UltimateGDBot.logInfo("Guild left: " + event.getGuild().getName() + " (" + event.getGuild().getLongID() + ")");
 	}
 
 }

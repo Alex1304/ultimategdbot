@@ -24,6 +24,7 @@
 # hidden files
 .*
 !.gitignore
+!/.circleci/
 
 # Maven
 /target/
