@@ -72,23 +72,23 @@ workflows:
     version: 2
     build-deploy:
         jobs:
-            build_beta:
+            - build_beta:
                 filters:
                     branches:
                         only: master
-            deploy_beta:
+            - deploy_beta:
                 requires:
                     - build_beta
                 filters:
                     branches:
                         only: master
-            build_stable:
+            - build_stable:
                 filters:
                     branches:
                         ignore: /.*/
                     tags:
                         only: /v.*/
-            deploy_stable:
+            - deploy_stable:
                 requires:
                     - build_stable
                 filters:
