@@ -2,10 +2,41 @@ defaults: &defaults
     working_directory: ~/repo
 
 cmd_build_beta: &cmd_build_beta
-    run: mvn -Dultimategdbot.release.channel=beta package
+    run: >
+        mvn
+        -Dultimategdbot.release.channel="beta"
+        -Dultimategdbot.prefix.full="ugdb?"
+        -Dultimategdbot.prefix.canonical="u?"
+        -Dhibernate.hikari.dataSource.url=$DB_URL_BETA
+        -Dhibernate.hikari.dataSource.user=$DB_USER
+        -Dhibernate.hikari.dataSource.password=$DB_PASSWORD
+        -Dultimategdbot.client.id=$BOT_ID_BETA
+        -Dultimategdbot.client.token=$BOT_TOKEN_BETA
+        -Dultimategdbot.hierarchy.owner_id=$BOT_OWNER_ID
+        -Dultimategdbot.hierarchy.official_guild_id=$BOT_OFFICIAL_GUILD_ID
+        -Dultimategdbot.hierarchy.moderator_role_id=$BOT_MODERATOR_ROLE_ID
+        -Dultimategdbot.hierarchy.betatester_role_id=$BOT_BETATESTER_ROLE_ID
+        -Dultimategdbot.gd_account.id=$BOT_GDACCOUNT_ID
+        -Dultimategdbot.gd_account.password=$BOT_GDACCOUNT_PASSWORD
+        package
 
 cmd_build_stable: &cmd_build_stable
-    run: mvn -Dultimategdbot.release.channel=stable package
+    run: >
+        mvn
+        -Dultimategdbot.release.channel="stable"
+        -Dultimategdbot.prefix.full="ugdb!"
+        -Dultimategdbot.prefix.canonical="u!"
+        -Dhibernate.hikari.dataSource.user=$DB_USER
+        -Dhibernate.hikari.dataSource.password=$DB_PASSWORD
+        -Dultimategdbot.client.id=$BOT_ID
+        -Dultimategdbot.client.token=$BOT_TOKEN
+        -Dultimategdbot.hierarchy.owner_id=$BOT_OWNER_ID
+        -Dultimategdbot.hierarchy.official_guild_id=$BOT_OFFICIAL_GUILD_ID
+        -Dultimategdbot.hierarchy.moderator_role_id=$BOT_MODERATOR_ROLE_ID
+        -Dultimategdbot.hierarchy.betatester_role_id=$BOT_BETATESTER_ROLE_ID
+        -Dultimategdbot.gd_account.id=$BOT_GDACCOUNT_ID
+        -Dultimategdbot.gd_account.password=$BOT_GDACCOUNT_PASSWORD
+        package
 
 version: 2
 
