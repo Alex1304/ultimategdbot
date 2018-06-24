@@ -51,7 +51,6 @@
 		<ultimategdbot.hierarchy.owner_id></ultimategdbot.hierarchy.owner_id>
 		<ultimategdbot.hierarchy.official_guild_id></ultimategdbot.hierarchy.official_guild_id>
 		<ultimategdbot.hierarchy.moderator_role_id></ultimategdbot.hierarchy.moderator_role_id>
-		<ultimategdbot.hierarchy.betatester_role_id></ultimategdbot.hierarchy.betatester_role_id>
 		<ultimategdbot.gd_account.id></ultimategdbot.gd_account.id>
 		<ultimategdbot.gd_account.password></ultimategdbot.gd_account.password>
 		<ultimategdbot.prefix.full></ultimategdbot.prefix.full>

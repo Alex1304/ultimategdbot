@@ -9,11 +9,14 @@ import com.github.alex1304.ultimategdbot.core.UltimateGDBot;
 import com.github.alex1304.ultimategdbot.dbentities.GlobalSettings;
 import com.github.alex1304.ultimategdbot.dbentities.GuildSettings;
 
+import sx.blah.discord.api.internal.json.objects.EmbedObject;
 import sx.blah.discord.handle.obj.IChannel;
 import sx.blah.discord.handle.obj.IGuild;
 import sx.blah.discord.handle.obj.IIDLinkedObject;
+import sx.blah.discord.handle.obj.IMessage;
 import sx.blah.discord.handle.obj.IRole;
 import sx.blah.discord.handle.obj.IUser;
+import sx.blah.discord.util.RequestBuffer;
 
 /**
  * Utilitary methods for the bot
@@ -97,6 +100,47 @@ public class BotUtils {
 		}
 		
 		return gs;
+	}
+	
+	/**
+	 * Sends a message to a Discord channel
+	 * 
+	 * @param channel
+	 *            - the channel to send the message in
+	 * @param message
+	 *            - the message content
+	 * @param embed
+	 *            - the message embed
+	 * @return IMessage
+	 */
+	public static IMessage sendMessage(IChannel channel, String message, EmbedObject embed) {
+		return RequestBuffer.request(() -> channel.sendMessage(message, embed)).get();
+	}
+
+	/**
+	 * Sends a message to a Discord channel
+	 * 
+	 * @param channel
+	 *            - the channel to send the message in
+	 * @param message
+	 *            - the message content
+	 * @return IMessage
+	 */
+	public static IMessage sendMessage(IChannel channel, String message) {
+		return RequestBuffer.request(() -> channel.sendMessage(message)).get();
+	}
+
+	/**
+	 * Sends a message to a Discord channel
+	 * 
+	 * @param channel
+	 *            - the channel to send the message in
+	 * @param embed
+	 *            - the message embed
+	 * @return IMessage
+	 */
+	public static IMessage sendMessage(IChannel channel, EmbedObject embed) {
+		return RequestBuffer.request(() -> channel.sendMessage(embed)).get();
 	}
 	
 	/**
