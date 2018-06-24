@@ -1,10 +1,13 @@
 package com.github.alex1304.ultimategdbot.core;
 
 import java.io.PrintStream;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 import com.github.alex1304.ultimategdbot.cache.Cache;
 import com.github.alex1304.ultimategdbot.dbentities.GlobalSettings;
+import com.github.alex1304.ultimategdbot.modules.Module;
 import com.github.alex1304.ultimategdbot.utils.BotUtils;
 import com.github.alex1304.ultimategdbot.utils.SnowflakeType;
 
@@ -29,6 +32,7 @@ public class UltimateGDBot {
 	private Properties props;
 	private Cache cache;
 	private GlobalSettings globals;
+	private Map<String, Module> modules;
 
 	/**
 	 * Load properties and builds Discord client
@@ -50,6 +54,7 @@ public class UltimateGDBot {
 		this.client = clientBuilder.build();
 		this.cache = new Cache();
 		this.globals = BotUtils.initGlobalSettings();
+		this.modules = new HashMap<>();
 	}
 	
 	/**
@@ -97,10 +102,6 @@ public class UltimateGDBot {
 		return (IRole) BotUtils.resolveSnowflakeString(SnowflakeType.ROLE, property("ultimategdbot.hierarchy.moderator_role_id"));
 	}
 	
-	public static IRole betatesterRole() {
-		return (IRole) BotUtils.resolveSnowflakeString(SnowflakeType.ROLE, property("ultimategdbot.hierarchy.betatester_role_id"));
-	}
-	
 	public static IChannel channelDebugLogs() {
 		return (IChannel) BotUtils.resolveSnowflake(SnowflakeType.CHANNEL, instance().globals.getChannelDebugLogs());
 	}
@@ -136,6 +137,49 @@ public class UltimateGDBot {
 	
 	public static void logError(String text) {
 		log("ERROR", text);
+	}
+	
+	public static void addModule(String key, Module module) {
+		instance().modules.put(key, module);
+		instance().client.getDispatcher().registerListener(module);
+	}
+	
+	public static void clearModules() {
+		stopModules();
+		instance().modules.clear();
+	}
+	
+	public static void startModules() {
+		for (Module m : instance().modules.values())
+			m.start();
+	}
+	
+	public static void stopModules() {
+		for (Module m : instance().modules.values())
+			m.stop();
+	}
+	
+	public static void restartModules() {
+		for (Module m : instance().modules.values())
+			m.restart();
+	}
+	
+	public static void startModule(String key) {
+		if (instance().modules.containsKey(key)) {
+			instance().modules.get(key).start();
+		}
+	}
+	
+	public static void stopModule(String key) {
+		if (instance().modules.containsKey(key)) {
+			instance().modules.get(key).stop();
+		}
+	}
+	
+	public static void restartModule(String key) {
+		if (instance().modules.containsKey(key)) {
+			instance().modules.get(key).restart();
+		}
 	}
 
 }
