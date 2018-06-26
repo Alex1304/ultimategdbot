@@ -26,12 +26,13 @@ import sx.blah.discord.util.RequestBuffer;
  */
 public class CommandsModule implements Module {
 
-	public static final Map<String, Command> COMMAND_MAP = new HashMap<>();
+	private Map<String, Command> commandMap;
 	
 	private boolean isEnabled;
 
 	public CommandsModule() {
 		this.isEnabled = false;
+		this.commandMap = new HashMap<>();
 	}
 
 	@Override
@@ -59,7 +60,7 @@ public class CommandsModule implements Module {
 	 * @param cmd
 	 */
 	public void registerCommand(CoreCommand cmd) {
-		COMMAND_MAP.put(cmd.getName(), cmd);
+		commandMap.put(cmd.getName(), cmd);
 	}
 
 	/**
@@ -67,7 +68,7 @@ public class CommandsModule implements Module {
 	 * @param cmd
 	 */
 	public void registerCommand(String name, Command cmd) {
-		COMMAND_MAP.put(name, cmd);
+		commandMap.put(name, cmd);
 	}
 	
 	private void registerCommands() {
@@ -77,7 +78,7 @@ public class CommandsModule implements Module {
 	}
 	
 	private void unregisterCommands() {
-		COMMAND_MAP.clear();
+		commandMap.clear();
 	}
 	
 	@EventSubscriber
@@ -90,27 +91,30 @@ public class CommandsModule implements Module {
 		if (argArray.length == 0)
 			return;
 		
-		final String mentionPrefix = UltimateGDBot.client().getOurUser().mention() + " ";
+		final String mentionPrefix = UltimateGDBot.client().getOurUser().mention();
 		String prefixUsed = "";
 		
 		if (argArray[0].startsWith(UltimateGDBot.property("ultimategdbot.prefix.full")))
 			prefixUsed = UltimateGDBot.property("ultimategdbot.prefix.full");
 		else if (argArray[0].startsWith(UltimateGDBot.property("ultimategdbot.prefix.canonical")))
 			prefixUsed = UltimateGDBot.property("ultimategdbot.prefix.canonical");
-		else if (argArray[0].startsWith(mentionPrefix)) {
+		else if (argArray[0].equals(mentionPrefix)) {
 			prefixUsed = mentionPrefix;
 		} else {
 			return;
 		}
 
-		final String cmdName = argArray[0].substring(prefixUsed.length()).toLowerCase();
+		final String cmdName = argArray[prefixUsed == mentionPrefix ? 1 : 0].substring(prefixUsed.length()).toLowerCase();
 		final List<String> args = new ArrayList<>(Arrays.asList(argArray));
+		
+		if (prefixUsed == mentionPrefix)
+			args.remove(0);
 		args.remove(0);
 		
 		new Thread(() -> {
 			try {
-				if (COMMAND_MAP.containsKey(cmdName)) {
-					Command cmd = COMMAND_MAP.get(cmdName);
+				if (commandMap.containsKey(cmdName)) {
+					Command cmd = commandMap.get(cmdName);
 					if (!(cmd instanceof CoreCommand) || BotRoles.isGrantedAll(event.getAuthor(), event.getChannel(),
 							((CoreCommand) cmd).getRolesRequired())) {
 						RequestBuffer.request(() -> event.getChannel().setTypingStatus(true));
