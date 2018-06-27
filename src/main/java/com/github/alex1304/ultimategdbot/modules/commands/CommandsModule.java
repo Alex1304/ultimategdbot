@@ -91,20 +91,24 @@ public class CommandsModule implements Module {
 		if (argArray.length == 0)
 			return;
 		
-		final String mentionPrefix = UltimateGDBot.client().getOurUser().mention();
+		final String mentionPrefix = UltimateGDBot.client().getOurUser().mention(true);
+		final String mentionPrefix2 = UltimateGDBot.client().getOurUser().mention(false);
 		String prefixUsed = "";
 		
 		if (argArray[0].startsWith(UltimateGDBot.property("ultimategdbot.prefix.full")))
 			prefixUsed = UltimateGDBot.property("ultimategdbot.prefix.full");
 		else if (argArray[0].startsWith(UltimateGDBot.property("ultimategdbot.prefix.canonical")))
 			prefixUsed = UltimateGDBot.property("ultimategdbot.prefix.canonical");
-		else if (argArray[0].equals(mentionPrefix)) {
+		else if (argArray[0].equals(mentionPrefix))
 			prefixUsed = mentionPrefix;
-		} else {
+		else if (argArray[0].equals(mentionPrefix2))
+			prefixUsed = mentionPrefix2;
+		else {
 			return;
 		}
 
-		final String cmdName = argArray[prefixUsed == mentionPrefix ? 1 : 0].substring(prefixUsed.length()).toLowerCase();
+		final String cmdName = (prefixUsed.equals(mentionPrefix) || prefixUsed.equals(mentionPrefix2) ?
+				argArray[1] : argArray[0].substring(prefixUsed.length())).toLowerCase();
 		final List<String> args = new ArrayList<>(Arrays.asList(argArray));
 		
 		if (prefixUsed == mentionPrefix)
