@@ -9,6 +9,8 @@ import java.util.Map;
 import com.github.alex1304.ultimategdbot.core.UltimateGDBot;
 import com.github.alex1304.ultimategdbot.exceptions.CommandFailedException;
 import com.github.alex1304.ultimategdbot.modules.Module;
+import com.github.alex1304.ultimategdbot.modules.reply.Reply;
+import com.github.alex1304.ultimategdbot.modules.reply.ReplyModule;
 import com.github.alex1304.ultimategdbot.utils.BotRoles;
 import com.github.alex1304.ultimategdbot.utils.BotUtils;
 
@@ -71,19 +73,58 @@ public class CommandsModule implements Module {
 		commandMap.put(name, cmd);
 	}
 	
+	/**
+	 * This is where the command map is loaded with command instances
+	 */
 	private void registerCommands() {
 		registerCommand("ping", (event, args) -> {
 			RequestBuffer.request(() -> event.getChannel().sendMessage("Pong! :ping_pong:"));
 		});
+		
+		registerCommand("reply", (event, args) -> {
+			BotUtils.sendMessage(event.getChannel(), "Hello");
+			ReplyModule rm = (ReplyModule) UltimateGDBot.getModule("reply");
+			rm.open(new Reply(event.getAuthor(), event.getChannel(), message -> {
+				if (message.equalsIgnoreCase("hello")) {
+					BotUtils.sendMessage(event.getChannel(), "How are you?");
+					rm.open(new Reply(event.getAuthor(), event.getChannel(), message2 -> {
+						if (message2.equalsIgnoreCase("fine"))
+							BotUtils.sendMessage(event.getChannel(), "Great!");
+						else if (message2.equalsIgnoreCase("bad"))
+							BotUtils.sendMessage(event.getChannel(), "Oh, sad to hear that...");
+						else
+							BotUtils.sendMessage(event.getChannel(), "Ok");
+					}));
+				} else if (message.equalsIgnoreCase("gay")) {
+					BotUtils.sendMessage(event.getChannel(), "no u");
+					rm.open(new Reply(event.getAuthor(), event.getChannel(), message2 -> {
+						if (message2.equalsIgnoreCase("no u"))
+							BotUtils.sendMessage(event.getChannel(), "Damn reverse card! You got me.");
+					}));
+				}
+			}));
+		});
 	}
 	
+	/**
+	 * Clears the command map
+	 */
 	private void unregisterCommands() {
 		commandMap.clear();
 	}
 	
+	/**
+	 * Handles the message received event from Discord and runs the command if
+	 * prefix and user permissions match
+	 * 
+	 * @param event - Contains context of the message received
+	 */
 	@EventSubscriber
 	public void onMessageReceived(MessageReceivedEvent event) {
 		if (!isEnabled)
+			return;
+		
+		if (event.getAuthor().isBot())
 			return;
 		
 		String[] argArray = event.getMessage().getContent().split(" ");
@@ -111,7 +152,7 @@ public class CommandsModule implements Module {
 				argArray[1] : argArray[0].substring(prefixUsed.length())).toLowerCase();
 		final List<String> args = new ArrayList<>(Arrays.asList(argArray));
 		
-		if (prefixUsed == mentionPrefix)
+		if (prefixUsed.equals(mentionPrefix) || prefixUsed.equals(mentionPrefix2))
 			args.remove(0);
 		args.remove(0);
 		
@@ -151,6 +192,15 @@ public class CommandsModule implements Module {
 				RequestBuffer.request(() -> event.getChannel().setTypingStatus(false));
 			}
 		}).start();
+	}
+
+	/**
+	 * Gets the commandMap
+	 *
+	 * @return Map<String,Command>
+	 */
+	public Map<String, Command> getCommandMap() {
+		return commandMap;
 	}
 
 }

@@ -1,6 +1,7 @@
 package com.github.alex1304.ultimategdbot.core;
 
 import com.github.alex1304.ultimategdbot.modules.commands.CommandsModule;
+import com.github.alex1304.ultimategdbot.modules.reply.ReplyModule;
 
 import sx.blah.discord.api.events.IListener;
 import sx.blah.discord.handle.impl.events.ReadyEvent;
@@ -18,6 +19,7 @@ public class Main {
 		UltimateGDBot.client().getDispatcher().registerListener(ON_READY);
 		
 		UltimateGDBot.addModule("commands", new CommandsModule());
+		UltimateGDBot.addModule("reply", new ReplyModule());
 		
 		UltimateGDBot.client().login();
 	}
