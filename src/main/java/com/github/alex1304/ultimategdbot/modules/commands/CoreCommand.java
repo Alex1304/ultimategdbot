@@ -11,9 +11,8 @@ import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedE
 
 
 /**
- * Core commands are commands directly triggered by users, generally using a prefix.
- * Those commands are supposed to show up in the help menu, and don't have any
- * parent command.
+ * Implementation of the Command interface that allows setting required roles to
+ * use the command, and setting a map of subcommands.
  * 
  * @author Alex1304
  *

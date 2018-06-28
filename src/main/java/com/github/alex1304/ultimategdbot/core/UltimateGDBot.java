@@ -181,5 +181,9 @@ public class UltimateGDBot {
 			instance().modules.get(key).restart();
 		}
 	}
+	
+	public static Module getModule(String key) {
+		return instance().modules.get(key);
+	}
 
 }
