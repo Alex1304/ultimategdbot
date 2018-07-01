@@ -4,6 +4,7 @@ import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Map.Entry;
 
 import com.github.alex1304.ultimategdbot.cache.Cache;
 import com.github.alex1304.ultimategdbot.dbentities.GlobalSettings;
@@ -150,35 +151,44 @@ public class UltimateGDBot {
 	}
 	
 	public static void startModules() {
-		for (Module m : instance().modules.values())
-			m.start();
+		for (Entry<String, Module> m : instance().modules.entrySet()) {
+			m.getValue().start();
+			logSuccess("Started module: `" + m.getKey() + "`");
+		}
 	}
 	
 	public static void stopModules() {
-		for (Module m : instance().modules.values())
-			m.stop();
+		for (Entry<String, Module> m : instance().modules.entrySet()) {
+			m.getValue().stop();
+			logWarning("Stopped module: `" + m.getKey() + "`");
+		}
 	}
 	
 	public static void restartModules() {
-		for (Module m : instance().modules.values())
-			m.restart();
+		for (Entry<String, Module> m : instance().modules.entrySet()) {
+			m.getValue().restart();
+			logSuccess("Restarted module: `" + m.getKey() + "`");
+		}
 	}
 	
 	public static void startModule(String key) {
 		if (instance().modules.containsKey(key)) {
 			instance().modules.get(key).start();
+			logSuccess("Started module: `" + key + "`");
 		}
 	}
 	
 	public static void stopModule(String key) {
 		if (instance().modules.containsKey(key)) {
 			instance().modules.get(key).stop();
+			logWarning("Stopped module: `" + key + "`");
 		}
 	}
 	
 	public static void restartModule(String key) {
 		if (instance().modules.containsKey(key)) {
 			instance().modules.get(key).restart();
+			logSuccess("Restarted module: `" + key + "`");
 		}
 	}
 	

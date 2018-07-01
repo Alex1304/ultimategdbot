@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.github.alex1304.ultimategdbot.modules.Module;
+import com.github.alex1304.ultimategdbot.utils.BotUtils;
 
 import sx.blah.discord.api.events.EventSubscriber;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
@@ -37,6 +38,7 @@ public class ReplyModule implements Module {
 	
 	public void open(Reply reply) {
 		this.openedReplies.put(toReplyID(reply), reply);
+		reply.resetTimeout();
 	}
 	
 	private static String toReplyID(Reply reply) {
@@ -55,10 +57,17 @@ public class ReplyModule implements Module {
 		String id = toReplyID(event.getChannel(), event.getAuthor());
 		Reply openedReply = openedReplies.remove(id);
 		
-		if (openedReply == null || openedReply.isTimedOut())
+		if (openedReply == null || openedReply.isTimedOut() || openedReply.isCancelled())
 			return;
 		
-		openedReply.handle(event.getMessage().getContent());
+		if (!openedReply.handle(event.getMessage().getContent())) {
+			if (event.getMessage().getContent().equalsIgnoreCase("cancel")) {
+				openedReply.cancel();
+			} else {
+				BotUtils.sendMessage(event.getChannel(), "Unexpected reply. Please try again.");
+				open(openedReply); // If the reply fails, reopen it
+			}
+		}
 	}
 
 }
