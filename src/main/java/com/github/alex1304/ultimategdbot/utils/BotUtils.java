@@ -1,6 +1,7 @@
 package com.github.alex1304.ultimategdbot.utils;
 
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 import org.hibernate.Session;
 
@@ -227,6 +228,72 @@ public class BotUtils {
 	 */
 	public static String formatDiscordUsername(IUser user) {
 		return user.getName() + "#" + user.getDiscriminator();
+	}
+	
+	/**
+	 * Format a millisecond value to a human-readable format
+	 * 
+	 * @param millis
+	 *            - the millisecond value to convert
+	 * @return String
+	 */
+	public static String formatTimeMillis(long millis) {
+		long tmp = millis;
+		
+		long days = TimeUnit.MILLISECONDS.toDays(tmp);
+		tmp -= TimeUnit.DAYS.toMillis(days);
+		long hours = TimeUnit.MILLISECONDS.toHours(tmp);
+		tmp -= TimeUnit.HOURS.toMillis(hours);
+		long minutes =  TimeUnit.MILLISECONDS.toMinutes(tmp);
+		tmp -= TimeUnit.MINUTES.toMillis(minutes);
+		long seconds =  TimeUnit.MILLISECONDS.toSeconds(tmp);
+		tmp -= TimeUnit.SECONDS.toMillis(seconds);
+		
+		return String.format(" %d day%s %d hour%s %d minute%s %d second%s",
+				days, days < 2 ? "" : "s",
+				hours, hours < 2 ? "" : "s",
+				minutes, minutes < 2 ? "" : "s",
+				seconds, seconds < 2 ? "" : "s"
+		).replaceAll(" 0 [^ ]+", "").trim();
+	}
+	
+	/**
+	 * Returns the prefix used in the message, null if none were used.
+	 * 
+	 * @param message
+	 *            - The message
+	 * @return String
+	 */
+	public static String prefixUsedInMessage(String message) {
+		final String mentionPrefix = UltimateGDBot.client().getOurUser().mention(true);
+		final String mentionPrefix2 = UltimateGDBot.client().getOurUser().mention(false);
+		String prefixUsed = null;
+		
+		if (message.toLowerCase().startsWith(UltimateGDBot.property("ultimategdbot.prefix.full").toLowerCase()))
+			prefixUsed = UltimateGDBot.property("ultimategdbot.prefix.full");
+		else if (message.toLowerCase().startsWith(UltimateGDBot.property("ultimategdbot.prefix.canonical").toLowerCase()))
+			prefixUsed = UltimateGDBot.property("ultimategdbot.prefix.canonical");
+		else if (message.equals(mentionPrefix))
+			prefixUsed = mentionPrefix;
+		else if (message.equals(mentionPrefix2))
+			prefixUsed = mentionPrefix2;
+		
+		return prefixUsed;
+	}
+	
+	/**
+	 * Tells whether the message starts with a mention prefix
+	 * 
+	 * @param message
+	 *            - The message
+	 * @return String
+	 */
+	public static boolean isMentionPrefix(String message) {
+		String prefix = prefixUsedInMessage(message);
+		final String mentionPrefix = UltimateGDBot.client().getOurUser().mention(true);
+		final String mentionPrefix2 = UltimateGDBot.client().getOurUser().mention(false);
+		
+		return prefix != null && (prefix.equals(mentionPrefix) || prefix.equals(mentionPrefix2));
 	}
 
 }

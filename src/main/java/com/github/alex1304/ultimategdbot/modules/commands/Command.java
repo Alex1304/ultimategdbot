@@ -1,8 +1,10 @@
 package com.github.alex1304.ultimategdbot.modules.commands;
 
+import java.util.EnumSet;
 import java.util.List;
 
 import com.github.alex1304.ultimategdbot.exceptions.CommandFailedException;
+import com.github.alex1304.ultimategdbot.utils.BotRoles;
 
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
 
@@ -30,4 +32,22 @@ public interface Command {
 	 *             command syntax is invalid.
 	 */
 	void runCommand(MessageReceivedEvent event, List<String> args) throws CommandFailedException;
+	
+	/**
+	 * Allows to set role restrictions on the command. By default, everyone can use the command.
+	 * 
+	 * @return EnumSet&lt;BotRoles&gt;
+	 */
+	default EnumSet<BotRoles> getRolesRequired() {
+		return EnumSet.of(BotRoles.USER);
+	}
+	
+	/**
+	 * Returns the parent command. This is optional and returns null by default.
+	 * 
+	 * @return Command
+	 */
+	default Command getParentCommand() {
+		return null;
+	}
 }

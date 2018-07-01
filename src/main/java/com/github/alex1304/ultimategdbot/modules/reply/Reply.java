@@ -1,6 +1,6 @@
 package com.github.alex1304.ultimategdbot.modules.reply;
 
-import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import sx.blah.discord.handle.obj.IChannel;
 import sx.blah.discord.handle.obj.IUser;
@@ -13,23 +13,31 @@ import sx.blah.discord.handle.obj.IUser;
  */
 public class Reply {
 
-	private static final int REPLY_TIMEOUT_MILLIS = 30000;
+	public static final int REPLY_TIMEOUT_MILLIS = 60000;
 	
 	private IUser user;
 	private IChannel channel;
 	private long beginTimestamp;
-	private Consumer<String> replyHandler;
+	private Predicate<String> replyHandler;
+	private Runnable onCancel;
+	private boolean isCancelled;
 	
-	/**
-	 * @param user
-	 * @param channel
-	 * @param replyHandler
-	 */
-	public Reply(IUser user, IChannel channel, Consumer<String> replyHandler) {
+	public Reply(IUser user, IChannel channel, Predicate<String> replyHandler, Runnable onCancel) {
 		this.user = user;
 		this.channel = channel;
 		this.beginTimestamp = System.currentTimeMillis();
 		this.replyHandler = replyHandler;
+		this.onCancel = onCancel;
+		this.isCancelled = false;
+	}
+	
+	public Reply(IUser user, IChannel channel, Predicate<String> replyHandler) {
+		this.user = user;
+		this.channel = channel;
+		this.beginTimestamp = System.currentTimeMillis();
+		this.replyHandler = replyHandler;
+		this.onCancel = () -> {};
+		this.isCancelled = false;
 	}
 	
 	/**
@@ -37,8 +45,8 @@ public class Reply {
 	 * 
 	 * @param message - The message to reply to
 	 */
-	public void handle(String message) {
-		this.replyHandler.accept(message);
+	public boolean handle(String message) {
+		return replyHandler.test(message);
 	}
 	
 	/**
@@ -65,6 +73,31 @@ public class Reply {
 	 */
 	public boolean isTimedOut() {
 		return System.currentTimeMillis() - beginTimestamp > REPLY_TIMEOUT_MILLIS;
+	}
+	
+	/**
+	 * Resets the timestamp to the current time and reverts the cancelled state.
+	 */
+	public void resetTimeout() {
+		this.beginTimestamp = System.currentTimeMillis();
+		this.isCancelled = false;
+	}
+	
+	/**
+	 * Cancels the reply. Executes the onCancel action if provided
+	 */
+	public void cancel() {
+		this.isCancelled = true;
+		onCancel.run();
+	}
+
+	/**
+	 * Whether the reply is cancelled
+	 *
+	 * @return boolean
+	 */
+	public boolean isCancelled() {
+		return isCancelled;
 	}
 
 }

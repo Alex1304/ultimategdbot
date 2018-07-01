@@ -9,8 +9,7 @@ import java.util.Map;
 import com.github.alex1304.ultimategdbot.core.UltimateGDBot;
 import com.github.alex1304.ultimategdbot.exceptions.CommandFailedException;
 import com.github.alex1304.ultimategdbot.modules.Module;
-import com.github.alex1304.ultimategdbot.modules.reply.Reply;
-import com.github.alex1304.ultimategdbot.modules.reply.ReplyModule;
+import com.github.alex1304.ultimategdbot.modules.commands.impl.help.HelpCommand;
 import com.github.alex1304.ultimategdbot.utils.BotRoles;
 import com.github.alex1304.ultimategdbot.utils.BotUtils;
 
@@ -41,28 +40,12 @@ public class CommandsModule implements Module {
 	public void start() {
 		registerCommands();
 		isEnabled = true;
-		UltimateGDBot.logSuccess("Commands module started!");
-		RequestBuffer.request(() -> {
-			UltimateGDBot.client().changePresence(StatusType.ONLINE, ActivityType.PLAYING, "I only have a ping command for now");
-		});
 	}
 
 	@Override
 	public void stop() {
 		isEnabled = false;
 		unregisterCommands();
-		UltimateGDBot.logSuccess("Commands module stopped!");
-		RequestBuffer.request(() -> {
-			UltimateGDBot.client().changePresence(StatusType.IDLE, ActivityType.PLAYING, "Commands unavailable");
-		});
-	}
-
-	/**
-	 * Puts a command into the map, associated by name
-	 * @param cmd
-	 */
-	public void registerCommand(CoreCommand cmd) {
-		commandMap.put(cmd.getName(), cmd);
 	}
 
 	/**
@@ -78,32 +61,10 @@ public class CommandsModule implements Module {
 	 */
 	private void registerCommands() {
 		registerCommand("ping", (event, args) -> {
-			RequestBuffer.request(() -> event.getChannel().sendMessage("Pong! :ping_pong:"));
+			BotUtils.sendMessage(event.getChannel(), "Pong! :ping_pong:");
 		});
 		
-		registerCommand("reply", (event, args) -> {
-			BotUtils.sendMessage(event.getChannel(), "Hello");
-			ReplyModule rm = (ReplyModule) UltimateGDBot.getModule("reply");
-			rm.open(new Reply(event.getAuthor(), event.getChannel(), message -> {
-				if (message.equalsIgnoreCase("hello")) {
-					BotUtils.sendMessage(event.getChannel(), "How are you?");
-					rm.open(new Reply(event.getAuthor(), event.getChannel(), message2 -> {
-						if (message2.equalsIgnoreCase("fine"))
-							BotUtils.sendMessage(event.getChannel(), "Great!");
-						else if (message2.equalsIgnoreCase("bad"))
-							BotUtils.sendMessage(event.getChannel(), "Oh, sad to hear that...");
-						else
-							BotUtils.sendMessage(event.getChannel(), "Ok");
-					}));
-				} else if (message.equalsIgnoreCase("gay")) {
-					BotUtils.sendMessage(event.getChannel(), "no u");
-					rm.open(new Reply(event.getAuthor(), event.getChannel(), message2 -> {
-						if (message2.equalsIgnoreCase("no u"))
-							BotUtils.sendMessage(event.getChannel(), "Damn reverse card! You got me.");
-					}));
-				}
-			}));
-		});
+		registerCommand("help", new HelpCommand());
 	}
 	
 	/**
@@ -114,60 +75,21 @@ public class CommandsModule implements Module {
 	}
 	
 	/**
-	 * Handles the message received event from Discord and runs the command if
-	 * prefix and user permissions match
+	 * Executes a command
 	 * 
-	 * @param event - Contains context of the message received
+	 * @param cmd - The command instance
+	 * @param event - The message received event containing context info of the command
+	 * @param args - The arguments of the command
 	 */
-	@EventSubscriber
-	public void onMessageReceived(MessageReceivedEvent event) {
-		if (!isEnabled)
-			return;
-		
-		if (event.getAuthor().isBot())
-			return;
-		
-		String[] argArray = event.getMessage().getContent().split(" ");
-
-		if (argArray.length == 0)
-			return;
-		
-		final String mentionPrefix = UltimateGDBot.client().getOurUser().mention(true);
-		final String mentionPrefix2 = UltimateGDBot.client().getOurUser().mention(false);
-		String prefixUsed = "";
-		
-		if (argArray[0].startsWith(UltimateGDBot.property("ultimategdbot.prefix.full")))
-			prefixUsed = UltimateGDBot.property("ultimategdbot.prefix.full");
-		else if (argArray[0].startsWith(UltimateGDBot.property("ultimategdbot.prefix.canonical")))
-			prefixUsed = UltimateGDBot.property("ultimategdbot.prefix.canonical");
-		else if (argArray[0].equals(mentionPrefix))
-			prefixUsed = mentionPrefix;
-		else if (argArray[0].equals(mentionPrefix2))
-			prefixUsed = mentionPrefix2;
-		else {
-			return;
-		}
-
-		final String cmdName = (prefixUsed.equals(mentionPrefix) || prefixUsed.equals(mentionPrefix2) ?
-				argArray[1] : argArray[0].substring(prefixUsed.length())).toLowerCase();
-		final List<String> args = new ArrayList<>(Arrays.asList(argArray));
-		
-		if (prefixUsed.equals(mentionPrefix) || prefixUsed.equals(mentionPrefix2))
-			args.remove(0);
-		args.remove(0);
-		
+	public void executeCommand(Command cmd, MessageReceivedEvent event, List<String> args) {
 		new Thread(() -> {
 			try {
-				if (commandMap.containsKey(cmdName)) {
-					Command cmd = commandMap.get(cmdName);
-					if (!(cmd instanceof CoreCommand) || BotRoles.isGrantedAll(event.getAuthor(), event.getChannel(),
-							((CoreCommand) cmd).getRolesRequired())) {
-						RequestBuffer.request(() -> event.getChannel().setTypingStatus(true));
-						cmd.runCommand(event, args);
-					}
-					else
-						throw new CommandFailedException("You don't have permission to use this command");
+				if (BotRoles.isGrantedAll(event.getAuthor(), event.getChannel(), cmd.getRolesRequired())) {
+					RequestBuffer.request(() -> event.getChannel().setTypingStatus(true));
+					cmd.runCommand(event, args);
 				}
+				else
+					throw new CommandFailedException("You don't have permission to use this command");
 			} catch (CommandFailedException e) {
 				BotUtils.sendMessage(event.getChannel(), ":negative_squared_cross_mark: " + e.getMessage());
 			} catch (DiscordException e) {
@@ -192,6 +114,43 @@ public class CommandsModule implements Module {
 				RequestBuffer.request(() -> event.getChannel().setTypingStatus(false));
 			}
 		}).start();
+	}
+	
+	/**
+	 * Handles the message received event from Discord and runs the command if
+	 * prefix and user permissions match
+	 * 
+	 * @param event - Contains context of the message received
+	 */
+	@EventSubscriber
+	public void onMessageReceived(MessageReceivedEvent event) {
+		if (!isEnabled)
+			return;
+		
+		if (event.getAuthor().isBot())
+			return;
+		
+		String[] argArray = event.getMessage().getContent().split(" ");
+
+		if (argArray.length == 0)
+			return;
+		
+		String prefixUsed = BotUtils.prefixUsedInMessage(argArray[0]);
+		boolean isMentionPrefix = BotUtils.isMentionPrefix(argArray[0]);
+		
+		if (prefixUsed == null)
+			return;
+
+		final String cmdName = isMentionPrefix ?
+				argArray[1] : argArray[0].substring(prefixUsed.length()).toLowerCase();
+		final List<String> args = new ArrayList<>(Arrays.asList(argArray));
+		
+		if (isMentionPrefix)
+			args.remove(0);
+		args.remove(0);
+		
+		if (commandMap.containsKey(cmdName))
+			executeCommand(commandMap.get(cmdName), event, args);
 	}
 
 	/**
