@@ -1,5 +1,6 @@
 package com.github.alex1304.ultimategdbot.utils;
 
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
@@ -321,6 +322,22 @@ public class BotUtils {
 				sb.append(" ");
 			return sb.toString();
 		}
+	}
+
+	/**
+	 * Returns a String which is the concatenation of all the String elements
+	 * from the list, each element seperated by a space.
+	 * 
+	 * @param args
+	 *            - The list to concatenate
+	 * @return the concatenated args
+	 */
+	public static String concatCommandArgs(List<String> args) {
+		String result = "";
+		for(String s : args)
+			result += s + " ";
+		
+		return result.isEmpty() ? result : result.substring(0, result.length() - 1);
 	}
 
 }

@@ -216,5 +216,15 @@
 			<artifactId>hibernate-hikaricp</artifactId>
 			<version>5.3.0.Final</version>
 		</dependency>
+		<dependency>
+			<groupId>com.github.alex1304</groupId>
+			<artifactId>jdash</artifactId>
+			<version>2.0.3</version>
+		</dependency>
+		<dependency>
+			<groupId>com.github.alex1304</groupId>
+			<artifactId>jdash-events</artifactId>
+			<version>1.0.0</version>
+		</dependency>
 	</dependencies>
 </project>

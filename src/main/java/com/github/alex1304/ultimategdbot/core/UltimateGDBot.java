@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 
+import com.github.alex1304.jdash.api.GDHttpClient;
 import com.github.alex1304.ultimategdbot.cache.Cache;
 import com.github.alex1304.ultimategdbot.dbentities.GlobalSettings;
 import com.github.alex1304.ultimategdbot.exceptions.ModuleUnavailableException;
@@ -36,6 +37,7 @@ public class UltimateGDBot {
 	private GlobalSettings globals;
 	private Map<String, Module> modules;
 	private Map<String, Boolean> startedModules;
+	private GDHttpClient gdClient;
 
 	/**
 	 * Load properties and builds Discord client
@@ -59,6 +61,9 @@ public class UltimateGDBot {
 		this.globals = BotUtils.initGlobalSettings();
 		this.modules = new HashMap<>();
 		this.startedModules = new HashMap<>();
+		this.gdClient = new GDHttpClient(
+				Long.parseLong(props.getProperty("ultimategdbot.gd_account.id")),
+				props.getProperty("ultimategdbot.gd_account.password"));
 	}
 	
 	/**
@@ -92,6 +97,10 @@ public class UltimateGDBot {
 	
 	public static Cache cache() {
 		return instance().cache;
+	}
+	
+	public static GDHttpClient gdClient() {
+		return instance().gdClient;
 	}
 	
 	public static IGuild officialGuild() {
