@@ -18,12 +18,4 @@ public interface Module {
 	 * Stops the module
 	 */
 	void stop();
-	
-	/**
-	 * Restarts the module
-	 */
-	default void restart() {
-		stop();
-		start();
-	}
 }

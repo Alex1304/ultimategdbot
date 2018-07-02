@@ -14,7 +14,7 @@ public class HelpCommand extends SuperCommand {
 	public HelpCommand() {
 		this.addSubCommand("list", new HelpListCommand());
 		
-		this.addMenuItem("To see the list of available commands, type `list`");
+		this.setMenuContent("To see the list of available commands, type `list`");
 	}
 
 }

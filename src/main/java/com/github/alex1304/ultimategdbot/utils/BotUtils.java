@@ -1,5 +1,6 @@
 package com.github.alex1304.ultimategdbot.utils;
 
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
@@ -294,6 +295,49 @@ public class BotUtils {
 		final String mentionPrefix2 = UltimateGDBot.client().getOurUser().mention(false);
 		
 		return prefix != null && (prefix.equals(mentionPrefix) || prefix.equals(mentionPrefix2));
+	}
+	
+	/**
+	 * Truncates a string to have the desired length. If too long, it will be
+	 * cut off with "...". If too short, it will be filled with spaces.
+	 * 
+	 * @param str
+	 *            - the string to truncate
+	 * @param n
+	 *            - the number of characters the output should have
+	 * @return String
+	 * @throws IllegalArgumentException
+	 *             if n is negative
+	 */
+	public static String truncate(String str, int n) {
+		if (n < 0)
+			throw new IllegalArgumentException("truncate: n cannot be a negative value");
+		if (str.length() == n)
+			return str;
+		else if (str.length() > n)
+			return str.substring(0, n - 3) + "...";
+		else {
+			StringBuffer sb = new StringBuffer(str);
+			while (sb.length() < n)
+				sb.append(" ");
+			return sb.toString();
+		}
+	}
+
+	/**
+	 * Returns a String which is the concatenation of all the String elements
+	 * from the list, each element seperated by a space.
+	 * 
+	 * @param args
+	 *            - The list to concatenate
+	 * @return the concatenated args
+	 */
+	public static String concatCommandArgs(List<String> args) {
+		String result = "";
+		for(String s : args)
+			result += s + " ";
+		
+		return result.isEmpty() ? result : result.substring(0, result.length() - 1);
 	}
 
 }

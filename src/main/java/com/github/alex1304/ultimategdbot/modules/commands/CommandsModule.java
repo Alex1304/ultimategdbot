@@ -10,13 +10,14 @@ import com.github.alex1304.ultimategdbot.core.UltimateGDBot;
 import com.github.alex1304.ultimategdbot.exceptions.CommandFailedException;
 import com.github.alex1304.ultimategdbot.modules.Module;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.help.HelpCommand;
+import com.github.alex1304.ultimategdbot.modules.commands.impl.level.LevelCommand;
+import com.github.alex1304.ultimategdbot.modules.commands.impl.modules.ModulesCommand;
 import com.github.alex1304.ultimategdbot.utils.BotRoles;
 import com.github.alex1304.ultimategdbot.utils.BotUtils;
 
 import sx.blah.discord.api.events.EventSubscriber;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
 import sx.blah.discord.util.DiscordException;
-import sx.blah.discord.util.RequestBuffer;
 
 /**
  * Module that manages and handles bot commands
@@ -32,18 +33,17 @@ public class CommandsModule implements Module {
 	public CommandsModule() {
 		this.isEnabled = false;
 		this.commandMap = new HashMap<>();
+		registerCommands();
 	}
 
 	@Override
 	public void start() {
-		registerCommands();
 		isEnabled = true;
 	}
 
 	@Override
 	public void stop() {
 		isEnabled = false;
-		unregisterCommands();
 	}
 
 	/**
@@ -63,29 +63,22 @@ public class CommandsModule implements Module {
 		});
 		
 		registerCommand("help", new HelpCommand());
+		registerCommand("modules", new ModulesCommand());
+		registerCommand("level", new LevelCommand());
 	}
 	
 	/**
-	 * Clears the command map
-	 */
-	private void unregisterCommands() {
-		commandMap.clear();
-	}
-	
-	/**
-	 * Executes a command
+	 * Executes a command. Works even if the module is stopped.
 	 * 
 	 * @param cmd - The command instance
 	 * @param event - The message received event containing context info of the command
 	 * @param args - The arguments of the command
 	 */
-	public void executeCommand(Command cmd, MessageReceivedEvent event, List<String> args) {
+	public static void executeCommand(Command cmd, MessageReceivedEvent event, List<String> args) {
 		new Thread(() -> {
 			try {
-				if (BotRoles.isGrantedAll(event.getAuthor(), event.getChannel(), cmd.getRolesRequired())) {
-					RequestBuffer.request(() -> event.getChannel().setTypingStatus(true));
+				if (BotRoles.isGrantedAll(event.getAuthor(), event.getChannel(), cmd.getRolesRequired()))
 					cmd.runCommand(event, args);
-				}
 				else
 					throw new CommandFailedException("You don't have permission to use this command");
 			} catch (CommandFailedException e) {
@@ -98,7 +91,7 @@ public class CommandsModule implements Module {
 				BotUtils.sendMessage(event.getChannel(), "An internal error occured while running the command."
 						+ " Please try again later.");
 				UltimateGDBot.logError(
-						"An internal error occured in the command handler\n"
+						"An internal error occured in the `commands` module\n"
 								+ "Context info:\n"
 								+ "```\n"
 								+ "Guild: " + event.getGuild().getName() + " (" + event.getGuild().getLongID() + ")\n"
@@ -106,10 +99,9 @@ public class CommandsModule implements Module {
 								+ "Author: " + event.getAuthor().getName() + "#" + event.getAuthor().getDiscriminator()
 										+ "(" + event.getAuthor().getLongID() + ")\n"
 								+ "Full message: " + event.getMessage().getContent() + "\n"
-								+ "```\n");
+								+ "```\n"
+								+ "Exception thrown: `" + e.getClass() + ": " + e.getMessage() + "`");
 				e.printStackTrace();
-			} finally {
-				RequestBuffer.request(() -> event.getChannel().setTypingStatus(false));
 			}
 		}).start();
 	}
@@ -122,7 +114,7 @@ public class CommandsModule implements Module {
 	 */
 	@EventSubscriber
 	public void onMessageReceived(MessageReceivedEvent event) {
-		if (!isEnabled)
+		if (!isEnabled && !BotRoles.isGranted(event.getAuthor(), event.getChannel(), BotRoles.OWNER))
 			return;
 		
 		if (event.getAuthor().isBot())
