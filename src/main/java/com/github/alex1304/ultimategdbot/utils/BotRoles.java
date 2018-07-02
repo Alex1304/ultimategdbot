@@ -17,7 +17,7 @@ import sx.blah.discord.util.PermissionUtils;
  *
  */
 public enum BotRoles {
-	SUPERADMIN((user, channel) -> user.getLongID() == UltimateGDBot.owner().getLongID()),
+	OWNER((user, channel) -> user.getLongID() == UltimateGDBot.owner().getLongID()),
 	MODERATOR((user, channel) -> user.getRolesForGuild(UltimateGDBot.officialGuild())
 			.contains(UltimateGDBot.moderatorRole())),
 	SERVER_ADMIN((user, channel) -> PermissionUtils.hasPermissions(channel, user, Permissions.ADMINISTRATOR)),
@@ -27,7 +27,7 @@ public enum BotRoles {
 	 * Defines extended roles for each role.
 	 */
 	static {
-		SUPERADMIN.setExtendedRoles(EnumSet.of(MODERATOR, SERVER_ADMIN, USER));
+		OWNER.setExtendedRoles(EnumSet.of(MODERATOR, SERVER_ADMIN, USER));
 		MODERATOR.setExtendedRoles(EnumSet.of(SERVER_ADMIN, USER));
 		SERVER_ADMIN.setExtendedRoles(EnumSet.of(USER));
 		USER.setExtendedRoles(EnumSet.noneOf(BotRoles.class));

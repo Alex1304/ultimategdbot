@@ -295,5 +295,32 @@ public class BotUtils {
 		
 		return prefix != null && (prefix.equals(mentionPrefix) || prefix.equals(mentionPrefix2));
 	}
+	
+	/**
+	 * Truncates a string to have the desired length. If too long, it will be
+	 * cut off with "...". If too short, it will be filled with spaces.
+	 * 
+	 * @param str
+	 *            - the string to truncate
+	 * @param n
+	 *            - the number of characters the output should have
+	 * @return String
+	 * @throws IllegalArgumentException
+	 *             if n is negative
+	 */
+	public static String truncate(String str, int n) {
+		if (n < 0)
+			throw new IllegalArgumentException("truncate: n cannot be a negative value");
+		if (str.length() == n)
+			return str;
+		else if (str.length() > n)
+			return str.substring(0, n - 3) + "...";
+		else {
+			StringBuffer sb = new StringBuffer(str);
+			while (sb.length() < n)
+				sb.append(" ");
+			return sb.toString();
+		}
+	}
 
 }

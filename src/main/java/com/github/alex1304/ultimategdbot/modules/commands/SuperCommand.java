@@ -1,6 +1,5 @@
 package com.github.alex1304.ultimategdbot.modules.commands;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -27,11 +26,11 @@ import sx.blah.discord.handle.obj.IMessage;
 public abstract class SuperCommand implements Command {
 
 	private Map<String, Command> subCommandMap;
-	private List<String> menuItems;
+	private String menuContent;
 
 	public SuperCommand() {
 		this.subCommandMap = new ConcurrentHashMap<>();
-		this.menuItems = new ArrayList<>();
+		this.menuContent = "";
 	}
 
 	/**
@@ -47,13 +46,7 @@ public abstract class SuperCommand implements Command {
 	 */
 	public boolean triggerSubCommand(String cmdName, MessageReceivedEvent event, List<String> args) {
 		if (subCommandMap.containsKey(cmdName)) {
-			CommandsModule cm;
-			try {
-				cm = (CommandsModule) UltimateGDBot.getModule("commands");
-				cm.executeCommand(subCommandMap.get(cmdName), event, args);
-			} catch (ModuleUnavailableException e) {
-				return false;
-			}
+			CommandsModule.executeCommand(subCommandMap.get(cmdName), event, args);
 			return true;
 		} else
 			return false;
@@ -77,10 +70,8 @@ public abstract class SuperCommand implements Command {
 			
 			StringBuffer menu = new StringBuffer();
 			
-			for (String item : menuItems) {
-				menu.append(item);
-				menu.append('\n');
-			}
+			menu.append(menuContent);
+			menu.append('\n');
 			
 			menu.append(String.format("**This menu will close after %s of inactivity, or type `cancel`**",
 					BotUtils.formatTimeMillis(Reply.DEFAULT_TIMEOUT_MILLIS)));
@@ -107,15 +98,6 @@ public abstract class SuperCommand implements Command {
 	public void addSubCommand(String name, Command cmd) {
 		this.subCommandMap.put(name, cmd);
 	}
-
-	/**
-	 * Adds an item in the interactive menu
-	 * 
-	 * @param menuItem - the item to add
-	 */
-	public void addMenuItem(String menuItem) {
-		this.menuItems.add(menuItem);
-	}
 	
 	private String buildInvalidSyntaxMessage(String invalidInput) {
 		StringBuffer sb = new StringBuffer();
@@ -125,8 +107,27 @@ public abstract class SuperCommand implements Command {
 			sb.append(invalidInput.toLowerCase());
 			sb.append(" ");
 			sb.append(sc);
+			sb.append("`\n");
 		}
 		
 		return sb.toString();
+	}
+
+	/**
+	 * Gets the menuContent
+	 *
+	 * @return String
+	 */
+	public String getMenuContent() {
+		return menuContent;
+	}
+
+	/**
+	 * Sets the menuContent
+	 *
+	 * @param menuContent - String
+	 */
+	public void setMenuContent(String menuContent) {
+		this.menuContent = menuContent;
 	}
 }

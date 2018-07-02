@@ -191,4 +191,13 @@ public class UltimateGDBot {
 		return instance().modules.get(key);
 	}
 
+	/**
+	 * Gets a copy of the startedModules
+	 *
+	 * @return Map&lt;String,Boolean&gt;
+	 */
+	public static Map<String, Boolean> getStartedModules() {
+		return new HashMap<>(instance().startedModules);
+	}
+
 }
