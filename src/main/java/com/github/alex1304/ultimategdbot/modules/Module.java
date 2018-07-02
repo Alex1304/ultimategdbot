@@ -14,7 +14,6 @@ public interface Module {
 	 */
 	void start();
 	
-	
 	/**
 	 * Stops the module
 	 */

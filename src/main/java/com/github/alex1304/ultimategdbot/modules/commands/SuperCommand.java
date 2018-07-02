@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.github.alex1304.ultimategdbot.core.UltimateGDBot;
@@ -75,27 +73,16 @@ public abstract class SuperCommand implements Command {
 		}
 		
 		menu.append(String.format("**This menu will close after %s of inactivity, or type `cancel`**",
-				BotUtils.formatTimeMillis(Reply.REPLY_TIMEOUT_MILLIS)));
+				BotUtils.formatTimeMillis(Reply.DEFAULT_TIMEOUT_MILLIS)));
 		
 		IMessage menuMsg = BotUtils.sendMessage(event.getChannel(), menu.toString());
 		
-		Timer t = new Timer();
-		TimerTask tsk = new TimerTask() {
-
-			@Override
-			public void run() {
-				if (!menuMsg.isDeleted())
-					menuMsg.delete();
-			}
-			
-		};
-		t.schedule(tsk, Reply.REPLY_TIMEOUT_MILLIS);
-		
-		rm.open(new Reply(event.getAuthor(), event.getChannel(), message -> {
-			t.cancel();
-			List<String> newArgs = Arrays.asList(message.split(" "));
+		Reply r = new Reply(menuMsg, event.getAuthor(), message -> {
+			List<String> newArgs = Arrays.asList(message.getContent().split(" "));
 			return triggerSubCommand(newArgs.get(0), event, newArgs.subList(1, newArgs.size()));
-		}, () -> tsk.run()));
+		});
+		
+		rm.open(r, true, true);
 	}
 
 	/**

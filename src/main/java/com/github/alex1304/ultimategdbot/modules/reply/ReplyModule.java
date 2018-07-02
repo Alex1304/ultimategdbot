@@ -4,7 +4,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.github.alex1304.ultimategdbot.modules.Module;
-import com.github.alex1304.ultimategdbot.utils.BotUtils;
+import com.github.alex1304.ultimategdbot.utils.Procedure;
 
 import sx.blah.discord.api.events.EventSubscriber;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
@@ -36,13 +36,38 @@ public class ReplyModule implements Module {
 		isEnabled = false;
 	}
 	
-	public void open(Reply reply) {
-		this.openedReplies.put(toReplyID(reply), reply);
-		reply.resetTimeout();
+	public void open(Reply reply, boolean retryOnFailure, boolean deleteInitialMessageAfterReply) {
+		if (!isEnabled)
+			return;
+		
+		String id = toReplyID(reply);
+				
+		Procedure closeReply = () -> openedReplies.remove(id);
+		
+		if (deleteInitialMessageAfterReply)
+			closeReply = closeReply.andThen(() -> reply.deleteInitialMessage());
+		
+		Reply existingReply = openedReplies.get(id);
+		if (existingReply != null)
+			existingReply.cancel();
+		
+		openedReplies.put(id, reply);
+		
+		reply.setOnSuccess(reply.getOnSuccess().compose(closeReply));
+		reply.setOnCancel(reply.getOnCancel().compose(closeReply));
+		if (!retryOnFailure)
+			reply.setOnFailure(reply.getOnFailure().compose(closeReply));
+		else
+			reply.setOnFailure(reply.getOnFailure().compose(() -> {
+				reply.cancel(false);
+				reply.startTimeout();
+			}));
+		
+		reply.startTimeout();
 	}
 	
 	private static String toReplyID(Reply reply) {
-		return reply.getChannel().getStringID() + reply.getUser().getStringID();
+		return reply.getInitialMessage().getChannel().getStringID() + reply.getUser().getStringID();
 	}
 	
 	private static String toReplyID(IChannel channel, IUser user) {
@@ -55,19 +80,15 @@ public class ReplyModule implements Module {
 			return;
 		
 		String id = toReplyID(event.getChannel(), event.getAuthor());
-		Reply openedReply = openedReplies.remove(id);
+		Reply openedReply = openedReplies.get(id);
 		
-		if (openedReply == null || openedReply.isTimedOut() || openedReply.isCancelled())
+		if (openedReply == null)
 			return;
 		
-		if (!openedReply.handle(event.getMessage().getContent())) {
-			if (event.getMessage().getContent().equalsIgnoreCase("cancel")) {
-				openedReply.cancel();
-			} else {
-				BotUtils.sendMessage(event.getChannel(), "Unexpected reply. Please try again.");
-				open(openedReply); // If the reply fails, reopen it
-			}
-		}
+		if (event.getMessage().getContent().equalsIgnoreCase("cancel"))
+			openedReply.cancel();
+		
+		openedReply.handle(event.getMessage());
 	}
 
 }

@@ -1,54 +1,164 @@
 package com.github.alex1304.ultimategdbot.modules.reply;
 
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.function.Predicate;
 
-import sx.blah.discord.handle.obj.IChannel;
+import com.github.alex1304.ultimategdbot.utils.Procedure;
+
+import sx.blah.discord.handle.obj.IMessage;
 import sx.blah.discord.handle.obj.IUser;
+import sx.blah.discord.util.DiscordException;
 
 /**
- * Represents a dialog with another user. They are specific to a channel and is designed to close
+ * Allows users to reply to a message sent by the bot. They are specific to a channel and is designed to close
  * after a certain time of inactivity
  *
  * @author Alex1304
  */
 public class Reply {
 
-	public static final int REPLY_TIMEOUT_MILLIS = 60000;
+	public static final long DEFAULT_TIMEOUT_MILLIS = 60000;
 	
+	private IMessage initialMessage;
 	private IUser user;
-	private IChannel channel;
-	private long beginTimestamp;
-	private Predicate<String> replyHandler;
-	private Runnable onCancel;
-	private boolean isCancelled;
+	private Predicate<IMessage> replyHandler;
+	private long timeout;
+	private Procedure onSuccess, onFailure, onCancel;
+	private Timer timer;
 	
-	public Reply(IUser user, IChannel channel, Predicate<String> replyHandler, Runnable onCancel) {
+	/**
+	 * @param initialMessage
+	 *            - The message initially sent by the bot to ask the user to
+	 *            reply
+	 * @param user
+	 *            - the user who is supposed to reply
+	 * @param replyHandler
+	 *            - Executes what should happen when the user replies. The
+	 *            predicate should return false if the bot received an
+	 *            unexpected reply, true otherwise
+	 * @param timeout
+	 *            - delay given to the user to reply timeout
+	 */
+	public Reply(IMessage initialMessage, IUser user, Predicate<IMessage> replyHandler, long timeout) {
+		this.initialMessage = initialMessage;
 		this.user = user;
-		this.channel = channel;
-		this.beginTimestamp = System.currentTimeMillis();
 		this.replyHandler = replyHandler;
-		this.onCancel = onCancel;
-		this.isCancelled = false;
-	}
-	
-	public Reply(IUser user, IChannel channel, Predicate<String> replyHandler) {
-		this.user = user;
-		this.channel = channel;
-		this.beginTimestamp = System.currentTimeMillis();
-		this.replyHandler = replyHandler;
+		this.timeout = timeout;
+		this.onSuccess = () -> {};
+		this.onFailure = () -> {};
 		this.onCancel = () -> {};
-		this.isCancelled = false;
+		this.timer = null;
 	}
 	
 	/**
-	 * Handles the message in order to reply
-	 * 
-	 * @param message - The message to reply to
+	 * @param initialMessage
+	 *            - The message initially sent by the bot to ask the user to
+	 *            reply
+	 * @param user
+	 *            - the user who is supposed to reply
+	 * @param replyHandler
+	 *            - Executes what should happen when the user replies. The
+	 *            predicate should return false if the bot received an
+	 *            unexpected reply, true otherwise
 	 */
-	public boolean handle(String message) {
-		return replyHandler.test(message);
+	public Reply(IMessage initialMessage, IUser user, Predicate<IMessage> replyHandler) {
+		this(initialMessage, user, replyHandler, DEFAULT_TIMEOUT_MILLIS);
 	}
 	
+	/**
+	 * Starts the timeout, in other words it schedules the deletion of the
+	 * intial message. The timer is cancelled when either {@link Reply#cancel()}
+	 * or {@link Reply#handle(IMessage)} is called
+	 */
+	public synchronized void startTimeout() {
+		if (timer != null)
+			return;
+		
+		this.timer = new Timer();
+		timer.schedule(new TimerTask() {
+
+			@Override
+			public void run() {
+				Reply.this.cancel();
+			}
+			
+		}, timeout);
+	}
+	
+	/**
+	 * Cancels the reply. Equivalent to {@code cancel(true)}
+	 */
+	public synchronized void cancel() {
+		this.cancel(true);
+	}
+	
+	/**
+	 * Cancels the reply.
+	 * 
+	 * @param runOnCancel - Whether to run the onCancel procedure
+	 */
+	public synchronized void cancel(boolean runOnCancel) {
+		if (timer == null)
+			return;
+		
+		timer.cancel();
+		this.timer = null;
+		
+		if (runOnCancel)
+			onCancel.run();
+	}
+	
+	/**
+	 * Handles the reply given by the user. Executes onSuccess and onFailure accordingly.
+	 * The reply is no longer opened after the reply has been handled.
+	 * 
+	 * @param message
+	 */
+	public synchronized void handle(IMessage message) {
+		this.cancel(false);
+		
+		if (replyHandler.test(message))
+			onSuccess.run();
+		else
+			onFailure.run();
+	}
+	
+	/**
+	 * Deletes the initial message. Doesn't do anything if message is already deleted
+	 * or if deleteOnCancel is set to false
+	 */
+	public void deleteInitialMessage() {
+		try {
+			if (!initialMessage.isDeleted())
+				initialMessage.delete();
+		} catch (DiscordException e) {
+			return;
+		}
+	}
+	
+	private Procedure emptyProcedureIfNull(Procedure p) {
+		return p == null ? () -> {} : p;
+	}
+
+	/**
+	 * Gets the initialMessage
+	 *
+	 * @return IMessage
+	 */
+	public IMessage getInitialMessage() {
+		return initialMessage;
+	}
+
+	/**
+	 * Sets the initialMessage
+	 *
+	 * @param initialMessage - IMessage
+	 */
+	public void setInitialMessage(IMessage initialMessage) {
+		this.initialMessage = initialMessage;
+	}
+
 	/**
 	 * Gets the user
 	 *
@@ -57,47 +167,107 @@ public class Reply {
 	public IUser getUser() {
 		return user;
 	}
+
 	/**
-	 * Gets the channel
+	 * Sets the user
 	 *
-	 * @return IChannel
+	 * @param user - IUser
 	 */
-	public IChannel getChannel() {
-		return channel;
-	}
-	
-	/**
-	 * Whether the dialog has timed out
-	 * 
-	 * @return boolean
-	 */
-	public boolean isTimedOut() {
-		return System.currentTimeMillis() - beginTimestamp > REPLY_TIMEOUT_MILLIS;
-	}
-	
-	/**
-	 * Resets the timestamp to the current time and reverts the cancelled state.
-	 */
-	public void resetTimeout() {
-		this.beginTimestamp = System.currentTimeMillis();
-		this.isCancelled = false;
-	}
-	
-	/**
-	 * Cancels the reply. Executes the onCancel action if provided
-	 */
-	public void cancel() {
-		this.isCancelled = true;
-		onCancel.run();
+	public void setUser(IUser user) {
+		this.user = user;
 	}
 
 	/**
-	 * Whether the reply is cancelled
+	 * Gets the replyHandler
 	 *
-	 * @return boolean
+	 * @return Predicate<IMessage>
 	 */
-	public boolean isCancelled() {
-		return isCancelled;
+	public Predicate<IMessage> getReplyHandler() {
+		return replyHandler;
 	}
 
+	/**
+	 * Sets the replyHandler
+	 *
+	 * @param replyHandler - Predicate<IMessage>
+	 */
+	public void setReplyHandler(Predicate<IMessage> replyHandler) {
+		this.replyHandler = replyHandler;
+	}
+
+	/**
+	 * Gets the timeout
+	 *
+	 * @return long
+	 */
+	public long getTimeout() {
+		return timeout;
+	}
+
+	/**
+	 * Sets the timeout
+	 *
+	 * @param timeout - long
+	 */
+	public void setTimeout(long timeout) {
+		this.timeout = timeout;
+	}
+
+	/**
+	 * Gets the onSuccess
+	 *
+	 * @return Procedure
+	 */
+	public Procedure getOnSuccess() {
+		return onSuccess;
+	}
+
+	/**
+	 * Sets the onSuccess. Won't do anything if the timeout is running
+	 *
+	 * @param onSuccess - Procedure
+	 */
+	public void setOnSuccess(Procedure onSuccess) {
+		if (timer == null)
+			this.onSuccess = emptyProcedureIfNull(onSuccess);
+	}
+
+	/**
+	 * Gets the onFailure
+	 *
+	 * @return Procedure
+	 */
+	public Procedure getOnFailure() {
+		return onFailure;
+	}
+
+	/**
+	 * Sets the onFailure. Won't do anything if the timeout is running
+	 *
+	 * @param onFailure - Procedure
+	 */
+	public void setOnFailure(Procedure onFailure) {
+		if (timer == null)
+			this.onFailure = emptyProcedureIfNull(onFailure);
+	}
+
+	/**
+	 * Gets the onCancel
+	 *
+	 * @return Procedure
+	 */
+	public Procedure getOnCancel() {
+		return onCancel;
+	}
+
+	/**
+	 * Sets the onCancel. Won't do anything if the timeout is running
+	 *
+	 * @param onCancel - Procedure
+	 */
+	public void setOnCancel(Procedure onCancel) {
+		if (timer == null)
+			this.onCancel = emptyProcedureIfNull(onCancel);
+	}
+	
 }
