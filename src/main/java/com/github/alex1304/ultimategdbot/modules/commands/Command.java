@@ -41,13 +41,4 @@ public interface Command {
 	default EnumSet<BotRoles> getRolesRequired() {
 		return EnumSet.of(BotRoles.USER);
 	}
-	
-	/**
-	 * Returns the parent command. This is optional and returns null by default.
-	 * 
-	 * @return Command
-	 */
-	default Command getParentCommand() {
-		return null;
-	}
 }

@@ -3,11 +3,12 @@ package com.github.alex1304.ultimategdbot.core;
 import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Map.Entry;
+import java.util.Properties;
 
 import com.github.alex1304.ultimategdbot.cache.Cache;
 import com.github.alex1304.ultimategdbot.dbentities.GlobalSettings;
+import com.github.alex1304.ultimategdbot.exceptions.ModuleUnavailableException;
 import com.github.alex1304.ultimategdbot.modules.Module;
 import com.github.alex1304.ultimategdbot.utils.BotUtils;
 import com.github.alex1304.ultimategdbot.utils.SnowflakeType;
@@ -34,6 +35,7 @@ public class UltimateGDBot {
 	private Cache cache;
 	private GlobalSettings globals;
 	private Map<String, Module> modules;
+	private Map<String, Boolean> startedModules;
 
 	/**
 	 * Load properties and builds Discord client
@@ -56,6 +58,7 @@ public class UltimateGDBot {
 		this.cache = new Cache();
 		this.globals = BotUtils.initGlobalSettings();
 		this.modules = new HashMap<>();
+		this.startedModules = new HashMap<>();
 	}
 	
 	/**
@@ -142,38 +145,29 @@ public class UltimateGDBot {
 	
 	public static void addModule(String key, Module module) {
 		instance().modules.put(key, module);
+		instance().startedModules.put(key, false);
 		instance().client.getDispatcher().registerListener(module);
 	}
 	
-	public static void clearModules() {
-		stopModules();
-		instance().modules.clear();
-	}
-	
 	public static void startModules() {
-		for (Entry<String, Module> m : instance().modules.entrySet()) {
-			m.getValue().start();
-			logSuccess("Started module: `" + m.getKey() + "`");
-		}
+		for (Entry<String, Module> m : instance().modules.entrySet())
+			startModule(m.getKey());
 	}
 	
 	public static void stopModules() {
-		for (Entry<String, Module> m : instance().modules.entrySet()) {
-			m.getValue().stop();
-			logWarning("Stopped module: `" + m.getKey() + "`");
-		}
+		for (Entry<String, Module> m : instance().modules.entrySet())
+			stopModule(m.getKey());
 	}
 	
 	public static void restartModules() {
-		for (Entry<String, Module> m : instance().modules.entrySet()) {
-			m.getValue().restart();
-			logSuccess("Restarted module: `" + m.getKey() + "`");
-		}
+		for (Entry<String, Module> m : instance().modules.entrySet())
+			restartModule(m.getKey());
 	}
 	
 	public static void startModule(String key) {
 		if (instance().modules.containsKey(key)) {
 			instance().modules.get(key).start();
+			instance().startedModules.put(key, true);
 			logSuccess("Started module: `" + key + "`");
 		}
 	}
@@ -181,18 +175,19 @@ public class UltimateGDBot {
 	public static void stopModule(String key) {
 		if (instance().modules.containsKey(key)) {
 			instance().modules.get(key).stop();
+			instance().startedModules.put(key, false);
 			logWarning("Stopped module: `" + key + "`");
 		}
 	}
 	
 	public static void restartModule(String key) {
-		if (instance().modules.containsKey(key)) {
-			instance().modules.get(key).restart();
-			logSuccess("Restarted module: `" + key + "`");
-		}
+		stopModule(key);
+		startModule(key);
 	}
 	
-	public static Module getModule(String key) {
+	public static Module getModule(String key) throws ModuleUnavailableException {
+		if (!instance().startedModules.containsKey(key) || !instance.startedModules.get(key))
+			throw new ModuleUnavailableException();
 		return instance().modules.get(key);
 	}
 

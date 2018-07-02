@@ -9,6 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import com.github.alex1304.ultimategdbot.core.UltimateGDBot;
 import com.github.alex1304.ultimategdbot.exceptions.CommandFailedException;
 import com.github.alex1304.ultimategdbot.exceptions.InvalidCommandArgsException;
+import com.github.alex1304.ultimategdbot.exceptions.ModuleUnavailableException;
 import com.github.alex1304.ultimategdbot.modules.reply.Reply;
 import com.github.alex1304.ultimategdbot.modules.reply.ReplyModule;
 import com.github.alex1304.ultimategdbot.utils.BotUtils;
@@ -46,8 +47,13 @@ public abstract class SuperCommand implements Command {
 	 */
 	public boolean triggerSubCommand(String cmdName, MessageReceivedEvent event, List<String> args) {
 		if (subCommandMap.containsKey(cmdName)) {
-			CommandsModule cm = (CommandsModule) UltimateGDBot.getModule("commands");
-			cm.executeCommand(subCommandMap.get(cmdName), event, args);
+			CommandsModule cm;
+			try {
+				cm = (CommandsModule) UltimateGDBot.getModule("commands");
+				cm.executeCommand(subCommandMap.get(cmdName), event, args);
+			} catch (ModuleUnavailableException e) {
+				return false;
+			}
 			return true;
 		} else
 			return false;
@@ -55,34 +61,41 @@ public abstract class SuperCommand implements Command {
 	
 	@Override
 	public final void runCommand(MessageReceivedEvent event, List<String> args) throws CommandFailedException {
+		InvalidCommandArgsException invalidArgsException = new InvalidCommandArgsException(
+				this.buildInvalidSyntaxMessage(event.getMessage().getContent()));
+		
 		if (!args.isEmpty()) { // First tries to guess subcommand in args
 			if (!triggerSubCommand(args.get(0), event, args.subList(1, args.size())))
-				throw new InvalidCommandArgsException();
+				throw invalidArgsException;
 			return;
 		}
 
 		// If no subcommand could be resolved with args, we will ask the user
 		// using an interactive menu
-		ReplyModule rm = (ReplyModule) UltimateGDBot.getModule("reply");
-		
-		StringBuffer menu = new StringBuffer();
-		
-		for (String item : menuItems) {
-			menu.append(item);
-			menu.append('\n');
+		try {
+			ReplyModule rm = (ReplyModule) UltimateGDBot.getModule("reply");
+			
+			StringBuffer menu = new StringBuffer();
+			
+			for (String item : menuItems) {
+				menu.append(item);
+				menu.append('\n');
+			}
+			
+			menu.append(String.format("**This menu will close after %s of inactivity, or type `cancel`**",
+					BotUtils.formatTimeMillis(Reply.DEFAULT_TIMEOUT_MILLIS)));
+			
+			IMessage menuMsg = BotUtils.sendMessage(event.getChannel(), menu.toString());
+			
+			Reply r = new Reply(menuMsg, event.getAuthor(), message -> {
+				List<String> newArgs = Arrays.asList(message.getContent().split(" "));
+				return triggerSubCommand(newArgs.get(0), event, newArgs.subList(1, newArgs.size()));
+			});
+			
+			rm.open(r, true, true);
+		} catch (ModuleUnavailableException e) {
+			throw invalidArgsException;	
 		}
-		
-		menu.append(String.format("**This menu will close after %s of inactivity, or type `cancel`**",
-				BotUtils.formatTimeMillis(Reply.DEFAULT_TIMEOUT_MILLIS)));
-		
-		IMessage menuMsg = BotUtils.sendMessage(event.getChannel(), menu.toString());
-		
-		Reply r = new Reply(menuMsg, event.getAuthor(), message -> {
-			List<String> newArgs = Arrays.asList(message.getContent().split(" "));
-			return triggerSubCommand(newArgs.get(0), event, newArgs.subList(1, newArgs.size()));
-		});
-		
-		rm.open(r, true, true);
 	}
 
 	/**
@@ -102,5 +115,18 @@ public abstract class SuperCommand implements Command {
 	 */
 	public void addMenuItem(String menuItem) {
 		this.menuItems.add(menuItem);
+	}
+	
+	private String buildInvalidSyntaxMessage(String invalidInput) {
+		StringBuffer sb = new StringBuffer();
+		
+		for (String sc : subCommandMap.keySet()) {
+			sb.append('`');
+			sb.append(invalidInput.toLowerCase());
+			sb.append(" ");
+			sb.append(sc);
+		}
+		
+		return sb.toString();
 	}
 }
