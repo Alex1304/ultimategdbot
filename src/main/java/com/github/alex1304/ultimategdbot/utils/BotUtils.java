@@ -1,5 +1,7 @@
 package com.github.alex1304.ultimategdbot.utils;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
@@ -145,8 +147,38 @@ public class BotUtils {
 		return RequestBuffer.request(() -> channel.sendMessage(embed)).get();
 	}
 	
+	/**
+	 * Toggles on/off typing status for a channel.
+	 * 
+	 * @param channel
+	 * @param on
+	 */
 	public static void typing(IChannel channel, boolean on) {
 		RequestBuffer.request(() -> channel.setTypingStatus(on));
+	}
+
+	/**
+	 * Escapes characters used in Markdown syntax using a backslash
+	 * 
+	 * @param text
+	 * @return String
+	 */
+	public static String escapeMarkdown(String text) {
+		List<Character> resultList = new ArrayList<>();
+		Character[] charsToEscape = { '\\', '_', '*', '~', '`', ':', '@', '#' };
+		List<Character> charsToEscapeList = new ArrayList<>(Arrays.asList(charsToEscape));
+		
+		for (char c : text.toCharArray()) {
+			if (charsToEscapeList.contains(c))
+				resultList.add('\\');
+			resultList.add(c);
+		}
+		
+		char[] result = new char[resultList.size()];
+		for (int i = 0 ; i < result.length ; i++)
+			result[i] = resultList.get(i);
+		
+		return new String(result);
 	}
 	
 	/**

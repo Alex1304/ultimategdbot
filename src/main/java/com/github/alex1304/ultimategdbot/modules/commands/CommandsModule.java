@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 import com.github.alex1304.ultimategdbot.core.UltimateGDBot;
 import com.github.alex1304.ultimategdbot.exceptions.CommandFailedException;
@@ -18,9 +17,7 @@ import com.github.alex1304.ultimategdbot.modules.reply.Reply;
 import com.github.alex1304.ultimategdbot.modules.reply.ReplyModule;
 import com.github.alex1304.ultimategdbot.utils.BotRoles;
 import com.github.alex1304.ultimategdbot.utils.BotUtils;
-import com.github.alex1304.ultimategdbot.utils.Emojis;
 
-import sx.blah.discord.api.events.EventSubscriber;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
 import sx.blah.discord.util.DiscordException;
 
@@ -66,6 +63,7 @@ public class CommandsModule implements Module {
 		registerCommand("ping", (event, args) -> {
 			BotUtils.sendMessage(event.getChannel(), "Pong! :ping_pong:");
 		});
+		
 		registerCommand("help", new HelpCommand());
 		registerCommand("modules", new ModulesCommand());
 		registerCommand("level", new LevelCommand());
@@ -116,7 +114,6 @@ public class CommandsModule implements Module {
 	 * 
 	 * @param event - Contains context of the message received
 	 */
-	@EventSubscriber
 	public void onMessageReceived(MessageReceivedEvent event) {
 		if (!isEnabled && !BotRoles.isGranted(event.getAuthor(), event.getChannel(), BotRoles.OWNER))
 			return;

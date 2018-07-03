@@ -6,7 +6,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import com.github.alex1304.ultimategdbot.modules.Module;
 import com.github.alex1304.ultimategdbot.utils.Procedure;
 
-import sx.blah.discord.api.events.EventSubscriber;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
 import sx.blah.discord.handle.obj.IChannel;
 import sx.blah.discord.handle.obj.IUser;
@@ -78,7 +77,6 @@ public class ReplyModule implements Module {
 		return channel.getStringID() + user.getStringID();
 	}
 	
-	@EventSubscriber
 	public void onMessageReceived(MessageReceivedEvent event) {
 		if (openedReplies == null)
 			return;
