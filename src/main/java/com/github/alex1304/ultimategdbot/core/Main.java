@@ -29,6 +29,7 @@ public class Main {
 	
 	private static final IListener<ReadyEvent> ON_READY = event -> {
 		try {
+			UltimateGDBot.loadEmojiGuilds();
 			UltimateGDBot.startModules();
 		} catch (Exception e) {
 			e.printStackTrace();

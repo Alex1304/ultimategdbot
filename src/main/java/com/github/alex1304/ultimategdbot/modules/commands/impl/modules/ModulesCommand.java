@@ -6,7 +6,7 @@ import java.util.Map.Entry;
 
 import com.github.alex1304.ultimategdbot.core.UltimateGDBot;
 import com.github.alex1304.ultimategdbot.exceptions.InvalidCommandArgsException;
-import com.github.alex1304.ultimategdbot.modules.commands.SuperCommand;
+import com.github.alex1304.ultimategdbot.modules.commands.InteractiveMenu;
 import com.github.alex1304.ultimategdbot.utils.BotRoles;
 import com.github.alex1304.ultimategdbot.utils.BotUtils;
 
@@ -15,7 +15,7 @@ import com.github.alex1304.ultimategdbot.utils.BotUtils;
  *
  * @author Alex1304
  */
-public class ModulesCommand extends SuperCommand {
+public class ModulesCommand extends InteractiveMenu {
 
 	public ModulesCommand() {
 		this.setMenuContent("To view the full list of modules and their status, type `list`\n"

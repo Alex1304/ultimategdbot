@@ -5,15 +5,20 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import com.github.alex1304.ultimategdbot.core.UltimateGDBot;
 import com.github.alex1304.ultimategdbot.exceptions.CommandFailedException;
+import com.github.alex1304.ultimategdbot.exceptions.ModuleUnavailableException;
 import com.github.alex1304.ultimategdbot.modules.Module;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.help.HelpCommand;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.level.LevelCommand;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.modules.ModulesCommand;
+import com.github.alex1304.ultimategdbot.modules.reply.Reply;
+import com.github.alex1304.ultimategdbot.modules.reply.ReplyModule;
 import com.github.alex1304.ultimategdbot.utils.BotRoles;
 import com.github.alex1304.ultimategdbot.utils.BotUtils;
+import com.github.alex1304.ultimategdbot.utils.Emojis;
 
 import sx.blah.discord.api.events.EventSubscriber;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
@@ -61,14 +66,13 @@ public class CommandsModule implements Module {
 		registerCommand("ping", (event, args) -> {
 			BotUtils.sendMessage(event.getChannel(), "Pong! :ping_pong:");
 		});
-		
 		registerCommand("help", new HelpCommand());
 		registerCommand("modules", new ModulesCommand());
 		registerCommand("level", new LevelCommand());
 	}
 	
 	/**
-	 * Executes a command. Works even if the module is stopped.
+	 * Executes a command asynchronously. Works even if the module is stopped.
 	 * 
 	 * @param cmd - The command instance
 	 * @param event - The message received event containing context info of the command
@@ -139,14 +143,23 @@ public class CommandsModule implements Module {
 			args.remove(0);
 		args.remove(0);
 		
-		if (commandMap.containsKey(cmdName))
+		if (commandMap.containsKey(cmdName)) {
+			// Before executing the command, cancel any opened reply for the current user/channel
+			try {
+				ReplyModule rm = (ReplyModule) UltimateGDBot.getModule("reply");
+				Reply r = rm.getReply(event.getChannel(), event.getAuthor());
+				if (r != null)
+					r.cancel();
+			} catch (ModuleUnavailableException e) {
+			}
 			executeCommand(commandMap.get(cmdName), event, args);
+		}
 	}
 
 	/**
 	 * Gets the commandMap
 	 *
-	 * @return Map<String,Command>
+	 * @return Map&lt;String,Command&gt;
 	 */
 	public Map<String, Command> getCommandMap() {
 		return commandMap;

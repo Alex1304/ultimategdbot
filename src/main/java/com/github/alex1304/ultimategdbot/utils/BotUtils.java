@@ -55,7 +55,7 @@ public class BotUtils {
 	 * @return IIDLinkedObject
 	 */
 	public static IIDLinkedObject resolveSnowflake(SnowflakeType type, long snowflake) {
-		return (IIDLinkedObject) UltimateGDBot.cache().readAndWriteIfNotExists("discord.snowflake." + snowflake, () -> {
+		return (IIDLinkedObject) UltimateGDBot.cache().readAndWriteIfNotExistsIgnoreExceptions("discord.snowflake." + snowflake, () -> {
 			return type.getFunc().apply(snowflake);
 		});
 	}
@@ -143,6 +143,10 @@ public class BotUtils {
 	 */
 	public static IMessage sendMessage(IChannel channel, EmbedObject embed) {
 		return RequestBuffer.request(() -> channel.sendMessage(embed)).get();
+	}
+	
+	public static void typing(IChannel channel, boolean on) {
+		RequestBuffer.request(() -> channel.setTypingStatus(on));
 	}
 	
 	/**

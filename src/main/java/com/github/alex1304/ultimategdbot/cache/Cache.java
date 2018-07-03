@@ -1,7 +1,8 @@
 package com.github.alex1304.ultimategdbot.cache;
 
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Supplier;
+
+import com.github.alex1304.ultimategdbot.utils.CacheItemSupplier;
 
 /**
  * A cache store objects for later use. Objects stored there have a limited
@@ -73,7 +74,7 @@ public class Cache {
 
 	/**
 	 * Attempts to read an entry from the cache, if not found then a supplier
-	 * will be used to write a new entry.
+	 * will be used to write a new entry. Any exception thrown inside the supplier will be forwarded
 	 * 
 	 * @param entryName
 	 *            - the unique identifier for the entry
@@ -83,8 +84,9 @@ public class Cache {
 	 *            - the lifetime applied to the new object in case a new object
 	 *            should be written
 	 * @return Object
+	 * @throws Exception forwards any exception thrown inside the supplier
 	 */
-	public Object readAndWriteIfNotExists(String entryName, Supplier<Object> itemSupplier, long lifetime) {
+	public Object readAndWriteIfNotExists(String entryName, CacheItemSupplier<Object> itemSupplier, long lifetime) throws Exception {
 		Object obj = read(entryName);
 
 		if (obj == null) {
@@ -99,7 +101,7 @@ public class Cache {
 	/**
 	 * Attempts to read an entry from the cache, if not found then a supplier
 	 * will be used to write a new entry. A default lifetime of 1 hour will be
-	 * applied.
+	 * applied. Any exception thrown inside the supplier will be forwarded
 	 * 
 	 * @param entryName
 	 *            - the unique identifier for the entry
@@ -108,8 +110,50 @@ public class Cache {
 	 * 
 	 * @return Object
 	 */
-	public Object readAndWriteIfNotExists(String entryName, Supplier<Object> itemSupplier) {
+	public Object readAndWriteIfNotExists(String entryName, CacheItemSupplier<Object> itemSupplier) throws Exception {
 		return readAndWriteIfNotExists(entryName, itemSupplier, DEFAULT_LIFETIME);
+	}
+
+	/**
+	 * Attempts to read an entry from the cache, if not found then a supplier
+	 * will be used to write a new entry. Any exception thrown inside the supplier will be ignored
+	 * 
+	 * @param entryName
+	 *            - the unique identifier for the entry
+	 * @param itemSupplier
+	 *            - Supplier that provides the new object to write in cache
+	 * @param lifetime
+	 *            - the lifetime applied to the new object in case a new object
+	 *            should be written
+	 * @return Object
+	 * @throws Exception forwards any exception thrown inside the supplier
+	 */
+	public Object readAndWriteIfNotExistsIgnoreExceptions(String entryName, CacheItemSupplier<Object> itemSupplier, long lifetime) {
+		Object obj = read(entryName);
+
+		if (obj == null) {
+			obj = itemSupplier.getIgnoreExceptions();
+			if (obj != null)
+				write(entryName, obj, lifetime);
+		}
+
+		return obj;
+	}
+
+	/**
+	 * Attempts to read an entry from the cache, if not found then a supplier
+	 * will be used to write a new entry. A default lifetime of 1 hour will be
+	 * applied. Any exception thrown inside the supplier will be ignored
+	 * 
+	 * @param entryName
+	 *            - the unique identifier for the entry
+	 * @param itemSupplier
+	 *            - Supplier that provides the new object to write in cache
+	 * 
+	 * @return Object
+	 */
+	public Object readAndWriteIfNotExistsIgnoreExceptions(String entryName, CacheItemSupplier<Object> itemSupplier) {
+		return readAndWriteIfNotExistsIgnoreExceptions(entryName, itemSupplier, DEFAULT_LIFETIME);
 	}
 
 	/**

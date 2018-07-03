@@ -17,6 +17,8 @@ cmd_build_beta: &cmd_build_beta
         -Dultimategdbot.hierarchy.moderator_role_id=$BOT_MODERATOR_ROLE_ID
         -Dultimategdbot.gd_account.id=$BOT_GDACCOUNT_ID
         -Dultimategdbot.gd_account.password=$BOT_GDACCOUNT_PASSWORD
+        -Dultimategdbot.misc.emoji_guild_id.1=$BOT_MISC_EMOJI_GUILD_ID_1
+        -Dultimategdbot.misc.emoji_guild_id.2=$BOT_MISC_EMOJI_GUILD_ID_2
         package
 
 cmd_build_stable: &cmd_build_stable
@@ -34,6 +36,8 @@ cmd_build_stable: &cmd_build_stable
         -Dultimategdbot.hierarchy.moderator_role_id=$BOT_MODERATOR_ROLE_ID
         -Dultimategdbot.gd_account.id=$BOT_GDACCOUNT_ID
         -Dultimategdbot.gd_account.password=$BOT_GDACCOUNT_PASSWORD
+        -Dultimategdbot.misc.emoji_guild_id.1=$BOT_MISC_EMOJI_GUILD_ID_1
+        -Dultimategdbot.misc.emoji_guild_id.2=$BOT_MISC_EMOJI_GUILD_ID_2
         package
 
 version: 2

@@ -17,18 +17,18 @@ import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedE
 import sx.blah.discord.handle.obj.IMessage;
 
 /**
- * A supercommand is a command which only role is to provide nested commands,
- * accessible either via an interactive menu or directly via args.
+ * An interactive menu is a command which only role is to provide nested commands,
+ * accessible via an interactive menu or directly via args.
  * 
  * @author Alex1304
  *
  */
-public abstract class SuperCommand implements Command {
+public abstract class InteractiveMenu implements Command {
 
 	private Map<String, Command> subCommandMap;
 	private String menuContent;
 
-	public SuperCommand() {
+	public InteractiveMenu() {
 		this.subCommandMap = new ConcurrentHashMap<>();
 		this.menuContent = "";
 	}
@@ -42,7 +42,7 @@ public abstract class SuperCommand implements Command {
 	 *            - the Discord event info provided by the parent core command
 	 * @param args
 	 *            - arguments to give to the subcommand
-	 * @return false if the command could not be found, true otherwise
+	 * @return false if the command could not be found or failed to execute, true otherwise
 	 */
 	public boolean triggerSubCommand(String cmdName, MessageReceivedEvent event, List<String> args) {
 		if (subCommandMap.containsKey(cmdName)) {
@@ -58,8 +58,10 @@ public abstract class SuperCommand implements Command {
 				this.buildInvalidSyntaxMessage(event.getMessage().getContent()));
 		
 		if (!args.isEmpty()) { // First tries to guess subcommand in args
-			if (!triggerSubCommand(args.get(0), event, args.subList(1, args.size())))
+			if (!subCommandMap.containsKey(args.get(0)))
 				throw invalidArgsException;
+			
+			triggerSubCommand(args.get(0), event, args.subList(1, args.size()));
 			return;
 		}
 
