@@ -2,9 +2,11 @@ package com.github.alex1304.ultimategdbot.core;
 
 import java.io.PrintStream;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
 import com.github.alex1304.jdash.api.GDHttpClient;
 import com.github.alex1304.ultimategdbot.cache.Cache;
@@ -17,6 +19,7 @@ import com.github.alex1304.ultimategdbot.utils.SnowflakeType;
 import sx.blah.discord.api.ClientBuilder;
 import sx.blah.discord.api.IDiscordClient;
 import sx.blah.discord.handle.obj.IChannel;
+import sx.blah.discord.handle.obj.IEmoji;
 import sx.blah.discord.handle.obj.IGuild;
 import sx.blah.discord.handle.obj.IRole;
 import sx.blah.discord.handle.obj.IUser;
@@ -38,7 +41,8 @@ public class UltimateGDBot {
 	private Map<String, Module> modules;
 	private Map<String, Boolean> startedModules;
 	private GDHttpClient gdClient;
-
+	private List<IGuild> emojiGuilds;
+	
 	/**
 	 * Load properties and builds Discord client
 	 * 
@@ -64,6 +68,18 @@ public class UltimateGDBot {
 		this.gdClient = new GDHttpClient(
 				Long.parseLong(props.getProperty("ultimategdbot.gd_account.id")),
 				props.getProperty("ultimategdbot.gd_account.password"));
+		this.emojiGuilds = null;
+	}
+	
+	public static void loadEmojiGuilds() {
+		if (instance().emojiGuilds != null)
+			return;
+		
+		instance().emojiGuilds = instance().props.keySet().stream()
+				.map(x -> x.toString())
+				.filter(x -> x.matches("ultimategdbot\\.misc\\.emoji_guild_id\\.[0-9A-Za-z]+"))
+				.map(x -> client().getGuildByID(Long.parseLong(property(x))))
+				.collect(Collectors.toList());
 	}
 	
 	/**
@@ -207,6 +223,42 @@ public class UltimateGDBot {
 	 */
 	public static Map<String, Boolean> getStartedModules() {
 		return new HashMap<>(instance().startedModules);
+	}
+	
+	/**
+	 * Tests if the module with the given name is available
+	 * 
+	 * @param key
+	 *            - the module name
+	 * @return boolean
+	 */
+	public static boolean isModuleAvailable(String key) {
+		try {
+			return getModule(key) != null;
+		} catch (ModuleUnavailableException e) {
+			return false;
+		}
+	}
+	
+	/**
+	 * Gets an emoji by its name from the emoji server
+	 * 
+	 * @param name
+	 * @return IEmoji
+	 */
+	public static IEmoji emoji(String name) {
+		if (instance().emojiGuilds == null)
+			return null;
+		
+		IEmoji emoji = null;
+		
+		for (IGuild g : instance().emojiGuilds) {
+			emoji = g.getEmojiByName(name);
+			if (emoji != null)
+				return emoji;
+		}
+		
+		return null;
 	}
 
 }

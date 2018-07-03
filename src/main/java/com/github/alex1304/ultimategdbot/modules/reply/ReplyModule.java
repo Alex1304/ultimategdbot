@@ -6,7 +6,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import com.github.alex1304.ultimategdbot.modules.Module;
 import com.github.alex1304.ultimategdbot.utils.Procedure;
 
-import sx.blah.discord.api.events.EventSubscriber;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
 import sx.blah.discord.handle.obj.IChannel;
 import sx.blah.discord.handle.obj.IUser;
@@ -20,25 +19,22 @@ import sx.blah.discord.handle.obj.IUser;
 public class ReplyModule implements Module {
 	
 	private Map<String, Reply> openedReplies;
-	private boolean isEnabled;
 	
-	public ReplyModule() {
+	@Override
+	public void start() {
 		this.openedReplies = new ConcurrentHashMap<>();
 	}
 
 	@Override
-	public void start() {
-		isEnabled = true;
-	}
-
-	@Override
 	public void stop() {
-		isEnabled = false;
+		for (Reply r : openedReplies.values())
+			r.cancel();
+		
+		openedReplies.clear();
+		this.openedReplies = null;
 	}
 	
 	public void open(Reply reply, boolean retryOnFailure, boolean deleteInitialMessageAfterReply) {
-		if (!isEnabled)
-			return;
 		
 		String id = toReplyID(reply);
 				
@@ -46,10 +42,6 @@ public class ReplyModule implements Module {
 		
 		if (deleteInitialMessageAfterReply)
 			closeReply = closeReply.andThen(() -> reply.deleteInitialMessage());
-		
-		Reply existingReply = openedReplies.get(id);
-		if (existingReply != null)
-			existingReply.cancel();
 		
 		openedReplies.put(id, reply);
 		
@@ -66,6 +58,17 @@ public class ReplyModule implements Module {
 		reply.startTimeout();
 	}
 	
+	/**
+	 * Gets the opened reply for this channel and user. Returns null if no reply is open
+	 * 
+	 * @param channel
+	 * @param user
+	 * @return Reply
+	 */
+	public Reply getReply(IChannel channel, IUser user) {
+		return openedReplies.get(toReplyID(channel, user));
+	}
+	
 	private static String toReplyID(Reply reply) {
 		return reply.getInitialMessage().getChannel().getStringID() + reply.getUser().getStringID();
 	}
@@ -74,9 +77,8 @@ public class ReplyModule implements Module {
 		return channel.getStringID() + user.getStringID();
 	}
 	
-	@EventSubscriber
 	public void onMessageReceived(MessageReceivedEvent event) {
-		if (!isEnabled)
+		if (openedReplies == null)
 			return;
 		
 		String id = toReplyID(event.getChannel(), event.getAuthor());

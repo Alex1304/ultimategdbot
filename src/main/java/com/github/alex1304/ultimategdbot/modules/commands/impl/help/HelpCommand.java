@@ -1,6 +1,6 @@
 package com.github.alex1304.ultimategdbot.modules.commands.impl.help;
 
-import com.github.alex1304.ultimategdbot.modules.commands.SuperCommand;
+import com.github.alex1304.ultimategdbot.modules.commands.InteractiveMenu;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.help.list.HelpListCommand;
 
 /**
@@ -9,7 +9,7 @@ import com.github.alex1304.ultimategdbot.modules.commands.impl.help.list.HelpLis
  *
  * @author Alex1304
  */
-public class HelpCommand extends SuperCommand {
+public class HelpCommand extends InteractiveMenu {
 	
 	public HelpCommand() {
 		this.addSubCommand("list", new HelpListCommand());

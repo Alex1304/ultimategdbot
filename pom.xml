@@ -56,6 +56,8 @@
 		<ultimategdbot.prefix.full></ultimategdbot.prefix.full>
 		<ultimategdbot.prefix.canonical></ultimategdbot.prefix.canonical>
 		<ultimategdbot.release.channel></ultimategdbot.release.channel>
+		<ultimategdbot.misc.emoji_guild_id.1></ultimategdbot.misc.emoji_guild_id.1>
+		<ultimategdbot.misc.emoji_guild_id.2></ultimategdbot.misc.emoji_guild_id.2>
 	</properties>
 
 
