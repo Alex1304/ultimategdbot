@@ -15,6 +15,7 @@ import com.github.alex1304.ultimategdbot.utils.BotUtils;
 
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
 import sx.blah.discord.handle.obj.IMessage;
+import sx.blah.discord.util.EmbedBuilder;
 
 /**
  * An interactive menu is a command which only role is to provide nested commands,
@@ -26,10 +27,12 @@ import sx.blah.discord.handle.obj.IMessage;
 public abstract class InteractiveMenu implements Command {
 
 	private Map<String, Command> subCommandMap;
+	private String menuEmbedContent;
 	private String menuContent;
 
 	public InteractiveMenu() {
 		this.subCommandMap = new ConcurrentHashMap<>();
+		this.menuEmbedContent = "";
 		this.menuContent = "";
 	}
 
@@ -72,13 +75,15 @@ public abstract class InteractiveMenu implements Command {
 			
 			StringBuffer menu = new StringBuffer();
 			
-			menu.append(menuContent);
+			menu.append(menuEmbedContent);
 			menu.append('\n');
 			
 			menu.append(String.format("**This menu will close after %s of inactivity, or type `cancel`**",
 					BotUtils.formatTimeMillis(Reply.DEFAULT_TIMEOUT_MILLIS)));
 			
-			IMessage menuMsg = BotUtils.sendMessage(event.getChannel(), menu.toString());
+			EmbedBuilder eb = new EmbedBuilder();
+			eb.appendDescription(menu.toString());
+			IMessage menuMsg = BotUtils.sendMessage(event.getChannel(), menuContent, eb.build());
 			
 			Reply r = new Reply(menuMsg, event.getAuthor(), message -> {
 				List<String> newArgs = Arrays.asList(message.getContent().split(" "));
@@ -113,6 +118,24 @@ public abstract class InteractiveMenu implements Command {
 		}
 		
 		return sb.toString();
+	}
+
+	/**
+	 * Gets the menuEmbedContent
+	 *
+	 * @return String
+	 */
+	public String getMenuEmbedContent() {
+		return menuEmbedContent;
+	}
+
+	/**
+	 * Sets the menuEmbedContent
+	 *
+	 * @param menuContent - String
+	 */
+	public void setMenuEmbedContent(String menuEmbedContent) {
+		this.menuEmbedContent = menuEmbedContent;
 	}
 
 	/**

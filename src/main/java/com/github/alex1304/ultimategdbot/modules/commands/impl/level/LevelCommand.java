@@ -62,6 +62,9 @@ public class LevelCommand implements Command {
 						return UltimateGDBot.gdClient().fetch(new GDLevelSearchHttpRequest(keywords, page));
 					});
 			
+			if (results.isEmpty() && page == 0)
+				throw new CommandFailedException("No results found.");
+			
 			if (results.size() == 1) {
 				this.openLevel(results.get(0), event, false, rollBackResults);
 				return;
@@ -73,8 +76,8 @@ public class LevelCommand implements Command {
 				return;
 			}
 			
-			NavigationMenu nm = new NavigationMenu(buildResultOutput(results, page)
-					+ "\nTo view full info on a level, type `select` followed by the search result number, ex. `select 2`");
+			NavigationMenu nm = new NavigationMenu(buildResultOutput(results, page),
+					"To view full info on a level, type `select` followed by the search result number, ex. `select 2`\n");
 			
 			nm.setOnNext((event0, args0) -> {
 				CommandsModule.executeCommand(new LevelCommand(page + 1), event, args);
@@ -126,10 +129,12 @@ public class LevelCommand implements Command {
 			});
 			
 			CommandsModule.executeCommand(nm, event, new ArrayList<>());
-		} catch(GDAPIException e) {
+		} catch (GDAPIException e) {
+			UltimateGDBot.logException(e);
 			throw new GDServersUnavailableException();
 		} catch (Exception e) {
-			throw new RuntimeException();
+			UltimateGDBot.logException(e);
+			throw new RuntimeException(e.getMessage());
 		} finally {
 			BotUtils.typing(event.getChannel(), false);
 		}
@@ -143,16 +148,21 @@ public class LevelCommand implements Command {
 		
 		int i = 1;
 		for (GDLevelPreview lp : results) {
-			output.append(String.format("`%d` - __**%s**__ by **%s**\n"
-					+ "      ID: %d\n"
+			String coins = GDUtils.coinsToEmoji(lp.getCoinCount(), lp.hasCoinsVerified(), true);
+			output.append(String.format("`%02d` - %s%s | __**%s**__ by **%s** (%d)\n"
 					+ "      Song: %s\n",
 					i,
+					GDUtils.difficultyToEmoji(lp),
+					coins.equals("None") ? "" : " " + coins,
 					lp.getName(),
 					lp.getCreatorName(),
 					lp.getId(),
-					lp.getSongTitle()));
+					GDUtils.formatSongPrimaryMetadata(lp.getSong())));
 			i++;
 		}
+		
+		if (results.isEmpty())
+			output.append("No results found.");
 		
 		return output.toString();
 	}
@@ -187,10 +197,12 @@ public class LevelCommand implements Command {
 					} catch (ModuleUnavailableException e) {
 					}
 				}
-			} catch(GDAPIException e) {
+			} catch (GDAPIException e) {
+				UltimateGDBot.logException(e);
 				throw new GDServersUnavailableException();
 			} catch (Exception e) {
-				throw new RuntimeException();
+				UltimateGDBot.logException(e);
+				throw new RuntimeException(e.getMessage());
 			} finally {
 				BotUtils.typing(event0.getChannel(), false);
 			}

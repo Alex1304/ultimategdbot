@@ -18,7 +18,7 @@ import com.github.alex1304.ultimategdbot.utils.BotUtils;
 public class ModulesCommand extends InteractiveMenu {
 
 	public ModulesCommand() {
-		this.setMenuContent("To view the full list of modules and their status, type `list`\n"
+		this.setMenuEmbedContent("To view the full list of modules and their status, type `list`\n"
 				+ "To start a module, type `start` followed by the module name, ex. `start commands`\n"
 				+ "To stop a module, type `stop` followed by the module name, ex. `stop commands`\n"
 				+ "To restart a module, type `restart` followed by the module name, ex. `restart commands`");

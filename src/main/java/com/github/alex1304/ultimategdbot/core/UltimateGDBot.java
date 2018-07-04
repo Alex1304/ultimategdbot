@@ -1,6 +1,5 @@
 package com.github.alex1304.ultimategdbot.core;
 
-import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -145,11 +144,7 @@ public class UltimateGDBot {
 		String s = "[" + tag + "] " + text;
 		
 		log(s);
-		
-		@SuppressWarnings("resource")
-		PrintStream logstream = tag.equalsIgnoreCase("error") ? System.err : System.out;
-		
-		logstream.println(s);
+		System.out.println(s);
 	}
 	
 	public static void logInfo(String text) {
@@ -166,6 +161,11 @@ public class UltimateGDBot {
 	
 	public static void logError(String text) {
 		log("ERROR", text);
+	}
+	
+	public static void logException(Exception e) {
+		log("ERROR", "Exception thrown: `" + e.getClass().getName() + ": " + e.getMessage() + "`");
+		e.printStackTrace();
 	}
 	
 	public static void addModule(String key, Module module) {
