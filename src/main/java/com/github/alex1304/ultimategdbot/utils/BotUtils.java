@@ -118,7 +118,7 @@ public class BotUtils {
 	 * @return IMessage
 	 */
 	public static IMessage sendMessage(IChannel channel, String message, EmbedObject embed) {
-		return RequestBuffer.request(() -> channel.sendMessage(message, embed)).get();
+		return RequestBuffer.request(() -> channel.sendMessage(truncate(message, 2000).trim(), embed)).get();
 	}
 
 	/**
@@ -131,7 +131,7 @@ public class BotUtils {
 	 * @return IMessage
 	 */
 	public static IMessage sendMessage(IChannel channel, String message) {
-		return RequestBuffer.request(() -> channel.sendMessage(message)).get();
+		return RequestBuffer.request(() -> channel.sendMessage(truncate(message, 2000).trim())).get();
 	}
 
 	/**

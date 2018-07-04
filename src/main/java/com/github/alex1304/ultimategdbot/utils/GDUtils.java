@@ -5,7 +5,7 @@ import java.util.Map;
 
 import com.github.alex1304.jdash.component.GDLevel;
 import com.github.alex1304.jdash.component.GDLevelPreview;
-import com.github.alex1304.jdash.component.property.GDLevelDifficulty;
+import com.github.alex1304.jdash.component.GDSong;
 
 import sx.blah.discord.api.internal.json.objects.EmbedObject;
 import sx.blah.discord.util.EmbedBuilder;
@@ -18,6 +18,7 @@ import sx.blah.discord.util.EmbedBuilder;
 public class GDUtils {
 
 	public static Map<String, String> difficultyIconByName = new HashMap<>();
+	public static Map<Integer, String> formatGameVersion = new HashMap<>();
 
 	static {
 		difficultyIconByName.put("6-harder-featured", "https://i.imgur.com/b7J4AXi.png");
@@ -101,6 +102,10 @@ public class GDUtils {
 		difficultyIconByName.put("0-demon-easy", "https://i.imgur.com/45GaxRN.png");
 		difficultyIconByName.put("10-demon-extreme-epic", "https://i.imgur.com/gFndlkZ.png");
 		difficultyIconByName.put("10-demon-extreme-featured", "https://i.imgur.com/xat5en2.png");
+		
+		formatGameVersion.put(7, "1.6 *");
+		formatGameVersion.put(10, "1.7");
+		formatGameVersion.put(11, "1.8");
 	}
 
 	/**
@@ -123,36 +128,76 @@ public class GDUtils {
 
 		eb.appendField(Emojis.PLAY + "  __" + lvl.getName() + "__ by " + lp.getCreatorName() + "",
 				"**Description:** " + BotUtils.escapeMarkdown(lvl.getDescription()), true);
-		eb.appendField(":musical_note:  Song: " + lp.getSongTitle() + " (" + lvl.getSongID() + ")",
+		eb.appendField("Coins: " + coinsToEmoji(lvl.getCoinCount(), lvl.hasCoinsVerified(), false),
 				Emojis.DOWNLOADS + " " + lvl.getDownloads() + "\t\t"
 						+ (lvl.getLikes() < 0 ? Emojis.DISLIKE + " " : Emojis.LIKE + " ") + lvl.getLikes() + "\t\t"
 						+ Emojis.LENGTH + " " + lvl.getLength().toString().toUpperCase(),
 				false);
 		
-		eb.appendField("User coins: ", coinsToEmoji(lvl.getCoinCount(), lvl.hasCoinsVerified()), true);
-		eb.appendField("Level version: ", "" + lvl.getLevelVersion(), true);
-		eb.appendField("Made in Geometry Dash version: ", "" + formatGameVersion(lvl.getGameVersion()), true);
-		eb.appendField("Uploaded: ", lvl.getUploadTimestamp() + " ago", true);
-		eb.appendField("Last Updated: ", lvl.getLastUpdatedTimestamp() + " ago", true);
-
-		if (lvl.getFeaturedScore() > 0)
-			eb.appendField("Featured", "Score: " + lvl.getFeaturedScore(), false);
-
-		eb.withFooterText("Level ID: " + lvl.getId());
+		String pass = "";
+		if (lvl.getPass() == -2)
+			pass = "Yes, no passcode required";
+		else if (lvl.getPass() == -1)
+			pass = "No";
+		else {
+			StringBuffer passStr = new StringBuffer(String.valueOf(lvl.getPass()));
+			passStr.deleteCharAt(0);
+			pass = "Yes, " + Emojis.LOCK + " passcode: " + String.format("%06d", Integer.parseInt(passStr.toString()));
+		}
+		
+		String objCount = "**Object count:** ";
+		if (lvl.getObjectCount() > 0 || lvl.getLevelVersion() >= 21) {
+			objCount += lvl.getObjectCount();
+			if (lvl.getObjectCount() > 40000)
+				objCount += " " + Emojis.OBJECT_OVERFLOW + " **This level may lag on low end devices**";
+		} else
+			objCount += "_Info unavailable for levels playable in GD 2.0 or older_";
+		objCount += "\n";
+		
+		eb.appendField(":musical_note:   " + formatSongPrimaryMetadata(lp.getSong()), 
+				formatSongSecondaryMetadata(lp.getSong()) + "\n\n"
+				+ "**Level ID:** " + lvl.getId() + "\n"
+				+ "**Level version:** " + lvl.getLevelVersion() + "\n"
+				+ "**Minimum GD version required to play this level:** " + formatGameVersion(lvl.getGameVersion()) + "\n"
+				+ "**Uploaded:** " + lvl.getUploadTimestamp() + " ago\n"
+				+ "**Last Updated:** " + lvl.getLastUpdatedTimestamp() + " ago\n"
+				+ "**Copyable:** " + pass + "\n"
+				+ objCount
+				+ (lvl.getOriginalLevelID() > 0 ? Emojis.COPY + " This level is a copy of " + lvl.getOriginalLevelID() + "\n" : "") + "\n"
+				+ (lvl.getFeaturedScore() > 0 ? Emojis.ICON_NA_FEATURED + " This level has been placed in the Featured section with a score of **"
+						+ lvl.getFeaturedScore() + "** (the higher this score is, the higher it's placed in the Featured section)\n" : "") + "\n"
+				+ (lvl.getGameVersion() == 7 ? "* Might also work on even older versions as there is no data to differenciate a level made in 1.0 from a level made in 1.6\n" : ""), false);
 
 		return eb.build();
 	}
 	
-	private static String coinsToEmoji(int n, boolean verified) {
+	/**
+	 * Builds a string of emojis according to the coin count and their verified status
+	 * 
+	 * @param n - the coin count
+	 * @param verified - verified status of the coins
+	 * @param shorten - short or long version of the string
+	 * @return
+	 */
+	public static String coinsToEmoji(int n, boolean verified, boolean shorten) {
 		String emoji = "" + (verified ? Emojis.USER_COIN : Emojis.USER_COIN_UNVERIFIED);
 		StringBuffer output = new StringBuffer();
 		
-		if (n <= 0)
-			return "None";
-		
-		for (int i = 1 ; i <= n && i <= 3 ; i++) {
+		if (shorten) {
+			if (n <= 0)
+				return "";
+			
 			output.append(emoji);
-			output.append(" ");
+			output.append(" x");
+			output.append(n);
+		} else {
+			if (n <= 0)
+				return "None";
+			
+			for (int i = 1 ; i <= n && i <= 3 ; i++) {
+				output.append(emoji);
+				output.append(" ");
+			}
 		}
 		
 		return output.toString();
@@ -162,9 +207,12 @@ public class GDUtils {
 		String difficulty = "";
 
 		difficulty += lvl.getStars() + "-";
-		difficulty += lvl.getDifficulty().toString().toLowerCase();
-		if (lvl.getDifficulty().equals(GDLevelDifficulty.DEMON))
-			difficulty += "-" + lvl.getDemonDifficulty().toString().toLowerCase();
+		if (lvl.isDemon())
+			difficulty += "demon-" + lvl.getDemonDifficulty().toString().toLowerCase();
+		else if (lvl.isAuto())
+			difficulty += "auto";
+		else
+			difficulty += lvl.getDifficulty().toString().toLowerCase();
 		if (lvl.isEpic())
 			difficulty += "-epic";
 		else if (lvl.getFeaturedScore() > 0)
@@ -173,12 +221,72 @@ public class GDUtils {
 		return difficultyIconByName.get(difficulty);
 	}
 	
+	/**
+	 * Adds a dot before the last difit of the version number. For example, 20
+	 * will become 2.0, etc.
+	 * 
+	 * @param v
+	 *            - the int representing the version
+	 * @return String - the formatted version
+	 */
 	public static String formatGameVersion(int v) {
-		String vStr = "" + v;
+		if (formatGameVersion.containsKey(v))
+			return formatGameVersion.get(v);
+		
+		String vStr = String.format("%02d", v);
 		if (vStr.length() <= 1)
 			return vStr;
 		
-		return vStr.charAt(0) + "." + vStr.substring(1, vStr.length());
+		return vStr.substring(0, vStr.length() - 1) + "." + vStr.charAt(vStr.length() - 1);
+	}
+	
+	/**
+	 * Formats song primary metadata (title + author) to a human-readable format
+	 * 
+	 * @param song - the song
+	 * @return String
+	 */
+	public static String formatSongPrimaryMetadata(GDSong song) {
+		return "__" + song.getSongTitle() + "__ by " + song.getSongAuthorName();
+	}
+
+	/**
+	 * Formats song secondary metadata (ID + size + download link) to a human-readable format
+	 * 
+	 * @param song - the song
+	 * @return String
+	 */
+	public static String formatSongSecondaryMetadata(GDSong song) {
+		return song.isCustom() ? ("SongID: " + song.getSongID() + " - Size: " + song.getSongSize() + "MB - "
+				+ Emojis.DOWNLOAD_SONG + " [Download](" + song.getDownloadURL() + ")") : "Geometry Dash native audio track";
+	}
+
+	/**
+	 * Returns the appropriate emoji for the difficulty of the given level
+	 * 
+	 * @param lp - the level
+	 * @return String
+	 */
+	public static String difficultyToEmoji(GDLevelPreview lvl) {
+		String difficulty = "icon_";
+
+		if (lvl.isDemon())
+			difficulty += "demon_" + lvl.getDemonDifficulty().toString();
+		else if (lvl.isAuto())
+			difficulty += "auto";
+		else
+			difficulty += lvl.getDifficulty().toString();
+		if (lvl.isEpic())
+			difficulty += "_epic";
+		else if (lvl.getFeaturedScore() > 0)
+			difficulty += "_featured";
+		
+		String output = Emojis.valueOf(difficulty.toUpperCase()).toString();
+		
+		if (lvl.getStars() > 0)
+			output += Emojis.STAR + " x" + lvl.getStars();
+		
+		return output;
 	}
 
 }

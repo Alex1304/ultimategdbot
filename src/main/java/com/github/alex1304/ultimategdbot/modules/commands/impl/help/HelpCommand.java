@@ -14,7 +14,7 @@ public class HelpCommand extends InteractiveMenu {
 	public HelpCommand() {
 		this.addSubCommand("list", new HelpListCommand());
 		
-		this.setMenuContent("To see the list of available commands, type `list`");
+		this.setMenuEmbedContent("To see the list of available commands, type `list`");
 	}
 
 }

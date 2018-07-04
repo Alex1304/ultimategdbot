@@ -18,7 +18,7 @@ import sx.blah.discord.util.DiscordException;
  */
 public class Reply {
 
-	public static final long DEFAULT_TIMEOUT_MILLIS = 60000;
+	public static final long DEFAULT_TIMEOUT_MILLIS = 600000;
 	
 	private IMessage initialMessage;
 	private IUser user;

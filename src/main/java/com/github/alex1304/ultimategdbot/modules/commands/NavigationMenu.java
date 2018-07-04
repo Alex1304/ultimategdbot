@@ -10,11 +10,12 @@ import com.github.alex1304.ultimategdbot.exceptions.CommandFailedException;
  */
 public class NavigationMenu extends InteractiveMenu {
 
-	public NavigationMenu(String content) {
-		this.setMenuContent(content
-				+ "\nTo go to next page, type `next`"
-				+ "\nTo go to previous page, type `prev`"
-				+ "\nTo go to a specific page, type `page <number>`, ex. `page 3` or `page 10`");
+	public NavigationMenu(String content, String embedContent) {
+		this.setMenuContent(content);
+		this.setMenuEmbedContent(embedContent
+				+ "To go to next page, type `next`\n"
+				+ "To go to previous page, type `prev`\n"
+				+ "To go to a specific page, type `page <number>`, ex. `page 3` or `page 10`");
 		
 		this.addSubCommand("next", (event, args) -> {
 			throw new CommandFailedException("No action is bound to this instruction");

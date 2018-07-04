@@ -13,6 +13,9 @@ public enum Emojis {
 	ICON_NA,
 	ICON_NA_FEATURED,
 	ICON_NA_EPIC,
+	ICON_AUTO,
+	ICON_AUTO_FEATURED,
+	ICON_AUTO_EPIC,
 	ICON_EASY,
 	ICON_EASY_FEATURED,
 	ICON_EASY_EPIC,
@@ -64,7 +67,12 @@ public enum Emojis {
 	SUCCESS,
 	FAILED,
 	ELDER_MOD,
-	MOD;
+	MOD,
+	OBJECT_OVERFLOW,
+	CROSS,
+	COPY,
+	LOCK,
+	DOWNLOAD_SONG;
 	
 	public IEmoji get() {
 		return UltimateGDBot.emoji(name().toLowerCase());
