@@ -132,6 +132,8 @@ public class LevelCommand implements Command {
 		} catch (GDAPIException e) {
 			UltimateGDBot.logException(e);
 			throw new GDServersUnavailableException();
+		} catch (CommandFailedException e) {
+			throw e;
 		} catch (Exception e) {
 			UltimateGDBot.logException(e);
 			throw new RuntimeException(e.getMessage());
