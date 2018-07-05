@@ -48,8 +48,8 @@ public abstract class InteractiveMenu implements Command {
 	 * @return false if the command could not be found or failed to execute, true otherwise
 	 */
 	public boolean triggerSubCommand(String cmdName, MessageReceivedEvent event, List<String> args) {
-		if (subCommandMap.containsKey(cmdName)) {
-			CommandsModule.executeCommand(subCommandMap.get(cmdName), event, args);
+		if (subCommandMap.containsKey(cmdName.toLowerCase())) {
+			CommandsModule.executeCommand(subCommandMap.get(cmdName.toLowerCase()), event, args);
 			return true;
 		} else
 			return false;
@@ -61,7 +61,7 @@ public abstract class InteractiveMenu implements Command {
 				this.buildInvalidSyntaxMessage(event.getMessage().getContent()));
 		
 		if (!args.isEmpty()) { // First tries to guess subcommand in args
-			if (!subCommandMap.containsKey(args.get(0)))
+			if (!subCommandMap.containsKey(args.get(0).toLowerCase()))
 				throw invalidArgsException;
 			
 			triggerSubCommand(args.get(0), event, args.subList(1, args.size()));
