@@ -135,8 +135,7 @@ public class LevelCommand implements Command {
 		} catch (CommandFailedException e) {
 			throw e;
 		} catch (Exception e) {
-			UltimateGDBot.logException(e);
-			throw new RuntimeException(e.getMessage());
+			throw new RuntimeException(e.getClass().getName() + ": " + e.getMessage());
 		} finally {
 			BotUtils.typing(event.getChannel(), false);
 		}

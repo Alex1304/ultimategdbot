@@ -20,17 +20,6 @@ public class GuildSettings {
 	public GuildSettings() {
 	}
 
-	/**
-	 * @param guildID
-	 * @param roleAwardedLevels
-	 * @param channelAwardedLevels
-	 * @param roleGDModerators
-	 * @param channelGDModerators
-	 * @param channelTimelyLevels
-	 * @param roleTimelyLevels
-	 * @param channelBotAnnouncements
-	 * @param tagEveryoneOnBotAnnouncement
-	 */
 	public GuildSettings(int guildID, long roleAwardedLevels, long channelAwardedLevels, long roleGDModerators,
 			long channelGDModerators, long channelTimelyLevels, long roleTimelyLevels, long channelBotAnnouncements,
 			boolean tagEveryoneOnBotAnnouncement) {

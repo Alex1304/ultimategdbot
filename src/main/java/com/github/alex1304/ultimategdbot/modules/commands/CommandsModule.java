@@ -13,6 +13,7 @@ import com.github.alex1304.ultimategdbot.modules.Module;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.help.HelpCommand;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.level.LevelCommand;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.modules.ModulesCommand;
+import com.github.alex1304.ultimategdbot.modules.commands.impl.profile.ProfileCommand;
 import com.github.alex1304.ultimategdbot.modules.reply.Reply;
 import com.github.alex1304.ultimategdbot.modules.reply.ReplyModule;
 import com.github.alex1304.ultimategdbot.utils.BotRoles;
@@ -67,6 +68,7 @@ public class CommandsModule implements Module {
 		registerCommand("help", new HelpCommand());
 		registerCommand("modules", new ModulesCommand());
 		registerCommand("level", new LevelCommand());
+		registerCommand("profile", new ProfileCommand());
 	}
 	
 	/**
@@ -92,18 +94,7 @@ public class CommandsModule implements Module {
 			} catch (Exception e) {
 				BotUtils.sendMessage(event.getChannel(), "An internal error occured while running the command."
 						+ " Please try again later.");
-				UltimateGDBot.logError(
-						"An internal error occured in the `commands` module\n"
-								+ "Context info:\n"
-								+ "```\n"
-								+ "Guild: " + event.getGuild().getName() + " (" + event.getGuild().getLongID() + ")\n"
-								+ "Channel: #" + event.getChannel().getName() + "\n"
-								+ "Author: " + event.getAuthor().getName() + "#" + event.getAuthor().getDiscriminator()
-										+ "(" + event.getAuthor().getLongID() + ")\n"
-								+ "Full message: " + event.getMessage().getContent() + "\n"
-								+ "```\n"
-								+ "Exception thrown: `" + e.getClass() + ": " + e.getMessage() + "`");
-				e.printStackTrace();
+				UltimateGDBot.logException(e);
 			}
 		}).start();
 	}

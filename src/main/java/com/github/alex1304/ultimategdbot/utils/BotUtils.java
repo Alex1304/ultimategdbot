@@ -375,5 +375,23 @@ public class BotUtils {
 		
 		return result.isEmpty() ? result : result.substring(0, result.length() - 1);
 	}
+	
+	public static long extractIDFromMention(String mention) {
+		IllegalArgumentException iae = new IllegalArgumentException("Not a mention");
+		if (!mention.matches("<@!?[0-9]+>"))
+			throw iae;
+		
+		StringBuffer sb = new StringBuffer(mention);
+		sb.deleteCharAt(sb.length() - 1);
+		sb.delete(0, 2);
+		if (sb.charAt(0) == '!')
+			sb.deleteCharAt(0);
+		
+		try {
+			return Long.parseLong(sb.toString());
+		} catch (NumberFormatException e) {
+			throw iae;
+		}
+	}
 
 }

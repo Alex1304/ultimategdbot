@@ -13,10 +13,6 @@ public class GlobalSettings {
 	public GlobalSettings() {
 	}
 
-	/**
-	 * @param id
-	 * @param channelDebugLogs
-	 */
 	public GlobalSettings(int id, long channelDebugLogs) {
 		this.id = id;
 		this.channelDebugLogs = channelDebugLogs;

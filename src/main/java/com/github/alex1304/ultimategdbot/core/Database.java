@@ -6,6 +6,7 @@ import org.hibernate.cfg.Configuration;
 
 import com.github.alex1304.ultimategdbot.dbentities.GlobalSettings;
 import com.github.alex1304.ultimategdbot.dbentities.GuildSettings;
+import com.github.alex1304.ultimategdbot.dbentities.UserSettings;
 
 /**
  * Methods to manage database interactions
@@ -23,6 +24,7 @@ public class Database {
 		Configuration config = new Configuration();
 		config.addClass(GuildSettings.class);
 		config.addClass(GlobalSettings.class);
+		config.addClass(UserSettings.class);
 		sessionFactory = config.buildSessionFactory();
 	}
 	
