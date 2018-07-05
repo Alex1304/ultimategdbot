@@ -166,8 +166,7 @@ public class GDUtils {
 				+ "**Copyable:** " + pass + "\n"
 				+ objCount
 				+ (lvl.getOriginalLevelID() > 0 ? Emojis.COPY + " This level is a copy of " + lvl.getOriginalLevelID() + "\n" : "")
-				+ "───────────────────\n"
-				+ (lvl.getFeaturedScore() > 0 ? Emojis.ICON_NA_FEATURED + " This level has been placed in the Featured section with a score of **"
+				+ (lvl.getFeaturedScore() > 0 ? "───────────────────\n" + Emojis.ICON_NA_FEATURED + " This level has been placed in the Featured section with a score of **"
 						+ lvl.getFeaturedScore() + "** (the higher this score is, the higher it's placed in the Featured section)\n" : ""), false);
 
 		return eb.build();
