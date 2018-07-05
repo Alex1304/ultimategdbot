@@ -261,7 +261,7 @@ public class GDUtils {
 	public static String formatSongSecondaryMetadata(GDSong song) {
 		return song.isCustom() ? ("SongID: " + song.getSongID() + " - Size: " + song.getSongSize() + "MB\n"
 				+ Emojis.PLAY + " [Play on Newgrounds](https://www.newgrounds.com/audio/listen/" + song.getSongID() + ")\n"
-				+ Emojis.DOWNLOAD_SONG + " [Download](" + song.getDownloadURL() + ")") : "Geometry Dash native audio track";
+				+ Emojis.DOWNLOAD_SONG + " [Download MP3](" + song.getDownloadURL() + ")") : "Geometry Dash native audio track";
 	}
 
 	/**
