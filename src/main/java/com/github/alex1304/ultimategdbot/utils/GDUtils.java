@@ -103,7 +103,6 @@ public class GDUtils {
 		difficultyIconByName.put("10-demon-extreme-epic", "https://i.imgur.com/gFndlkZ.png");
 		difficultyIconByName.put("10-demon-extreme-featured", "https://i.imgur.com/xat5en2.png");
 		
-		formatGameVersion.put(7, "1.6 *");
 		formatGameVersion.put(10, "1.7");
 		formatGameVersion.put(11, "1.8");
 	}
@@ -127,7 +126,7 @@ public class GDUtils {
 		eb.withThumbnail(getDifficultyImageForLevel(lvl));
 
 		eb.appendField(Emojis.PLAY + "  __" + lvl.getName() + "__ by " + lp.getCreatorName() + "",
-				"**Description:** " + BotUtils.escapeMarkdown(lvl.getDescription()), true);
+				"**Description:** " + (lvl.getDescription().isEmpty() ? "*(No description provided)*" : BotUtils.escapeMarkdown(lvl.getDescription())), true);
 		eb.appendField("Coins: " + coinsToEmoji(lvl.getCoinCount(), lvl.hasCoinsVerified(), false),
 				Emojis.DOWNLOADS + " " + lvl.getDownloads() + "\t\t"
 						+ (lvl.getLikes() < 0 ? Emojis.DISLIKE + " " : Emojis.LIKE + " ") + lvl.getLikes() + "\t\t"
@@ -147,6 +146,8 @@ public class GDUtils {
 		
 		String objCount = "**Object count:** ";
 		if (lvl.getObjectCount() > 0 || lvl.getLevelVersion() >= 21) {
+			if (lvl.getObjectCount() == 65535)
+				objCount += "More than ";
 			objCount += lvl.getObjectCount();
 			if (lvl.getObjectCount() > 40000)
 				objCount += " " + Emojis.OBJECT_OVERFLOW + " **This level may lag on low end devices**";
@@ -165,8 +166,7 @@ public class GDUtils {
 				+ objCount
 				+ (lvl.getOriginalLevelID() > 0 ? Emojis.COPY + " This level is a copy of " + lvl.getOriginalLevelID() + "\n" : "") + "\n"
 				+ (lvl.getFeaturedScore() > 0 ? Emojis.ICON_NA_FEATURED + " This level has been placed in the Featured section with a score of **"
-						+ lvl.getFeaturedScore() + "** (the higher this score is, the higher it's placed in the Featured section)\n" : "") + "\n"
-				+ (lvl.getGameVersion() == 7 ? "* Might also work on even older versions as there is no data to differenciate a level made in 1.0 from a level made in 1.6\n" : ""), false);
+						+ lvl.getFeaturedScore() + "** (the higher this score is, the higher it's placed in the Featured section)\n" : ""), false);
 
 		return eb.build();
 	}
@@ -230,6 +230,8 @@ public class GDUtils {
 	 * @return String - the formatted version
 	 */
 	public static String formatGameVersion(int v) {
+		if (v < 10)
+			return "<1.6";
 		if (formatGameVersion.containsKey(v))
 			return formatGameVersion.get(v);
 		
@@ -257,7 +259,8 @@ public class GDUtils {
 	 * @return String
 	 */
 	public static String formatSongSecondaryMetadata(GDSong song) {
-		return song.isCustom() ? ("SongID: " + song.getSongID() + " - Size: " + song.getSongSize() + "MB - "
+		return song.isCustom() ? ("SongID: " + song.getSongID() + " - Size: " + song.getSongSize() + "MB\n"
+				+ Emojis.PLAY + " [Play on Newgrounds](https://www.newgrounds.com/audio/listen/" + song.getSongID() + ")\n"
 				+ Emojis.DOWNLOAD_SONG + " [Download](" + song.getDownloadURL() + ")") : "Geometry Dash native audio track";
 	}
 
