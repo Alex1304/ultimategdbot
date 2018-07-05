@@ -1,11 +1,15 @@
 package com.github.alex1304.ultimategdbot.utils;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
 
 import com.github.alex1304.jdash.component.GDLevel;
 import com.github.alex1304.jdash.component.GDLevelPreview;
 import com.github.alex1304.jdash.component.GDSong;
+import com.github.alex1304.jdash.component.GDUser;
+import com.github.alex1304.jdash.component.property.GDUserRole;
 
 import sx.blah.discord.api.internal.json.objects.EmbedObject;
 import sx.blah.discord.util.EmbedBuilder;
@@ -169,6 +173,55 @@ public class GDUtils {
 				+ (lvl.getFeaturedScore() > 0 ? "───────────────────\n" + Emojis.ICON_NA_FEATURED + " This level has been placed in the Featured section with a score of **"
 						+ lvl.getFeaturedScore() + "** (the higher this score is, the higher it's placed in the Featured section)\n" : ""), false);
 
+		return eb.build();
+	}
+	
+	/**
+	 * Builds an embed for the specified Geometry Dash user
+	 * @param authorName - authorName field of the embed
+	 * @param authorIcon - authorIcon field of the embed
+	 * @param user - the user to convert to embed
+	 * @return an EmbedObject representing the embedded user
+	 */
+	public static EmbedObject buildEmbedForGDUser(String authorName, String authorIcon, GDUser user) {
+		EmbedBuilder eb = new EmbedBuilder();
+		
+		eb.withAuthorName(authorName);
+		eb.withAuthorIcon(authorIcon);
+		
+		eb.appendField(":chart_with_upwards_trend:  " + user.getName() + "'s stats", Emojis.STAR + "  " + user.getStars()+ "\t\t"
+			+ Emojis.DIAMOND + "  " + user.getDiamonds() + "\t\t"
+			+ Emojis.USER_COIN + "  " + user.getUserCoins() + "\t\t"
+			+ Emojis.SECRET_COIN + "  " + user.getSecretCoins() + "\t\t"
+			+ Emojis.DEMON + "  " + user.getDemons() + "\t\t"
+			+ Emojis.CREATOR_POINTS + "  " + user.getCreatorPoints() + "\n", false);
+		
+		String mod = "";
+		if (user.getRole() == GDUserRole.MODERATOR)
+			mod = Emojis.MOD + "  **" + user.getRole().toString().replaceAll("_", " ") + "**\n";
+		else if (user.getRole() == GDUserRole.ELDER_MODERATOR)
+			mod = Emojis.ELDER_MOD + "  **" + user.getRole().toString().replaceAll("_", " ") + "**\n";
+		
+		try {
+			eb.appendField("───────────────────", mod
+					+ Emojis.GLOBAL_RANK + "  **Global Rank:** "
+					+ (user.getGlobalRank() == 0 ? "*Unranked*" : user.getGlobalRank()) + "\n"
+					+ Emojis.YOUTUBE + "  **Youtube:** "
+						+ (user.getYoutube().isEmpty() ? "*not provided*" : "[Open link](https://www.youtube.com/channel/"
+						+ URLEncoder.encode(user.getYoutube(), "UTF-8") + ")") + "\n"
+					+ Emojis.TWITCH + "  **Twitch:** "
+						+ (user.getTwitch().isEmpty() ? "*not provided*" : "["  + user.getTwitch()
+						+ "](http://www.twitch.tv/" + URLEncoder.encode(user.getTwitch(), "UTF-8") + ")") + "\n"
+					+ Emojis.TWITTER + "  **Twitter:** "
+						+ (user.getTwitter().isEmpty() ? "*not provided*" : "[@" + user.getTwitter() + "]"
+						+ "(http://www.twitter.com/" + URLEncoder.encode(user.getTwitter(), "UTF-8") + ")"),
+					false);
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		}
+		
+		eb.withFooterText("PlayerID: " + user.getPlayerID() + " | " + "AccountID: " + user.getAccountID());
+		
 		return eb.build();
 	}
 	
