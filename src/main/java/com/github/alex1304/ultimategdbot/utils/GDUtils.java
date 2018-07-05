@@ -130,8 +130,8 @@ public class GDUtils {
 		eb.appendField("Coins: " + coinsToEmoji(lvl.getCoinCount(), lvl.hasCoinsVerified(), false),
 				Emojis.DOWNLOADS + " " + lvl.getDownloads() + "\t\t"
 						+ (lvl.getLikes() < 0 ? Emojis.DISLIKE + " " : Emojis.LIKE + " ") + lvl.getLikes() + "\t\t"
-						+ Emojis.LENGTH + " " + lvl.getLength().toString().toUpperCase(),
-				false);
+						+ Emojis.LENGTH + " " + lvl.getLength().toString().toUpperCase() + "\n"
+				+ "───────────────────\n", false);
 		
 		String pass = "";
 		if (lvl.getPass() == -2)
@@ -156,7 +156,8 @@ public class GDUtils {
 		objCount += "\n";
 		
 		eb.appendField(":musical_note:   " + formatSongPrimaryMetadata(lp.getSong()), 
-				formatSongSecondaryMetadata(lp.getSong()) + "\n\n"
+				formatSongSecondaryMetadata(lp.getSong()) + "\n"
+				+ "───────────────────\n"
 				+ "**Level ID:** " + lvl.getId() + "\n"
 				+ "**Level version:** " + lvl.getLevelVersion() + "\n"
 				+ "**Minimum GD version required to play this level:** " + formatGameVersion(lvl.getGameVersion()) + "\n"
@@ -164,7 +165,8 @@ public class GDUtils {
 				+ "**Last Updated:** " + lvl.getLastUpdatedTimestamp() + " ago\n"
 				+ "**Copyable:** " + pass + "\n"
 				+ objCount
-				+ (lvl.getOriginalLevelID() > 0 ? Emojis.COPY + " This level is a copy of " + lvl.getOriginalLevelID() + "\n" : "") + "\n"
+				+ (lvl.getOriginalLevelID() > 0 ? Emojis.COPY + " This level is a copy of " + lvl.getOriginalLevelID() + "\n" : "")
+				+ "───────────────────\n"
 				+ (lvl.getFeaturedScore() > 0 ? Emojis.ICON_NA_FEATURED + " This level has been placed in the Featured section with a score of **"
 						+ lvl.getFeaturedScore() + "** (the higher this score is, the higher it's placed in the Featured section)\n" : ""), false);
 
