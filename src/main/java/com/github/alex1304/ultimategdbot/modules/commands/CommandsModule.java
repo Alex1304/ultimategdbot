@@ -10,6 +10,7 @@ import com.github.alex1304.ultimategdbot.core.UltimateGDBot;
 import com.github.alex1304.ultimategdbot.exceptions.CommandFailedException;
 import com.github.alex1304.ultimategdbot.exceptions.ModuleUnavailableException;
 import com.github.alex1304.ultimategdbot.modules.Module;
+import com.github.alex1304.ultimategdbot.modules.commands.impl.account.AccountCommand;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.help.HelpCommand;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.level.LevelCommand;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.modules.ModulesCommand;
@@ -69,6 +70,7 @@ public class CommandsModule implements Module {
 		registerCommand("modules", new ModulesCommand());
 		registerCommand("level", new LevelCommand());
 		registerCommand("profile", new ProfileCommand());
+		registerCommand("account", new AccountCommand());
 	}
 	
 	/**

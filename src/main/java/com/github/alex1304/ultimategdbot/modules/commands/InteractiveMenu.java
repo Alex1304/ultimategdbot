@@ -24,7 +24,7 @@ import sx.blah.discord.util.EmbedBuilder;
  * @author Alex1304
  *
  */
-public abstract class InteractiveMenu implements Command {
+public class InteractiveMenu implements Command {
 
 	private Map<String, Command> subCommandMap;
 	private String menuEmbedContent;

@@ -3,7 +3,7 @@
 <hibernate-mapping default-lazy="false">
   <class name="com.github.alex1304.ultimategdbot.dbentities.GuildSettings" table="guild_settings">
     <id name="guildID" type="long" column="guild_id">
-      <generator class="native"/>
+      <generator class="assigned"/>
     </id>
     <property name="roleAwardedLevels" type="long" column="role_awarded_levels" />
     <property name="channelAwardedLevels" type="long" column="channel_awarded_levels" />
