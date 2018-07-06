@@ -12,6 +12,7 @@ import com.github.alex1304.ultimategdbot.exceptions.ModuleUnavailableException;
 import com.github.alex1304.ultimategdbot.modules.Module;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.account.AccountCommand;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.help.HelpCommand;
+import com.github.alex1304.ultimategdbot.modules.commands.impl.leaderboard.LeaderboardMenu;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.level.LevelCommand;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.modules.ModulesCommand;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.profile.ProfileCommand;
@@ -71,6 +72,7 @@ public class CommandsModule implements Module {
 		registerCommand("level", new LevelCommand());
 		registerCommand("profile", new ProfileCommand());
 		registerCommand("account", new AccountCommand());
+		registerCommand("leaderboard", (event, args) -> executeCommand(new LeaderboardMenu(), event, args));
 	}
 	
 	/**

@@ -210,7 +210,7 @@ public class GDUtils {
 		String discord = "";
 		List<IUser> linkedAccounts = getDiscordUsersLinkedToGDAccount(user.getAccountID());
 		if (!linkedAccounts.isEmpty()) {
-			discord += Emojis.DISCORD + " **Discord:** ";
+			discord += Emojis.DISCORD + "  **Discord:** ";
 			for (IUser u : linkedAccounts)
 				discord += BotUtils.formatDiscordUsername(u) + ", ";
 			discord = discord.substring(0, discord.length() - 2);

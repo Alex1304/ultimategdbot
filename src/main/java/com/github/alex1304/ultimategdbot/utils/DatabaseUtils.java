@@ -1,6 +1,7 @@
 package com.github.alex1304.ultimategdbot.utils;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -61,14 +62,14 @@ public class DatabaseUtils {
 	 */
 	public static <T> List<T> query(Class<T> entityClass, String query, Object... params) {
 		Session s = Database.newSession();
-		List<T> list = null;
+		List<T> list = new ArrayList<>();
 		
 		try {
 			Query<T> q = s.createQuery(query, entityClass);
 			for (int i = 0 ; i < params.length ; i++) {
 				q.setParameter(i, params[i]);
 			}
-			list = q.getResultList();
+			list.addAll(q.getResultList());
 		} finally {
 			s.close();
 		}

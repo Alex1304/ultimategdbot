@@ -264,16 +264,21 @@ public class BotUtils {
 	}
 	
 	/**
-	 * Generates a random String made of alphanumeric characters.
-	 * The length of the generated String is specified as an argument.
-	 * @param n - the length of the generated String
+	 * Generates a random String made of alphanumeric characters. The length of
+	 * the generated String is specified as an argument.
+	 * 
+	 * The following characters are excluded to avoid confusion between l and 1,
+	 * O and 0, etc: <code>l, I, 1, 0, O</code>
+	 * 
+	 * @param n
+	 *            - the length of the generated String
 	 * @return the generated random String
 	 */
 	public static String generateAlphanumericToken(int n) {
 		if (n < 1)
 			return null;
 		
-		final String alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+		final String alphabet = "23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 		char[] result = new char[n];
 		
 		for (int i = 0 ; i < result.length ; i++)
