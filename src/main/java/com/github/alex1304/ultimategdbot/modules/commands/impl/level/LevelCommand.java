@@ -76,36 +76,11 @@ public class LevelCommand implements Command {
 				return;
 			}
 			
-			NavigationMenu nm = new NavigationMenu(buildResultOutput(results, page),
-					"To view full info on a level, type `select` followed by the search result number, ex. `select 2`\n");
+			NavigationMenu nm = new NavigationMenu(page, 9999, page -> new LevelCommand(page), event, args);
 			
-			nm.setOnNext((event0, args0) -> {
-				CommandsModule.executeCommand(new LevelCommand(page + 1), event, args);
-			});
-			nm.setOnPrev((event0, args0) -> {
-				CommandsModule.executeCommand(new LevelCommand(page - 1), event, args);
-			});
-			nm.setOnPage((event0, args0) -> {
-				if (args0.isEmpty()) {
-					rollBackResults.run();
-					throw new InvalidCommandArgsException("`page <number>`, ex. `page 3`");
-				}
-				
-				int pageInput = 1;
-				
-				try {
-					pageInput = Integer.parseInt(args0.get(0));
-					if (pageInput < 1) {
-						rollBackResults.run();
-						throw new CommandFailedException("Page number cannot be negative");
-					}
-				} catch (NumberFormatException e) {
-					rollBackResults.run();
-					throw new CommandFailedException("Sorry, `" + args0.get(0) + "` isn't a valid page number");
-				}
-				
-				CommandsModule.executeCommand(new LevelCommand(pageInput - 1), event, args);
-			});
+			nm.setMenuContent(buildResultOutput(results, page));
+			nm.setMenuEmbedContent("To view full info on a level, type `select` followed by the search "
+					+ "result number, ex. `select 2`\n");
 			
 			nm.addSubCommand("select", (event0, args0) -> {
 				if (args0.isEmpty()) {
