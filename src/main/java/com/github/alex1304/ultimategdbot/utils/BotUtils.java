@@ -180,6 +180,30 @@ public class BotUtils {
 		
 		return new String(result);
 	}
+
+	/**
+	 * Escapes characters used in regex syntax using a backslash
+	 * 
+	 * @param text
+	 * @return String
+	 */
+	public static String escapeRegex(String text) {
+		List<Character> resultList = new ArrayList<>();
+		Character[] charsToEscape = { '\\', '+', '*', '-', '[', ']', '.', '^', '$', '(', ')', '{', '}', '|', '?' };
+		List<Character> charsToEscapeList = new ArrayList<>(Arrays.asList(charsToEscape));
+		
+		for (char c : text.toCharArray()) {
+			if (charsToEscapeList.contains(c))
+				resultList.add('\\');
+			resultList.add(c);
+		}
+		
+		char[] result = new char[resultList.size()];
+		for (int i = 0 ; i < result.length ; i++)
+			result[i] = resultList.get(i);
+		
+		return new String(result);
+	}
 	
 	/**
 	 * Gets the channel of a guild by the given String.
@@ -392,6 +416,18 @@ public class BotUtils {
 		} catch (NumberFormatException e) {
 			throw iae;
 		}
+	}
+	
+	public static String commandWithoutArgs(String fullMessage, List<String> args) {
+		StringBuffer sb = new StringBuffer(fullMessage);
+		StringBuffer concatArgs = new StringBuffer(concatCommandArgs(args));
+		
+		sb.reverse();
+		concatArgs.reverse();
+		concatArgs.append(" ");
+		
+		
+		return new StringBuffer(sb.toString().replaceFirst(escapeRegex(concatArgs.toString()), "")).reverse().toString();
 	}
 
 }

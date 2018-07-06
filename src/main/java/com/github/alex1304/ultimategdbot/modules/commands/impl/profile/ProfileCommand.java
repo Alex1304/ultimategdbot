@@ -30,34 +30,42 @@ public class ProfileCommand implements Command {
 
 	@Override
 	public void runCommand(MessageReceivedEvent event, List<String> args) throws CommandFailedException {
-		if (args.isEmpty())
-			throw new InvalidCommandArgsException("`" + event.getMessage().getContent() + " <username or playerID>`, ex. `"
-					+ event.getMessage().getContent() + " ViPriN` or `" + event.getMessage().getContent() + " 16`");
-		
 		try {
 			String keywords = BotUtils.concatCommandArgs(args);
 			long accountID = -1;
 			
-			try {
-				long userID = BotUtils.extractIDFromMention(keywords);
-				UserSettings us = DatabaseUtils.findByID(UserSettings.class, userID);
+			if (args.isEmpty()) {
+				UserSettings us = DatabaseUtils.findByID(UserSettings.class, event.getAuthor().getLongID());
 				
 				if (us == null || !us.getLinkActivated())
-					throw new NoSuchElementException();
+					throw new InvalidCommandArgsException("If you want to show someone else's profile, use `" + event.getMessage().getContent() + " <username or playerID>`, ex. `"
+							+ event.getMessage().getContent() + " ViPriN` or `" + event.getMessage().getContent() + " 16`\n"
+							+ "If you want to display your own profile, you may want to link your Geomety Dash account first. To do so, use `"
+							+ UltimateGDBot.property("ultimategdbot.prefix.canonical") + "account` and follow instructions. You will then be able to "
+							+ "use the profile command without specifying a user.");
 				
 				accountID = us.getGdUserID();
-			} catch (IllegalArgumentException | NoSuchElementException e) {
-				String cacheID = "gd.usersearch." + keywords;
-				GDComponentList<GDUserPreview> results = (GDComponentList<GDUserPreview>) UltimateGDBot.cache()
-						.readAndWriteIfNotExists(cacheID, () -> {
-							BotUtils.typing(event.getChannel(), true);
-							return UltimateGDBot.gdClient().fetch(new GDUserSearchHttpRequest(keywords, 0));
-						});
-				
-				if (results.isEmpty())
-					throw new CommandFailedException("User not found.");
-				
-				accountID = results.get(0).getAccountID();
+			} else {
+				try {
+					long userID = BotUtils.extractIDFromMention(keywords);
+					UserSettings us = DatabaseUtils.findByID(UserSettings.class, userID);
+					
+					if (us == null || !us.getLinkActivated())
+						throw new NoSuchElementException();
+					
+					accountID = us.getGdUserID();
+				} catch (IllegalArgumentException | NoSuchElementException e) {
+					GDComponentList<GDUserPreview> results = (GDComponentList<GDUserPreview>) UltimateGDBot.cache()
+							.readAndWriteIfNotExists("gd.usersearch." + keywords, () -> {
+								BotUtils.typing(event.getChannel(), true);
+								return UltimateGDBot.gdClient().fetch(new GDUserSearchHttpRequest(keywords, 0));
+							});
+					
+					if (results.isEmpty())
+						throw new CommandFailedException("User not found.");
+					
+					accountID = results.get(0).getAccountID();
+				}
 			}
 			
 			final long finalAccountID = accountID;
