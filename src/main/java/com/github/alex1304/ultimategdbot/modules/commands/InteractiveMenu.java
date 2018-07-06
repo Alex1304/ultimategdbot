@@ -58,7 +58,7 @@ public class InteractiveMenu implements Command {
 	@Override
 	public final void runCommand(MessageReceivedEvent event, List<String> args) throws CommandFailedException {
 		InvalidCommandArgsException invalidArgsException = new InvalidCommandArgsException(
-				this.buildInvalidSyntaxMessage(event.getMessage().getContent()));
+				this.buildInvalidSyntaxMessage(BotUtils.commandWithoutArgs(event.getMessage().getContent(), args)));
 		
 		if (!args.isEmpty()) { // First tries to guess subcommand in args
 			if (!subCommandMap.containsKey(args.get(0).toLowerCase()))

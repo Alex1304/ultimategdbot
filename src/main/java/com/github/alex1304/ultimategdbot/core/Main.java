@@ -38,14 +38,12 @@ public class Main {
 			UltimateGDBot.client().getDispatcher().registerListener((IListener<MessageReceivedEvent>) event0 -> {
 				try {
 					CommandsModule cm = (CommandsModule) UltimateGDBot.getModule("commands");
-					ReplyModule rm = (ReplyModule) UltimateGDBot.getModule("reply");
-					
 					cm.onMessageReceived(event0);
+				} catch (ModuleUnavailableException e) {}
+				try {
+					ReplyModule rm = (ReplyModule) UltimateGDBot.getModule("reply");
 					rm.onMessageReceived(event0);
-				} catch (ModuleUnavailableException e) {
-					e.printStackTrace();
-					System.exit(1);
-				}
+				} catch (ModuleUnavailableException e) {}
 			});
 			
 		} catch (Exception e) {

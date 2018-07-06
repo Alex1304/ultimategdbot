@@ -1,6 +1,7 @@
 package com.github.alex1304.ultimategdbot.utils;
 
 import java.io.Serializable;
+import java.util.function.Consumer;
 
 import org.hibernate.ObjectNotFoundException;
 import org.hibernate.Session;
@@ -52,24 +53,7 @@ public class DatabaseUtils {
 	 * @return boolean - whether it has saved without issues
 	 */
 	public static boolean save(Object obj) {
-		Session s = Database.newSession();
-		Transaction tx = null;
-		boolean success = false;
-		
-		try {
-			tx = s.beginTransaction();
-			s.saveOrUpdate(obj);
-			tx.commit();
-			success = true;
-		} catch (RuntimeException e) {
-			if (tx != null)
-				tx.rollback();
-			UltimateGDBot.logException(e);
-		} finally {
-			s.close();
-		}
-		
-		return success;
+		return performTransaction(session -> session.saveOrUpdate(obj), false);
 	}
 	
 	/**
@@ -79,14 +63,28 @@ public class DatabaseUtils {
 	 * @return boolean - whether it has deleted without issues
 	 */
 	public static boolean delete(Object obj) {
+		return performTransaction(session -> session.delete(obj), true);
+	}
+	
+	/**
+	 * Performs what is inside txConsumer with a transaction
+	 * 
+	 * @param txConsumer
+	 *            - what should be done with the session during the transaction
+	 * @param flush
+	 *            - whether to flush
+	 * @return boolean - whether the transaction has been successful
+	 */
+	public static boolean performTransaction(Consumer<Session> txConsumer, boolean flush) {
 		Session s = Database.newSession();
 		Transaction tx = null;
 		boolean success = false;
 		
 		try {
 			tx = s.beginTransaction();
-			s.delete(obj);
-			s.flush();
+			txConsumer.accept(s);
+			if (flush)
+				s.flush();
 			tx.commit();
 			success = true;
 		} catch (RuntimeException e) {

@@ -43,19 +43,19 @@ public class ModulesCommand extends InteractiveMenu {
 		
 		this.addSubCommand("start", (event, args) -> {
 			if (args.isEmpty())
-				throw new InvalidCommandArgsException("Please prodide a module name");
+				throw new InvalidCommandArgsException("Please provide a module name");
 			UltimateGDBot.startModule(args.get(0));
 		});
 
 		this.addSubCommand("stop", (event, args) -> {
 			if (args.isEmpty())
-				throw new InvalidCommandArgsException("Please prodide a module name");
+				throw new InvalidCommandArgsException("Please provide a module name");
 			UltimateGDBot.stopModule(args.get(0));
 		});
 
 		this.addSubCommand("restart", (event, args) -> {
 			if (args.isEmpty())
-				throw new InvalidCommandArgsException("Please prodide a module name");
+				throw new InvalidCommandArgsException("Please provide a module name");
 			UltimateGDBot.restartModule(args.get(0));
 		});
 	}

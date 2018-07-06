@@ -44,6 +44,9 @@ public class AccountCommand implements Command {
 
 	@Override
 	public void runCommand(MessageReceivedEvent event, List<String> args) throws CommandFailedException {
+		if (!UltimateGDBot.isModuleAvailable("reply"))
+			throw new CommandFailedException("This command is temporarily unavailable. Try again later.");
+		
 		UserSettings us = DatabaseUtils.findByID(UserSettings.class, event.getAuthor().getLongID());
 		InteractiveMenu menu = new InteractiveMenu();
 		StringBuffer menuContent = new StringBuffer(
