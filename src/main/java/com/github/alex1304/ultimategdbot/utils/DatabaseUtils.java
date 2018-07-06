@@ -1,11 +1,13 @@
 package com.github.alex1304.ultimategdbot.utils;
 
 import java.io.Serializable;
+import java.util.List;
 import java.util.function.Consumer;
 
 import org.hibernate.ObjectNotFoundException;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
+import org.hibernate.query.Query;
 
 import com.github.alex1304.ultimategdbot.core.Database;
 import com.github.alex1304.ultimategdbot.core.UltimateGDBot;
@@ -44,6 +46,34 @@ public class DatabaseUtils {
 		}
 		
 		return result;
+	}
+	
+	/**
+	 * Makes a simple query and returns an list containing the results
+	 * 
+	 * @param query
+	 *            - the HQL query
+	 * @param params
+	 *            - the query params
+	 * @param <T>
+	 *            - the entity type
+	 * @return List&lt;Object&gt;
+	 */
+	public static <T> List<T> query(Class<T> entityClass, String query, Object... params) {
+		Session s = Database.newSession();
+		List<T> list = null;
+		
+		try {
+			Query<T> q = s.createQuery(query, entityClass);
+			for (int i = 0 ; i < params.length ; i++) {
+				q.setParameter(i, params[i]);
+			}
+			list = q.getResultList();
+		} finally {
+			s.close();
+		}
+		
+		return list;
 	}
 	
 	/**
