@@ -72,7 +72,8 @@ public enum Emojis {
 	CROSS,
 	COPY,
 	LOCK,
-	DOWNLOAD_SONG;
+	DOWNLOAD_SONG,
+	DISCORD;
 	
 	public IEmoji get() {
 		return UltimateGDBot.emoji(name().toLowerCase());

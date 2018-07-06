@@ -3,15 +3,20 @@ package com.github.alex1304.ultimategdbot.utils;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import com.github.alex1304.jdash.component.GDLevel;
 import com.github.alex1304.jdash.component.GDLevelPreview;
 import com.github.alex1304.jdash.component.GDSong;
 import com.github.alex1304.jdash.component.GDUser;
 import com.github.alex1304.jdash.component.property.GDUserRole;
+import com.github.alex1304.ultimategdbot.core.UltimateGDBot;
+import com.github.alex1304.ultimategdbot.dbentities.UserSettings;
 
 import sx.blah.discord.api.internal.json.objects.EmbedObject;
+import sx.blah.discord.handle.obj.IUser;
 import sx.blah.discord.util.EmbedBuilder;
 
 /**
@@ -202,6 +207,15 @@ public class GDUtils {
 		else if (user.getRole() == GDUserRole.ELDER_MODERATOR)
 			mod = Emojis.ELDER_MOD + "  **" + user.getRole().toString().replaceAll("_", " ") + "**\n";
 		
+		String discord = "";
+		List<IUser> linkedAccounts = getDiscordUsersLinkedToGDAccount(user.getAccountID());
+		if (!linkedAccounts.isEmpty()) {
+			discord += Emojis.DISCORD + " **Discord:** ";
+			for (IUser u : linkedAccounts)
+				discord += BotUtils.formatDiscordUsername(u) + ", ";
+			discord = discord.substring(0, discord.length() - 2);
+		}
+		
 		try {
 			eb.appendField("───────────────────", mod
 					+ Emojis.GLOBAL_RANK + "  **Global Rank:** "
@@ -214,8 +228,8 @@ public class GDUtils {
 						+ "](http://www.twitch.tv/" + URLEncoder.encode(user.getTwitch(), "UTF-8") + ")") + "\n"
 					+ Emojis.TWITTER + "  **Twitter:** "
 						+ (user.getTwitter().isEmpty() ? "*not provided*" : "[@" + user.getTwitter() + "]"
-						+ "(http://www.twitter.com/" + URLEncoder.encode(user.getTwitter(), "UTF-8") + ")"),
-					false);
+						+ "(http://www.twitter.com/" + URLEncoder.encode(user.getTwitter(), "UTF-8") + ")") + "\n"
+					+ discord, false);
 		} catch (UnsupportedEncodingException e) {
 			e.printStackTrace();
 		}
@@ -344,6 +358,19 @@ public class GDUtils {
 			output += Emojis.STAR + " x" + lvl.getStars();
 		
 		return output;
+	}
+	
+	/**
+	 * Gets the list of Discord accounts associated with the given GD account ID
+	 * 
+	 * @param gdAccountID - long
+	 * @return List&lt;IUser&gt;
+	 */
+	public static List<IUser> getDiscordUsersLinkedToGDAccount(long gdAccountID) {
+		return DatabaseUtils.query(UserSettings.class, "from UserSettings u where u.gdUserID = ?0", gdAccountID).stream()
+				.map(x -> UltimateGDBot.client().fetchUser(x.getUserID()))
+				.filter(x -> x != null)
+				.collect(Collectors.toList());
 	}
 
 }
