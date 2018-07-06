@@ -31,7 +31,7 @@ public class ProfileCommand implements Command {
 	@Override
 	public void runCommand(MessageReceivedEvent event, List<String> args) throws CommandFailedException {
 		if (args.isEmpty())
-			throw new InvalidCommandArgsException(event.getMessage().getContent() + " <username or playerID>`, ex. `"
+			throw new InvalidCommandArgsException("`" + event.getMessage().getContent() + " <username or playerID>`, ex. `"
 					+ event.getMessage().getContent() + " ViPriN` or `" + event.getMessage().getContent() + " 16`");
 		
 		try {

@@ -3,7 +3,7 @@
 <hibernate-mapping default-lazy="false">
   <class name="com.github.alex1304.ultimategdbot.dbentities.UserSettings" table="user_settings">
     <id name="userID" type="long" column="user_id">
-      <generator class="native"/>
+      <generator class="assigned"/>
     </id>
     <property name="gdUserID" type="long" column="gd_user_id" not-null="true" />
     <property name="linkActivated" type="boolean" column="link_activated" not-null="true" />
