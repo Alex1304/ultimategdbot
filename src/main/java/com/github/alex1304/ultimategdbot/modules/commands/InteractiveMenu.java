@@ -7,6 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.github.alex1304.ultimategdbot.core.UltimateGDBot;
 import com.github.alex1304.ultimategdbot.exceptions.CommandFailedException;
+import com.github.alex1304.ultimategdbot.exceptions.CommandUnavailableException;
 import com.github.alex1304.ultimategdbot.exceptions.InvalidCommandArgsException;
 import com.github.alex1304.ultimategdbot.exceptions.ModuleUnavailableException;
 import com.github.alex1304.ultimategdbot.modules.reply.Reply;
@@ -29,11 +30,19 @@ public class InteractiveMenu implements Command {
 	private Map<String, Command> subCommandMap;
 	private String menuEmbedContent;
 	private String menuContent;
+	private boolean closeOnTimeout;
+	private boolean readSubcommandsInArgs;
 
 	public InteractiveMenu() {
+		this(true, true);
+	}
+	
+	public InteractiveMenu(boolean readSubcommandsInArgs, boolean closeOnTimeout) {
 		this.subCommandMap = new ConcurrentHashMap<>();
 		this.menuEmbedContent = "";
 		this.menuContent = "";
+		this.readSubcommandsInArgs = readSubcommandsInArgs;
+		this.closeOnTimeout = closeOnTimeout;
 	}
 
 	/**
@@ -60,7 +69,7 @@ public class InteractiveMenu implements Command {
 		InvalidCommandArgsException invalidArgsException = new InvalidCommandArgsException(
 				this.buildInvalidSyntaxMessage(BotUtils.commandWithoutArgs(event.getMessage().getContent(), args)));
 		
-		if (!args.isEmpty()) { // First tries to guess subcommand in args
+		if (readSubcommandsInArgs && !args.isEmpty()) { // First tries to guess subcommand in args
 			if (!subCommandMap.containsKey(args.get(0).toLowerCase()))
 				throw invalidArgsException;
 			
@@ -78,8 +87,11 @@ public class InteractiveMenu implements Command {
 			menu.append(menuEmbedContent);
 			menu.append('\n');
 			
-			menu.append(String.format("**This menu will close after %s of inactivity, or type `cancel`**",
-					BotUtils.formatTimeMillis(Reply.DEFAULT_TIMEOUT_MILLIS)));
+			if (closeOnTimeout)
+				menu.append(String.format("**This menu will close after %s of inactivity, or type `cancel`**",
+						BotUtils.formatTimeMillis(Reply.DEFAULT_TIMEOUT_MILLIS)));
+			else
+				menu.append("To close this menu, type `cancel`");
 			
 			EmbedBuilder eb = new EmbedBuilder();
 			eb.appendDescription(menu.toString());
@@ -90,9 +102,14 @@ public class InteractiveMenu implements Command {
 				return triggerSubCommand(newArgs.get(0), event, newArgs.subList(1, newArgs.size()));
 			});
 			
-			rm.open(r, true, true);
+			if (!closeOnTimeout) {
+				r.setOnSuccess(() -> r.deleteInitialMessage());
+				this.addSubCommand("cancel", (event0, args0) -> r.deleteInitialMessage());
+			}
+			
+			rm.open(r, true, closeOnTimeout);
 		} catch (ModuleUnavailableException e) {
-			throw invalidArgsException;	
+			throw readSubcommandsInArgs ? invalidArgsException : new CommandUnavailableException();	
 		}
 	}
 

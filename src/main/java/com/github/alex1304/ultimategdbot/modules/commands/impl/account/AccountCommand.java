@@ -73,13 +73,8 @@ public class AccountCommand implements Command {
 				String username = BotUtils.concatCommandArgs(args0);
 				
 				GDComponentList<GDUserPreview> results = (GDComponentList<GDUserPreview>) UltimateGDBot.cache()
-						.readAndWriteIfNotExistsIgnoreExceptions("gd.usersearch." + username, () -> {
-							try {
-								return UltimateGDBot.gdClient().fetch(new GDUserSearchHttpRequest(username, 0));
-							} catch (GDAPIException e) {
-								return null;
-							}
-						});
+						.readAndWriteIfNotExists("gd.usersearch." + username, () -> 
+								UltimateGDBot.gdClient().fetch(new GDUserSearchHttpRequest(username, 0)));
 				
 				if (results == null || results.isEmpty()) {
 					rerunCmd.run();
@@ -96,13 +91,8 @@ public class AccountCommand implements Command {
 			});
 		} else  {
 			GDUser user = (GDUser) UltimateGDBot.cache()
-					.readAndWriteIfNotExistsIgnoreExceptions("gd.user." + us.getGdUserID(), () -> {
-						try {
-							return UltimateGDBot.gdClient().fetch(new GDUserHttpRequest(us.getGdUserID()));
-						} catch (GDAPIException e) {
-							return null;
-						}
-					});
+					.readAndWriteIfNotExists("gd.user." + us.getGdUserID(), () -> 
+							UltimateGDBot.gdClient().fetch(new GDUserHttpRequest(us.getGdUserID())));
 			
 			if (user == null) {
 				menuContent.append(":warning: You seem to be linked to a Geometry Dash account, but I can't find "
@@ -151,7 +141,7 @@ public class AccountCommand implements Command {
 								throw new CommandFailedException("Unable to verify your account. Make sure you have followed the steps given to verify your account and try again.");
 							}
 						} catch (GDAPIException e) {
-							throw new CommandFailedException("Geometry Dash servers are unavailable so I am unable to fetch your message. Try again later.");
+							throw new CommandFailedException("Geometry Dash servers are unavailable so I am unable to verify your account. Try again later.");
 						}
 					});
 				} else {

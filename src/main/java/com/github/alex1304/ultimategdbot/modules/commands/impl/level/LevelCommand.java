@@ -8,7 +8,6 @@ import com.github.alex1304.jdash.api.request.GDLevelSearchHttpRequest;
 import com.github.alex1304.jdash.component.GDComponentList;
 import com.github.alex1304.jdash.component.GDLevel;
 import com.github.alex1304.jdash.component.GDLevelPreview;
-import com.github.alex1304.jdash.exceptions.GDAPIException;
 import com.github.alex1304.ultimategdbot.core.UltimateGDBot;
 import com.github.alex1304.ultimategdbot.exceptions.CommandFailedException;
 import com.github.alex1304.ultimategdbot.exceptions.GDServersUnavailableException;
@@ -49,71 +48,64 @@ public class LevelCommand implements Command {
 			throw new InvalidCommandArgsException("`" + event.getMessage().getContent() + " <name or ID>`, ex `"
 					+ event.getMessage().getContent() + " Level Easy`");
 
-		final Procedure rollBackResults = () -> CommandsModule.executeCommand(new LevelCommand(page), event, args);
+		final Procedure rollBackResults = () -> CommandsModule.executeCommand(this, event, args);
 		
-		try {
-			String keywords = BotUtils.concatCommandArgs(args);
-			String cacheID = "gd.levelsearch." + keywords + page;
-				
+		String keywords = BotUtils.concatCommandArgs(args);
+		String cacheID = "gd.levelsearch." + keywords + page;
 			
-			GDComponentList<GDLevelPreview> results = (GDComponentList<GDLevelPreview>) UltimateGDBot.cache()
-					.readAndWriteIfNotExists(cacheID, () -> {
-						BotUtils.typing(event.getChannel(), true);
-						return UltimateGDBot.gdClient().fetch(new GDLevelSearchHttpRequest(keywords, page));
-					});
-			
-			if (results.isEmpty() && page == 0)
-				throw new CommandFailedException("No results found.");
-			
-			if (results.size() == 1) {
-				this.openLevel(results.get(0), event, false, rollBackResults);
-				return;
-			}
-			
-			if (!UltimateGDBot.isModuleAvailable("reply")) {
-				BotUtils.sendMessage(event.getChannel(), buildResultOutput(results, page) +
-						"\nAbility to navigate through search results is currently unavailable. Sorry for the inconvenience.");
-				return;
-			}
-			
-			NavigationMenu nm = new NavigationMenu(page, 9999, page -> new LevelCommand(page), event, args);
-			
-			nm.setMenuContent(buildResultOutput(results, page));
-			nm.setMenuEmbedContent("To view full info on a level, type `select` followed by the search "
-					+ "result number, ex. `select 2`\n");
-			
-			nm.addSubCommand("select", (event0, args0) -> {
-				if (args0.isEmpty()) {
-					rollBackResults.run();
-					throw new InvalidCommandArgsException("`select <number>`, ex. `select 2`");
-				}
-				
-				int selectInput = 1;
-				
-				try {
-					selectInput = Integer.parseInt(args0.get(0));
-					if (selectInput < 1 || selectInput > results.size()) {
-						rollBackResults.run();
-						throw new CommandFailedException("Result number out of range");
-					}
-				} catch (NumberFormatException e) {
-					rollBackResults.run();
-					throw new CommandFailedException("Sorry, `" + args0.get(0) + "` isn't a valid page number");
-				}
-				this.openLevel(results.get(selectInput - 1), event, true, rollBackResults);
-			});
-			
-			CommandsModule.executeCommand(nm, event, new ArrayList<>());
-		} catch (GDAPIException e) {
-			UltimateGDBot.logException(e);
+		
+		GDComponentList<GDLevelPreview> results = (GDComponentList<GDLevelPreview>) UltimateGDBot.cache()
+				.readAndWriteIfNotExists(cacheID, () -> {
+					BotUtils.typing(event.getChannel(), true);
+					return UltimateGDBot.gdClient().fetch(new GDLevelSearchHttpRequest(keywords, page));
+				});
+		
+		if (results == null)
 			throw new GDServersUnavailableException();
-		} catch (CommandFailedException e) {
-			throw e;
-		} catch (Exception e) {
-			throw new RuntimeException(e.getClass().getName() + ": " + e.getMessage());
-		} finally {
-			BotUtils.typing(event.getChannel(), false);
+		
+		if (results.isEmpty() && page == 0)
+			throw new CommandFailedException("No results found.");
+		
+		if (results.size() == 1) {
+			this.openLevel(results.get(0), event, false, rollBackResults);
+			return;
 		}
+		
+		if (!UltimateGDBot.isModuleAvailable("reply")) {
+			BotUtils.sendMessage(event.getChannel(), buildResultOutput(results, page) +
+					"\nAbility to navigate through search results is currently unavailable. Sorry for the inconvenience.");
+			return;
+		}
+		
+		NavigationMenu nm = new NavigationMenu(page, 9999, page -> new LevelCommand(page), event, args);
+		
+		nm.setMenuContent(buildResultOutput(results, page));
+		nm.setMenuEmbedContent("To view full info on a level, type `select` followed by the search "
+				+ "result number, ex. `select 2`\n");
+		
+		nm.addSubCommand("select", (event0, args0) -> {
+			if (args0.isEmpty()) {
+				rollBackResults.run();
+				throw new InvalidCommandArgsException("`select <number>`, ex. `select 2`");
+			}
+			
+			int selectInput = 1;
+			
+			try {
+				selectInput = Integer.parseInt(args0.get(0));
+				if (selectInput < 1 || selectInput > results.size()) {
+					rollBackResults.run();
+					throw new CommandFailedException("Result number out of range");
+				}
+			} catch (NumberFormatException e) {
+				rollBackResults.run();
+				throw new CommandFailedException("Sorry, `" + args0.get(0) + "` isn't a valid page number");
+			}
+			this.openLevel(results.get(selectInput - 1), event, true, rollBackResults);
+		});
+		
+		CommandsModule.executeCommand(nm, event, new ArrayList<>());
+		BotUtils.typing(event.getChannel(), false);
 	}
 
 	private String buildResultOutput(GDComponentList<GDLevelPreview> results, int page) {
@@ -145,43 +137,38 @@ public class LevelCommand implements Command {
 	
 	private void openLevel(GDLevelPreview lp, MessageReceivedEvent event, boolean canGoBack, Procedure goBack) {
 		CommandsModule.executeCommand((event0, args0) -> {
-			try {
-				GDLevel lvl = (GDLevel) UltimateGDBot.cache().readAndWriteIfNotExists("gd.level." + lp.getId(), () -> {
-					BotUtils.typing(event0.getChannel(), true);
-					return UltimateGDBot.gdClient().fetch(new GDLevelHttpRequest(lp.getId()));
-				});
-
-				String message = event.getAuthor().mention() + ", here's the level you requested to show.";
-
-				if (canGoBack && UltimateGDBot.isModuleAvailable("reply"))
-					message += "\nYou can go back to search results by typing `back`";
-
-				IMessage output = BotUtils.sendMessage(event0.getChannel(), message, GDUtils.buildEmbedForGDLevel("Search result",
-						"https://i.imgur.com/a9B6LyS.png", lp, lvl));
-
-				if (canGoBack) {
-					try {
-						ReplyModule rm = (ReplyModule) UltimateGDBot.getModule("reply");
-						Reply r = new Reply(output, event0.getAuthor(), message0 -> {
-							if (message0.getContent().equalsIgnoreCase("back")) {
-								goBack.run();
-								return true;
-							} else
-								return false;
-						});
-						rm.open(r, true, false);
-					} catch (ModuleUnavailableException e) {
-					}
-				}
-			} catch (GDAPIException e) {
-				UltimateGDBot.logException(e);
+			GDLevel lvl = (GDLevel) UltimateGDBot.cache().readAndWriteIfNotExists("gd.level." + lp.getId(), () -> {
+				BotUtils.typing(event0.getChannel(), true);
+				return UltimateGDBot.gdClient().fetch(new GDLevelHttpRequest(lp.getId()));
+			});
+			
+			if (lvl == null)
 				throw new GDServersUnavailableException();
-			} catch (Exception e) {
-				UltimateGDBot.logException(e);
-				throw new RuntimeException(e.getMessage());
-			} finally {
-				BotUtils.typing(event0.getChannel(), false);
+
+			String message = event.getAuthor().mention() + ", here's the level you requested to show.";
+
+			if (canGoBack && UltimateGDBot.isModuleAvailable("reply"))
+				message += "\nYou can go back to search results by typing `back`";
+
+			IMessage output = BotUtils.sendMessage(event0.getChannel(), message, GDUtils.buildEmbedForGDLevel("Search result",
+					"https://i.imgur.com/a9B6LyS.png", lp, lvl));
+
+			if (canGoBack) {
+				try {
+					ReplyModule rm = (ReplyModule) UltimateGDBot.getModule("reply");
+					Reply r = new Reply(output, event0.getAuthor(), message0 -> {
+						if (message0.getContent().equalsIgnoreCase("back")) {
+							goBack.run();
+							return true;
+						} else
+							return false;
+					});
+					rm.open(r, true, false);
+				} catch (ModuleUnavailableException e) {
+				}
 			}
+			
+			BotUtils.typing(event0.getChannel(), false);
 		}, event, new ArrayList<>());
 	}
 

@@ -20,6 +20,8 @@ public class NavigationMenu extends InteractiveMenu {
 	private String appendMenuEmbedContent;
 
 	public NavigationMenu(int page, int pageMax, Function<Integer, Command> commandForPage, MessageReceivedEvent event, List<String> args) {
+		super(false, false);
+		
 		boolean hasNext = page < pageMax;
 		boolean hasPrev = page > 0;
 		boolean hasMultiplePages = pageMax > 0;
