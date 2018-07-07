@@ -16,6 +16,7 @@ import com.github.alex1304.ultimategdbot.modules.commands.impl.leaderboard.Leade
 import com.github.alex1304.ultimategdbot.modules.commands.impl.level.LevelCommand;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.modules.ModulesCommand;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.profile.ProfileCommand;
+import com.github.alex1304.ultimategdbot.modules.commands.impl.setup.SetupCommand;
 import com.github.alex1304.ultimategdbot.modules.reply.Reply;
 import com.github.alex1304.ultimategdbot.modules.reply.ReplyModule;
 import com.github.alex1304.ultimategdbot.utils.BotRoles;
@@ -73,6 +74,7 @@ public class CommandsModule implements Module {
 		registerCommand("profile", new ProfileCommand());
 		registerCommand("account", new AccountCommand());
 		registerCommand("leaderboard", (event, args) -> executeCommand(new LeaderboardMenu(), event, args));
+		registerCommand("setup", new SetupCommand());
 	}
 	
 	/**

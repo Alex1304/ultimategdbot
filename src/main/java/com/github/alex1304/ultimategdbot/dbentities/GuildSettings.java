@@ -1,5 +1,7 @@
 package com.github.alex1304.ultimategdbot.dbentities;
 
+import sx.blah.discord.handle.obj.IGuild;
+
 /**
  * Database entity for guild settings
  *
@@ -7,6 +9,7 @@ package com.github.alex1304.ultimategdbot.dbentities;
  */
 public class GuildSettings {
 	
+	private IGuild guildInstance;
 	private long guildID;
 	private long roleAwardedLevels;
 	private long channelAwardedLevels;
@@ -14,15 +17,12 @@ public class GuildSettings {
 	private long channelGDModerators;
 	private long channelTimelyLevels;
 	private long roleTimelyLevels;
-	private long channelBotAnnouncements;
-	private boolean tagEveryoneOnBotAnnouncement;
 
 	public GuildSettings() {
 	}
 
-	public GuildSettings(int guildID, long roleAwardedLevels, long channelAwardedLevels, long roleGDModerators,
-			long channelGDModerators, long channelTimelyLevels, long roleTimelyLevels, long channelBotAnnouncements,
-			boolean tagEveryoneOnBotAnnouncement) {
+	public GuildSettings(long guildID, long roleAwardedLevels, long channelAwardedLevels, long roleGDModerators,
+			long channelGDModerators, long channelTimelyLevels, long roleTimelyLevels) {
 		this.guildID = guildID;
 		this.roleAwardedLevels = roleAwardedLevels;
 		this.channelAwardedLevels = channelAwardedLevels;
@@ -30,8 +30,6 @@ public class GuildSettings {
 		this.channelGDModerators = channelGDModerators;
 		this.channelTimelyLevels = channelTimelyLevels;
 		this.roleTimelyLevels = roleTimelyLevels;
-		this.channelBotAnnouncements = channelBotAnnouncements;
-		this.tagEveryoneOnBotAnnouncement = tagEveryoneOnBotAnnouncement;
 	}
 
 	/**
@@ -160,49 +158,30 @@ public class GuildSettings {
 		this.roleTimelyLevels = roleTimelyLevels;
 	}
 
-	/**
-	 * Gets the channelBotAnnouncements
-	 *
-	 * @return long
-	 */
-	public long getChannelBotAnnouncements() {
-		return channelBotAnnouncements;
-	}
-
-	/**
-	 * Sets the channelBotAnnouncements
-	 *
-	 * @param channelBotAnnouncements - long
-	 */
-	public void setChannelBotAnnouncements(long channelBotAnnouncements) {
-		this.channelBotAnnouncements = channelBotAnnouncements;
-	}
-
-	/**
-	 * Gets the tagEveryoneOnBotAnnouncement
-	 *
-	 * @return boolean
-	 */
-	public boolean isTagEveryoneOnBotAnnouncement() {
-		return tagEveryoneOnBotAnnouncement;
-	}
-
-	/**
-	 * Sets the tagEveryoneOnBotAnnouncement
-	 *
-	 * @param tagEveryoneOnBotAnnouncement - boolean
-	 */
-	public void setTagEveryoneOnBotAnnouncement(boolean tagEveryoneOnBotAnnouncement) {
-		this.tagEveryoneOnBotAnnouncement = tagEveryoneOnBotAnnouncement;
-	}
-
 	@Override
 	public String toString() {
 		return "GuildSettings [guildID=" + guildID + ", roleAwardedLevels=" + roleAwardedLevels
 				+ ", channelAwardedLevels=" + channelAwardedLevels + ", roleGDModerators=" + roleGDModerators
 				+ ", channelGDModerators=" + channelGDModerators + ", channelTimelyLevels=" + channelTimelyLevels
-				+ ", roleTimelyLevels=" + roleTimelyLevels + ", channelBotAnnouncements=" + channelBotAnnouncements
-				+ ", tagEveryoneOnBotAnnouncement=" + tagEveryoneOnBotAnnouncement + "]";
+				+ ", roleTimelyLevels=" + roleTimelyLevels + "]";
+	}
+	
+	/**
+	 * Gets the guildInstance
+	 *
+	 * @return IGuild
+	 */
+	public IGuild getGuildInstance() {
+		return guildInstance;
 	}
 
+	/**
+	 * Sets the guildInstance
+	 *
+	 * @param guildInstance - IGuild
+	 */
+	public void setGuildInstance(IGuild guildInstance) {
+		this.guildInstance = guildInstance;
+		this.guildID = guildInstance.getLongID();
+	}
 }

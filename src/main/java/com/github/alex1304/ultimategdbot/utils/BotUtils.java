@@ -252,7 +252,7 @@ public class BotUtils {
 		} catch (NumberFormatException e) {
 			try {
 				roleID = Long.parseLong(str.substring(3, str.length() - 1));
-			} catch (NumberFormatException e2) {
+			} catch (NumberFormatException | StringIndexOutOfBoundsException e2) {
 				try {
 					roleID = guild.getRolesByName(str).get(0).getLongID();
 				} catch (IndexOutOfBoundsException e3) {
