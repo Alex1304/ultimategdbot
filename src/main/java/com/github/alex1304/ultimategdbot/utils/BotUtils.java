@@ -57,7 +57,7 @@ public class BotUtils {
 	 * @return IIDLinkedObject
 	 */
 	public static IIDLinkedObject resolveSnowflake(SnowflakeType type, long snowflake) {
-		return (IIDLinkedObject) UltimateGDBot.cache().readAndWriteIfNotExistsIgnoreExceptions("discord.snowflake." + snowflake, () -> {
+		return (IIDLinkedObject) UltimateGDBot.cache().readAndWriteIfNotExists("discord.snowflake." + snowflake, () -> {
 			return type.getFunc().apply(snowflake);
 		});
 	}

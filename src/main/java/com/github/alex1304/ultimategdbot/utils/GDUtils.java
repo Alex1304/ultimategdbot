@@ -5,12 +5,16 @@ import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
+import com.github.alex1304.jdash.api.request.GDUserSearchHttpRequest;
+import com.github.alex1304.jdash.component.GDComponentList;
 import com.github.alex1304.jdash.component.GDLevel;
 import com.github.alex1304.jdash.component.GDLevelPreview;
 import com.github.alex1304.jdash.component.GDSong;
 import com.github.alex1304.jdash.component.GDUser;
+import com.github.alex1304.jdash.component.GDUserPreview;
 import com.github.alex1304.jdash.component.property.GDUserRole;
 import com.github.alex1304.ultimategdbot.core.UltimateGDBot;
 import com.github.alex1304.ultimategdbot.dbentities.UserSettings;
@@ -317,6 +321,8 @@ public class GDUtils {
 	 * @return String
 	 */
 	public static String formatSongPrimaryMetadata(GDSong song) {
+		if (song == null)
+			return "Unknown song";
 		return "__" + song.getSongTitle() + "__ by " + song.getSongAuthorName();
 	}
 
@@ -327,6 +333,8 @@ public class GDUtils {
 	 * @return String
 	 */
 	public static String formatSongSecondaryMetadata(GDSong song) {
+		if (song == null)
+			return ":warning: This level is using a song that doesn't exist at all on Newgrounds";
 		return song.isCustom() ? ("SongID: " + song.getSongID() + " - Size: " + song.getSongSize() + "MB\n"
 				+ Emojis.PLAY + " [Play on Newgrounds](https://www.newgrounds.com/audio/listen/" + song.getSongID() + ")\n"
 				+ Emojis.DOWNLOAD_SONG + " [Download MP3](" + song.getDownloadURL() + ")") : "Geometry Dash native audio track";
@@ -371,6 +379,39 @@ public class GDUtils {
 				.map(x -> UltimateGDBot.client().fetchUser(x.getUserID()))
 				.filter(x -> x != null)
 				.collect(Collectors.toList());
+	}
+	
+	/**
+	 * Attempts to guess a GD user ID from the given string. If the string
+	 * refers to a Discord user, this will look for a linked GD user. Returns -1
+	 * if the user ID can't be guessed, returns -2 if GD servers are unavailable
+	 * 
+	 * @param str
+	 *            - String
+	 * @return long
+	 */
+	public static long guessGDUserIDFromString(String str) {
+		long accountID = -1;
+		try {
+			long userID = BotUtils.extractIDFromMention(str);
+			UserSettings us = DatabaseUtils.findByID(UserSettings.class, userID);
+			
+			if (us == null || !us.getLinkActivated())
+				throw new NoSuchElementException();
+			
+			accountID = us.getGdUserID();
+		} catch (IllegalArgumentException | NoSuchElementException e) {
+			GDComponentList<GDUserPreview> results = (GDComponentList<GDUserPreview>) UltimateGDBot.cache()
+					.readAndWriteIfNotExists("gd.usersearch." + str, () ->
+							UltimateGDBot.gdClient().fetch(new GDUserSearchHttpRequest(str, 0)));
+			
+			if (results == null)
+				accountID = -2;
+			else if (!results.isEmpty())
+				accountID = results.get(0).getAccountID();
+		}
+		
+		return accountID;
 	}
 
 }
