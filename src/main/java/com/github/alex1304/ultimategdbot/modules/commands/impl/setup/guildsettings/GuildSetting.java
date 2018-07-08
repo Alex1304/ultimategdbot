@@ -48,10 +48,6 @@ public abstract class GuildSetting<I, O> {
 		return theList;
 	}
 	
-	public static <I, O, T extends GuildSetting<I, O>> T get(Class<T> settingClass, String name, GuildSettings gs) {
-		return (T) get(name, gs);
-	}
-	
 	public static GuildSetting<?, ?> get(String name, GuildSettings gs) {
 		GuildSettingMapping<?, ?, ?> gsm = null;
 		Iterator<GuildSettingMapping<?, ?, ?>> it = REGISTERED_SETTINGS.iterator();

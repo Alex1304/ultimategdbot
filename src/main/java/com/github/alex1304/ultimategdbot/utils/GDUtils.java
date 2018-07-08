@@ -131,29 +131,19 @@ public class GDUtils {
 	 *            - the level to convert to embed
 	 * @return an EmbedObject representing the embedded level
 	 */
-	public static EmbedObject buildEmbedForGDLevel(String authorName, String authorIcon, GDLevelPreview lp, GDLevel lvl, boolean customEmojis) {
+	public static EmbedObject buildEmbedForGDLevel(String authorName, String authorIcon, GDLevelPreview lp, GDLevel lvl) {
 		EmbedBuilder eb = new EmbedBuilder();
-		
-		String emojiPlay = customEmojis ? "" + Emojis.PLAY : ":arrow_forward:";
-		String emojiDownloads = customEmojis ? "" + Emojis.DOWNLOADS : ":inbox_tray:";
-		String emojiLike = customEmojis ? "" + Emojis.LIKE : ":thumbsup:";
-		String emojiDisike = customEmojis ? "" + Emojis.DISLIKE : ":thumbsdown:";
-		String emojiLength = customEmojis ? "" + Emojis.LENGTH : ":clock3:";
-		String emojiLock = customEmojis ? "" + Emojis.LOCK : ":lock:";
-		String emojiObjectOverflow = customEmojis ? "" + Emojis.OBJECT_OVERFLOW : ":warning:";
-		String emojiCopy = customEmojis ? "" + Emojis.COPY : ":copyright:";
-		String emojiIconNAFeatured = customEmojis ? Emojis.ICON_NA_FEATURED + " " : "";
 
 		eb.withAuthorName(authorName);
 		eb.withAuthorIcon(authorIcon);
 		eb.withThumbnail(getDifficultyImageForLevel(lvl));
 
-		eb.appendField(emojiPlay + "  __" + lvl.getName() + "__ by " + lp.getCreatorName() + "",
+		eb.appendField(Emojis.PLAY + "  __" + lvl.getName() + "__ by " + lp.getCreatorName() + "",
 				"**Description:** " + (lvl.getDescription().isEmpty() ? "*(No description provided)*" : BotUtils.escapeMarkdown(lvl.getDescription())), true);
-		eb.appendField("Coins: " + coinsToEmoji(lvl.getCoinCount(), lvl.hasCoinsVerified(), false, customEmojis),
-				emojiDownloads + " " + lvl.getDownloads() + "\t\t"
-						+ (lvl.getLikes() < 0 ? emojiDisike + " " : emojiLike + " ") + lvl.getLikes() + "\t\t"
-						+ emojiLength + " " + lvl.getLength().toString().toUpperCase() + "\n"
+		eb.appendField("Coins: " + coinsToEmoji(lvl.getCoinCount(), lvl.hasCoinsVerified(), false, false),
+				Emojis.DOWNLOADS + " " + lvl.getDownloads() + "\t\t"
+						+ (lvl.getLikes() < 0 ? Emojis.DISLIKE + " " : Emojis.LIKE + " ") + lvl.getLikes() + "\t\t"
+						+ Emojis.LENGTH + " " + lvl.getLength().toString().toUpperCase() + "\n"
 				+ "───────────────────\n", false);
 		
 		String pass = "";
@@ -164,7 +154,7 @@ public class GDUtils {
 		else {
 			StringBuffer passStr = new StringBuffer(String.valueOf(lvl.getPass()));
 			passStr.deleteCharAt(0);
-			pass = "Yes, " + emojiLock + " passcode: " + String.format("%06d", Integer.parseInt(passStr.toString()));
+			pass = "Yes, " + Emojis.LOCK + " passcode: " + String.format("%06d", Integer.parseInt(passStr.toString()));
 		}
 		
 		String objCount = "**Object count:** ";
@@ -173,13 +163,13 @@ public class GDUtils {
 				objCount += "More than ";
 			objCount += lvl.getObjectCount();
 			if (lvl.getObjectCount() > 40000)
-				objCount += " " + emojiObjectOverflow + " **This level may lag on low end devices**";
+				objCount += " " + Emojis.OBJECT_OVERFLOW + " **This level may lag on low end devices**";
 		} else
 			objCount += "_Info unavailable for levels playable in GD 2.0 or older_";
 		objCount += "\n";
 		
 		eb.appendField(":musical_note:   " + formatSongPrimaryMetadata(lp.getSong()), 
-				formatSongSecondaryMetadata(lp.getSong(), customEmojis) + "\n"
+				formatSongSecondaryMetadata(lp.getSong()) + "\n"
 				+ "───────────────────\n"
 				+ "**Level ID:** " + lvl.getId() + "\n"
 				+ "**Level version:** " + lvl.getLevelVersion() + "\n"
@@ -188,8 +178,8 @@ public class GDUtils {
 				+ "**Last Updated:** " + lvl.getLastUpdatedTimestamp() + " ago\n"
 				+ "**Copyable:** " + pass + "\n"
 				+ objCount
-				+ (lvl.getOriginalLevelID() > 0 ? emojiCopy + " This level is a copy of " + lvl.getOriginalLevelID() + "\n" : "")
-				+ (lvl.getFeaturedScore() > 0 ? "───────────────────\n" + emojiIconNAFeatured + "This level has been placed in the Featured section with a score of **"
+				+ (lvl.getOriginalLevelID() > 0 ? Emojis.COPY + " This level is a copy of " + lvl.getOriginalLevelID() + "\n" : "")
+				+ (lvl.getFeaturedScore() > 0 ? "───────────────────\n" + Emojis.ICON_NA_FEATURED + "This level has been placed in the Featured section with a score of **"
 						+ lvl.getFeaturedScore() + "** (the higher this score is, the higher it's placed in the Featured section)\n" : ""), false);
 
 		return eb.build();
@@ -342,15 +332,12 @@ public class GDUtils {
 	 * @param song - the song
 	 * @return String
 	 */
-	public static String formatSongSecondaryMetadata(GDSong song, boolean customEmojis) {
-		String emojiPlay = customEmojis ? "" + Emojis.PLAY : ":arrow_forward:";
-		String emojiDownload = customEmojis ? "" + Emojis.DOWNLOAD_SONG : ":inbox_tray:";
-		
+	public static String formatSongSecondaryMetadata(GDSong song) {
 		if (song == null)
 			return ":warning: This level is using a song that doesn't exist at all on Newgrounds";
 		return song.isCustom() ? ("SongID: " + song.getSongID() + " - Size: " + song.getSongSize() + "MB\n"
-				+ emojiPlay + " [Play on Newgrounds](https://www.newgrounds.com/audio/listen/" + song.getSongID() + ")  "
-				+ emojiDownload + " [Download MP3](" + song.getDownloadURL() + ")") : "Geometry Dash native audio track";
+				+ Emojis.PLAY + " [Play on Newgrounds](https://www.newgrounds.com/audio/listen/" + song.getSongID() + ")  "
+				+ Emojis.DOWNLOAD_SONG + " [Download MP3](" + song.getDownloadURL() + ")") : "Geometry Dash native audio track";
 	}
 
 	/**

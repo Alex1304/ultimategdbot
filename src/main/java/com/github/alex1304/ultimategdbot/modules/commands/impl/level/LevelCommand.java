@@ -151,7 +151,7 @@ public class LevelCommand implements Command {
 				message += "\nYou can go back to search results by typing `back`";
 
 			IMessage output = BotUtils.sendMessage(event0.getChannel(), message, GDUtils.buildEmbedForGDLevel("Search result",
-					"https://i.imgur.com/a9B6LyS.png", lp, lvl, true));
+					"https://i.imgur.com/a9B6LyS.png", lp, lvl));
 
 			if (canGoBack) {
 				try {
