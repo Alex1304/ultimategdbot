@@ -6,8 +6,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.github.alex1304.jdash.api.request.GDLevelSearchHttpRequest;
+import com.github.alex1304.jdash.component.GDComponentList;
+import com.github.alex1304.jdash.component.GDLevelPreview;
+import com.github.alex1304.jdashevents.common.CommonEvents;
+import com.github.alex1304.jdashevents.manager.GDEventManager;
 import com.github.alex1304.ultimategdbot.core.UltimateGDBot;
 import com.github.alex1304.ultimategdbot.exceptions.CommandFailedException;
+import com.github.alex1304.ultimategdbot.exceptions.GDServersUnavailableException;
+import com.github.alex1304.ultimategdbot.exceptions.InvalidCommandArgsException;
 import com.github.alex1304.ultimategdbot.exceptions.ModuleUnavailableException;
 import com.github.alex1304.ultimategdbot.modules.Module;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.account.AccountCommand;
@@ -75,6 +82,33 @@ public class CommandsModule implements Module {
 		registerCommand("account", new AccountCommand());
 		registerCommand("leaderboard", (event, args) -> executeCommand(new LeaderboardMenu(), event, args));
 		registerCommand("setup", new SetupCommand());
+		
+		// Temporary commands
+		
+		registerCommand("ratelevel", (event, args) -> {
+			if (args.isEmpty())
+				throw new InvalidCommandArgsException("`" + event.getMessage().getContent() + " <level ID>`");
+			
+			long id = -1;
+			
+			try {
+				id = Long.parseLong(args.get(0));
+			} catch (NumberFormatException e) {
+				throw new CommandFailedException("Invalid ID");
+			}
+			
+			final long fid = id;
+			GDComponentList<GDLevelPreview> lplist = (GDComponentList<GDLevelPreview>) UltimateGDBot.cache()
+					.readAndWriteIfNotExists("gd.levelsearch." + fid, () ->
+							UltimateGDBot.gdClient().fetch(new GDLevelSearchHttpRequest("" + fid, 0)));
+			
+			if (lplist == null)
+				throw new GDServersUnavailableException();
+			if (lplist.isEmpty())
+				throw new CommandFailedException("Level not found");
+			
+			GDEventManager.getInstance().dispatch(CommonEvents.AWARDED_LEVEL_ADDED, lplist);
+		});
 	}
 	
 	/**

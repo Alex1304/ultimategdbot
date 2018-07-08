@@ -116,7 +116,7 @@ public class LevelCommand implements Command {
 		
 		int i = 1;
 		for (GDLevelPreview lp : results) {
-			String coins = GDUtils.coinsToEmoji(lp.getCoinCount(), lp.hasCoinsVerified(), true);
+			String coins = GDUtils.coinsToEmoji(lp.getCoinCount(), lp.hasCoinsVerified(), true, true);
 			output.append(String.format("`%02d` - %s%s | __**%s**__ by **%s** (%d)\n"
 					+ "      Song: %s\n",
 					i,
@@ -151,7 +151,7 @@ public class LevelCommand implements Command {
 				message += "\nYou can go back to search results by typing `back`";
 
 			IMessage output = BotUtils.sendMessage(event0.getChannel(), message, GDUtils.buildEmbedForGDLevel("Search result",
-					"https://i.imgur.com/a9B6LyS.png", lp, lvl));
+					"https://i.imgur.com/a9B6LyS.png", lp, lvl, true));
 
 			if (canGoBack) {
 				try {

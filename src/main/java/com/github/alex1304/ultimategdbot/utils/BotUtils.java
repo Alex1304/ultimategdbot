@@ -12,14 +12,26 @@ import com.github.alex1304.ultimategdbot.core.Database;
 import com.github.alex1304.ultimategdbot.core.UltimateGDBot;
 import com.github.alex1304.ultimategdbot.dbentities.GlobalSettings;
 import com.github.alex1304.ultimategdbot.dbentities.GuildSettings;
+import com.mrpowergamerbr.temmiewebhook.DiscordEmbed;
+import com.mrpowergamerbr.temmiewebhook.DiscordMessage;
+import com.mrpowergamerbr.temmiewebhook.TemmieWebhook;
+import com.mrpowergamerbr.temmiewebhook.embed.AuthorEmbed;
+import com.mrpowergamerbr.temmiewebhook.embed.FieldEmbed;
+import com.mrpowergamerbr.temmiewebhook.embed.FooterEmbed;
+import com.mrpowergamerbr.temmiewebhook.embed.ImageEmbed;
+import com.mrpowergamerbr.temmiewebhook.embed.ProviderEmbed;
+import com.mrpowergamerbr.temmiewebhook.embed.ThumbnailEmbed;
+import com.mrpowergamerbr.temmiewebhook.embed.VideoEmbed;
 
 import sx.blah.discord.api.internal.json.objects.EmbedObject;
+import sx.blah.discord.api.internal.json.objects.EmbedObject.EmbedFieldObject;
 import sx.blah.discord.handle.obj.IChannel;
 import sx.blah.discord.handle.obj.IGuild;
 import sx.blah.discord.handle.obj.IIDLinkedObject;
 import sx.blah.discord.handle.obj.IMessage;
 import sx.blah.discord.handle.obj.IRole;
 import sx.blah.discord.handle.obj.IUser;
+import sx.blah.discord.handle.obj.IWebhook;
 import sx.blah.discord.util.RequestBuffer;
 
 /**
@@ -433,6 +445,65 @@ public class BotUtils {
 		
 		
 		return new StringBuffer(sb.toString().replaceFirst(escapeRegex(concatArgs.toString()), "")).reverse().toString();
+	}
+	
+	public static DiscordEmbed toWebhookEmbed(EmbedObject d4jembed) {
+		DiscordEmbed de = new DiscordEmbed(d4jembed.title, d4jembed.description);
+		
+		if (d4jembed.author != null)
+			de.setAuthor(new AuthorEmbed(d4jembed.author.name, d4jembed.author.url, d4jembed.author.icon_url,
+					d4jembed.author.proxy_icon_url));
+		de.setColor(d4jembed.color);
+		
+		List<FieldEmbed> fields = new ArrayList<>();
+		for (EmbedFieldObject efo : d4jembed.fields)
+			fields.add(new FieldEmbed(efo.name, efo.value, efo.inline));
+		
+		de.setFields(fields);
+		
+		if (d4jembed.footer != null)
+			de.setFooter(new FooterEmbed(d4jembed.footer.text, d4jembed.footer.icon_url, 
+					d4jembed.footer.proxy_icon_url));
+		
+		if (d4jembed.image != null)
+			de.setImage(new ImageEmbed(d4jembed.image.url, d4jembed.image.proxy_url, d4jembed.image.height, 
+					d4jembed.image.width));
+		
+		if (d4jembed.provider != null)
+			de.setProvider(new ProviderEmbed(d4jembed.provider.name, d4jembed.provider.url));
+		
+		if (d4jembed.thumbnail != null)
+			de.setThumbnail(new ThumbnailEmbed(d4jembed.thumbnail.url, d4jembed.thumbnail.proxy_url, 
+					d4jembed.thumbnail.height, d4jembed.thumbnail.width));
+		
+		de.setTimestamp(d4jembed.timestamp);
+		de.setType(d4jembed.type);
+		de.setUrl(d4jembed.url);
+		
+		if (d4jembed.video != null)
+			de.setVideo(new VideoEmbed(d4jembed.video.url, d4jembed.video.height, d4jembed.video.width));
+		
+		return de;
+	}
+	
+	public static TemmieWebhook toTemmieWebhook(IWebhook w) {
+		return new TemmieWebhook("https://discordapp.com/api/webhooks/" + w.getStringID() + "/" + w.getToken());
+	}
+	
+	public static void sendWebhookMessage(IChannel channel, String content, EmbedObject obj) {
+		IWebhook w = null;
+		List<IWebhook> webhooks = channel.getWebhooks();
+		
+		if (webhooks.isEmpty()) {
+			w = channel.createWebhook("UltimateGDBot");
+		} else
+			w = webhooks.get(0);
+		
+		toTemmieWebhook(w).sendMessage(DiscordMessage.builder()
+				.embed(toWebhookEmbed(obj))
+				.content(content)
+				.username("UltimateGDBot")
+				.build());
 	}
 
 }
