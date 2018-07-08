@@ -327,11 +327,12 @@ public class BotUtils {
 		long seconds =  TimeUnit.MILLISECONDS.toSeconds(tmp);
 		tmp -= TimeUnit.SECONDS.toMillis(seconds);
 		
-		return String.format(" %d day%s %d hour%s %d minute%s %d second%s",
+		return String.format(" %d day%s %d hour%s %d minute%s %d second%s %d millisecond%s",
 				days, days < 2 ? "" : "s",
 				hours, hours < 2 ? "" : "s",
 				minutes, minutes < 2 ? "" : "s",
-				seconds, seconds < 2 ? "" : "s"
+				seconds, seconds < 2 ? "" : "s",
+				millis % 1000, millis % 1000 < 2 ? "" : "s"
 		).replaceAll(" 0 [^ ]+", "").trim();
 	}
 	

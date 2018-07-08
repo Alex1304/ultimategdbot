@@ -1,5 +1,6 @@
 package com.github.alex1304.ultimategdbot.modules.commands.impl.setup;
 
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
@@ -47,7 +48,7 @@ public class SetupCommand implements Command {
 		
 		final GuildSettings finalGs = gs;
 		InteractiveMenu setupMenu = new InteractiveMenu();
-		Procedure reopenMenu = () -> CommandsModule.executeCommand(this, event, args);
+		Procedure reopenMenu = () -> CommandsModule.executeCommand(this, event, new ArrayList<>());
 		
 		setupMenu.setMenuContent("This menu will allow you to configure UltimateGDBot for your server."
 				+ "You can for example choose a channel for Geometry Dash event notifications and choose "
