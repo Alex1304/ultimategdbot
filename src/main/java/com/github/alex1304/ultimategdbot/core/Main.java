@@ -2,6 +2,7 @@ package com.github.alex1304.ultimategdbot.core;
 
 import com.github.alex1304.ultimategdbot.exceptions.ModuleUnavailableException;
 import com.github.alex1304.ultimategdbot.modules.commands.CommandsModule;
+import com.github.alex1304.ultimategdbot.modules.gdevents.GDEventsModule;
 import com.github.alex1304.ultimategdbot.modules.reply.ReplyModule;
 
 import sx.blah.discord.api.events.IListener;
@@ -25,6 +26,7 @@ public class Main {
 		
 		UltimateGDBot.addModule("commands", new CommandsModule());
 		UltimateGDBot.addModule("reply", new ReplyModule());
+		UltimateGDBot.addModule("gd_events", new GDEventsModule());
 		
 		UltimateGDBot.client().login();
 	}
