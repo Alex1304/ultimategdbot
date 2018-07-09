@@ -140,7 +140,7 @@ public class GDUtils {
 
 		eb.appendField(Emojis.PLAY + "  __" + lvl.getName() + "__ by " + lp.getCreatorName() + "",
 				"**Description:** " + (lvl.getDescription().isEmpty() ? "*(No description provided)*" : BotUtils.escapeMarkdown(lvl.getDescription())), true);
-		eb.appendField("Coins: " + coinsToEmoji(lvl.getCoinCount(), lvl.hasCoinsVerified(), false, false),
+		eb.appendField("Coins: " + coinsToEmoji(lvl.getCoinCount(), lvl.hasCoinsVerified(), false, true),
 				Emojis.DOWNLOADS + " " + lvl.getDownloads() + "\t\t"
 						+ (lvl.getLikes() < 0 ? Emojis.DISLIKE + " " : Emojis.LIKE + " ") + lvl.getLikes() + "\t\t"
 						+ Emojis.LENGTH + " " + lvl.getLength().toString().toUpperCase() + "\n"
