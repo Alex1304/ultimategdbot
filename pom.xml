@@ -185,14 +185,6 @@
 			</build>
 		</profile>
 	</profiles>
-	
-	<repositories>
-		<repository>
-			<id>jitpack.io</id>
-			<url>https://jitpack.io</url>
-	    </repository>
-	</repositories>
-	
 
 	<dependencies>
 		<dependency>
@@ -235,11 +227,6 @@
 			<groupId>com.github.alex1304</groupId>
 			<artifactId>jdash-events</artifactId>
 			<version>1.0.5</version>
-		</dependency>
-		<dependency>
-		    <groupId>com.github.MrPowerGamerBR</groupId>
-			<artifactId>TemmieWebhook</artifactId>
-			<version>-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
 </project>
