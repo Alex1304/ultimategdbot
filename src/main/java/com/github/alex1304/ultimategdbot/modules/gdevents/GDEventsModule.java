@@ -10,11 +10,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import com.github.alex1304.jdash.api.request.GDLevelHttpRequest;
-import com.github.alex1304.jdash.api.request.GDLevelSearchHttpRequest;
 import com.github.alex1304.jdash.component.GDComponentList;
-import com.github.alex1304.jdash.component.GDLevel;
 import com.github.alex1304.jdash.component.GDLevelPreview;
+import com.github.alex1304.jdash.component.GDTimelyLevel;
 import com.github.alex1304.jdash.exceptions.GDAPIException;
 import com.github.alex1304.jdashevents.GDEvent;
 import com.github.alex1304.jdashevents.common.CommonEvents;
@@ -74,23 +72,16 @@ public class GDEventsModule implements Module {
 				List<IMessage> ml = newAwardedBroadcastResults.get(lp1.getId());
 				
 				if (ml != null) {
-					GDLevel lvl = (GDLevel) UltimateGDBot.cache()
-							.readAndWriteIfNotExists("gd.level." + lp2.getId(), () -> {
-								return UltimateGDBot.gdClient().fetch(new GDLevelHttpRequest(lp2.getId()));
-							});
+					EmbedObject embed = GDUtils.buildEmbedForGDLevel("New rated level!", "https://i.imgur.com/asoMj1W.png", lp2);
 					
-					if (lvl != null) {
-						EmbedObject embed = GDUtils.buildEmbedForGDLevel("New rated level!", "https://i.imgur.com/asoMj1W.png", lp2, lvl);
-						
-						ml.parallelStream().forEach(m -> {
-							RequestBuffer.request(() -> {
-								try {
-									m.edit(m.getContent(), embed);
-								} catch (MissingPermissionsException | DiscordException e) {
-								}
-							});
+					ml.parallelStream().forEach(m -> {
+						RequestBuffer.request(() -> {
+							try {
+								m.edit(m.getContent(), embed);
+							} catch (MissingPermissionsException | DiscordException e) {
+							}
 						});
-					}
+					});
 				}
 			}
 		}));
@@ -198,12 +189,7 @@ public class GDEventsModule implements Module {
 					.collect(Collectors.toList());
 			
 			for (GDLevelPreview lp : lvllist) {
-				GDLevel lvl = (GDLevel) UltimateGDBot.cache()
-						.readAndWriteIfNotExists("gd.level." + lp.getId(), () ->
-								UltimateGDBot.gdClient().fetch(new GDLevelHttpRequest(lp.getId())));
-				
-				if (lvl != null) {
-					EmbedObject embed = GDUtils.buildEmbedForGDLevel(authorName, authorIcon, lp, lvl);
+					EmbedObject embed = GDUtils.buildEmbedForGDLevel(authorName, authorIcon, lp);
 					
 					MessageBroadcaster mb = new MessageBroadcaster(channels, channel -> {
 						GuildSettings gs = channelToGS.get(channel.getLongID());
@@ -223,13 +209,12 @@ public class GDEventsModule implements Module {
 					});
 					
 					mb.broadcast();
-				}
 			}
 		};
 	}
 	
 
-	public Consumer<GDUpdatedComponent<GDLevel>> broadcastUpdatedLevelConsumer(String authorName, String authorIcon, String messageContent, String eventName) {
+	public Consumer<GDUpdatedComponent<GDTimelyLevel>> broadcastUpdatedLevelConsumer(String authorName, String authorIcon, String messageContent, String eventName) {
 		return updated -> {
 			long beginMillis = System.currentTimeMillis();
 			List<GuildSettings> gsList = DatabaseUtils.query(GuildSettings.class, "from GuildSettings g where g.channelTimelyLevels > 0");
@@ -257,31 +242,25 @@ public class GDEventsModule implements Module {
 					.filter(c -> c != null)
 					.collect(Collectors.toList());
 			
-			GDLevel lvl = updated.getAfterUpdate();
+			GDTimelyLevel lvl = updated.getAfterUpdate();
 			
-			GDComponentList<GDLevelPreview> lp = (GDComponentList<GDLevelPreview>) UltimateGDBot.cache()
-					.readAndWriteIfNotExists("gd.levelsearch." + lvl.getId(), () -> 
-							UltimateGDBot.gdClient().fetch(new GDLevelSearchHttpRequest("" + lvl.getId(), 0)));
+			EmbedObject embed = GDUtils.buildEmbedForGDLevel(authorName + "(#" + lvl.getTimelyNumber() + ")", authorIcon, lvl);
 			
-			if (lp != null && !lp.isEmpty()) {
-				EmbedObject embed = GDUtils.buildEmbedForGDLevel(authorName, authorIcon, lp.get(0), lvl);
-				
-				MessageBroadcaster mb = new MessageBroadcaster(channels, channel -> {
-					GuildSettings gs = channelToGS.get(channel.getLongID());
-					RoleAwardedLevelsSetting rals = new RoleAwardedLevelsSetting(gs);
-					return new OptionalRoleTagMessage(messageContent, embed, rals.getValue());
-				});
-				
-				mb.setOnDone((prepTime, broadcastTime) -> {
-					long realPrepTime = prepTime + (System.currentTimeMillis() - beginMillis);
-					UltimateGDBot.logSuccess("Successfully processed **" + eventName + "** event for level " + embed.fields[0].name + "\n"
-							+ "Gathered info on subscribed guilds in: " + BotUtils.formatTimeMillis(realPrepTime) + "\n"
-							+ "Sent messages in all guilds in: " + BotUtils.formatTimeMillis(broadcastTime) + "\n"
-							+ "**Total execution time: " + BotUtils.formatTimeMillis(realPrepTime + broadcastTime) + "**");
-				});
-				
-				mb.broadcast();
-			}
+			MessageBroadcaster mb = new MessageBroadcaster(channels, channel -> {
+				GuildSettings gs = channelToGS.get(channel.getLongID());
+				RoleAwardedLevelsSetting rals = new RoleAwardedLevelsSetting(gs);
+				return new OptionalRoleTagMessage(messageContent, embed, rals.getValue());
+			});
+			
+			mb.setOnDone((prepTime, broadcastTime) -> {
+				long realPrepTime = prepTime + (System.currentTimeMillis() - beginMillis);
+				UltimateGDBot.logSuccess("Successfully processed **" + eventName + "** event for level " + embed.fields[0].name + "\n"
+						+ "Gathered info on subscribed guilds in: " + BotUtils.formatTimeMillis(realPrepTime) + "\n"
+						+ "Sent messages in all guilds in: " + BotUtils.formatTimeMillis(broadcastTime) + "\n"
+						+ "**Total execution time: " + BotUtils.formatTimeMillis(realPrepTime + broadcastTime) + "**");
+			});
+			
+			mb.broadcast();
 		};
 	}
 
