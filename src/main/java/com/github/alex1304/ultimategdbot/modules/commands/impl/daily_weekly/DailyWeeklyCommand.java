@@ -41,7 +41,7 @@ public class DailyWeeklyCommand implements Command {
 				+ ", here is the " + (weekly ? "Weekly demon" : "Daily level") 
 				+ " of today. Next in " 
 				+ BotUtils.formatTimeMillis(tl.getNextTimelyCooldown() * 1000), 
-				GDUtils.buildEmbedForGDLevel((weekly ? "Weekly demon" : "Daily level") + "(#" + tl.getTimelyNumber() + ")",
+				GDUtils.buildEmbedForGDLevel((weekly ? "Weekly demon" : "Daily level") + " (#" + tl.getTimelyNumber() + ")",
 						(weekly ? "https://i.imgur.com/kcsP5SN.png" : "https://i.imgur.com/enpYuB8.png"), tl));
 	}
 

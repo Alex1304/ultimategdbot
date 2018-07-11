@@ -1,6 +1,6 @@
 package com.github.alex1304.ultimategdbot.modules.gdevents;
 
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -32,6 +32,7 @@ import com.github.alex1304.ultimategdbot.modules.gdevents.broadcast.OptionalRole
 import com.github.alex1304.ultimategdbot.utils.BotUtils;
 import com.github.alex1304.ultimategdbot.utils.DatabaseUtils;
 import com.github.alex1304.ultimategdbot.utils.GDUtils;
+import com.github.alex1304.ultimategdbot.utils.Procedure;
 
 import sx.blah.discord.api.internal.json.objects.EmbedObject;
 import sx.blah.discord.handle.obj.IChannel;
@@ -54,10 +55,12 @@ public class GDEventsModule implements Module {
 	private AwardedLevelEventScanner als;
 	private DailyLevelEventScanner dls;
 	private WeeklyDemonEventScanner wds;
-	private Map<Long, List<IMessage>> newAwardedBroadcastResults;	
+	private Map<Long, List<IMessage>> newAwardedBroadcastResults;
+	private Map<Long, Procedure> awardedPendingEdit;
 	
 	public GDEventsModule() {
-		this.newAwardedBroadcastResults = new HashMap<>();
+		this.newAwardedBroadcastResults = new ConcurrentHashMap<>();
+		this.awardedPendingEdit = new ConcurrentHashMap<>();
 		
 		GDEventManager.getInstance().registerEvent(new GDEvent<>(CommonEvents.AWARDED_LEVEL_ADDED,
 				broadcastLevelListConsumer("New rated level!", "https://i.imgur.com/asoMj1W.png", 
@@ -74,14 +77,20 @@ public class GDEventsModule implements Module {
 				if (ml != null) {
 					EmbedObject embed = GDUtils.buildEmbedForGDLevel("New rated level!", "https://i.imgur.com/asoMj1W.png", lp2);
 					
-					ml.parallelStream().forEach(m -> {
-						RequestBuffer.request(() -> {
-							try {
-								m.edit(m.getContent(), embed);
-							} catch (MissingPermissionsException | DiscordException e) {
-							}
+					Procedure doEdit = () ->
+						ml.parallelStream().forEach(m -> {
+							RequestBuffer.request(() -> {
+								try {
+									m.edit(m.getContent(), embed);
+								} catch (MissingPermissionsException | DiscordException e) {
+								}
+							});
 						});
-					});
+						
+					if (!ml.isEmpty())
+						doEdit.run();
+					else
+						awardedPendingEdit.put(lp2.getId(), doEdit);
 				}
 			}
 		}));
@@ -163,6 +172,10 @@ public class GDEventsModule implements Module {
 	public Consumer<GDComponentList<GDLevelPreview>> broadcastLevelListConsumer(String authorName, String authorIcon, String messageContent, String eventName, boolean saveResults) {
 		return lvllist -> {
 			long beginMillis = System.currentTimeMillis();
+			
+			if (saveResults)
+				lvllist.forEach(l -> newAwardedBroadcastResults.put(l.getId(), new ArrayList<>()));
+			
 			List<GuildSettings> gsList = DatabaseUtils.query(GuildSettings.class, "from GuildSettings g where g.channelAwardedLevels > 0");
 			
 			Map<Long, GuildSettings> channelToGS = new ConcurrentHashMap<>();
@@ -204,8 +217,13 @@ public class GDEventsModule implements Module {
 								+ "Sent messages in all guilds in: " + BotUtils.formatTimeMillis(broadcastTime) + "\n"
 								+ "**Total execution time: " + BotUtils.formatTimeMillis(realPrepTime + broadcastTime) + "**");
 						
-						if (saveResults)
+						if (saveResults) {
 							newAwardedBroadcastResults.put(lp.getId(), mb.getResults());
+							Procedure doEdit = awardedPendingEdit.get(lp.getId());
+							if (doEdit != null)
+								doEdit.run();
+							awardedPendingEdit.remove(lp.getId());
+						}
 					});
 					
 					mb.broadcast();
@@ -244,7 +262,7 @@ public class GDEventsModule implements Module {
 			
 			GDTimelyLevel lvl = updated.getAfterUpdate();
 			
-			EmbedObject embed = GDUtils.buildEmbedForGDLevel(authorName + "(#" + lvl.getTimelyNumber() + ")", authorIcon, lvl);
+			EmbedObject embed = GDUtils.buildEmbedForGDLevel(authorName + " (#" + lvl.getTimelyNumber() + ")", authorIcon, lvl);
 			
 			MessageBroadcaster mb = new MessageBroadcaster(channels, channel -> {
 				GuildSettings gs = channelToGS.get(channel.getLongID());
