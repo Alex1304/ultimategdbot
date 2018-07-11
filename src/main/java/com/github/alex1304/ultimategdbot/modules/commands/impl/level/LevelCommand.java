@@ -19,6 +19,7 @@ import com.github.alex1304.ultimategdbot.modules.commands.NavigationMenu;
 import com.github.alex1304.ultimategdbot.modules.reply.Reply;
 import com.github.alex1304.ultimategdbot.modules.reply.ReplyModule;
 import com.github.alex1304.ultimategdbot.utils.BotUtils;
+import com.github.alex1304.ultimategdbot.utils.Emojis;
 import com.github.alex1304.ultimategdbot.utils.GDUtils;
 import com.github.alex1304.ultimategdbot.utils.Procedure;
 
@@ -116,8 +117,8 @@ public class LevelCommand implements Command {
 		
 		int i = 1;
 		for (GDLevelPreview lp : results) {
-			String coins = GDUtils.coinsToEmoji(lp.getCoinCount(), lp.hasCoinsVerified(), true, true);
-			output.append(String.format("`%02d` - %s%s | __**%s**__ by **%s** (%d)\n"
+			String coins = GDUtils.coinsToEmoji(lp.getCoinCount(), lp.hasCoinsVerified(), true);
+			output.append(String.format("`%02d` - %s%s | __**%s**__ by **%s** (%d) %s%s\n"
 					+ "      Song: %s\n",
 					i,
 					GDUtils.difficultyToEmoji(lp),
@@ -125,6 +126,8 @@ public class LevelCommand implements Command {
 					lp.getName(),
 					lp.getCreatorName(),
 					lp.getId(),
+					lp.getOriginalLevelID() > 0 ? Emojis.COPY : "",
+					lp.getObjectCount() > 40000 ? Emojis.OBJECT_OVERFLOW : "",
 					GDUtils.formatSongPrimaryMetadata(lp.getSong())));
 			i++;
 		}
@@ -149,9 +152,16 @@ public class LevelCommand implements Command {
 
 			if (canGoBack && UltimateGDBot.isModuleAvailable("reply"))
 				message += "\nYou can go back to search results by typing `back`";
+			
+			int pass = lvl.getPass();
+			String upload = lvl.getUploadTimestamp();
+			String update = lvl.getLastUpdatedTimestamp();
+			
+			lvl = new GDLevel(lp, pass, upload, update);
+			lvl.setCreatorName(lp.getCreatorName());
 
 			IMessage output = BotUtils.sendMessage(event0.getChannel(), message, GDUtils.buildEmbedForGDLevel("Search result",
-					"https://i.imgur.com/a9B6LyS.png", lp, lvl));
+					"https://i.imgur.com/a9B6LyS.png", lvl));
 
 			if (canGoBack) {
 				try {
