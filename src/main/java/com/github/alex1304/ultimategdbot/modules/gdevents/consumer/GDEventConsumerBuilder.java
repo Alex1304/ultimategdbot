@@ -40,7 +40,7 @@ public abstract class GDEventConsumerBuilder<T extends GDComponent> {
 	public Consumer<T> build() {
 		return component -> {
 			long beginMillis = System.currentTimeMillis();
-			UltimateGDBot.logInfo("GD event fired: **" + eventName + "** with data\n```\n" + component + "\n```\n");
+			UltimateGDBot.logInfo("GD event fired: **" + eventName + "** for " + componentToHumanReadableString(component));
 			
 			this.executeBefore(component);
 			

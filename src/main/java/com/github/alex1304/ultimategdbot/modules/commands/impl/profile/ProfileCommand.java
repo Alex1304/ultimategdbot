@@ -11,6 +11,7 @@ import com.github.alex1304.ultimategdbot.exceptions.GDServersUnavailableExceptio
 import com.github.alex1304.ultimategdbot.exceptions.InvalidCommandArgsException;
 import com.github.alex1304.ultimategdbot.exceptions.UnknownUserException;
 import com.github.alex1304.ultimategdbot.modules.commands.Command;
+import com.github.alex1304.ultimategdbot.utils.AuthorObjects;
 import com.github.alex1304.ultimategdbot.utils.BotUtils;
 import com.github.alex1304.ultimategdbot.utils.DatabaseUtils;
 import com.github.alex1304.ultimategdbot.utils.GDUtils;
@@ -58,8 +59,7 @@ public class ProfileCommand implements Command {
 			throw new GDServersUnavailableException();
 		
 		BotUtils.sendMessage(event.getChannel(), event.getAuthor().mention() + ", here is the profile of "
-				+ "user **" + user.getName() + "** :", GDUtils.buildEmbedForGDUser("User profile",
-						"https://i.imgur.com/ppg4HqJ.png", user));
+				+ "user **" + user.getName() + "** :", GDUtils.buildEmbedForGDUser(AuthorObjects.userProfile(), user));
 		
 		BotUtils.typing(event.getChannel(), false);
 	}

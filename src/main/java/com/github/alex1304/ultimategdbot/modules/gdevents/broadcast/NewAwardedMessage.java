@@ -29,11 +29,14 @@ public class NewAwardedMessage extends OptionalRoleTagMessage {
 
 	public NewAwardedMessage(EmbedObject baseEmbed, IRole roleToPing) {
 		super("", baseEmbed, roleToPing);
-		this.setBaseContent(RANDOM_TEXT.get(new Random().nextInt(RANDOM_TEXT.size())));
 	}
 	
 	public NewAwardedMessage() {
-		this.setBaseContent(RANDOM_TEXT.get(new Random().nextInt(RANDOM_TEXT.size())));
 	}
-
+	
+	@Override
+	public String buildContent() {
+		this.setBaseContent(RANDOM_TEXT.get(new Random().nextInt(RANDOM_TEXT.size())));
+		return super.buildContent();
+	}
 }

@@ -4,8 +4,11 @@ import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 
+import com.github.alex1304.ultimategdbot.dbentities.AwardedLevel;
+import com.github.alex1304.ultimategdbot.dbentities.GDMod;
 import com.github.alex1304.ultimategdbot.dbentities.GlobalSettings;
 import com.github.alex1304.ultimategdbot.dbentities.GuildSettings;
+import com.github.alex1304.ultimategdbot.dbentities.TimelyLevel;
 import com.github.alex1304.ultimategdbot.dbentities.UserSettings;
 
 /**
@@ -25,6 +28,9 @@ public class Database {
 		config.addClass(GuildSettings.class);
 		config.addClass(GlobalSettings.class);
 		config.addClass(UserSettings.class);
+		config.addClass(AwardedLevel.class);
+		config.addClass(TimelyLevel.class);
+		config.addClass(GDMod.class);
 		sessionFactory = config.buildSessionFactory();
 	}
 	

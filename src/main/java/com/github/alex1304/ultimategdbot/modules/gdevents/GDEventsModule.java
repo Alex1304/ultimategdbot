@@ -6,6 +6,7 @@ import java.util.TimerTask;
 
 import com.github.alex1304.jdash.component.GDComponentList;
 import com.github.alex1304.jdash.component.GDLevelPreview;
+import com.github.alex1304.jdash.component.property.GDUserRole;
 import com.github.alex1304.jdash.exceptions.GDAPIException;
 import com.github.alex1304.jdashevents.GDEvent;
 import com.github.alex1304.jdashevents.common.CommonEvents;
@@ -19,7 +20,9 @@ import com.github.alex1304.ultimategdbot.modules.Module;
 import com.github.alex1304.ultimategdbot.modules.gdevents.broadcast.AwardedDeletedMessage;
 import com.github.alex1304.ultimategdbot.modules.gdevents.broadcast.NewAwardedMessage;
 import com.github.alex1304.ultimategdbot.modules.gdevents.broadcast.TimelyChangedMessage;
+import com.github.alex1304.ultimategdbot.modules.gdevents.broadcast.UserModStatusMessage;
 import com.github.alex1304.ultimategdbot.modules.gdevents.consumer.GDAwardedConsumerBuilder;
+import com.github.alex1304.ultimategdbot.modules.gdevents.consumer.GDModConsumerBuilder;
 import com.github.alex1304.ultimategdbot.modules.gdevents.consumer.GDTimelyConsumerBuilder;
 import com.github.alex1304.ultimategdbot.utils.AuthorObjects;
 import com.github.alex1304.ultimategdbot.utils.GDUtils;
@@ -56,12 +59,28 @@ public class GDEventsModule implements Module {
 
 	private static final GDTimelyConsumerBuilder WEEKLY_CHANGED_CB = new GDTimelyConsumerBuilder(
 			"Weekly Demon Changed", num -> AuthorObjects.weeklyDemon(num), new TimelyChangedMessage(true));
+
+	private static final GDModConsumerBuilder USER_PROMOTED_ELDER_CB = new GDModConsumerBuilder(
+			"User Promoted Elder", AuthorObjects.userPromoted(), new UserModStatusMessage(true, GDUserRole.ELDER_MODERATOR));
+
+	private static final GDModConsumerBuilder USER_PROMOTED_MOD_CB = new GDModConsumerBuilder(
+			"User Promoted Mod", AuthorObjects.userPromoted(), new UserModStatusMessage(true, GDUserRole.MODERATOR));
+
+	private static final GDModConsumerBuilder USER_DEMOTED_MOD_CB = new GDModConsumerBuilder(
+			"User Demoted Mod", AuthorObjects.userDemoted(), new UserModStatusMessage(false, GDUserRole.MODERATOR));
+
+	private static final GDModConsumerBuilder USER_DEMOTED_USER_CB = new GDModConsumerBuilder(
+			"User Demoted User", AuthorObjects.userDemoted(), new UserModStatusMessage(false, GDUserRole.USER));
 	
 	public GDEventsModule() {
 		GDEventManager.getInstance().registerEvent(new GDEvent<>(CommonEvents.AWARDED_LEVEL_ADDED, AWARDED_ADDED_CB.build()));
 		GDEventManager.getInstance().registerEvent(new GDEvent<>(CommonEvents.AWARDED_LEVEL_DELETED, AWARDED_DELETED_CB.build()));
 		GDEventManager.getInstance().registerEvent(new GDEvent<>(CommonEvents.DAILY_LEVEL_CHANGED, DAILY_CHANGED_CB.build()));
 		GDEventManager.getInstance().registerEvent(new GDEvent<>(CommonEvents.WEEKLY_DEMON_CHANGED, WEEKLY_CHANGED_CB.build()));
+		GDEventManager.getInstance().registerEvent(new GDEvent<>("USER_PROMOTED_ELDER", USER_PROMOTED_ELDER_CB.build()));
+		GDEventManager.getInstance().registerEvent(new GDEvent<>("USER_PROMOTED_MOD", USER_PROMOTED_MOD_CB.build()));
+		GDEventManager.getInstance().registerEvent(new GDEvent<>("USER_DEMOTED_MOD", USER_DEMOTED_MOD_CB.build()));
+		GDEventManager.getInstance().registerEvent(new GDEvent<>("USER_DEMOTED_USER", USER_DEMOTED_USER_CB.build()));
 		
 		GDEventManager.getInstance().registerEvent(new GDEvent<GDComponentList<GDUpdatedComponent<GDLevelPreview>>>(CommonEvents.AWARDED_LEVEL_UPDATED, (GDComponentList<GDUpdatedComponent<GDLevelPreview>> updated) -> {
 			for (GDUpdatedComponent<GDLevelPreview> ulp : updated) {

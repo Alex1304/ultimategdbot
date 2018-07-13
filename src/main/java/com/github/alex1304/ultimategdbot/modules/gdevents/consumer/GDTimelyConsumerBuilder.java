@@ -1,5 +1,6 @@
 package com.github.alex1304.ultimategdbot.modules.gdevents.consumer;
 
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -8,9 +9,12 @@ import com.github.alex1304.jdash.component.GDTimelyLevel;
 import com.github.alex1304.jdashevents.customcomponents.GDUpdatedComponent;
 import com.github.alex1304.ultimategdbot.core.UltimateGDBot;
 import com.github.alex1304.ultimategdbot.dbentities.GuildSettings;
+import com.github.alex1304.ultimategdbot.dbentities.TimelyLevel;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.setup.guildsettings.RoleTimelyLevelsSetting;
 import com.github.alex1304.ultimategdbot.modules.gdevents.broadcast.MessageBroadcaster;
 import com.github.alex1304.ultimategdbot.modules.gdevents.broadcast.OptionalRoleTagMessage;
+import com.github.alex1304.ultimategdbot.modules.gdevents.broadcast.TimelyChangedMessage;
+import com.github.alex1304.ultimategdbot.utils.DatabaseUtils;
 import com.github.alex1304.ultimategdbot.utils.GDUtils;
 
 import sx.blah.discord.api.internal.json.objects.EmbedObject;
@@ -26,7 +30,7 @@ public class GDTimelyConsumerBuilder extends GDEventConsumerBuilder<GDUpdatedCom
 
 	private Function<Long, AuthorObject> embedAuthor;
 
-	public GDTimelyConsumerBuilder(String eventName, Function<Long, AuthorObject> embedAuthor, OptionalRoleTagMessage messageToBroadcast) {
+	public GDTimelyConsumerBuilder(String eventName, Function<Long, AuthorObject> embedAuthor, TimelyChangedMessage messageToBroadcast) {
 		super(eventName, "channelTimelyLevels", messageToBroadcast);
 		this.embedAuthor = embedAuthor;
 	}
@@ -55,6 +59,12 @@ public class GDTimelyConsumerBuilder extends GDEventConsumerBuilder<GDUpdatedCom
 	protected void executeBefore(GDUpdatedComponent<GDTimelyLevel> component) {
 		UltimateGDBot.cache().write("gd.timely.true", null);
 		UltimateGDBot.cache().write("gd.timely.false", null);
+	}
+	
+	@Override
+	protected void executeAfter(GDUpdatedComponent<GDTimelyLevel> component) {
+		DatabaseUtils.save(new TimelyLevel(component.getAfterUpdate().getId(), new Timestamp(System.currentTimeMillis()),
+						((TimelyChangedMessage) messageToBroadcast).isWeekly()));
 	}
 	
 	@Override

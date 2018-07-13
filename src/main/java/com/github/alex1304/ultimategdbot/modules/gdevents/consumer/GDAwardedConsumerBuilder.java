@@ -1,5 +1,6 @@
 package com.github.alex1304.ultimategdbot.modules.gdevents.consumer;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -7,10 +8,12 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.github.alex1304.jdash.component.GDComponentList;
 import com.github.alex1304.jdash.component.GDLevelPreview;
+import com.github.alex1304.ultimategdbot.dbentities.AwardedLevel;
 import com.github.alex1304.ultimategdbot.dbentities.GuildSettings;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.setup.guildsettings.RoleAwardedLevelsSetting;
 import com.github.alex1304.ultimategdbot.modules.gdevents.broadcast.MessageBroadcaster;
 import com.github.alex1304.ultimategdbot.modules.gdevents.broadcast.OptionalRoleTagMessage;
+import com.github.alex1304.ultimategdbot.utils.DatabaseUtils;
 import com.github.alex1304.ultimategdbot.utils.GDUtils;
 import com.github.alex1304.ultimategdbot.utils.Procedure;
 
@@ -77,6 +80,8 @@ public class GDAwardedConsumerBuilder extends GDEventConsumerBuilder<GDComponent
 				if (doEdit != null)
 					doEdit.run();
 				awardedPendingEdit.remove(l.getId());
+				DatabaseUtils.save(new AwardedLevel(l.getId(), new Timestamp(System.currentTimeMillis()),
+						l.getDownloads(), l.getLikes()));
 			});
 		}
 	}

@@ -28,5 +28,16 @@ public class AuthorObjects {
 	public static AuthorObject searchResult() {
 		return new AuthorObject("Search result", "", "https://i.imgur.com/a9B6LyS.png", "");
 	}
-
+	
+	public static AuthorObject userProfile() {
+		return new AuthorObject("User profile", "", "https://i.imgur.com/ppg4HqJ.png", "");
+	}
+	
+	public static AuthorObject userPromoted() {
+		return new AuthorObject("User promoted!", "", "https://i.imgur.com/zY61GDD.png", "");
+	}
+	
+	public static AuthorObject userDemoted() {
+		return new AuthorObject("User demoted...", "", "https://i.imgur.com/X53HV7d.png", "");
+	}
 }
