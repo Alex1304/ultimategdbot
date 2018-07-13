@@ -14,6 +14,9 @@ public class OptionalRoleTagMessage implements BroadcastableMessage {
 	private EmbedObject baseEmbed;
 	private IRole roleToPing;
 	
+	public OptionalRoleTagMessage() {
+	}
+	
 	public OptionalRoleTagMessage(String baseContent, EmbedObject baseEmbed, IRole roleToPing) {
 		this.baseContent = baseContent;
 		this.baseEmbed = baseEmbed;
@@ -60,6 +63,33 @@ public class OptionalRoleTagMessage implements BroadcastableMessage {
 	 */
 	public IRole getRoleToPing() {
 		return roleToPing;
+	}
+
+	/**
+	 * Sets the baseContent
+	 *
+	 * @param baseContent - String
+	 */
+	public void setBaseContent(String baseContent) {
+		this.baseContent = baseContent;
+	}
+
+	/**
+	 * Sets the baseEmbed
+	 *
+	 * @param baseEmbed - EmbedObject
+	 */
+	public void setBaseEmbed(EmbedObject baseEmbed) {
+		this.baseEmbed = baseEmbed;
+	}
+
+	/**
+	 * Sets the roleToPing
+	 *
+	 * @param roleToPing - IRole
+	 */
+	public void setRoleToPing(IRole roleToPing) {
+		this.roleToPing = roleToPing;
 	}
 
 }

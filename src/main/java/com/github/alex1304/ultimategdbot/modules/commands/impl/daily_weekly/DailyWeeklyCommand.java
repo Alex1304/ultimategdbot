@@ -7,6 +7,7 @@ import com.github.alex1304.jdash.component.GDTimelyLevel;
 import com.github.alex1304.ultimategdbot.core.UltimateGDBot;
 import com.github.alex1304.ultimategdbot.exceptions.CommandFailedException;
 import com.github.alex1304.ultimategdbot.modules.commands.Command;
+import com.github.alex1304.ultimategdbot.utils.AuthorObjects;
 import com.github.alex1304.ultimategdbot.utils.BotUtils;
 import com.github.alex1304.ultimategdbot.utils.GDUtils;
 
@@ -41,8 +42,8 @@ public class DailyWeeklyCommand implements Command {
 				+ ", here is the " + (weekly ? "Weekly demon" : "Daily level") 
 				+ " of today. Next in " 
 				+ BotUtils.formatTimeMillis(tl.getNextTimelyCooldown() * 1000), 
-				GDUtils.buildEmbedForGDLevel((weekly ? "Weekly demon" : "Daily level") + " (#" + tl.getTimelyNumber() + ")",
-						(weekly ? "https://i.imgur.com/kcsP5SN.png" : "https://i.imgur.com/enpYuB8.png"), tl));
+				GDUtils.buildEmbedForGDLevel(weekly ? AuthorObjects.weeklyDemon(tl.getTimelyNumber())
+						: AuthorObjects.dailyLevel(tl.getTimelyNumber()), tl));
 	}
 
 }

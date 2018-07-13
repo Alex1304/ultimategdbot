@@ -18,6 +18,7 @@ import com.github.alex1304.ultimategdbot.modules.commands.CommandsModule;
 import com.github.alex1304.ultimategdbot.modules.commands.NavigationMenu;
 import com.github.alex1304.ultimategdbot.modules.reply.Reply;
 import com.github.alex1304.ultimategdbot.modules.reply.ReplyModule;
+import com.github.alex1304.ultimategdbot.utils.AuthorObjects;
 import com.github.alex1304.ultimategdbot.utils.BotUtils;
 import com.github.alex1304.ultimategdbot.utils.Emojis;
 import com.github.alex1304.ultimategdbot.utils.GDUtils;
@@ -160,8 +161,8 @@ public class LevelCommand implements Command {
 			lvl = new GDLevel(lp, pass, upload, update);
 			lvl.setCreatorName(lp.getCreatorName());
 
-			IMessage output = BotUtils.sendMessage(event0.getChannel(), message, GDUtils.buildEmbedForGDLevel("Search result",
-					"https://i.imgur.com/a9B6LyS.png", lvl));
+			IMessage output = BotUtils.sendMessage(event0.getChannel(), message, GDUtils.buildEmbedForGDLevel(
+					AuthorObjects.searchResult(), lvl));
 
 			if (canGoBack) {
 				try {
