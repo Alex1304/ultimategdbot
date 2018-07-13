@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-lazy="false">
+  <class name="com.github.alex1304.ultimategdbot.dbentities.AwardedLevel" table="awarded_level">
+    <id name="levelID" type="long" column="level_id">
+      <generator class="assigned"/>
+    </id>
+    <property name="insertDate" type="timestamp" column="insert_date" />
+    <property name="downloads" type="int" column="downloads" />
+    <property name="likes" type="int" column="likes" />
+  </class>
+</hibernate-mapping>
