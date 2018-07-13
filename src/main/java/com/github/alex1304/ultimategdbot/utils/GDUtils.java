@@ -20,6 +20,7 @@ import com.github.alex1304.ultimategdbot.core.UltimateGDBot;
 import com.github.alex1304.ultimategdbot.dbentities.UserSettings;
 
 import sx.blah.discord.api.internal.json.objects.EmbedObject;
+import sx.blah.discord.api.internal.json.objects.EmbedObject.AuthorObject;
 import sx.blah.discord.handle.obj.IUser;
 import sx.blah.discord.util.EmbedBuilder;
 
@@ -133,7 +134,7 @@ public class GDUtils {
 	 *            - the level to convert to embed
 	 * @return an EmbedObject representing the embedded level
 	 */
-	public static EmbedObject buildEmbedForGDLevel(String authorName, String authorIcon, GDLevelPreview lp) {
+	public static EmbedObject buildEmbedForGDLevel(AuthorObject author, GDLevelPreview lp) {
 		EmbedBuilder eb = new EmbedBuilder();
 		
 		GDLevel lvl = null;
@@ -141,8 +142,8 @@ public class GDUtils {
 		if (lp instanceof GDLevel)
 			lvl = (GDLevel) lp;
 
-		eb.withAuthorName(authorName);
-		eb.withAuthorIcon(authorIcon);
+		eb.withAuthorName(author.name);
+		eb.withAuthorIcon(author.icon_url);
 		eb.withThumbnail(getDifficultyImageForLevel(lp));
 		
 		eb.appendField(Emojis.PLAY + "  __" + lp.getName() + "__ by " + lp.getCreatorName() + "",

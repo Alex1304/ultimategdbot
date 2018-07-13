@@ -17,6 +17,7 @@ import com.github.alex1304.ultimategdbot.modules.commands.impl.leaderboard.Leade
 import com.github.alex1304.ultimategdbot.modules.commands.impl.level.LevelCommand;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.modules.ModulesCommand;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.profile.ProfileCommand;
+import com.github.alex1304.ultimategdbot.modules.commands.impl.pushevent.PushEventCommand;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.setup.SetupCommand;
 import com.github.alex1304.ultimategdbot.modules.reply.Reply;
 import com.github.alex1304.ultimategdbot.modules.reply.ReplyModule;
@@ -78,6 +79,7 @@ public class CommandsModule implements Module {
 		registerCommand("setup", new SetupCommand());
 		registerCommand("daily", new DailyWeeklyCommand(false));
 		registerCommand("weekly", new DailyWeeklyCommand(true));
+		registerCommand("pushevent", new PushEventCommand());
 	}
 	
 	/**
