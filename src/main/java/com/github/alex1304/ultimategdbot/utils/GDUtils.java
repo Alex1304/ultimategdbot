@@ -207,11 +207,11 @@ public class GDUtils {
 	 * @param user - the user to convert to embed
 	 * @return an EmbedObject representing the embedded user
 	 */
-	public static EmbedObject buildEmbedForGDUser(String authorName, String authorIcon, GDUser user) {
+	public static EmbedObject buildEmbedForGDUser(AuthorObject author, GDUser user) {
 		EmbedBuilder eb = new EmbedBuilder();
 		
-		eb.withAuthorName(authorName);
-		eb.withAuthorIcon(authorIcon);
+		eb.withAuthorName(author.name);
+		eb.withAuthorIcon(author.icon_url);
 		
 		eb.appendField(":chart_with_upwards_trend:  " + user.getName() + "'s stats", Emojis.STAR + "  " + user.getStars()+ "\t\t"
 			+ Emojis.DIAMOND + "  " + user.getDiamonds() + "\t\t"
