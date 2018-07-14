@@ -76,6 +76,20 @@ public class CheckModCommand implements Command {
 			GDEventManager.getInstance().dispatch("USER_DEMOTED_MOD", user);
 		else if (mod != null && user.getRole() == GDUserRole.USER)
 			GDEventManager.getInstance().dispatch("USER_DEMOTED_USER", user);
+		
+
+		if (mod != null && user.getRole() == GDUserRole.USER)
+			DatabaseUtils.delete(mod);
+		else {
+			if (mod == null)
+				mod = new GDMod();
+			
+			mod.setAccountID(user.getAccountID());
+			mod.setUsername(user.getName());
+			mod.setElder(user.getRole() == GDUserRole.ELDER_MODERATOR);
+			
+			DatabaseUtils.save(mod);
+		}
 			
 		BotUtils.typing(event.getChannel(), false);
 	}

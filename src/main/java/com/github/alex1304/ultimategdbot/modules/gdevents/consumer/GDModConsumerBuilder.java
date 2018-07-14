@@ -4,14 +4,11 @@ import java.util.List;
 import java.util.Map;
 
 import com.github.alex1304.jdash.component.GDUser;
-import com.github.alex1304.jdash.component.property.GDUserRole;
-import com.github.alex1304.ultimategdbot.dbentities.GDMod;
 import com.github.alex1304.ultimategdbot.dbentities.GuildSettings;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.setup.guildsettings.RoleGDModeratorsSetting;
 import com.github.alex1304.ultimategdbot.modules.gdevents.broadcast.MessageBroadcaster;
 import com.github.alex1304.ultimategdbot.modules.gdevents.broadcast.OptionalRoleTagMessage;
 import com.github.alex1304.ultimategdbot.modules.gdevents.broadcast.UserModStatusMessage;
-import com.github.alex1304.ultimategdbot.utils.DatabaseUtils;
 import com.github.alex1304.ultimategdbot.utils.GDUtils;
 
 import sx.blah.discord.api.internal.json.objects.EmbedObject;
@@ -49,17 +46,6 @@ public class GDModConsumerBuilder extends GDEventConsumerBuilder<GDUser> {
 		});
 
 		mb.broadcast();
-	}
-	
-	@Override
-	protected void executeAfter(GDUser component) {
-		GDMod mod = DatabaseUtils.findByID(GDMod.class, component.getAccountID());
-		if (mod != null && component.getRole() == GDUserRole.USER)
-			DatabaseUtils.delete(mod);
-		else
-			DatabaseUtils.save(new GDMod(component.getAccountID(),
-					component.getRole() == GDUserRole.ELDER_MODERATOR));
-			
 	}
 
 	@Override

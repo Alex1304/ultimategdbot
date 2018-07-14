@@ -8,13 +8,15 @@ package com.github.alex1304.ultimategdbot.dbentities;
 public class GDMod {
 	
 	private long accountID;
+	private String username;
 	private boolean elder;
 
 	public GDMod() {
 	}
 
-	public GDMod(long accountID, boolean elder) {
+	public GDMod(long accountID, String username, boolean elder) {
 		this.accountID = accountID;
+		this.username = username;
 		this.elder = elder;
 	}
 
@@ -25,6 +27,15 @@ public class GDMod {
 	 */
 	public long getAccountID() {
 		return accountID;
+	}
+
+	/**
+	 * Gets the username
+	 *
+	 * @return String
+	 */
+	public String getUsername() {
+		return username;
 	}
 
 	/**
@@ -52,5 +63,14 @@ public class GDMod {
 	 */
 	public void setElder(boolean elder) {
 		this.elder = elder;
+	}
+	
+	/**
+	 * Sets the username
+	 *
+	 * @param username - String
+	 */
+	public void setUsername(String username) {
+		this.username = username;
 	}
 }

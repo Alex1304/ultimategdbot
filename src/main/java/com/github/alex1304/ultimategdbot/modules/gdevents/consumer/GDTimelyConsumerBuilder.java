@@ -7,7 +7,6 @@ import java.util.function.Function;
 
 import com.github.alex1304.jdash.component.GDTimelyLevel;
 import com.github.alex1304.jdashevents.customcomponents.GDUpdatedComponent;
-import com.github.alex1304.ultimategdbot.core.UltimateGDBot;
 import com.github.alex1304.ultimategdbot.dbentities.GuildSettings;
 import com.github.alex1304.ultimategdbot.dbentities.TimelyLevel;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.setup.guildsettings.RoleTimelyLevelsSetting;
@@ -56,20 +55,14 @@ public class GDTimelyConsumerBuilder extends GDEventConsumerBuilder<GDUpdatedCom
 	}
 	
 	@Override
-	protected void executeBefore(GDUpdatedComponent<GDTimelyLevel> component) {
-		UltimateGDBot.cache().write("gd.timely.true", null);
-		UltimateGDBot.cache().write("gd.timely.false", null);
-	}
-	
-	@Override
 	protected void executeAfter(GDUpdatedComponent<GDTimelyLevel> component) {
 		DatabaseUtils.save(new TimelyLevel(component.getAfterUpdate().getId(), new Timestamp(System.currentTimeMillis()),
-						((TimelyChangedMessage) messageToBroadcast).isWeekly()));
+						component.getAfterUpdate().isWeekly()));
 	}
 	
 	@Override
 	protected String componentToHumanReadableString(GDUpdatedComponent<GDTimelyLevel> component) {
-		return "level - __" + component.getAfterUpdate().getName() + "__ by " + component.getAfterUpdate().getCreatorName()
+		return "level __" + component.getAfterUpdate().getName() + "__ by " + component.getAfterUpdate().getCreatorName()
 				+ " (" + component.getAfterUpdate().getId() + ") ";
 	}
 }

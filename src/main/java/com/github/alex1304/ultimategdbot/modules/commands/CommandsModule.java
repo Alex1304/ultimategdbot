@@ -16,6 +16,7 @@ import com.github.alex1304.ultimategdbot.modules.commands.impl.daily_weekly.Dail
 import com.github.alex1304.ultimategdbot.modules.commands.impl.help.HelpCommand;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.leaderboard.LeaderboardMenu;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.level.LevelCommand;
+import com.github.alex1304.ultimategdbot.modules.commands.impl.modlist.ModListCommand;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.modules.ModulesCommand;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.profile.ProfileCommand;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.pushevent.PushEventCommand;
@@ -82,6 +83,7 @@ public class CommandsModule implements Module {
 		registerCommand("weekly", new DailyWeeklyCommand(true));
 		registerCommand("pushevent", new PushEventCommand());
 		registerCommand("checkmod", new CheckModCommand());
+		registerCommand("modlist", new ModListCommand());
 	}
 	
 	/**

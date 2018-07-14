@@ -13,6 +13,7 @@ import com.github.alex1304.ultimategdbot.dbentities.GlobalSettings;
 import com.github.alex1304.ultimategdbot.exceptions.ModuleUnavailableException;
 import com.github.alex1304.ultimategdbot.modules.Module;
 import com.github.alex1304.ultimategdbot.utils.BotUtils;
+import com.github.alex1304.ultimategdbot.utils.Emojis;
 import com.github.alex1304.ultimategdbot.utils.SnowflakeType;
 
 import sx.blah.discord.api.ClientBuilder;
@@ -134,33 +135,32 @@ public class UltimateGDBot {
 		return (IChannel) BotUtils.resolveSnowflake(SnowflakeType.CHANNEL, instance().globals.getChannelDebugLogs());
 	}
 	
-	private static void log(String text) {
+	public static void log(String text) {
+		System.out.println(text);
+		
 		RequestBuffer.request(() -> {
 			channelDebugLogs().sendMessage(text);
 		});
 	}
 	
 	public static void log(String tag, String text) {
-		String s = "[" + tag + "] " + text;
-		
-		log(s);
-		System.out.println(s);
+		log("[" + tag + "] " + text);
 	}
 	
 	public static void logInfo(String text) {
-		log("INFO", text);
+		log(Emojis.INFO + " " + text);
 	}
 	
 	public static void logWarning(String text) {
-		log("WARNING", text);
+		log(":warning: " + text);
 	}
 	
 	public static void logSuccess(String text) {
-		log("SUCCESS", text);
+		log(Emojis.SUCCESS + " " + text);
 	}
 	
 	public static void logError(String text) {
-		log("ERROR", text);
+		log(Emojis.CROSS + " " + text);
 	}
 	
 	public static void logException(Exception e) {

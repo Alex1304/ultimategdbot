@@ -4,8 +4,10 @@ import java.util.List;
 
 import com.github.alex1304.jdash.api.request.GDTimelyLevelHttpRequest;
 import com.github.alex1304.jdash.component.GDTimelyLevel;
+import com.github.alex1304.jdash.exceptions.GDAPIException;
 import com.github.alex1304.ultimategdbot.core.UltimateGDBot;
 import com.github.alex1304.ultimategdbot.exceptions.CommandFailedException;
+import com.github.alex1304.ultimategdbot.exceptions.GDServersUnavailableException;
 import com.github.alex1304.ultimategdbot.modules.commands.Command;
 import com.github.alex1304.ultimategdbot.utils.AuthorObjects;
 import com.github.alex1304.ultimategdbot.utils.BotUtils;
@@ -31,9 +33,13 @@ public class DailyWeeklyCommand implements Command {
 
 	@Override
 	public void runCommand(MessageReceivedEvent event, List<String> args) throws CommandFailedException {
-		GDTimelyLevel tl = (GDTimelyLevel) UltimateGDBot.cache()
-				.readAndWriteIfNotExists("gd.timely." + weekly, () ->
-						UltimateGDBot.gdClient().fetch(new GDTimelyLevelHttpRequest(weekly, UltimateGDBot.gdClient())));
+		GDTimelyLevel tl = null;
+		
+		try {
+			tl = UltimateGDBot.gdClient().fetch(new GDTimelyLevelHttpRequest(weekly, UltimateGDBot.gdClient()));
+		} catch (GDAPIException e) {
+			throw new GDServersUnavailableException();
+		}
 				
 		if (tl == null)
 			throw new CommandFailedException((weekly ? "Weekly demon" : "Daily level") + " is currently unavailable. Try again later.");

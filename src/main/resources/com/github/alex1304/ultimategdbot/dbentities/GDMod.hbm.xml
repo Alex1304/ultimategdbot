@@ -5,6 +5,7 @@
     <id name="accountID" type="long" column="account_id">
       <generator class="assigned"/>
     </id>
-    <property name="elder" type="boolean" column="elder" />
+    <property name="elder" type="boolean" />
+    <property name="username" type="string" />
   </class>
 </hibernate-mapping>

@@ -6,6 +6,6 @@
       <generator class="assigned"/>
     </id>
     <property name="insertDate" type="timestamp" column="insert_date" />
-    <property name="weekly" type="boolean" column="weekly" />
+    <property name="weekly" type="boolean" />
   </class>
 </hibernate-mapping>
