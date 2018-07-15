@@ -87,7 +87,7 @@ public class ReplyModule implements Module {
 		if (openedReply == null)
 			return;
 		
-		if (event.getMessage().getContent().equalsIgnoreCase("cancel"))
+		if (event.getMessage().getContent().equalsIgnoreCase("close"))
 			openedReply.cancel();
 		
 		openedReply.handle(event.getMessage());

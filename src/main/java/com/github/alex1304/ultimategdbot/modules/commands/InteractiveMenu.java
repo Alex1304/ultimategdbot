@@ -88,10 +88,10 @@ public class InteractiveMenu implements Command {
 			menu.append('\n');
 			
 			if (closeOnTimeout)
-				menu.append(String.format("**This menu will close after %s of inactivity, or type `cancel`**",
+				menu.append(String.format("**This menu will close after %s of inactivity, or type `close`**",
 						BotUtils.formatTimeMillis(Reply.DEFAULT_TIMEOUT_MILLIS)));
 			else
-				menu.append("To close this menu, type `cancel`");
+				menu.append("To close this menu, type `close`");
 			
 			EmbedBuilder eb = new EmbedBuilder();
 			eb.appendDescription(menu.toString());
@@ -104,7 +104,7 @@ public class InteractiveMenu implements Command {
 			
 			if (!closeOnTimeout) {
 				r.setOnSuccess(() -> r.deleteInitialMessage());
-				this.addSubCommand("cancel", (event0, args0) -> r.deleteInitialMessage());
+				this.addSubCommand("close", (event0, args0) -> r.deleteInitialMessage());
 			}
 			
 			rm.open(r, true, closeOnTimeout);

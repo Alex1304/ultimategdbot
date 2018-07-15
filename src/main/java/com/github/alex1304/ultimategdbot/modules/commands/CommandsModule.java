@@ -10,6 +10,7 @@ import com.github.alex1304.ultimategdbot.core.UltimateGDBot;
 import com.github.alex1304.ultimategdbot.exceptions.CommandFailedException;
 import com.github.alex1304.ultimategdbot.exceptions.ModuleUnavailableException;
 import com.github.alex1304.ultimategdbot.modules.Module;
+import com.github.alex1304.ultimategdbot.modules.commands.impl.about.AboutCommand;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.account.AccountCommand;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.checkmod.CheckModCommand;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.daily_weekly.DailyWeeklyCommand;
@@ -84,6 +85,7 @@ public class CommandsModule implements Module {
 		registerCommand("pushevent", new PushEventCommand());
 		registerCommand("checkmod", new CheckModCommand());
 		registerCommand("modlist", new ModListCommand());
+		registerCommand("about", new AboutCommand());
 	}
 	
 	/**
