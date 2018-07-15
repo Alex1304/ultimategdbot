@@ -1,7 +1,11 @@
 package com.github.alex1304.ultimategdbot.modules.guildevents;
 
+import java.util.List;
+
 import com.github.alex1304.ultimategdbot.core.UltimateGDBot;
+import com.github.alex1304.ultimategdbot.dbentities.GuildSettings;
 import com.github.alex1304.ultimategdbot.modules.Module;
+import com.github.alex1304.ultimategdbot.utils.DatabaseUtils;
 
 import sx.blah.discord.api.events.EventSubscriber;
 import sx.blah.discord.handle.impl.events.guild.GuildCreateEvent;
@@ -16,6 +20,12 @@ import sx.blah.discord.handle.impl.events.guild.GuildUnavailableEvent;
 public class GuildEventsModule implements Module {
 
 	private boolean enabled;
+	private List<GuildSettings> initialKnownGuilds;
+	
+	public GuildEventsModule() {
+		this.enabled = false;
+		this.initialKnownGuilds = DatabaseUtils.query(GuildSettings.class, "from GuildSettings");
+	}
 
 	@Override
 	public void start() {
@@ -32,8 +42,15 @@ public class GuildEventsModule implements Module {
 		if (!enabled)
 			return;
 		
+		if (initialKnownGuilds.stream().anyMatch(gs -> gs.getGuildID() == event.getGuild().getLongID()))
+			return;
+		
 		UltimateGDBot.logSuccess("New guild joined: " + event.getGuild().getName()
 				+ " (" + event.getGuild().getLongID() + ")");
+		
+		GuildSettings gs = new GuildSettings();
+		gs.setGuildID(event.getGuild().getLongID());
+		DatabaseUtils.save(gs);
 	}
 	
 	@EventSubscriber
@@ -43,6 +60,12 @@ public class GuildEventsModule implements Module {
 		
 		UltimateGDBot.logError("Guild left: " + event.getGuild().getName()
 				+ " (" + event.getGuild().getLongID() + ")");
+		
+		GuildSettings gs = DatabaseUtils.findByID(GuildSettings.class, event.getGuild().getLongID());
+		if (gs != null)
+			DatabaseUtils.delete(gs);
+		
+		initialKnownGuilds.removeIf(x -> x.getGuildID() == event.getGuild().getLongID());
 	}
 	
 	@EventSubscriber

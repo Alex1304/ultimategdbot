@@ -35,7 +35,6 @@ public class ReplyModule implements Module {
 	}
 	
 	public void open(Reply reply, boolean retryOnFailure, boolean deleteInitialMessageAfterReply) {
-		
 		String id = toReplyID(reply);
 				
 		Procedure closeReply = () -> openedReplies.remove(id);
@@ -87,7 +86,7 @@ public class ReplyModule implements Module {
 		if (openedReply == null)
 			return;
 		
-		if (event.getMessage().getContent().equalsIgnoreCase("cancel"))
+		if (event.getMessage().getContent().equalsIgnoreCase("close"))
 			openedReply.cancel();
 		
 		openedReply.handle(event.getMessage());
