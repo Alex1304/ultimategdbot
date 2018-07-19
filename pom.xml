@@ -45,14 +45,15 @@
 		<hibernate.hikari.dataSource.user>root</hibernate.hikari.dataSource.user>
 		<hibernate.hikari.dataSource.password>root</hibernate.hikari.dataSource.password>
 		
-		<!-- The properties below must be given as arguments on build -->
+		<!-- The properties below must be given as arguments on build (unless it's prefilled with "default") -->
 		<ultimategdbot.client.id></ultimategdbot.client.id>
 		<ultimategdbot.client.token></ultimategdbot.client.token>
 		<ultimategdbot.hierarchy.owner_id></ultimategdbot.hierarchy.owner_id>
 		<ultimategdbot.hierarchy.official_guild_id></ultimategdbot.hierarchy.official_guild_id>
 		<ultimategdbot.hierarchy.moderator_role_id></ultimategdbot.hierarchy.moderator_role_id>
-		<ultimategdbot.gd_account.id></ultimategdbot.gd_account.id>
-		<ultimategdbot.gd_account.password></ultimategdbot.gd_account.password>
+		<ultimategdbot.gd_client.url>default</ultimategdbot.gd_client.url>
+		<ultimategdbot.gd_client.id></ultimategdbot.gd_client.id>
+		<ultimategdbot.gd_client.password></ultimategdbot.gd_client.password>
 		<ultimategdbot.prefix.full></ultimategdbot.prefix.full>
 		<ultimategdbot.prefix.canonical></ultimategdbot.prefix.canonical>
 		<ultimategdbot.release.channel></ultimategdbot.release.channel>
@@ -138,7 +139,7 @@
 		<dependency>
 			<groupId>com.github.alex1304</groupId>
 			<artifactId>jdash</artifactId>
-			<version>2.1.2</version>
+			<version>2.2.0</version>
 		</dependency>
 		<dependency>
 			<groupId>com.github.alex1304</groupId>

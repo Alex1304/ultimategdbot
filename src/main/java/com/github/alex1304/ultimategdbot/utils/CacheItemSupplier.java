@@ -2,6 +2,8 @@ package com.github.alex1304.ultimategdbot.utils;
 
 import java.util.function.Supplier;
 
+import com.github.alex1304.ultimategdbot.core.UltimateGDBot;
+
 /**
  * Similar to {@link Supplier} but throws any exceptions
  * 
@@ -29,6 +31,7 @@ public interface CacheItemSupplier<T> {
 		try {
 			return get();
 		} catch (Exception e) {
+			UltimateGDBot.logException(e);
 			return null;
 		}
 	}

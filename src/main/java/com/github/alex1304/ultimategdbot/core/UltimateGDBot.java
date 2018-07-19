@@ -8,6 +8,7 @@ import java.util.Properties;
 import java.util.stream.Collectors;
 
 import com.github.alex1304.jdash.api.GDHttpClient;
+import com.github.alex1304.jdash.exceptions.GDAPIException;
 import com.github.alex1304.ultimategdbot.cache.Cache;
 import com.github.alex1304.ultimategdbot.dbentities.GlobalSettings;
 import com.github.alex1304.ultimategdbot.exceptions.ModuleUnavailableException;
@@ -66,8 +67,11 @@ public class UltimateGDBot {
 		this.modules = new HashMap<>();
 		this.startedModules = new HashMap<>();
 		this.gdClient = new GDHttpClient(
-				Long.parseLong(props.getProperty("ultimategdbot.gd_account.id")),
-				props.getProperty("ultimategdbot.gd_account.password"));
+				Long.parseLong(props.getProperty("ultimategdbot.gd_client.id")),
+				props.getProperty("ultimategdbot.gd_client.password"));
+		String host = props.getProperty("ultimategdbot.gd_client.url");
+		if (!host.equals("default"))
+			gdClient.setHost(host);
 		this.emojiGuilds = null;
 	}
 	
@@ -166,6 +170,9 @@ public class UltimateGDBot {
 	public static void logException(Exception e) {
 		logError("Exception thrown: `" + e.getClass().getName() + ": " + e.getMessage() + "`");
 		e.printStackTrace();
+		
+		if (e instanceof GDAPIException && ((GDAPIException) e).getUnderlyingException() != null)
+			logException(((GDAPIException) e).getUnderlyingException());
 	}
 	
 	public static void addModule(String key, Module module) {
