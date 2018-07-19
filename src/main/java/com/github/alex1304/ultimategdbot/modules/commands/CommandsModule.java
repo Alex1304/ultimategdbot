@@ -25,6 +25,7 @@ import com.github.alex1304.ultimategdbot.modules.commands.impl.pushevent.PushEve
 import com.github.alex1304.ultimategdbot.modules.commands.impl.restart.RestartCommand;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.setup.SetupCommand;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.shutdown.ShutdownCommand;
+import com.github.alex1304.ultimategdbot.modules.commands.impl.system.SystemCommand;
 import com.github.alex1304.ultimategdbot.modules.reply.Reply;
 import com.github.alex1304.ultimategdbot.modules.reply.ReplyModule;
 import com.github.alex1304.ultimategdbot.utils.BotRoles;
@@ -92,6 +93,7 @@ public class CommandsModule implements Module {
 		registerCommand("gdevents", new GDEventsCommand());
 		registerCommand("restart", new RestartCommand());
 		registerCommand("shutdown", new ShutdownCommand());
+		registerCommand("system", new SystemCommand());
 	}
 	
 	/**

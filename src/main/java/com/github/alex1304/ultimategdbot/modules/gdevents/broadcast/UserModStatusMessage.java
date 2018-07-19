@@ -6,7 +6,7 @@ import sx.blah.discord.api.internal.json.objects.EmbedObject;
 import sx.blah.discord.handle.obj.IRole;
 
 /**
- * Message when user is promoted Elder moderator
+ * Message when user is promoted / demotedr
  *
  * @author Alex1304
  */
@@ -18,7 +18,9 @@ public class UserModStatusMessage extends OptionalRoleTagMessage {
 
 	public UserModStatusMessage(EmbedObject baseEmbed, IRole roleToPing, boolean promoted, GDUserRole role) {
 		super("A user has been " + (promoted ? "promoted" : "demoted") +
-				(role == GDUserRole.USER ? "" : " to Geometry Dash " + (role == GDUserRole.ELDER_MODERATOR ?
+				(role == GDUserRole.USER ? "" : " Geometry Dash " + (role == GDUserRole.ELDER_MODERATOR ?
+						"Elder " : "") + "Moderator") + (promoted ? "!" : "..."), "You have been " + (promoted ? "promoted" : "demoted") +
+				(role == GDUserRole.USER ? "" : " Geometry Dash " + (role == GDUserRole.ELDER_MODERATOR ?
 						"Elder " : "") + "Moderator") + (promoted ? "!" : "..."), baseEmbed, roleToPing);
 	}
 }

@@ -15,6 +15,7 @@ import com.github.alex1304.ultimategdbot.modules.commands.impl.setup.guildsettin
 import com.github.alex1304.ultimategdbot.modules.gdevents.broadcast.BroadcastableMessage;
 import com.github.alex1304.ultimategdbot.modules.gdevents.broadcast.MessageBroadcaster;
 import com.github.alex1304.ultimategdbot.modules.gdevents.broadcast.OptionalRoleTagMessage;
+import com.github.alex1304.ultimategdbot.utils.BotUtils;
 import com.github.alex1304.ultimategdbot.utils.DatabaseUtils;
 import com.github.alex1304.ultimategdbot.utils.GDUtils;
 import com.github.alex1304.ultimategdbot.utils.Procedure;
@@ -23,6 +24,7 @@ import sx.blah.discord.api.internal.json.objects.EmbedObject;
 import sx.blah.discord.api.internal.json.objects.EmbedObject.AuthorObject;
 import sx.blah.discord.handle.obj.IChannel;
 import sx.blah.discord.handle.obj.IMessage;
+import sx.blah.discord.handle.obj.IUser;
 
 /**
  * Builds consumer for awarded level events
@@ -62,6 +64,9 @@ public class GDAwardedConsumerBuilder extends GDEventConsumerBuilder<GDComponent
 			});
 
 			mb.broadcast();
+			
+			List<IUser> linkedUsers = GDUtils.getDiscordUsersLinkedToGDAccount(GDUtils.guessGDUserIDFromString(lp.getCreatorName()));
+			linkedUsers.forEach(u -> BotUtils.sendMessage(u.getOrCreatePMChannel(), ((OptionalRoleTagMessage) messageToBroadcast.get()).getPrivateContent(), embed));
 			
 			if (saveResults)
 				broadcastResults.put(lp.getId(), mb.getResults());
