@@ -40,12 +40,14 @@ public class ModListCommand implements Command {
 	public void runCommand(MessageReceivedEvent event, List<String> args) throws CommandFailedException {
 		StringBuffer sb = new StringBuffer(event.getAuthor().mention() + ", here is the latest known list of Geometry Dash moderators:\n\n");
 		
+		List<GDMod> mods = this.mods;
+		
 		if (mods == null) {
-			this.mods = DatabaseUtils.query(GDMod.class, "from GDMod");
+			mods = DatabaseUtils.query(GDMod.class, "from GDMod");
 			if (mods == null)
 				throw new DatabaseFailureException();
 
-			this.mods = mods.stream()
+			mods = mods.stream()
 					.map(m -> {
 						if (m.getUsername().isEmpty()) {
 							GDUser user = (GDUser) UltimateGDBot.cache()
@@ -63,7 +65,9 @@ public class ModListCommand implements Command {
 								x.getUsername().toLowerCase().compareTo(y.getUsername().toLowerCase()) : x.getElder() ? -1 : 1)
 					.collect(Collectors.toList());
 		}
-
+		
+		final List<GDMod> fMods = mods;
+		
 		int pageMax = (int) Math.ceil(mods.size() / 20.0) - 1;
 		sb.append("Page " + (page + 1) + "/" + (pageMax + 1) + "\n\n");
 		
@@ -71,7 +75,7 @@ public class ModListCommand implements Command {
 			sb.append((m.getElder() ? Emojis.ELDER_MOD : Emojis.MOD) + " "
 					+ (m.getUsername().isEmpty() ? "Unknown user (" + m.getAccountID() + ")" : m.getUsername()) + "\n"));
 		
-		NavigationMenu nm = new NavigationMenu(page, pageMax, page0 -> new ModListCommand(page0, mods), event, args);
+		NavigationMenu nm = new NavigationMenu(page, pageMax, page0 -> new ModListCommand(page0, fMods), event, args);
 		nm.setMenuContent(sb.toString());
 		
 		CommandsModule.executeCommand(nm, event, args);

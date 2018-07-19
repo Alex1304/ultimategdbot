@@ -2,13 +2,14 @@ package com.github.alex1304.ultimategdbot.modules.gdevents.consumer;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import com.github.alex1304.jdash.component.GDUser;
 import com.github.alex1304.ultimategdbot.dbentities.GuildSettings;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.setup.guildsettings.RoleGDModeratorsSetting;
+import com.github.alex1304.ultimategdbot.modules.gdevents.broadcast.BroadcastableMessage;
 import com.github.alex1304.ultimategdbot.modules.gdevents.broadcast.MessageBroadcaster;
 import com.github.alex1304.ultimategdbot.modules.gdevents.broadcast.OptionalRoleTagMessage;
-import com.github.alex1304.ultimategdbot.modules.gdevents.broadcast.UserModStatusMessage;
 import com.github.alex1304.ultimategdbot.utils.GDUtils;
 
 import sx.blah.discord.api.internal.json.objects.EmbedObject;
@@ -24,7 +25,7 @@ public class GDModConsumerBuilder extends GDEventConsumerBuilder<GDUser> {
 	
 	private AuthorObject embedAuthor;
 
-	public GDModConsumerBuilder(String eventName, AuthorObject embedAuthor, UserModStatusMessage messageToBroadcast) {
+	public GDModConsumerBuilder(String eventName, AuthorObject embedAuthor, Supplier<BroadcastableMessage> messageToBroadcast) {
 		super(eventName, "channelGDModerators", messageToBroadcast);
 		this.embedAuthor = embedAuthor;
 	}
@@ -39,7 +40,7 @@ public class GDModConsumerBuilder extends GDEventConsumerBuilder<GDUser> {
 			GuildSettings gs = channelToGS.get(channel.getLongID());
 			RoleGDModeratorsSetting rals = new RoleGDModeratorsSetting(gs);
 
-			OptionalRoleTagMessage ortm = (OptionalRoleTagMessage) messageToBroadcast;
+			OptionalRoleTagMessage ortm = (OptionalRoleTagMessage) messageToBroadcast.get();
 			ortm.setBaseEmbed(embed);
 			ortm.setRoleToPing(rals.getValue());
 			return ortm;

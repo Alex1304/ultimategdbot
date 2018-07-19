@@ -22,7 +22,9 @@ import com.github.alex1304.ultimategdbot.modules.commands.impl.modlist.ModListCo
 import com.github.alex1304.ultimategdbot.modules.commands.impl.modules.ModulesCommand;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.profile.ProfileCommand;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.pushevent.PushEventCommand;
+import com.github.alex1304.ultimategdbot.modules.commands.impl.restart.RestartCommand;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.setup.SetupCommand;
+import com.github.alex1304.ultimategdbot.modules.commands.impl.shutdown.ShutdownCommand;
 import com.github.alex1304.ultimategdbot.modules.reply.Reply;
 import com.github.alex1304.ultimategdbot.modules.reply.ReplyModule;
 import com.github.alex1304.ultimategdbot.utils.BotRoles;
@@ -88,6 +90,8 @@ public class CommandsModule implements Module {
 		registerCommand("modlist", new ModListCommand());
 		registerCommand("about", new AboutCommand());
 		registerCommand("gdevents", new GDEventsCommand());
+		registerCommand("restart", new RestartCommand());
+		registerCommand("shutdown", new ShutdownCommand());
 	}
 	
 	/**

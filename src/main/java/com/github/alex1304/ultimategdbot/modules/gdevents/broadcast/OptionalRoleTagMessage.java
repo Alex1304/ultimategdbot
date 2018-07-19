@@ -91,5 +91,11 @@ public class OptionalRoleTagMessage implements BroadcastableMessage {
 	public void setRoleToPing(IRole roleToPing) {
 		this.roleToPing = roleToPing;
 	}
+	
+	@Override
+	public String toString() {
+		return "OptionalRoleTagMessage [baseContent=" + baseContent + ", baseEmbed=" + baseEmbed + ", roleToPing="
+				+ roleToPing + "]";
+	}
 
 }

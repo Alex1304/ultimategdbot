@@ -36,7 +36,7 @@ public class MessageBroadcaster {
 	}
 	
 	public void broadcast() {
-		channels.parallelStream().forEach(channel -> {
+		channels.forEach(channel -> {
 			broadcastMap.put(channel, messageForChannel.apply(channel));
 		});
 		

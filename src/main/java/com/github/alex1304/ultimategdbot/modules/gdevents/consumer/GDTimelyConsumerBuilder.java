@@ -4,15 +4,16 @@ import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import com.github.alex1304.jdash.component.GDTimelyLevel;
 import com.github.alex1304.jdashevents.customcomponents.GDUpdatedComponent;
 import com.github.alex1304.ultimategdbot.dbentities.GuildSettings;
 import com.github.alex1304.ultimategdbot.dbentities.TimelyLevel;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.setup.guildsettings.RoleTimelyLevelsSetting;
+import com.github.alex1304.ultimategdbot.modules.gdevents.broadcast.BroadcastableMessage;
 import com.github.alex1304.ultimategdbot.modules.gdevents.broadcast.MessageBroadcaster;
 import com.github.alex1304.ultimategdbot.modules.gdevents.broadcast.OptionalRoleTagMessage;
-import com.github.alex1304.ultimategdbot.modules.gdevents.broadcast.TimelyChangedMessage;
 import com.github.alex1304.ultimategdbot.utils.DatabaseUtils;
 import com.github.alex1304.ultimategdbot.utils.GDUtils;
 
@@ -29,7 +30,7 @@ public class GDTimelyConsumerBuilder extends GDEventConsumerBuilder<GDUpdatedCom
 
 	private Function<Long, AuthorObject> embedAuthor;
 
-	public GDTimelyConsumerBuilder(String eventName, Function<Long, AuthorObject> embedAuthor, TimelyChangedMessage messageToBroadcast) {
+	public GDTimelyConsumerBuilder(String eventName, Function<Long, AuthorObject> embedAuthor, Supplier<BroadcastableMessage> messageToBroadcast) {
 		super(eventName, "channelTimelyLevels", messageToBroadcast);
 		this.embedAuthor = embedAuthor;
 	}
@@ -45,7 +46,7 @@ public class GDTimelyConsumerBuilder extends GDEventConsumerBuilder<GDUpdatedCom
 			GuildSettings gs = channelToGS.get(channel.getLongID());
 			RoleTimelyLevelsSetting rals = new RoleTimelyLevelsSetting(gs);
 
-			OptionalRoleTagMessage ortm = (OptionalRoleTagMessage) messageToBroadcast;
+			OptionalRoleTagMessage ortm = (OptionalRoleTagMessage) messageToBroadcast.get();
 			ortm.setBaseEmbed(embed);
 			ortm.setRoleToPing(rals.getValue());
 			return ortm;

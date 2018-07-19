@@ -24,15 +24,9 @@ public class AwardedDeletedMessage extends OptionalRoleTagMessage {
 	));
 
 	public AwardedDeletedMessage(EmbedObject baseEmbed, IRole roleToPing) {
-		super("", baseEmbed, roleToPing);
+		super(RANDOM_TEXT.get(new Random().nextInt(RANDOM_TEXT.size())), baseEmbed, roleToPing);
 	}
 
 	public AwardedDeletedMessage() {
-	}
-	
-	@Override
-	public String buildContent() {
-		this.setBaseContent(RANDOM_TEXT.get(new Random().nextInt(RANDOM_TEXT.size())));
-		return super.buildContent();
 	}
 }

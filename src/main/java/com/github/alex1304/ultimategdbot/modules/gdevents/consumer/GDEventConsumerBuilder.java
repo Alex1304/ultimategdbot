@@ -1,10 +1,12 @@
 package com.github.alex1304.ultimategdbot.modules.gdevents.consumer;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import com.github.alex1304.jdash.component.GDComponent;
@@ -29,9 +31,9 @@ public abstract class GDEventConsumerBuilder<T extends GDComponent> {
 	
 	private String dbChannelField;
 	protected String eventName;
-	protected BroadcastableMessage messageToBroadcast;
+	protected Supplier<BroadcastableMessage> messageToBroadcast;
 
-	public GDEventConsumerBuilder(String eventName, String dbChannelField, BroadcastableMessage messageToBroadcast) {
+	public GDEventConsumerBuilder(String eventName, String dbChannelField, Supplier<BroadcastableMessage> messageToBroadcast) {
 		this.eventName = eventName;
 		this.dbChannelField = dbChannelField;
 		this.messageToBroadcast = messageToBroadcast;
@@ -48,7 +50,7 @@ public abstract class GDEventConsumerBuilder<T extends GDComponent> {
 			
 			Map<Long, GuildSettings> channelToGS = new ConcurrentHashMap<>();
 			
-			List<IChannel> channels = gsList.parallelStream()
+			gsList = gsList.parallelStream()
 					.filter(gs -> {
 						Optional<IGuild> og = UltimateGDBot.client().getGuilds().parallelStream()
 								.filter(g -> g.getLongID() == gs.getGuildID())
@@ -59,15 +61,17 @@ public abstract class GDEventConsumerBuilder<T extends GDComponent> {
 						} else
 							return false;
 					})
-					.map(gs -> {
-						IChannel c = new ChannelAwardedLevelsSetting(gs).getValue();
-						
-						if (c != null)
-							channelToGS.put(c.getLongID(), gs);
-						return c;
-					})
-					.filter(c -> c != null)
 					.collect(Collectors.toList());
+			
+			List<IChannel> channels = new ArrayList<>();
+					
+			for (GuildSettings gs : gsList) {
+				IChannel c = new ChannelAwardedLevelsSetting(gs).getValue();
+				if (c != null) {
+					channelToGS.put(c.getLongID(), gs);
+					channels.add(c);
+				}
+			}
 			
 			long prepTime = System.currentTimeMillis() - beginMillis;
 			

@@ -5,12 +5,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 
 import com.github.alex1304.jdash.component.GDComponentList;
 import com.github.alex1304.jdash.component.GDLevelPreview;
 import com.github.alex1304.ultimategdbot.dbentities.AwardedLevel;
 import com.github.alex1304.ultimategdbot.dbentities.GuildSettings;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.setup.guildsettings.RoleAwardedLevelsSetting;
+import com.github.alex1304.ultimategdbot.modules.gdevents.broadcast.BroadcastableMessage;
 import com.github.alex1304.ultimategdbot.modules.gdevents.broadcast.MessageBroadcaster;
 import com.github.alex1304.ultimategdbot.modules.gdevents.broadcast.OptionalRoleTagMessage;
 import com.github.alex1304.ultimategdbot.utils.DatabaseUtils;
@@ -34,7 +36,7 @@ public class GDAwardedConsumerBuilder extends GDEventConsumerBuilder<GDComponent
 	private Map<Long, List<IMessage>> broadcastResults;
 	private Map<Long, Procedure> awardedPendingEdit;
 
-	public GDAwardedConsumerBuilder(String eventName, AuthorObject embedAuthor, OptionalRoleTagMessage messageToBroadcast, boolean saveResults) {
+	public GDAwardedConsumerBuilder(String eventName, AuthorObject embedAuthor, Supplier<BroadcastableMessage> messageToBroadcast, boolean saveResults) {
 		super(eventName, "channelAwardedLevels", messageToBroadcast);
 		this.embedAuthor = embedAuthor;
 		this.saveResults = saveResults;
@@ -53,7 +55,7 @@ public class GDAwardedConsumerBuilder extends GDEventConsumerBuilder<GDComponent
 				GuildSettings gs = channelToGS.get(channel.getLongID());
 				RoleAwardedLevelsSetting rals = new RoleAwardedLevelsSetting(gs);
 
-				OptionalRoleTagMessage ortm = (OptionalRoleTagMessage) messageToBroadcast;
+				OptionalRoleTagMessage ortm = (OptionalRoleTagMessage) messageToBroadcast.get();
 				ortm.setBaseEmbed(embed);
 				ortm.setRoleToPing(rals.getValue());
 				return ortm;

@@ -49,28 +49,28 @@ public class GDEventsModule implements Module {
 	private WeeklyDemonEventScanner wds;
 	
 	private static final GDAwardedConsumerBuilder AWARDED_ADDED_CB = new GDAwardedConsumerBuilder(
-			"Awarded Level Added", AuthorObjects.awardedLevelAdded(), new NewAwardedMessage(), true);
+			"Awarded Level Added", AuthorObjects.awardedLevelAdded(), () -> new NewAwardedMessage(), true);
 	
 	private static final GDAwardedConsumerBuilder AWARDED_DELETED_CB = new GDAwardedConsumerBuilder(
-			"Awarded Level Deleted", AuthorObjects.awardedLevelDeleted(), new AwardedDeletedMessage(), false);
+			"Awarded Level Deleted", AuthorObjects.awardedLevelDeleted(), () -> new AwardedDeletedMessage(), false);
 	
 	private static final GDTimelyConsumerBuilder DAILY_CHANGED_CB = new GDTimelyConsumerBuilder(
-			"Daily Level Changed", num -> AuthorObjects.dailyLevel(num), new TimelyChangedMessage(false));
+			"Daily Level Changed", num -> AuthorObjects.dailyLevel(num), () -> new TimelyChangedMessage(false));
 
 	private static final GDTimelyConsumerBuilder WEEKLY_CHANGED_CB = new GDTimelyConsumerBuilder(
-			"Weekly Demon Changed", num -> AuthorObjects.weeklyDemon(num), new TimelyChangedMessage(true));
+			"Weekly Demon Changed", num -> AuthorObjects.weeklyDemon(num), () -> new TimelyChangedMessage(true));
 
 	private static final GDModConsumerBuilder USER_PROMOTED_ELDER_CB = new GDModConsumerBuilder(
-			"User Promoted Elder", AuthorObjects.userPromoted(), new UserModStatusMessage(true, GDUserRole.ELDER_MODERATOR));
+			"User Promoted Elder", AuthorObjects.userPromoted(), () -> new UserModStatusMessage(true, GDUserRole.ELDER_MODERATOR));
 
 	private static final GDModConsumerBuilder USER_PROMOTED_MOD_CB = new GDModConsumerBuilder(
-			"User Promoted Mod", AuthorObjects.userPromoted(), new UserModStatusMessage(true, GDUserRole.MODERATOR));
+			"User Promoted Mod", AuthorObjects.userPromoted(), () -> new UserModStatusMessage(true, GDUserRole.MODERATOR));
 
 	private static final GDModConsumerBuilder USER_DEMOTED_MOD_CB = new GDModConsumerBuilder(
-			"User Demoted Mod", AuthorObjects.userDemoted(), new UserModStatusMessage(false, GDUserRole.MODERATOR));
+			"User Demoted Mod", AuthorObjects.userDemoted(), () -> new UserModStatusMessage(false, GDUserRole.MODERATOR));
 
 	private static final GDModConsumerBuilder USER_DEMOTED_USER_CB = new GDModConsumerBuilder(
-			"User Demoted User", AuthorObjects.userDemoted(), new UserModStatusMessage(false, GDUserRole.USER));
+			"User Demoted User", AuthorObjects.userDemoted(), () -> new UserModStatusMessage(false, GDUserRole.USER));
 	
 	public GDEventsModule() {
 		GDEventManager.getInstance().registerEvent(new GDEvent<>(CommonEvents.AWARDED_LEVEL_ADDED, AWARDED_ADDED_CB.build()));

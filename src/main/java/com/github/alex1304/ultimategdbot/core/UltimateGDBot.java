@@ -164,7 +164,7 @@ public class UltimateGDBot {
 	}
 	
 	public static void logException(Exception e) {
-		log("ERROR", "Exception thrown: `" + e.getClass().getName() + ": " + e.getMessage() + "`");
+		logError("Exception thrown: `" + e.getClass().getName() + ": " + e.getMessage() + "`");
 		e.printStackTrace();
 	}
 	

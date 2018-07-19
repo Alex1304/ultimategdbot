@@ -78,9 +78,10 @@ public class CheckModCommand implements Command {
 			GDEventManager.getInstance().dispatch("USER_DEMOTED_USER", user);
 		
 
-		if (mod != null && user.getRole() == GDUserRole.USER)
-			DatabaseUtils.delete(mod);
-		else {
+		if (user.getRole() == GDUserRole.USER) {
+			if (mod != null)
+				DatabaseUtils.delete(mod);
+		} else {
 			if (mod == null)
 				mod = new GDMod();
 			
@@ -90,8 +91,6 @@ public class CheckModCommand implements Command {
 			
 			DatabaseUtils.save(mod);
 		}
-			
-		BotUtils.typing(event.getChannel(), false);
 	}
 
 }
