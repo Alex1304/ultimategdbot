@@ -1,7 +1,6 @@
 package com.github.alex1304.ultimategdbot.modules.commands.impl.restart;
 
 import java.io.File;
-import java.util.Date;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -43,7 +42,7 @@ public class RestartCommand implements Command {
 			
 			final ProcessBuilder builder = new ProcessBuilder(command);
 			builder.redirectErrorStream(true);
-			builder.redirectOutput(new File(System.getProperty("user.dir") + File.separator + "restart_" + new Date().toString().replaceAll(" ", "_") + ".log"));
+			builder.redirectOutput(new File(System.getProperty("user.dir") + File.separator + "restart_" + System.currentTimeMillis() + ".log"));
 			builder.start();
 			System.exit(0);
 		} catch (Exception e) {

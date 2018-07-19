@@ -28,9 +28,10 @@ public class NewAwardedMessage extends OptionalRoleTagMessage {
 	));
 
 	public NewAwardedMessage(EmbedObject baseEmbed, IRole roleToPing) {
-		super(RANDOM_TEXT.get(new Random().nextInt(RANDOM_TEXT.size())), baseEmbed, roleToPing);
+		super(RANDOM_TEXT.get(new Random().nextInt(RANDOM_TEXT.size())), "Congratulations for getting your level rated!", baseEmbed, roleToPing);
 	}
 	
 	public NewAwardedMessage() {
+		this(null, null);
 	}
 }

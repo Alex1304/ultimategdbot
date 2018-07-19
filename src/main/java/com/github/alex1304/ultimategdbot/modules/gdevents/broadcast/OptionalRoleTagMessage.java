@@ -11,14 +11,16 @@ import sx.blah.discord.handle.obj.IRole;
 public class OptionalRoleTagMessage implements BroadcastableMessage {
 
 	private String baseContent;
+	private String privateContent;
 	private EmbedObject baseEmbed;
 	private IRole roleToPing;
 	
 	public OptionalRoleTagMessage() {
 	}
 	
-	public OptionalRoleTagMessage(String baseContent, EmbedObject baseEmbed, IRole roleToPing) {
+	public OptionalRoleTagMessage(String baseContent, String privateContent, EmbedObject baseEmbed, IRole roleToPing) {
 		this.baseContent = baseContent;
+		this.privateContent = privateContent;
 		this.baseEmbed = baseEmbed;
 		this.roleToPing = roleToPing;
 	}
@@ -48,6 +50,15 @@ public class OptionalRoleTagMessage implements BroadcastableMessage {
 	}
 
 	/**
+	 * Gets the privateContent
+	 *
+	 * @return String
+	 */
+	public String getPrivateContent() {
+		return privateContent;
+	}
+
+	/**
 	 * Gets the baseEmbed
 	 *
 	 * @return EmbedObject
@@ -72,6 +83,15 @@ public class OptionalRoleTagMessage implements BroadcastableMessage {
 	 */
 	public void setBaseContent(String baseContent) {
 		this.baseContent = baseContent;
+	}
+
+	/**
+	 * Sets the privateContent
+	 *
+	 * @param privateContent - String
+	 */
+	public void setPrivateContent(String privateContent) {
+		this.privateContent = privateContent;
 	}
 
 	/**

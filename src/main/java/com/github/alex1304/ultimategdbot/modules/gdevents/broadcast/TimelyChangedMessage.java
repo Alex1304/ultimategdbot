@@ -17,6 +17,7 @@ public class TimelyChangedMessage extends OptionalRoleTagMessage {
 	}
 
 	public TimelyChangedMessage(EmbedObject baseEmbed, IRole roleToPing, boolean weekly) {
-		super(String.format(TEXT, weekly ? "Weekly demon" : "Daily level"), baseEmbed, roleToPing);
+		super(String.format(TEXT, weekly ? "Weekly demon" : "Daily level"), "Congrats on getting the " +
+				(weekly ? "Weekly demon" : "Daily level") + "!", baseEmbed, roleToPing);
 	}
 }

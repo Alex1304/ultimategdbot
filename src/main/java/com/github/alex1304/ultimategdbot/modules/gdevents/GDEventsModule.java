@@ -82,7 +82,7 @@ public class GDEventsModule implements Module {
 		GDEventManager.getInstance().registerEvent(new GDEvent<>("USER_DEMOTED_MOD", USER_DEMOTED_MOD_CB.build()));
 		GDEventManager.getInstance().registerEvent(new GDEvent<>("USER_DEMOTED_USER", USER_DEMOTED_USER_CB.build()));
 		
-		GDEventManager.getInstance().registerEvent(new GDEvent<GDComponentList<GDUpdatedComponent<GDLevelPreview>>>(CommonEvents.AWARDED_LEVEL_UPDATED, (GDComponentList<GDUpdatedComponent<GDLevelPreview>> updated) -> {
+		GDEventManager.getInstance().registerEvent(new GDEvent<>(CommonEvents.AWARDED_LEVEL_UPDATED, (GDComponentList<GDUpdatedComponent<GDLevelPreview>> updated) -> {
 			for (GDUpdatedComponent<GDLevelPreview> ulp : updated) {
 				GDLevelPreview lp1 = ulp.getBeforeUpdate();
 				GDLevelPreview lp2 = ulp.getAfterUpdate();

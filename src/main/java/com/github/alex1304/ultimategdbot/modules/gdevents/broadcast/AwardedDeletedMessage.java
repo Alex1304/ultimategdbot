@@ -24,9 +24,10 @@ public class AwardedDeletedMessage extends OptionalRoleTagMessage {
 	));
 
 	public AwardedDeletedMessage(EmbedObject baseEmbed, IRole roleToPing) {
-		super(RANDOM_TEXT.get(new Random().nextInt(RANDOM_TEXT.size())), baseEmbed, roleToPing);
+		super(RANDOM_TEXT.get(new Random().nextInt(RANDOM_TEXT.size())), "Oh snap, your level is no longer rated...", baseEmbed, roleToPing);
 	}
 
 	public AwardedDeletedMessage() {
+		this(null, null);
 	}
 }
