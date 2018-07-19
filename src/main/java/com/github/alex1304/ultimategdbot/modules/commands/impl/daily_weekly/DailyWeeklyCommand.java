@@ -35,10 +35,12 @@ public class DailyWeeklyCommand implements Command {
 	public void runCommand(MessageReceivedEvent event, List<String> args) throws CommandFailedException {
 		GDTimelyLevel tl = null;
 		
+		BotUtils.typing(event.getChannel(), true);
+		
 		try {
 			tl = UltimateGDBot.gdClient().fetch(new GDTimelyLevelHttpRequest(weekly, UltimateGDBot.gdClient()));
 		} catch (GDAPIException e) {
-			throw new GDServersUnavailableException();
+			throw new GDServersUnavailableException(e);
 		}
 				
 		if (tl == null)
@@ -50,6 +52,7 @@ public class DailyWeeklyCommand implements Command {
 				+ BotUtils.formatTimeMillis(tl.getNextTimelyCooldown() * 1000), 
 				GDUtils.buildEmbedForGDLevel(weekly ? AuthorObjects.weeklyDemon(tl.getTimelyNumber())
 						: AuthorObjects.dailyLevel(tl.getTimelyNumber()), tl));
+		BotUtils.typing(event.getChannel(), false);
 	}
 
 }

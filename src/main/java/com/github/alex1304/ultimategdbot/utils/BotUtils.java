@@ -291,7 +291,7 @@ public class BotUtils {
 	 * @return The formatted username as String.
 	 */
 	public static String formatDiscordUsername(IUser user) {
-		return user.getName() + "#" + user.getDiscriminator();
+		return escapeMarkdown(user.getName() + "#" + user.getDiscriminator());
 	}
 	
 	/**

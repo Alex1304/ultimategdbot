@@ -15,8 +15,8 @@ cmd_build_beta: &cmd_build_beta
         -Dultimategdbot.hierarchy.owner_id=$BOT_OWNER_ID
         -Dultimategdbot.hierarchy.official_guild_id=$BOT_OFFICIAL_GUILD_ID
         -Dultimategdbot.hierarchy.moderator_role_id=$BOT_MODERATOR_ROLE_ID
-        -Dultimategdbot.gd_account.id=$BOT_GDACCOUNT_ID
-        -Dultimategdbot.gd_account.password=$BOT_GDACCOUNT_PASSWORD
+        -Dultimategdbot.gd_client.id=$BOT_GDACCOUNT_ID
+        -Dultimategdbot.gd_client.password=$BOT_GDACCOUNT_PASSWORD
         -Dultimategdbot.misc.emoji_guild_id.1=$BOT_MISC_EMOJI_GUILD_ID_1
         -Dultimategdbot.misc.emoji_guild_id.2=$BOT_MISC_EMOJI_GUILD_ID_2
         package
@@ -34,8 +34,8 @@ cmd_build_stable: &cmd_build_stable
         -Dultimategdbot.hierarchy.owner_id=$BOT_OWNER_ID
         -Dultimategdbot.hierarchy.official_guild_id=$BOT_OFFICIAL_GUILD_ID
         -Dultimategdbot.hierarchy.moderator_role_id=$BOT_MODERATOR_ROLE_ID
-        -Dultimategdbot.gd_account.id=$BOT_GDACCOUNT_ID
-        -Dultimategdbot.gd_account.password=$BOT_GDACCOUNT_PASSWORD
+        -Dultimategdbot.gd_client.id=$BOT_GDACCOUNT_ID
+        -Dultimategdbot.gd_client.password=$BOT_GDACCOUNT_PASSWORD
         -Dultimategdbot.misc.emoji_guild_id.1=$BOT_MISC_EMOJI_GUILD_ID_1
         -Dultimategdbot.misc.emoji_guild_id.2=$BOT_MISC_EMOJI_GUILD_ID_2
         package
@@ -71,7 +71,7 @@ jobs:
             - run: |
                 ssh $SSH_USER@$SSH_HOST "mkdir -p ~/ultimategdbot ; pgrep -f ~/ultimategdbot/ultimategdbot-beta.jar | xargs kill -9"
                 scp target/ultimategdbot.jar $SSH_USER@$SSH_HOST:~/ultimategdbot/ultimategdbot-beta.jar
-                ssh $SSH_USER@$SSH_HOST "nohup java -jar ~/ultimategdbot/ultimategdbot-beta.jar >> out.log 2>&1 &"
+                ssh $SSH_USER@$SSH_HOST "nohup java -jar ~/ultimategdbot/ultimategdbot-beta.jar >> ~/ultimategdbot/out-beta.log 2>&1 &"
     build_stable:
         <<: *defaults
         docker:
@@ -100,7 +100,7 @@ jobs:
             - run: |
                 ssh $SSH_USER@$SSH_HOST "mkdir -p ~/ultimategdbot ; pgrep -f ~/ultimategdbot/ultimategdbot-stable.jar | xargs kill -9"
                 scp target/ultimategdbot.jar $SSH_USER@$SSH_HOST:~/ultimategdbot/ultimategdbot-stable.jar
-                ssh $SSH_USER@$SSH_HOST "nohup java -jar ~/ultimategdbot/ultimategdbot-stable.jar >> out.log 2>&1 &"
+                ssh $SSH_USER@$SSH_HOST "nohup java -jar ~/ultimategdbot/ultimategdbot-stable.jar >> ~/ultimategdbot/out-stable.log 2>&1 &"
 workflows:
     version: 2
     build-deploy:
