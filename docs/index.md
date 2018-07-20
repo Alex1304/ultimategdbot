@@ -8,12 +8,13 @@ UltimateGDBot is a Discord bot designed for Geometry Dash players. It gives user
 
 ## Interesting... How do I add the bot to my Discord server?
 
-You can invite UltimateGDBot to your own server using the following authorization link: https://discordapp.com/oauth2/authorize?client_id=358598636436979713&scope=bot&permissions=268520448
+You can invite UltimateGDBot to your own server using the following authorization link: [https://discordapp.com/oauth2/authorize?client_id=358598636436979713&scope=bot&permissions=268520448](https://discordapp.com/oauth2/authorize?client_id=358598636436979713&scope=bot&permissions=268520448
+)
 
 ## Help and support
 
-If you need further help with the bot after reading this manual, you can contact the bot's owner on Discord (Alex1304#9704), or join the official Discord server and ask your question there: https://discord.gg/VpVdKvg
+If you need further help with the bot after reading this manual, you can contact the bot's owner on Discord (Alex1304#9704), or join the official Discord server and ask your question there: [https://discord.gg/VpVdKvg](https://discord.gg/VpVdKvg)
 
 ## Partners and credits
 
-UltimateGDBot is hosted and powered by FastVM, a company that sells powerful virtual private servers for a low price. Check their plans on their website https://www.fastvm.io/ and use promo code `GDBOT` to get 10% discount.
+UltimateGDBot is hosted and powered by FastVM, a company that sells powerful virtual private servers for a low price. Check their plans on their website [https://www.fastvm.io/](https://www.fastvm.io/) and use promo code `GDBOT` to get 10% discount.
