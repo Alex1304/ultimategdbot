@@ -30,6 +30,7 @@ import com.github.alex1304.ultimategdbot.modules.reply.Reply;
 import com.github.alex1304.ultimategdbot.modules.reply.ReplyModule;
 import com.github.alex1304.ultimategdbot.utils.BotRoles;
 import com.github.alex1304.ultimategdbot.utils.BotUtils;
+import com.github.alex1304.ultimategdbot.utils.Emojis;
 
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
 import sx.blah.discord.util.DiscordException;
@@ -111,13 +112,13 @@ public class CommandsModule implements Module {
 				else
 					throw new CommandFailedException("You don't have permission to use this command");
 			} catch (CommandFailedException e) {
-				BotUtils.sendMessage(event.getChannel(), ":negative_squared_cross_mark: " + e.getMessage());
+				BotUtils.sendMessage(event.getChannel(), Emojis.CROSS + " " + e.getMessage());
 			} catch (DiscordException e) {
-				BotUtils.sendMessage(event.getChannel(), ":negative_squared_cross_mark: Sorry, an error occured"
+				BotUtils.sendMessage(event.getChannel(), Emojis.CROSS + " Sorry, an error occured"
 						+ " while running the command.\n```\n" + e.getErrorMessage() + "\n```");
 				System.err.println(e.getErrorMessage());
 			} catch (Exception e) {
-				BotUtils.sendMessage(event.getChannel(), "An internal error occured while running the command."
+				BotUtils.sendMessage(event.getChannel(), Emojis.CROSS + " An internal error occured while running the command."
 						+ " Please try again later.");
 				UltimateGDBot.logException(e);
 			}
