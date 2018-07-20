@@ -37,7 +37,15 @@ cd ultimategdbot
 
 In the newly created directory you have a file called `database.sql`. Run this SQL script in your MySQL/MariaDB database in order to create the necessary tables. 
 
-After that, you need to fill out the global settings for the bot. For now there is only one, `channel_debug_logs`, which allows you to choose a Discord channel where the bot can send debug messages. Create a new entry in the `global_settings` table in the database, assign to the row the ID 1, and put the ID of the desired channel in the `channel_debug_logs` column. If you don't do this, the bot won't work.
+After that, you need to fill out the global settings for the bot. For now there is only one, `channel_debug_logs`, which allows you to choose a Discord channel where the bot can send debug messages. Create a new entry in the `global_settings` table in the database, assign to the row the ID 1, and put the ID of the desired channel in the `channel_debug_logs` column. This would correspond to the following SQL command:
+
+```sql
+INSERT INTO global_settings VALUES (1, XXXXX);
+```
+
+with XXXXX being the ID of the desired debug log channel.
+
+This step is very important. If you don't do this, the bot won't work.
 
 ### Create a bot account
 

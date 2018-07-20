@@ -2,9 +2,9 @@ package com.github.alex1304.ultimategdbot.modules.commands;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import com.github.alex1304.ultimategdbot.core.UltimateGDBot;
 import com.github.alex1304.ultimategdbot.exceptions.CommandFailedException;
@@ -47,7 +47,7 @@ public class CommandsModule implements Module {
 
 	public CommandsModule() {
 		this.isEnabled = false;
-		this.commandMap = new HashMap<>();
+		this.commandMap = new TreeMap<>();
 		registerCommands();
 	}
 

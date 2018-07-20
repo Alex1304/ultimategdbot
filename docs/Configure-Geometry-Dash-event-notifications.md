@@ -36,6 +36,15 @@ The `set` subcommand allows you to edit the value of a field. The first argument
 
 From now on, the bot should be sending messages in the specified channel and the specified role will be tagged at each notification. If it doesn't send anything even after the event happened, **please double check if the bot has permissions to send messages with embeds links in the specified channel**. Note that the role setting is optional: if you configure a channel without specifying a role to tag, the notifications feature will still work, the messages will just be sent in the channel without tagging any role.
 
+If you want the bot to stop sending notifications, use the `reset` subcommand on the channel you want the bot to stop sending notifications. For example, 
+
+```
+[prefix]setup reset channel_awarded_levels
+
+```
+
+will make the bot stop sending awarded level notifications. To enable it back, use the `set` command again on the desired channel.
+
 ## The `gdevents` command
 
 Once you have configured roles to tag, everyone in your server can assign these roles themselves using the `gdevents` command. 
