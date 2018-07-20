@@ -32,7 +32,7 @@ Then you need to follow instructions given by the command to complete the linkin
 
 ## `checkmod`
 
-This command checks for the presence of a Moderator badge on the specified GD user's profile. The bot replies with "Failed" if the user isn't moderator, otherwise it replies "Success". This is designed similarly to the "REQ" button in-game, however keep in mind that the doesn't use this button behind the scenes. It just checks for the presence of the Moderator badge on the user's profile, as said previously.
+This command checks for the presence of a Moderator badge on the specified GD user's profile. The bot replies with "Failed" if the user isn't moderator, otherwise it replies "Success". This is designed similarly to the "REQ" button in-game, however keep in mind that the bot doesn't use this button behind the scenes. It just checks for the presence of the Moderator badge on the user's profile, as said previously.
 
 Why is this command useful? It is true that the `profile` command already shows the Moderator status, but `checkmod` has the particularity of being able to detect changes in the moderator status of the user. If you run `checkmod` once, and says "Failed", then re-run the command a few moments later and says "Success" on the same user, then a Geometry Dash event "User promoted!" will be fired, and all servers that have configured a channel to receive GD moderators notifications will receive a message. This command is actually the only way to trigger GD moderator events, so if you know that someone got promoted or demoted, go ahead and use `checkmod` on that user to let everyone else know!
 
@@ -120,4 +120,4 @@ Please refer to [this section](http://ultimategdbot.readthedocs.io/en/latest/Con
 
 ## `weekly`
 
-Shows info on the currentWeekly demon in Geometry Dash. The countdown to next Weekly demon is displayed in the message.
+Shows info on the current Weekly demon in Geometry Dash. The countdown to next Weekly demon is displayed in the message.

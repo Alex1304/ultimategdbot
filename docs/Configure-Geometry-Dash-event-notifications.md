@@ -21,7 +21,7 @@ When you run this command, a menu opens and displays the current settings. If yo
 - `role_timely_levels` - The role that the bot is supposed to tag when sending notifications on new Daily levels and Weekly demons.. Expected value: the name or the mention of a Discord role, ex. `subscribers` or `@subscribers`
 - `role_gd_moderators` - The role that the bot is supposed to tag when sending notifications on Geometry Dash moderators promotions/demotions. Expected value: the name or the mention of a Discord role, ex. `subscribers` or `@subscribers`
 
-Let's say I want to make the bot send notification for new awarded levels in a channel called `#botspam` and by tagging the role `@pingme` on each notification. I would run the following sequence of commands (each new line is a separate message):
+Let's say I want to make the bot send notifications for new awarded levels in a channel called `#botspam` and by tagging the role `@pingme` on each notification. I would run the following sequence of commands (each new line is a separate message):
 
 
 ```
