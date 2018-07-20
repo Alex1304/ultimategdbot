@@ -27,6 +27,7 @@ cmd_build_stable: &cmd_build_stable
         -Dultimategdbot.release.channel="stable"
         -Dultimategdbot.prefix.full="ugdb!"
         -Dultimategdbot.prefix.canonical="u!"
+        -Dhibernate.hikari.dataSource.url=$DB_URL
         -Dhibernate.hikari.dataSource.user=$DB_USER
         -Dhibernate.hikari.dataSource.password=$DB_PASSWORD
         -Dultimategdbot.client.id=$BOT_ID
