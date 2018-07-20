@@ -29,6 +29,7 @@ public class AboutCommand implements Command {
 		bib.withPermissions(EnumSet.of(
 				Permissions.SEND_MESSAGES,
 				Permissions.EMBED_LINKS,
+				Permissions.USE_EXTERNAL_EMOJIS,
 				Permissions.READ_MESSAGE_HISTORY,
 				Permissions.READ_MESSAGES,
 				Permissions.MANAGE_ROLES
@@ -61,6 +62,7 @@ public class AboutCommand implements Command {
 				+ "UltimateGDBot is an open-source project. You can check out the GitHub repository at "
 				+ "https://github.com/Alex1304/ultimategdbot" + (invite != null && invite.isPresent() ? " and join the official "
 						+ "support server at https://" + invite.get().toString() : "") + "\n"
+				+ "User manual: http://ultimategdbot.readthedocs.io/en/latest"
 				+ "\n───────────────────\n\n"
 				+ "UltimateGDBot is hosted and powered by __FastVM__, a company that sells powerful virtual private servers "
 				+ "for a low price. Check their plans on their website https://www.fastvm.io/ and use promo code `GDBOT` "

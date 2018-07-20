@@ -54,6 +54,8 @@ public class SetupCommand implements Command {
 				+ "You can for example choose a channel for Geometry Dash event notifications and choose "
 				+ "a role to tag. More configurable things might be added in the future so check this commmand"
 				+ "from time to time to see if the configuration fits with your server's needs!\n\n"
+				+ "**Please check out the setup tutorial first if you don't know the meaning of the fields below:** "
+				+ "http://ultimategdbot.readthedocs.io/en/latest/Configure-Geometry-Dash-event-notifications/\n\n"
 				+ settingsList.toString());
 		
 		setupMenu.setMenuEmbedContent("To assign a value to a field, type `set <field_name> <new_value>`, ex. "
