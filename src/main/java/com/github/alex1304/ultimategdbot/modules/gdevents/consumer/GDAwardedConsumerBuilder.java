@@ -11,6 +11,7 @@ import com.github.alex1304.jdash.component.GDComponentList;
 import com.github.alex1304.jdash.component.GDLevelPreview;
 import com.github.alex1304.ultimategdbot.dbentities.AwardedLevel;
 import com.github.alex1304.ultimategdbot.dbentities.GuildSettings;
+import com.github.alex1304.ultimategdbot.modules.commands.impl.setup.guildsettings.ChannelAwardedLevelsSetting;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.setup.guildsettings.RoleAwardedLevelsSetting;
 import com.github.alex1304.ultimategdbot.modules.gdevents.broadcast.BroadcastableMessage;
 import com.github.alex1304.ultimategdbot.modules.gdevents.broadcast.MessageBroadcaster;
@@ -39,7 +40,7 @@ public class GDAwardedConsumerBuilder extends GDEventConsumerBuilder<GDComponent
 	private Map<Long, Procedure> awardedPendingEdit;
 
 	public GDAwardedConsumerBuilder(String eventName, AuthorObject embedAuthor, Supplier<BroadcastableMessage> messageToBroadcast, boolean saveResults) {
-		super(eventName, "channelAwardedLevels", messageToBroadcast);
+		super(eventName, "channelAwardedLevels", messageToBroadcast, gs -> new ChannelAwardedLevelsSetting(gs).getValue());
 		this.embedAuthor = embedAuthor;
 		this.saveResults = saveResults;
 		this.broadcastResults = new ConcurrentHashMap<>();

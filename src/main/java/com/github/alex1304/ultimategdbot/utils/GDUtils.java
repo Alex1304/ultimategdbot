@@ -158,7 +158,7 @@ public class GDUtils {
 		String objCount = "**Object count:** ";
 		if (lp.getObjectCount() > 0 || lp.getLevelVersion() >= 21) {
 			if (lp.getObjectCount() == 65535)
-				objCount += "More than ";
+				objCount += ">";
 			objCount += lp.getObjectCount();
 		} else
 			objCount += "_Info unavailable for levels playable in GD 2.0 or older_";
@@ -390,7 +390,7 @@ public class GDUtils {
 	 * @return List&lt;IUser&gt;
 	 */
 	public static List<IUser> getDiscordUsersLinkedToGDAccount(long gdAccountID) {
-		return DatabaseUtils.query(UserSettings.class, "from UserSettings u where u.gdUserID = ?0", gdAccountID).stream()
+		return DatabaseUtils.query(UserSettings.class, "from UserSettings u where u.gdUserID = ?0 and u.linkActivated = 1", gdAccountID).stream()
 				.map(x -> UltimateGDBot.client().fetchUser(x.getUserID()))
 				.filter(x -> x != null)
 				.collect(Collectors.toList());

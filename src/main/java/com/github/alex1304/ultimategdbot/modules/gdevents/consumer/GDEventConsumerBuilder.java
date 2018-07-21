@@ -6,13 +6,13 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import com.github.alex1304.jdash.component.GDComponent;
 import com.github.alex1304.ultimategdbot.core.UltimateGDBot;
 import com.github.alex1304.ultimategdbot.dbentities.GuildSettings;
-import com.github.alex1304.ultimategdbot.modules.commands.impl.setup.guildsettings.ChannelAwardedLevelsSetting;
 import com.github.alex1304.ultimategdbot.modules.gdevents.broadcast.BroadcastableMessage;
 import com.github.alex1304.ultimategdbot.utils.BotUtils;
 import com.github.alex1304.ultimategdbot.utils.DatabaseUtils;
@@ -32,11 +32,13 @@ public abstract class GDEventConsumerBuilder<T extends GDComponent> {
 	private String dbChannelField;
 	protected String eventName;
 	protected Supplier<BroadcastableMessage> messageToBroadcast;
+	protected Function<GuildSettings, IChannel> broadcastChannel;
 
-	public GDEventConsumerBuilder(String eventName, String dbChannelField, Supplier<BroadcastableMessage> messageToBroadcast) {
+	public GDEventConsumerBuilder(String eventName, String dbChannelField, Supplier<BroadcastableMessage> messageToBroadcast, Function<GuildSettings, IChannel> broadcastChannel) {
 		this.eventName = eventName;
 		this.dbChannelField = dbChannelField;
 		this.messageToBroadcast = messageToBroadcast;
+		this.broadcastChannel = broadcastChannel;
 	}
 	
 	public Consumer<T> build() {
@@ -66,7 +68,7 @@ public abstract class GDEventConsumerBuilder<T extends GDComponent> {
 			List<IChannel> channels = new ArrayList<>();
 					
 			for (GuildSettings gs : gsList) {
-				IChannel c = new ChannelAwardedLevelsSetting(gs).getValue();
+				IChannel c = broadcastChannel.apply(gs);
 				if (c != null) {
 					channelToGS.put(c.getLongID(), gs);
 					channels.add(c);

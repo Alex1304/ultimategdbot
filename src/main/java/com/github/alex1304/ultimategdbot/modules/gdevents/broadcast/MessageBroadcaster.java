@@ -51,7 +51,7 @@ public class MessageBroadcaster {
 					try {
 						return channel.sendMessage(bm.buildContent(), bm.buildEmbed());
 					} catch (MissingPermissionsException | DiscordException e) {
-						UltimateGDBot.logException(e);
+						System.err.println("[MessageBroadcaster] " + e.getClass().getName() + ": " + e.getMessage());
 						return null;
 					}
 				}).get());
