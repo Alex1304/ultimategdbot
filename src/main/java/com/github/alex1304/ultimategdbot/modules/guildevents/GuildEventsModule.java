@@ -45,7 +45,7 @@ public class GuildEventsModule implements Module {
 		if (initialKnownGuilds.stream().anyMatch(gs -> gs.getGuildID() == event.getGuild().getLongID()))
 			return;
 		
-		UltimateGDBot.logSuccess("New guild joined: " + event.getGuild().getName()
+		UltimateGDBot.logInfo(":inbox_tray: New guild joined: " + event.getGuild().getName()
 				+ " (" + event.getGuild().getLongID() + ")");
 		
 		GuildSettings gs = new GuildSettings();
@@ -58,7 +58,7 @@ public class GuildEventsModule implements Module {
 		if (!enabled)
 			return;
 		
-		UltimateGDBot.logError("Guild left: " + event.getGuild().getName()
+		UltimateGDBot.logInfo(":outbox_tray: Guild left: " + event.getGuild().getName()
 				+ " (" + event.getGuild().getLongID() + ")");
 		
 		GuildSettings gs = DatabaseUtils.findByID(GuildSettings.class, event.getGuild().getLongID());

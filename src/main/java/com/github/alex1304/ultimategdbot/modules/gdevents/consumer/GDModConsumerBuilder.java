@@ -6,6 +6,7 @@ import java.util.function.Supplier;
 
 import com.github.alex1304.jdash.component.GDUser;
 import com.github.alex1304.ultimategdbot.dbentities.GuildSettings;
+import com.github.alex1304.ultimategdbot.modules.commands.impl.setup.guildsettings.ChannelGDModeratorsSetting;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.setup.guildsettings.RoleGDModeratorsSetting;
 import com.github.alex1304.ultimategdbot.modules.gdevents.broadcast.BroadcastableMessage;
 import com.github.alex1304.ultimategdbot.modules.gdevents.broadcast.MessageBroadcaster;
@@ -28,7 +29,7 @@ public class GDModConsumerBuilder extends GDEventConsumerBuilder<GDUser> {
 	private AuthorObject embedAuthor;
 
 	public GDModConsumerBuilder(String eventName, AuthorObject embedAuthor, Supplier<BroadcastableMessage> messageToBroadcast) {
-		super(eventName, "channelGDModerators", messageToBroadcast);
+		super(eventName, "channelGDModerators", messageToBroadcast, gs -> new ChannelGDModeratorsSetting(gs).getValue());
 		this.embedAuthor = embedAuthor;
 	}
 

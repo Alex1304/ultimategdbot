@@ -10,6 +10,7 @@ import com.github.alex1304.jdash.component.GDTimelyLevel;
 import com.github.alex1304.jdashevents.customcomponents.GDUpdatedComponent;
 import com.github.alex1304.ultimategdbot.dbentities.GuildSettings;
 import com.github.alex1304.ultimategdbot.dbentities.TimelyLevel;
+import com.github.alex1304.ultimategdbot.modules.commands.impl.setup.guildsettings.ChannelTimelyLevelsSetting;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.setup.guildsettings.RoleTimelyLevelsSetting;
 import com.github.alex1304.ultimategdbot.modules.gdevents.broadcast.BroadcastableMessage;
 import com.github.alex1304.ultimategdbot.modules.gdevents.broadcast.MessageBroadcaster;
@@ -33,7 +34,7 @@ public class GDTimelyConsumerBuilder extends GDEventConsumerBuilder<GDUpdatedCom
 	private Function<Long, AuthorObject> embedAuthor;
 
 	public GDTimelyConsumerBuilder(String eventName, Function<Long, AuthorObject> embedAuthor, Supplier<BroadcastableMessage> messageToBroadcast) {
-		super(eventName, "channelTimelyLevels", messageToBroadcast);
+		super(eventName, "channelTimelyLevels", messageToBroadcast, gs -> new ChannelTimelyLevelsSetting(gs).getValue());
 		this.embedAuthor = embedAuthor;
 	}
 

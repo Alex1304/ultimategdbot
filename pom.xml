@@ -1,10 +1,9 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>com.github.alex1304</groupId>
 	<artifactId>ultimategdbot</artifactId>
-	<version>3.0.0-SNAPSHOT</version>
+	<version>3.0.1-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>ultimategdbot</name>
@@ -46,19 +45,19 @@
 		<hibernate.hikari.dataSource.password>root</hibernate.hikari.dataSource.password>
 		
 		<!-- The properties below must be given as arguments on build (unless it's prefilled with "default") -->
-		<ultimategdbot.client.id></ultimategdbot.client.id>
-		<ultimategdbot.client.token></ultimategdbot.client.token>
-		<ultimategdbot.hierarchy.owner_id></ultimategdbot.hierarchy.owner_id>
-		<ultimategdbot.hierarchy.official_guild_id></ultimategdbot.hierarchy.official_guild_id>
-		<ultimategdbot.hierarchy.moderator_role_id></ultimategdbot.hierarchy.moderator_role_id>
+		<ultimategdbot.client.id />
+		<ultimategdbot.client.token />
+		<ultimategdbot.hierarchy.owner_id />
+		<ultimategdbot.hierarchy.official_guild_id />
+		<ultimategdbot.hierarchy.moderator_role_id />
 		<ultimategdbot.gd_client.url>default</ultimategdbot.gd_client.url>
-		<ultimategdbot.gd_client.id></ultimategdbot.gd_client.id>
-		<ultimategdbot.gd_client.password></ultimategdbot.gd_client.password>
-		<ultimategdbot.prefix.full></ultimategdbot.prefix.full>
-		<ultimategdbot.prefix.canonical></ultimategdbot.prefix.canonical>
-		<ultimategdbot.release.channel></ultimategdbot.release.channel>
-		<ultimategdbot.misc.emoji_guild_id.1></ultimategdbot.misc.emoji_guild_id.1>
-		<ultimategdbot.misc.emoji_guild_id.2></ultimategdbot.misc.emoji_guild_id.2>
+		<ultimategdbot.gd_client.id />
+		<ultimategdbot.gd_client.password />
+		<ultimategdbot.prefix.full />
+		<ultimategdbot.prefix.canonical />
+		<ultimategdbot.release.channel />
+		<ultimategdbot.misc.emoji_guild_id.1 />
+		<ultimategdbot.misc.emoji_guild_id.2 />
 	</properties>
 
 	<build>
@@ -100,6 +99,16 @@
 						</goals>
 					</execution>
 				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-release-plugin</artifactId>
+				<version>2.5.3</version>
+				<configuration>
+					<tagNameFormat>v@{project.version}</tagNameFormat>
+					<autoVersionSubmodules>true</autoVersionSubmodules>
+					<goals>deploy</goals>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>

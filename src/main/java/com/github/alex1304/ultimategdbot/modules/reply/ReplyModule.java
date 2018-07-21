@@ -36,6 +36,9 @@ public class ReplyModule implements Module {
 	
 	public void open(Reply reply, boolean retryOnFailure, boolean deleteInitialMessageAfterReply) {
 		String id = toReplyID(reply);
+		
+		if (id == null)
+			return;
 				
 		Procedure closeReply = () -> openedReplies.remove(id);
 		
@@ -69,6 +72,8 @@ public class ReplyModule implements Module {
 	}
 	
 	private static String toReplyID(Reply reply) {
+		if (reply.getInitialMessage() == null)
+			return null;
 		return reply.getInitialMessage().getChannel().getStringID() + reply.getUser().getStringID();
 	}
 	
@@ -81,6 +86,10 @@ public class ReplyModule implements Module {
 			return;
 		
 		String id = toReplyID(event.getChannel(), event.getAuthor());
+		
+		if (id == null)
+			return;
+		
 		Reply openedReply = openedReplies.get(id);
 		
 		if (openedReply == null)
