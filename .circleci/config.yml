@@ -110,12 +110,16 @@ workflows:
                 filters:
                     branches:
                         only: master
+                    tags:
+                        only: /v.*/
             - deploy_beta:
                 requires:
                     - build_beta
                 filters:
                     branches:
                         only: master
+                    tags:
+                        only: /v.*/
             - build_stable:
                 filters:
                     branches:
