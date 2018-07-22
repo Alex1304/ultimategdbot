@@ -19,7 +19,7 @@ Here are the minimum requirements to build and run your own version of UltimateG
 
 - Java Runtime Environment 8 or above
 - Apache Maven
-- MySQL or MariaDB with root privileges
+- MySQL or MariaDB with root privileges	
 - Git
 
 I let you search on Google for installation tutorials of these pieces of software for your OS.
@@ -84,9 +84,39 @@ In the end, the build command should look like this (values given here are just 
 mvn -Dultimategdbot.release.channel="stable" -Dultimategdbot.prefix.full="ugdb!" -Dultimategdbot.prefix.canonical="u!" -Dhibernate.hikari.dataSource.url="jdbc:mysql://localhost/ultimategdbot" -Dhibernate.hikari.dataSource.user="CoolUsername" -Dhibernate.hikari.dataSource.password="MyP@ssword" -Dultimategdbot.client.id="123456789" -Dultimategdbot.client.token="TheTokenHerejxbkhfnkhsbfhsbckhsllhjjjgcSKFQCQCqcGeGSEcEqyVBFj" -Dultimategdbot.hierarchy.owner_id="987456321" -Dultimategdbot.hierarchy.official_guild_id="85274196" -Dultimategdbot.hierarchy.moderator_role_id="786512570000" -Dultimategdbot.gd_client.id="8888888" -Dultimategdbot.gd_client.password="An0th€rP@ssw0rd" -Dultimategdbot.misc.emoji_guild_id.1="9999999999" -Dultimategdbot.misc.emoji_guild_id.2="66666666666" package
 ```
 
-If it says BUILD SUCCESS, a JAR file has been created in a directory called `target/`, this is the JAR file you will need to run to start the bot. If you ever need to change one of the parameters, you need to re-run the build command with the correct parameters and grab the new JAR file.
+If it says BUILD SUCCESS, a JAR file has been created in a directory called `target/`, this is the JAR file you will need to run to start the bot. Do not doubleclick the JAR file as it won't do anything, the proper way to run it is via command line `java -jar ultimategdbot.jar`. If you ever need to change one of the parameters, you need to re-run the build command with the correct parameters and grab the new JAR file.
 
-If it says BUILD FAILURE or if the JAR file refuses to start, try to solve the problem by yourself by looking at the errors displayed in console, and if you are stuck don't hesitate to reach support by following instructions in the Home page of this manual.
+If it says BUILD FAILURE and can't figure out how to fix it, an alternative method exists to give parameters to the build process. **However, if you're using this method, do NOT publish the code of your version of UltimateGDBot, as it involves putting sensitive data into configuration files tracked by Git.** This file is named `pom.xml` and is located in the root folder of the project. Open this file, and scroll to where the `<properties>` tag is located (lines 36 to 61). The parameters listed above are all between lines 43 and 60. For each line, you need to open the tag if closed (if a tag is formatted as `<propertyname />` you need to change is as `<propertyname></propertyname>`), and write the value of the property between the tags (without quotes). In our example above it would look like this:
+
+```xml
+<properties>
+
+	<!-- Don't touch properties from lines 37 to 42 -->
+
+	<hibernate.hikari.dataSource.url>jdbc:mysql://localhost/ultimategdbot</hibernate.hikari.dataSource.url>
+	<hibernate.hikari.dataSource.user>CoolUsername</hibernate.hikari.dataSource.user>
+	<hibernate.hikari.dataSource.password>MyP@ssword</hibernate.hikari.dataSource.password>
+
+	<!-- The properties below must be given as arguments on build (unless it's prefilled with "default") -->
+	<ultimategdbot.client.id>123456789</ultimategdbot.client.id>
+	<ultimategdbot.client.token>TheTokenHerejxbkhfnkhsbfhsbckhsllhjjjgcSKFQCQCqcGeGSEcEqyVBFj</ultimategdbot.client.token>
+	<ultimategdbot.hierarchy.owner_id>987456321</ultimategdbot.hierarchy.owner_id>
+	<ultimategdbot.hierarchy.official_guild_id>85274196</ultimategdbot.hierarchy.official_guild_id>
+	<ultimategdbot.hierarchy.moderator_role_id>786512570000</ultimategdbot.hierarchy.moderator_role_id>
+	<ultimategdbot.gd_client.url>default</ultimategdbot.gd_client.url>
+	<ultimategdbot.gd_client.id>8888888</ultimategdbot.gd_client.id>
+	<ultimategdbot.gd_client.password>An0th€rP@ssw0rd</ultimategdbot.gd_client.password>
+	<ultimategdbot.prefix.full>ugdb!</ultimategdbot.prefix.full>
+	<ultimategdbot.prefix.canonical>u!</ultimategdbot.prefix.canonical>
+	<ultimategdbot.release.channel>stable</ultimategdbot.release.channel>
+	<ultimategdbot.misc.emoji_guild_id.1>9999999999</ultimategdbot.misc.emoji_guild_id.1>
+	<ultimategdbot.misc.emoji_guild_id.2>66666666666</ultimategdbot.misc.emoji_guild_id.2>
+</properties>
+```
+
+Save the file and then just run `mvn package` without any parameter.
+
+If it still says BUILD FAILURE or if the JAR file refuses to start, try to solve the problem by yourself by looking at the errors displayed in console, and if you are stuck don't hesitate to reach support by following instructions in the Home page of this manual.
 
 ## Administration commands
 
@@ -96,7 +126,7 @@ As the bot owner or bot moderator, you have access to extra commands that are no
 
 Owner only. This is where you start and stop modules of the bot. The bot implementation is modular, each module encapsulates a particular functionality. Currently the modules are:
 
-- `commands` - This module registers all command and exposes them to everyone. If this module is disabled, nobody will be able to use any command, except for the bot owner (so the module can be started again later).
+- `commands` - This module registers all commands and exposes them to everyone. If this module is disabled, nobody will be able to use any command, except for the bot owner (so the module can be started again later).
 - `reply` - This module handles interactive menus and navigation menus. If this module is disabled, you can no longer navigate through level search results or leaderboards, and commands containing subcommands won't work anymore unless the subcommands are given as arguments. Generally it is deprecated to disable this module, as it can negatively affect users experience. If you have issues with some commands, it's better to disable the whole `commands` module instead.
 - `gd_events` - This module encapsulates the scanners for GD events. A scanner is a task that refreshes the Awarded page, the Daily level and the Weekly demon at a periodic rate in order to see if there are changes. This way the bot can detect that a level got rated/Daily/Weekly and automatically notify the configured channels in real time. If this module is disabled, the bot will stop scanning for changes in GD and it's up to the owner to trigger awarded/daily/weekly events using `pushevent`.
 - `guild_events` - Just a small module that sends messages in the debug log channel everytime people add or remove the bot from their Discord server. It's useful to keep track of the servers the bot joins or leaves.
