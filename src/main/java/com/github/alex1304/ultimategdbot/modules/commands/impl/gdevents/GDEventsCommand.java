@@ -77,7 +77,7 @@ public class GDEventsCommand implements Command {
 						else
 							event0.getAuthor().addRole(role);
 						
-						BotUtils.sendMessage(event0.getChannel(), Emojis.SUCCESS + "Successfully " + 
+						BotUtils.sendMessage(event0.getChannel(), Emojis.SUCCESS + " Successfully " + 
 								(hasRole ? "removed" : "added") + " the `" + role.getName() + "` role. You will " +
 								(hasRole ? "no longer" : "now") + " receive notifications from this server " + info + "\n" +
 								(hasRole ? "To get the role back" : "To remove the role") + ", run the command again.");

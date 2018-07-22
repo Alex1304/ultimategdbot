@@ -17,6 +17,7 @@ import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedE
  * @author Alex1304
  *
  */
+@FunctionalInterface
 public interface Command {
 
 	/**
