@@ -48,8 +48,10 @@ public class GDModConsumerBuilder extends GDEventConsumerBuilder<GDUser> {
 			ortm.setRoleToPing(rals.getValue());
 			return ortm;
 		});
-
+		
+		mb.setOnDone(onDone);
 		mb.broadcast();
+		onBroadcastDone.run();
 		
 		List<IUser> linkedUsers = GDUtils.getDiscordUsersLinkedToGDAccount(component.getAccountID());
 		linkedUsers.forEach(u -> BotUtils.sendMessage(u.getOrCreatePMChannel(), ((OptionalRoleTagMessage) messageToBroadcast.get()).getPrivateContent(), embed));

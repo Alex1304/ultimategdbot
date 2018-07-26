@@ -1,19 +1,17 @@
 package com.github.alex1304.ultimategdbot.modules.gdevents.broadcast;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
-import com.github.alex1304.ultimategdbot.core.UltimateGDBot;
-
+import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
 import sx.blah.discord.handle.obj.IChannel;
 import sx.blah.discord.handle.obj.IMessage;
-import sx.blah.discord.util.DiscordException;
-import sx.blah.discord.util.MissingPermissionsException;
+import sx.blah.discord.util.RateLimitException;
 import sx.blah.discord.util.RequestBuffer;
 
 /**
@@ -26,13 +24,17 @@ public class MessageBroadcaster {
 	private Map<IChannel, BroadcastableMessage> broadcastMap;
 	private List<IChannel> channels;
 	private Function<IChannel, BroadcastableMessage> messageForChannel;
-	private List<IMessage> results;
+	private ObservableList<IMessage> results;
+	private Consumer<ObservableList<? extends IMessage>> onDone;
+	private boolean isDone;
 	
 	public MessageBroadcaster(List<IChannel> channels, Function<IChannel, BroadcastableMessage> messageForChannel) {
 		this.channels = channels;
 		this.messageForChannel = messageForChannel;
 		this.broadcastMap = new ConcurrentHashMap<>();
-		this.results = Collections.synchronizedList(new ArrayList<>());
+		this.results = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
+		this.onDone = results -> {};
+		this.isDone = false;
 	}
 	
 	public void broadcast() {
@@ -40,6 +42,42 @@ public class MessageBroadcaster {
 			broadcastMap.put(channel, messageForChannel.apply(channel));
 		});
 		
+		results.addListener((ListChangeListener.Change<? extends IMessage> event) -> {
+			while(event.next()) {
+				event.getAddedSubList().forEach(m -> {
+					StringBuilder sb = new StringBuilder("[MessageBroadcaster] ");
+					if (m == null)
+						sb.append("Failed to send a message");
+					else
+						sb.append("Successfully sent a message to guild " + m.getGuild().getStringID());
+					
+					System.out.println(sb.toString());
+				});
+				
+				if (!isDone && event.getList().size() >= broadcastMap.entrySet().size()) {
+					onDone.accept(event.getList());
+					this.isDone = true;
+				}
+			}
+		});
+		
+		broadcastMap.entrySet().parallelStream().forEach(entry -> {
+			IChannel channel = entry.getKey();
+			BroadcastableMessage bm = entry.getValue();
+			
+			RequestBuffer.request(() -> {
+				try {
+					results.add(channel.sendMessage(bm.buildContent(), bm.buildEmbed()));
+				} catch (Exception e) {
+					if (e instanceof RateLimitException)
+						throw e;
+					System.err.println("[MessageBroadcaster] " + e.getClass().getName() + ": " + e.getMessage());
+					results.add(null);
+				} 
+			});
+		});
+		
+		/*
 		List<Thread> tlist = new ArrayList<>();
 		
 		for (Entry<IChannel, BroadcastableMessage> entry : broadcastMap.entrySet()) {
@@ -68,6 +106,11 @@ public class MessageBroadcaster {
 				UltimateGDBot.logException(e);
 			}
 		}
+		*/
+	}
+	
+	public void setOnDone(Consumer<ObservableList<? extends IMessage>> onDone) {
+		this.onDone = onDone;
 	}
 
 	/**

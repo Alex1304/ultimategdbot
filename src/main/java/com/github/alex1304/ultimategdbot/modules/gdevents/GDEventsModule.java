@@ -41,7 +41,7 @@ import sx.blah.discord.util.RequestBuffer;
  */
 public class GDEventsModule implements Module {
 	
-	private static final long SCAN_PERIOD = 3000;
+	private static final long SCAN_PERIOD = 10000;
 	
 	private Timer gdEventsScanTimer;
 	private AwardedLevelEventScanner als;
@@ -87,7 +87,7 @@ public class GDEventsModule implements Module {
 				GDLevelPreview lp1 = ulp.getBeforeUpdate();
 				GDLevelPreview lp2 = ulp.getAfterUpdate();
 				
-				List<IMessage> ml = AWARDED_ADDED_CB.getBroadcastResults().get(lp1 != null ? lp1.getId() : lp2.getId());
+				List<? extends IMessage> ml = AWARDED_ADDED_CB.getBroadcastResults().get(lp1 != null ? lp1.getId() : lp2.getId());
 				
 				if (ml != null) {
 					EmbedObject embed = GDUtils.buildEmbedForGDLevel(AuthorObjects.awardedLevelAdded(), lp2);

@@ -168,11 +168,30 @@ public class UltimateGDBot {
 	}
 	
 	public static void logException(Exception e) {
-		logError("Exception thrown: `" + e.getClass().getName() + ": " + e.getMessage() + "`");
-		e.printStackTrace();
-		
-		if (e instanceof GDAPIException && ((GDAPIException) e).getUnderlyingException() != null)
-			logException(((GDAPIException) e).getUnderlyingException());
+		if (e instanceof GDAPIException) {
+			GDAPIException ge = (GDAPIException) e;
+			StringBuilder sb = new StringBuilder("A problem occured when fetching data from Geometry Dash servers.\n");
+			if (ge.getResponse().isEmpty())
+				sb.append("The following request failed:\n");
+			else
+				sb.append("Request sent:\n");
+			
+			sb.append("```\n" + ge.getRequest() + "\n```\n");
+			
+			if (!ge.getResponse().isEmpty()) {
+				sb.append("Response returned by the server, that the bot was unable to parse:\n");
+				sb.append("```\n" + BotUtils.truncate(ge.getResponse(), 1400).trim() + "\n```\n");
+			}
+			
+			sb.append("Exception thrown: `" + ge.getUnderlyingException().getClass().getName() + ": " + ge.getUnderlyingException().getMessage() + "`");
+			
+			logError(sb.toString());
+			System.err.print("[GDAPIException] ");
+			ge.getUnderlyingException().printStackTrace();
+		} else {
+			logError("Exception thrown: `" + e.getClass().getName() + ": " + e.getMessage() + "`");
+			e.printStackTrace();
+		}
 	}
 	
 	public static void addModule(String key, Module module) {

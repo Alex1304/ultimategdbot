@@ -70,8 +70,6 @@ CREATE TABLE `guild_settings` (
   `channel_awarded_levels` bigint(20) NOT NULL DEFAULT '0',
   `role_gd_moderators` bigint(20) NOT NULL DEFAULT '0',
   `channel_gd_moderators` bigint(20) NOT NULL DEFAULT '0',
-  `channel_bot_announcements` bigint(20) NOT NULL DEFAULT '0',
-  `tag_everyone_on_bot_announcement` tinyint(1) NOT NULL DEFAULT '0',
   `channel_timely_levels` bigint(20) NOT NULL DEFAULT '0',
   `role_timely_levels` bigint(20) NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
