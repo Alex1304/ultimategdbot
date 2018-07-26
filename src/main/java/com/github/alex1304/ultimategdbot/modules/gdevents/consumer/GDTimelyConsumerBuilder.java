@@ -54,8 +54,11 @@ public class GDTimelyConsumerBuilder extends GDEventConsumerBuilder<GDUpdatedCom
 			ortm.setRoleToPing(rals.getValue());
 			return ortm;
 		});
-
+		
+		mb.setOnDone(onDone);
 		mb.broadcast();
+		onBroadcastDone.run();
+		
 		List<IUser> linkedUsers = GDUtils.getDiscordUsersLinkedToGDAccount(GDUtils.guessGDUserIDFromString(component.getAfterUpdate().getCreatorName()));
 		linkedUsers.forEach(u -> BotUtils.sendMessage(u.getOrCreatePMChannel(), ((OptionalRoleTagMessage) messageToBroadcast.get()).getPrivateContent(), embed));
 	}

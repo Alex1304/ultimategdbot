@@ -16,9 +16,12 @@ import com.github.alex1304.ultimategdbot.dbentities.GuildSettings;
 import com.github.alex1304.ultimategdbot.modules.gdevents.broadcast.BroadcastableMessage;
 import com.github.alex1304.ultimategdbot.utils.BotUtils;
 import com.github.alex1304.ultimategdbot.utils.DatabaseUtils;
+import com.github.alex1304.ultimategdbot.utils.Procedure;
 
+import javafx.collections.ObservableList;
 import sx.blah.discord.handle.obj.IChannel;
 import sx.blah.discord.handle.obj.IGuild;
+import sx.blah.discord.handle.obj.IMessage;
 
 /**
  * Builds a GD event consumer that will broadcast info on the event to all subscribed guilds
@@ -33,12 +36,16 @@ public abstract class GDEventConsumerBuilder<T extends GDComponent> {
 	protected String eventName;
 	protected Supplier<BroadcastableMessage> messageToBroadcast;
 	protected Function<GuildSettings, IChannel> broadcastChannel;
+	protected Procedure onBroadcastDone;
+	protected Consumer<ObservableList<? extends IMessage>> onDone;
 
 	public GDEventConsumerBuilder(String eventName, String dbChannelField, Supplier<BroadcastableMessage> messageToBroadcast, Function<GuildSettings, IChannel> broadcastChannel) {
 		this.eventName = eventName;
 		this.dbChannelField = dbChannelField;
 		this.messageToBroadcast = messageToBroadcast;
 		this.broadcastChannel = broadcastChannel;
+		this.onBroadcastDone = () -> {};
+		this.onDone = results -> {};
 	}
 	
 	public Consumer<T> build() {
@@ -77,18 +84,31 @@ public abstract class GDEventConsumerBuilder<T extends GDComponent> {
 			
 			long prepTime = System.currentTimeMillis() - beginMillis;
 			
+			this.onDone = results -> {
+				long successful = results.stream().filter(x -> x != null).count();
+				long failed = results.stream().filter(x -> x == null).count();
+				
+				UltimateGDBot.logSuccess("Received broadcast results for GD event **" + eventName + "** for " 
+					+ componentToHumanReadableString(component) + ".\n"
+					+ "Total guilds that were subscribed to **" + eventName + "** event: **" + channels.size() + "**\n"
+					+ "Successfully notified: " + successful + " guilds\n"
+					+ "Failed to notify: " + failed + " guilds\n"
+					+ "**Total execution time: " + BotUtils.formatTimeMillis(System.currentTimeMillis() - beginMillis) + "**");
+			};
+			
+			this.onBroadcastDone = () -> {
+				long broadcastTime = System.currentTimeMillis() - beginMillis - prepTime;
+				
+				UltimateGDBot.logSuccess("Successfully processed GD event **" + eventName + "** for " 
+						+ componentToHumanReadableString(component) + ".\n"
+						+ "Gathered info on guilds subscribed to this event in: " + BotUtils.formatTimeMillis(prepTime) + "\n"
+						+ "Sent message requests in: " + BotUtils.formatTimeMillis(broadcastTime) + "\n"
+						+ "Now waiting for broadcast results...");
+			};
+			
 			this.broadcastComponent(component, channels, channelToGS);
 			
-			long broadcastTime = System.currentTimeMillis() - beginMillis - prepTime;
-			
 			this.executeAfter(component);
-			
-			UltimateGDBot.logSuccess("Successfully processed GD event **" + eventName + "** for " 
-					+ componentToHumanReadableString(component) + ".\n"
-					+ "Gathered info on subscribed guilds in: " + BotUtils.formatTimeMillis(prepTime) + "\n"
-					+ "Broadcast message to " + channels.size() + " guilds in: " + BotUtils.formatTimeMillis(broadcastTime) + "\n"
-					+ "**Total execution time: " + BotUtils.formatTimeMillis(prepTime + broadcastTime) + "**");
-			
 		};
 	}
 	

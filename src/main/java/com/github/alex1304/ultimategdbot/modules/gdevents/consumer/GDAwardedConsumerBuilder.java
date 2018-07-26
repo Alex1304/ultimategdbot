@@ -1,7 +1,6 @@
 package com.github.alex1304.ultimategdbot.modules.gdevents.consumer;
 
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -21,6 +20,8 @@ import com.github.alex1304.ultimategdbot.utils.DatabaseUtils;
 import com.github.alex1304.ultimategdbot.utils.GDUtils;
 import com.github.alex1304.ultimategdbot.utils.Procedure;
 
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import sx.blah.discord.api.internal.json.objects.EmbedObject;
 import sx.blah.discord.api.internal.json.objects.EmbedObject.AuthorObject;
 import sx.blah.discord.handle.obj.IChannel;
@@ -36,7 +37,7 @@ public class GDAwardedConsumerBuilder extends GDEventConsumerBuilder<GDComponent
 	
 	private AuthorObject embedAuthor;
 	private boolean saveResults;
-	private Map<Long, List<IMessage>> broadcastResults;
+	private Map<Long, ObservableList<? extends IMessage>> broadcastResults;
 	private Map<Long, Procedure> awardedPendingEdit;
 
 	public GDAwardedConsumerBuilder(String eventName, AuthorObject embedAuthor, Supplier<BroadcastableMessage> messageToBroadcast, boolean saveResults) {
@@ -63,31 +64,38 @@ public class GDAwardedConsumerBuilder extends GDEventConsumerBuilder<GDComponent
 				ortm.setRoleToPing(rals.getValue());
 				return ortm;
 			});
+			
+			mb.setOnDone(results -> {
+				this.onDone.accept(results);
+				if (saveResults) {
+					broadcastResults.put(lp.getId(), results);
+					component.forEach(l -> {
+						Procedure doEdit = awardedPendingEdit.get(l.getId());
+						if (doEdit != null)
+							doEdit.run();
+						awardedPendingEdit.remove(l.getId());
+					});
+				}
+			});
 
 			mb.broadcast();
+			onBroadcastDone.run();
 			
 			List<IUser> linkedUsers = GDUtils.getDiscordUsersLinkedToGDAccount(GDUtils.guessGDUserIDFromString(lp.getCreatorName()));
 			linkedUsers.forEach(u -> BotUtils.sendMessage(u.getOrCreatePMChannel(), ((OptionalRoleTagMessage) messageToBroadcast.get()).getPrivateContent(), embed));
-			
-			if (saveResults)
-				broadcastResults.put(lp.getId(), mb.getResults());
 		}
 	}
 
 	@Override
 	protected void executeBefore(GDComponentList<GDLevelPreview> component) {
 		if (saveResults)
-			component.forEach(l -> broadcastResults.put(l.getId(), new ArrayList<>()));
+			component.forEach(l -> broadcastResults.put(l.getId(), FXCollections.observableArrayList()));
 	}
 
 	@Override
 	protected void executeAfter(GDComponentList<GDLevelPreview> component) {
 		if (saveResults) {
 			component.forEach(l -> {
-				Procedure doEdit = awardedPendingEdit.get(l.getId());
-				if (doEdit != null)
-					doEdit.run();
-				awardedPendingEdit.remove(l.getId());
 				DatabaseUtils.save(new AwardedLevel(l.getId(), new Timestamp(System.currentTimeMillis()),
 						l.getDownloads(), l.getLikes()));
 			});
@@ -108,16 +116,16 @@ public class GDAwardedConsumerBuilder extends GDEventConsumerBuilder<GDComponent
 	/**
 	 * Gets the broadcastResults
 	 *
-	 * @return Map<Long,List<IMessage>>
+	 * @return Map&lt;Long, ObservableList&lt;? extends IMessage&gt;&gt;
 	 */
-	public Map<Long, List<IMessage>> getBroadcastResults() {
+	public Map<Long, ObservableList<? extends IMessage>> getBroadcastResults() {
 		return broadcastResults;
 	}
 
 	/**
 	 * Gets the awardedPendingEdit
 	 *
-	 * @return Map<Long,Procedure>
+	 * @return Map&lt;Long, Procedure&gt;
 	 */
 	public Map<Long, Procedure> getAwardedPendingEdit() {
 		return awardedPendingEdit;
