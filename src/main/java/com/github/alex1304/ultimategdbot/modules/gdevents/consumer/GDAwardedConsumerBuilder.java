@@ -66,24 +66,28 @@ public class GDAwardedConsumerBuilder extends GDEventConsumerBuilder<GDComponent
 			});
 			
 			mb.setOnDone(results -> {
-				this.onDone.accept(results);
-				if (saveResults) {
-					broadcastResults.put(lp.getId(), results);
-					component.forEach(l -> {
-						Procedure doEdit = awardedPendingEdit.get(l.getId());
-						if (doEdit != null)
-							doEdit.run();
-						awardedPendingEdit.remove(l.getId());
-					});
+				// Do nothing if the component isn't the last one
+				if (component.get(component.size() - 1).equals(lp)) {
+					this.onDone.accept(results);
+					if (saveResults) {
+						broadcastResults.put(lp.getId(), results);
+						component.forEach(l -> {
+							Procedure doEdit = awardedPendingEdit.get(l.getId());
+							if (doEdit != null)
+								doEdit.run();
+							awardedPendingEdit.remove(l.getId());
+						});
+					}
 				}
 			});
-
-			mb.broadcast();
-			onBroadcastDone.run();
 			
 			List<IUser> linkedUsers = GDUtils.getDiscordUsersLinkedToGDAccount(GDUtils.guessGDUserIDFromString(lp.getCreatorName()));
 			linkedUsers.forEach(u -> BotUtils.sendMessage(u.getOrCreatePMChannel(), ((OptionalRoleTagMessage) messageToBroadcast.get()).getPrivateContent(), embed));
+
+			mb.broadcast();
 		}
+		
+		onBroadcastDone.run();
 	}
 
 	@Override

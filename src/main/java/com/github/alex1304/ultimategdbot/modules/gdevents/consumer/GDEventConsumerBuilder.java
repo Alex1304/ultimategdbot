@@ -1,6 +1,7 @@
 package com.github.alex1304.ultimategdbot.modules.gdevents.consumer;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -11,6 +12,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import com.github.alex1304.jdash.component.GDComponent;
+import com.github.alex1304.jdash.component.GDComponentList;
 import com.github.alex1304.ultimategdbot.core.UltimateGDBot;
 import com.github.alex1304.ultimategdbot.dbentities.GuildSettings;
 import com.github.alex1304.ultimategdbot.modules.gdevents.broadcast.BroadcastableMessage;
@@ -50,6 +52,9 @@ public abstract class GDEventConsumerBuilder<T extends GDComponent> {
 	
 	public Consumer<T> build() {
 		return component -> {
+			if (component instanceof GDComponentList)
+				Collections.reverse((GDComponentList<?>) component);
+			
 			long beginMillis = System.currentTimeMillis();
 			UltimateGDBot.logInfo("GD event fired: **" + eventName + "** for " + componentToHumanReadableString(component));
 			
