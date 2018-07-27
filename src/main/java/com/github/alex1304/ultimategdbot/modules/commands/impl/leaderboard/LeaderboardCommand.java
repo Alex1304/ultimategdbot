@@ -1,5 +1,6 @@
 package com.github.alex1304.ultimategdbot.modules.commands.impl.leaderboard;
 
+import java.util.EnumSet;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.function.Function;
@@ -23,6 +24,7 @@ import com.github.alex1304.ultimategdbot.utils.Procedure;
 
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
 import sx.blah.discord.handle.obj.IUser;
+import sx.blah.discord.handle.obj.Permissions;
 
 /**
  * Executes the leaderboard command
@@ -144,6 +146,11 @@ public class LeaderboardCommand implements Command {
 		});
 		
 		CommandsModule.executeCommand(nm, event, args);
+	}
+	
+	@Override
+	public EnumSet<Permissions> getPermissionsRequired() {
+		return EnumSet.of(Permissions.EMBED_LINKS, Permissions.USE_EXTERNAL_EMOJIS);
 	}
 	
 }

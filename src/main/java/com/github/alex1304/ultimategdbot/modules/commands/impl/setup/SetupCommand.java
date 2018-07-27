@@ -20,6 +20,7 @@ import com.github.alex1304.ultimategdbot.utils.Emojis;
 import com.github.alex1304.ultimategdbot.utils.Procedure;
 
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
+import sx.blah.discord.handle.obj.Permissions;
 
 /**
  * The setup command allows server admins to configure various things for the bot
@@ -111,5 +112,10 @@ public class SetupCommand implements Command {
 	@Override
 	public EnumSet<BotRoles> getRolesRequired() {
 		return EnumSet.of(BotRoles.SERVER_ADMIN);
+	}
+	
+	@Override
+	public EnumSet<Permissions> getPermissionsRequired() {
+		return EnumSet.of(Permissions.EMBED_LINKS);
 	}
 }

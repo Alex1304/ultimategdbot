@@ -1,7 +1,15 @@
 package com.github.alex1304.ultimategdbot.modules.commands.impl.about;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.UncheckedIOException;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 
 import com.github.alex1304.ultimategdbot.core.UltimateGDBot;
@@ -51,23 +59,33 @@ public class AboutCommand implements Command {
 		if (invite == null || !invite.isPresent())
 			UltimateGDBot.logWarning("[AboutCommand] Cannot find any Discord invite links for the official server");
 		
-		String content = "**Thank you for using UltimateGDBot v" + UltimateGDBot.property("ultimategdbot.release.version") + " (" + UltimateGDBot.property("ultimategdbot.release.channel") + " build)**\n\n"
-				+ "UltimateGDBot is a Discord bot developed by **" + BotUtils.formatDiscordUsername(UltimateGDBot.owner()) + "** and designed for Geometry Dash players. It gives users an easy access to data "
-				+ "from Geometry Dash servers (levels, user stats, etc), and can notify them on events happening in-game "
-				+ "(new featured levels, new Daily levels/Weekly demons, new Geometry Dash moderators...).\n\n"
-				+ "UltimateGDBot is currently operating in **" + UltimateGDBot.client().getGuilds().size()
-				+ "** servers which represents **" + UltimateGDBot.client().getUsers().size() + "** users across Discord. "
-				+ "You can invite UltimateGDBot to your own server using the following authorization link: <" + bib.build() + ">\n"
-				+ "\n"
-				+ "UltimateGDBot is an open-source project. You can check out the GitHub repository at "
-				+ "https://github.com/Alex1304/ultimategdbot" + (invite != null && invite.isPresent() ? " and join the official "
-						+ "support server at https://" + invite.get().toString() : "") + "\n"
-				+ "User manual: http://ultimategdbot.readthedocs.io/en/latest"
-				+ "\n───────────────────\n\n"
-				+ "UltimateGDBot is hosted and powered by __FastVM__, a company that sells powerful virtual private servers "
-				+ "for a low price. Check their plans on their website https://www.fastvm.io/ and use promo code `GDBOT` "
-				+ "to get 10% discount.";
-		
-		BotUtils.sendMessage(event.getChannel(), content);
+		try {
+			Map<String, String> vars = new HashMap<>();
+			
+			vars.put("bot_name", UltimateGDBot.property("ultimategdbot.name"));
+			vars.put("project_version", UltimateGDBot.property("ultimategdbot.release.version"));
+			vars.put("bot_release_channel", UltimateGDBot.property("ultimategdbot.release.channel"));
+			vars.put("bot_owner", BotUtils.formatDiscordUsername(UltimateGDBot.owner()));
+			vars.put("server_count", "" + UltimateGDBot.client().getGuilds().size());
+			vars.put("user_count", "" + UltimateGDBot.client().getUsers().size());
+			vars.put("bot_auth_link", bib.build());
+			vars.put("official_guild_invite", invite == null || !invite.isPresent() ? "*[no invite links available]*" : "https://" + invite.get().toString());
+			
+			InputStream is = getClass().getResourceAsStream("/about.txt");
+			BufferedReader sr = new BufferedReader(new InputStreamReader(is));
+			
+			StringBuilder sb = new StringBuilder();
+			sr.lines().forEach(line -> sb.append(line + "\n"));
+			sr.close();
+			
+			String content = sb.toString();
+	
+			for (Entry<String, String> var : vars.entrySet())
+				content = content.replaceAll("\\{\\{ *" + String.valueOf(var.getKey()) + " *\\}\\}", String.valueOf(var.getValue()));
+			
+			BotUtils.sendMessage(event.getChannel(), content);
+		} catch (IOException | UncheckedIOException e) {
+			throw new CommandFailedException("Something went wrong. Try again later.");
+		}
 	}
 }

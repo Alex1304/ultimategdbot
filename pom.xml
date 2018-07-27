@@ -1,4 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>com.github.alex1304</groupId>
@@ -43,8 +44,10 @@
 		<hibernate.hikari.dataSource.url>jdbc:mysql://localhost/ultimategdbot</hibernate.hikari.dataSource.url>
 		<hibernate.hikari.dataSource.user>root</hibernate.hikari.dataSource.user>
 		<hibernate.hikari.dataSource.password>root</hibernate.hikari.dataSource.password>
-		
-		<!-- The properties below must be given as arguments on build (unless it's prefilled with "default") -->
+
+		<!-- The properties below must be given as arguments on build (unless it's 
+			prefilled with a value) -->
+		<ultimategdbot.name>UltimateGDBot</ultimategdbot.name>
 		<ultimategdbot.client.id />
 		<ultimategdbot.client.token />
 		<ultimategdbot.hierarchy.owner_id />
@@ -148,7 +151,7 @@
 		<dependency>
 			<groupId>com.github.alex1304</groupId>
 			<artifactId>jdash</artifactId>
-			<version>2.2.3</version>
+			<version>2.2.4-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>com.github.alex1304</groupId>

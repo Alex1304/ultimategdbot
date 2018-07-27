@@ -1,10 +1,10 @@
 package com.github.alex1304.ultimategdbot.modules.commands.impl.gdevents;
 
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.github.alex1304.ultimategdbot.core.UltimateGDBot;
 import com.github.alex1304.ultimategdbot.dbentities.GuildSettings;
 import com.github.alex1304.ultimategdbot.exceptions.CommandFailedException;
 import com.github.alex1304.ultimategdbot.modules.commands.Command;
@@ -20,7 +20,6 @@ import com.github.alex1304.ultimategdbot.utils.Emojis;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
 import sx.blah.discord.handle.obj.IRole;
 import sx.blah.discord.handle.obj.Permissions;
-import sx.blah.discord.util.PermissionUtils;
 import sx.blah.discord.util.RequestBuffer;
 
 /**
@@ -32,9 +31,6 @@ public class GDEventsCommand implements Command {
 
 	@Override
 	public void runCommand(MessageReceivedEvent event, List<String> args) throws CommandFailedException {
-		if (!PermissionUtils.hasPermissions(event.getGuild(), UltimateGDBot.client().getOurUser(), Permissions.MANAGE_ROLES))
-			throw new CommandFailedException("This command requires UltimateGDBot to be granted permission to manage roles in this server.");
-		
 		GuildSettings gs = DatabaseUtils.findByID(GuildSettings.class, event.getGuild().getLongID());
 		
 		if (gs == null) {
@@ -88,6 +84,11 @@ public class GDEventsCommand implements Command {
 		
 		im.setMenuEmbedContent(embedContent.toString());
 		CommandsModule.executeCommand(im, event, args);
+	}
+	
+	@Override
+	public EnumSet<Permissions> getPermissionsRequired() {
+		return EnumSet.of(Permissions.MANAGE_ROLES, Permissions.EMBED_LINKS);
 	}
 
 }

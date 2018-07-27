@@ -10,6 +10,8 @@ import com.github.alex1304.ultimategdbot.modules.commands.InteractiveMenu;
 import com.github.alex1304.ultimategdbot.utils.BotRoles;
 import com.github.alex1304.ultimategdbot.utils.BotUtils;
 
+import sx.blah.discord.handle.obj.Permissions;
+
 /**
  * Admin command to manage modules
  *
@@ -64,6 +66,11 @@ public class ModulesCommand extends InteractiveMenu {
 	@Override
 	public EnumSet<BotRoles> getRolesRequired() {
 		return EnumSet.of(BotRoles.OWNER);
+	}
+	
+	@Override
+	public EnumSet<Permissions> getPermissionsRequired() {
+		return EnumSet.of(Permissions.EMBED_LINKS);
 	}
 
 }

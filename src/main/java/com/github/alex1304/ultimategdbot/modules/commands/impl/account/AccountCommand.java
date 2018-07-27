@@ -1,6 +1,7 @@
 package com.github.alex1304.ultimategdbot.modules.commands.impl.account;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 
 import com.github.alex1304.jdash.api.request.GDMessageListHttpRequest;
@@ -30,6 +31,7 @@ import com.github.alex1304.ultimategdbot.utils.Procedure;
 
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
 import sx.blah.discord.handle.obj.IMessage;
+import sx.blah.discord.handle.obj.Permissions;
 
 /**
  * Allows users to link their Discord account with their Geometry Dash account.
@@ -46,12 +48,19 @@ public class AccountCommand implements Command {
 	public void runCommand(MessageReceivedEvent event, List<String> args) throws CommandFailedException {
 		if (!UltimateGDBot.isModuleAvailable("reply"))
 			throw new CommandFailedException("This command is temporarily unavailable. Try again later.");
+
+		GDUser botUser = (GDUser) UltimateGDBot.cache()
+				.readAndWriteIfNotExists("gd.user." + UltimateGDBot.gdClient().getAccountID(), () -> 
+				UltimateGDBot.gdClient().fetch(new GDUserHttpRequest(UltimateGDBot.gdClient().getAccountID())));
+		
+		if (botUser == null || botUser.getName().isEmpty())
+			throw new CommandFailedException("This command is disabled because the bot's account is unavailable on Geometry Dash (failed to fetch user with accountID " + UltimateGDBot.gdClient().getAccountID() + ")");
 		
 		UserSettings us = DatabaseUtils.findByID(UserSettings.class, event.getAuthor().getLongID());
 		InteractiveMenu menu = new InteractiveMenu();
 		StringBuffer menuContent = new StringBuffer(
 				"You can link your Discord account with your Geometry Dash account to get access to "
-						+ "cool stuff in UltimateGDBot. You can for example use the `profile` command without arguments to display your own info, "
+						+ "cool stuff in " + UltimateGDBot.property("ultimategdbot.name") + ". You can for example use the `profile` command without arguments to display your own info, "
 						+ "let others easily access your profile by mentionning you, or appear in server-wide Geometry Dash "
 						+ "leaderboards.\n\n");
 		StringBuffer menuEmbedContent = new StringBuffer();
@@ -106,7 +115,7 @@ public class AccountCommand implements Command {
 							+ "process.\n");
 					
 					menuEmbedContent.append("Step 1: Open Geometry Dash\n");
-					menuEmbedContent.append("Step 2: Search for user \"UltimateGDBot\" and open profile\n");
+					menuEmbedContent.append("Step 2: Search for user \"" + botUser.getName() + "\" and open profile\n");
 					menuEmbedContent.append("Step 3: Click the button to send a private message\n");
 					menuEmbedContent.append("Step 4: In the \"Subject\" field, input `Confirm` (case insensitive)\n");
 					menuEmbedContent.append("Step 5: In the \"Body\" field, input the code `" + us.getConfirmationToken() + "` (:warning: case sensitive)\n");
@@ -175,6 +184,11 @@ public class AccountCommand implements Command {
 		menu.setMenuEmbedContent(menuEmbedContent.toString());
 		
 		CommandsModule.executeCommand(menu, event, args);
+	}
+	
+	@Override
+	public EnumSet<Permissions> getPermissionsRequired() {
+		return EnumSet.of(Permissions.EMBED_LINKS);
 	}
 
 }
