@@ -1,5 +1,6 @@
 package com.github.alex1304.ultimategdbot.modules.commands.impl.modlist;
 
+import java.util.EnumSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -16,6 +17,7 @@ import com.github.alex1304.ultimategdbot.utils.DatabaseUtils;
 import com.github.alex1304.ultimategdbot.utils.Emojis;
 
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
+import sx.blah.discord.handle.obj.Permissions;
 
 /**
  * Allows users to see the list of GD moderators
@@ -79,5 +81,10 @@ public class ModListCommand implements Command {
 		nm.setMenuContent(sb.toString());
 		
 		CommandsModule.executeCommand(nm, event, args);
+	}
+	
+	@Override
+	public EnumSet<Permissions> getPermissionsRequired() {
+		return EnumSet.of(Permissions.EMBED_LINKS, Permissions.USE_EXTERNAL_EMOJIS);
 	}
 }

@@ -1,5 +1,6 @@
 package com.github.alex1304.ultimategdbot.modules.commands.impl.daily_weekly;
 
+import java.util.EnumSet;
 import java.util.List;
 
 import com.github.alex1304.jdash.api.request.GDTimelyLevelHttpRequest;
@@ -14,6 +15,7 @@ import com.github.alex1304.ultimategdbot.utils.BotUtils;
 import com.github.alex1304.ultimategdbot.utils.GDUtils;
 
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
+import sx.blah.discord.handle.obj.Permissions;
 
 /**
  * Allows user to see Daily level and Weekly demon info
@@ -53,6 +55,11 @@ public class DailyWeeklyCommand implements Command {
 				GDUtils.buildEmbedForGDLevel(weekly ? AuthorObjects.weeklyDemon(tl.getTimelyNumber())
 						: AuthorObjects.dailyLevel(tl.getTimelyNumber()), tl));
 		BotUtils.typing(event.getChannel(), false);
+	}
+	
+	@Override
+	public EnumSet<Permissions> getPermissionsRequired() {
+		return EnumSet.of(Permissions.EMBED_LINKS, Permissions.USE_EXTERNAL_EMOJIS);
 	}
 
 }

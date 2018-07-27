@@ -33,7 +33,9 @@ import com.github.alex1304.ultimategdbot.utils.BotUtils;
 import com.github.alex1304.ultimategdbot.utils.Emojis;
 
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
+import sx.blah.discord.handle.obj.Permissions;
 import sx.blah.discord.util.DiscordException;
+import sx.blah.discord.util.PermissionUtils;
 
 /**
  * Module that manages and handles bot commands
@@ -107,10 +109,15 @@ public class CommandsModule implements Module {
 	public static void executeCommand(Command cmd, MessageReceivedEvent event, List<String> args) {
 		new Thread(() -> {
 			try {
-				if (BotRoles.isGrantedAll(event.getAuthor(), event.getChannel(), cmd.getRolesRequired()))
-					cmd.runCommand(event, args);
-				else
+				if (!BotRoles.isGrantedAll(event.getAuthor(), event.getChannel(), cmd.getRolesRequired()))
 					throw new CommandFailedException("You don't have permission to use this command");
+				else if (!PermissionUtils.hasPermissions(event.getChannel(), UltimateGDBot.client().getOurUser(), cmd.getPermissionsRequired())) {
+					StringBuilder sb = new StringBuilder();
+					for (Permissions perm : cmd.getPermissionsRequired())
+						sb.append("- " + perm.toString().replaceAll("_", " ") + "\n");
+					throw new CommandFailedException("I don't have the necessary permissions in your server to run this command. This command requires all of the following permissions to work:\n" + sb.toString());
+				} else
+					cmd.runCommand(event, args);
 			} catch (CommandFailedException e) {
 				BotUtils.sendMessage(event.getChannel(), Emojis.CROSS + " " + e.getMessage());
 			} catch (DiscordException e) {

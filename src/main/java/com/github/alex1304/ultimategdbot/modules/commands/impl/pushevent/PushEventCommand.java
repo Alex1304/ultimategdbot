@@ -22,6 +22,7 @@ import com.github.alex1304.ultimategdbot.modules.commands.InteractiveMenu;
 import com.github.alex1304.ultimategdbot.utils.BotRoles;
 
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
+import sx.blah.discord.handle.obj.Permissions;
 
 /**
  * Allows bot owner to fire any GD event manually
@@ -151,5 +152,10 @@ public class PushEventCommand implements Command {
 	@Override
 	public EnumSet<BotRoles> getRolesRequired() {
 		return EnumSet.of(BotRoles.OWNER);
+	}
+	
+	@Override
+	public EnumSet<Permissions> getPermissionsRequired() {
+		return EnumSet.of(Permissions.EMBED_LINKS);
 	}
 }

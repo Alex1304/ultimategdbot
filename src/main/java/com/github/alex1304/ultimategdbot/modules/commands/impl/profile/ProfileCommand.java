@@ -1,5 +1,6 @@
 package com.github.alex1304.ultimategdbot.modules.commands.impl.profile;
 
+import java.util.EnumSet;
 import java.util.List;
 
 import com.github.alex1304.jdash.api.request.GDUserHttpRequest;
@@ -17,6 +18,7 @@ import com.github.alex1304.ultimategdbot.utils.DatabaseUtils;
 import com.github.alex1304.ultimategdbot.utils.GDUtils;
 
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
+import sx.blah.discord.handle.obj.Permissions;
 
 /**
  * Command to display a user's profile
@@ -62,6 +64,11 @@ public class ProfileCommand implements Command {
 				+ "user **" + user.getName() + "** :", GDUtils.buildEmbedForGDUser(AuthorObjects.userProfile(), user));
 		
 		BotUtils.typing(event.getChannel(), false);
+	}
+	
+	@Override
+	public EnumSet<Permissions> getPermissionsRequired() {
+		return EnumSet.of(Permissions.EMBED_LINKS, Permissions.USE_EXTERNAL_EMOJIS);
 	}
 
 }

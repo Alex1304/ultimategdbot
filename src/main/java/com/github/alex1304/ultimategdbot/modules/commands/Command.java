@@ -7,6 +7,7 @@ import com.github.alex1304.ultimategdbot.exceptions.CommandFailedException;
 import com.github.alex1304.ultimategdbot.utils.BotRoles;
 
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
+import sx.blah.discord.handle.obj.Permissions;
 
 /**
  * A command is a sub-program that is triggered by another program or a person.
@@ -41,5 +42,15 @@ public interface Command {
 	 */
 	default EnumSet<BotRoles> getRolesRequired() {
 		return EnumSet.of(BotRoles.USER);
+	}
+	
+	/**
+	 * Allows to set Discord permission restrictions on the command. By default,
+	 * the command won't require any permission
+	 * 
+	 * @return EnumSet&lt;Permissions&gt;
+	 */
+	default EnumSet<Permissions> getPermissionsRequired() {
+		return EnumSet.noneOf(Permissions.class);
 	}
 }

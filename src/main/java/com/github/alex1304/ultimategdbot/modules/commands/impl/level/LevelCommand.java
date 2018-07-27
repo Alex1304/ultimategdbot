@@ -1,6 +1,7 @@
 package com.github.alex1304.ultimategdbot.modules.commands.impl.level;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 
 import com.github.alex1304.jdash.api.request.GDLevelHttpRequest;
@@ -26,6 +27,7 @@ import com.github.alex1304.ultimategdbot.utils.Procedure;
 
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
 import sx.blah.discord.handle.obj.IMessage;
+import sx.blah.discord.handle.obj.Permissions;
 
 /**
  * Allows user to search for a level in Geometry Dash
@@ -181,6 +183,11 @@ public class LevelCommand implements Command {
 			
 			BotUtils.typing(event0.getChannel(), false);
 		}, event, new ArrayList<>());
+	}
+	
+	@Override
+	public EnumSet<Permissions> getPermissionsRequired() {
+		return EnumSet.of(Permissions.EMBED_LINKS, Permissions.USE_EXTERNAL_EMOJIS);
 	}
 
 }
