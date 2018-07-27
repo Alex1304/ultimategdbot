@@ -3,7 +3,7 @@
 
 	<groupId>com.github.alex1304</groupId>
 	<artifactId>ultimategdbot</artifactId>
-	<version>3.0.4</version>
+	<version>3.0.5-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>ultimategdbot</name>
@@ -30,7 +30,7 @@
 		<url>https://github.com/Alex1304/ultimategdbot/tree/master</url>
 		<connection>scm:git:git://github.com/Alex1304/ultimategdbot.git</connection>
 		<developerConnection>scm:git:ssh://git@github.com/Alex1304/ultimategdbot.git</developerConnection>
-		<tag>v3.0.4</tag>
+		<tag>HEAD</tag>
 	</scm>
 
 	<properties>
