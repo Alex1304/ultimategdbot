@@ -20,11 +20,11 @@ import sx.blah.discord.handle.impl.events.guild.GuildUnavailableEvent;
 public class GuildEventsModule implements Module {
 
 	private boolean enabled;
-	private List<GuildSettings> initialKnownGuilds;
+	private List<GuildSettings> knownGuilds;
 	
 	public GuildEventsModule() {
 		this.enabled = false;
-		this.initialKnownGuilds = DatabaseUtils.query(GuildSettings.class, "from GuildSettings");
+		this.knownGuilds = DatabaseUtils.query(GuildSettings.class, "from GuildSettings");
 	}
 
 	@Override
@@ -42,7 +42,7 @@ public class GuildEventsModule implements Module {
 		if (!enabled)
 			return;
 		
-		if (initialKnownGuilds.stream().anyMatch(gs -> gs.getGuildID() == event.getGuild().getLongID()))
+		if (knownGuilds.stream().anyMatch(gs -> gs.getGuildID() == event.getGuild().getLongID()))
 			return;
 		
 		UltimateGDBot.logInfo(":inbox_tray: New guild joined: " + event.getGuild().getName()
@@ -51,6 +51,7 @@ public class GuildEventsModule implements Module {
 		GuildSettings gs = new GuildSettings();
 		gs.setGuildID(event.getGuild().getLongID());
 		DatabaseUtils.save(gs);
+		knownGuilds.add(gs);
 	}
 	
 	@EventSubscriber
@@ -65,7 +66,7 @@ public class GuildEventsModule implements Module {
 		if (gs != null)
 			DatabaseUtils.delete(gs);
 		
-		initialKnownGuilds.removeIf(x -> x.getGuildID() == event.getGuild().getLongID());
+		knownGuilds.removeIf(x -> x.getGuildID() == event.getGuild().getLongID());
 	}
 	
 	@EventSubscriber
