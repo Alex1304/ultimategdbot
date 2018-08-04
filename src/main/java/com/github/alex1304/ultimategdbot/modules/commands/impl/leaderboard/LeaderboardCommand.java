@@ -11,7 +11,6 @@ import com.github.alex1304.jdash.component.GDUser;
 import com.github.alex1304.ultimategdbot.core.UltimateGDBot;
 import com.github.alex1304.ultimategdbot.dbentities.UserSettings;
 import com.github.alex1304.ultimategdbot.exceptions.CommandFailedException;
-import com.github.alex1304.ultimategdbot.exceptions.GDServersUnavailableException;
 import com.github.alex1304.ultimategdbot.exceptions.UnknownUserException;
 import com.github.alex1304.ultimategdbot.modules.commands.Command;
 import com.github.alex1304.ultimategdbot.modules.commands.CommandsModule;
@@ -124,11 +123,12 @@ public class LeaderboardCommand implements Command {
 
 		nm.addSubCommand("finduser", (event0, args0) -> {
 			Procedure rollback = () -> CommandsModule.executeCommand(this, event, args);
-			long accountID = GDUtils.guessGDUserIDFromString(BotUtils.concatCommandArgs(args0));
+			GDUser user = GDUtils.guessGDUserFromString(BotUtils.concatCommandArgs(args0));
+			long accountID = user == null ? -1 : user.getAccountID();
 			
 			if (accountID < 0) {
 				rollback.run();
-				throw accountID == -2 ? new GDServersUnavailableException() : new UnknownUserException();
+				throw new UnknownUserException();
 			}
 			
 			int rank = entryList.stream()

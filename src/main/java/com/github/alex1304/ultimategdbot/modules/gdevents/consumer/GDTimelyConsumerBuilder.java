@@ -7,6 +7,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import com.github.alex1304.jdash.component.GDTimelyLevel;
+import com.github.alex1304.jdash.component.GDUser;
 import com.github.alex1304.jdashevents.customcomponents.GDUpdatedComponent;
 import com.github.alex1304.ultimategdbot.dbentities.GuildSettings;
 import com.github.alex1304.ultimategdbot.dbentities.TimelyLevel;
@@ -58,8 +59,9 @@ public class GDTimelyConsumerBuilder extends GDEventConsumerBuilder<GDUpdatedCom
 		mb.setOnDone(onDone);
 		mb.broadcast();
 		onBroadcastDone.run();
-		
-		List<IUser> linkedUsers = GDUtils.getDiscordUsersLinkedToGDAccount(GDUtils.guessGDUserIDFromString(component.getAfterUpdate().getCreatorName()));
+
+		GDUser creator = GDUtils.guessGDUserFromString(component.getAfterUpdate().getCreatorName());
+		List<IUser> linkedUsers = GDUtils.getDiscordUsersLinkedToGDAccount(creator == null ? -1 : creator.getAccountID());
 		linkedUsers.forEach(u -> BotUtils.sendMessage(u.getOrCreatePMChannel(), ((OptionalRoleTagMessage) messageToBroadcast.get()).getPrivateContent(), embed));
 	}
 	

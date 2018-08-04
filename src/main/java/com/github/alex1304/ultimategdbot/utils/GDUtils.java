@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
+import com.github.alex1304.jdash.api.request.GDUserHttpRequest;
 import com.github.alex1304.jdash.api.request.GDUserSearchHttpRequest;
 import com.github.alex1304.jdash.component.GDComponentList;
 import com.github.alex1304.jdash.component.GDLevel;
@@ -397,7 +398,7 @@ public class GDUtils {
 	}
 	
 	/**
-	 * Attempts to guess a GD user ID from the given string. If the string
+	 * Attempts to guess a GD account ID from the given string. If the string
 	 * refers to a Discord user, this will look for a linked GD user. Returns -1
 	 * if the user ID can't be guessed, returns -2 if GD servers are unavailable
 	 * 
@@ -405,8 +406,8 @@ public class GDUtils {
 	 *            - String
 	 * @return long
 	 */
-	public static long guessGDUserIDFromString(String str) {
-		long accountID = -1;
+	public static GDUser guessGDUserFromString(String str) {
+		GDUser user = null;
 		try {
 			long userID = BotUtils.extractIDFromMention(str);
 			UserSettings us = DatabaseUtils.findByID(UserSettings.class, userID);
@@ -414,19 +415,18 @@ public class GDUtils {
 			if (us == null || !us.getLinkActivated())
 				throw new NoSuchElementException();
 			
-			accountID = us.getGdUserID();
+			user = (GDUser) UltimateGDBot.cache().readAndWriteIfNotExists("gd.user." + us.getGdUserID(),
+					() -> UltimateGDBot.gdClient().fetch(new GDUserHttpRequest(us.getGdUserID())));
 		} catch (IllegalArgumentException | NoSuchElementException e) {
 			GDComponentList<GDUserPreview> results = (GDComponentList<GDUserPreview>) UltimateGDBot.cache()
-					.readAndWriteIfNotExists("gd.usersearch." + str, () ->
+					.readAndWriteIfNotExists("gd.usersearch." + str.replaceAll("_", " "), () ->
 							UltimateGDBot.gdClient().fetch(new GDUserSearchHttpRequest(str, 0)));
 			
-			if (results == null)
-				accountID = -2;
-			else if (!results.isEmpty())
-				accountID = results.get(0).getAccountID();
+			if (results != null && !results.isEmpty())
+				user = (GDUser) UltimateGDBot.cache().readAndWriteIfNotExists("gd.user." + results.get(0).getAccountID(),
+						() -> UltimateGDBot.gdClient().fetch(new GDUserHttpRequest(results.get(0).getAccountID())));
 		}
 		
-		return accountID;
+		return user;
 	}
-
 }
