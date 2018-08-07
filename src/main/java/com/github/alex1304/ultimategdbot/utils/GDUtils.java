@@ -2,12 +2,14 @@ package com.github.alex1304.ultimategdbot.utils;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
+import com.github.alex1304.jdash.api.request.GDLevelHttpRequest;
 import com.github.alex1304.jdash.api.request.GDUserHttpRequest;
 import com.github.alex1304.jdash.api.request.GDUserSearchHttpRequest;
 import com.github.alex1304.jdash.component.GDComponentList;
@@ -19,9 +21,16 @@ import com.github.alex1304.jdash.component.GDUserPreview;
 import com.github.alex1304.jdash.component.property.GDUserRole;
 import com.github.alex1304.ultimategdbot.core.UltimateGDBot;
 import com.github.alex1304.ultimategdbot.dbentities.UserSettings;
+import com.github.alex1304.ultimategdbot.exceptions.GDServersUnavailableException;
+import com.github.alex1304.ultimategdbot.exceptions.ModuleUnavailableException;
+import com.github.alex1304.ultimategdbot.modules.commands.CommandsModule;
+import com.github.alex1304.ultimategdbot.modules.reply.Reply;
+import com.github.alex1304.ultimategdbot.modules.reply.ReplyModule;
 
 import sx.blah.discord.api.internal.json.objects.EmbedObject;
 import sx.blah.discord.api.internal.json.objects.EmbedObject.AuthorObject;
+import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
+import sx.blah.discord.handle.obj.IMessage;
 import sx.blah.discord.handle.obj.IUser;
 import sx.blah.discord.util.EmbedBuilder;
 
@@ -428,5 +437,101 @@ public class GDUtils {
 		}
 		
 		return user;
+	}
+	
+	/**
+	 * Converts a list of levels into a string
+	 * 
+	 * @param levellist
+	 *            - the list to convert
+	 * @param page
+	 *            - the page number to display
+	 * @return String
+	 */
+	public static String levelListToString(GDComponentList<GDLevelPreview> levellist, int page) {
+		StringBuffer output = new StringBuffer();
+		output.append("Page: ");
+		output.append(page + 1);
+		output.append("\n\n");
+		
+		int i = 1;
+		for (GDLevelPreview lp : levellist) {
+			String coins = GDUtils.coinsToEmoji(lp.getCoinCount(), lp.hasCoinsVerified(), true);
+			output.append(String.format("`%02d` - %s%s | __**%s**__ by **%s** (%d) %s%s\n"
+					+ "      Song: %s\n",
+					i,
+					GDUtils.difficultyToEmoji(lp),
+					coins.equals("None") ? "" : " " + coins,
+					lp.getName(),
+					lp.getCreatorName(),
+					lp.getId(),
+					lp.getOriginalLevelID() > 0 ? Emojis.COPY : "",
+					lp.getObjectCount() > 40000 ? Emojis.OBJECT_OVERFLOW : "",
+					GDUtils.formatSongPrimaryMetadata(lp.getSong())));
+			i++;
+		}
+		
+		if (levellist.isEmpty())
+			output.append("No results found.");
+		
+		return output.toString();
+	}
+	
+	/**
+	 * Action to execute when a user selects a level in seearch results to open
+	 * full level info.
+	 * 
+	 * @param lp
+	 *            - the level selected
+	 * @param event
+	 *            - Context of event
+	 * @param canGoBack
+	 *            - whether the user can go back to search results
+	 * @param goBack
+	 *            - action when user goes back. This may be null if canGoBack is
+	 *            false.
+	 */
+	public static void openLevel(GDLevelPreview lp, MessageReceivedEvent event, boolean canGoBack, Procedure goBack) {
+		CommandsModule.executeCommand((event0, args0) -> {
+			GDLevel lvl = (GDLevel) UltimateGDBot.cache().readAndWriteIfNotExists("gd.level." + lp.getId(), () -> {
+				BotUtils.typing(event0.getChannel(), true);
+				return UltimateGDBot.gdClient().fetch(new GDLevelHttpRequest(lp.getId()));
+			});
+			
+			if (lvl == null)
+				throw new GDServersUnavailableException();
+
+			String message = event.getAuthor().mention() + ", here's the level you requested to show.";
+
+			if (canGoBack && UltimateGDBot.isModuleAvailable("reply"))
+				message += "\nYou can go back to search results by typing `back`";
+			
+			int pass = lvl.getPass();
+			String upload = lvl.getUploadTimestamp();
+			String update = lvl.getLastUpdatedTimestamp();
+			
+			lvl = new GDLevel(lp, pass, upload, update);
+			lvl.setCreatorName(lp.getCreatorName());
+
+			IMessage output = BotUtils.sendMessage(event0.getChannel(), message, GDUtils.buildEmbedForGDLevel(
+					AuthorObjects.searchResult(), lvl));
+
+			if (canGoBack) {
+				try {
+					ReplyModule rm = (ReplyModule) UltimateGDBot.getModule("reply");
+					Reply r = new Reply(output, event0.getAuthor(), message0 -> {
+						if (message0.getContent().equalsIgnoreCase("back")) {
+							goBack.run();
+							return true;
+						} else
+							return false;
+					});
+					rm.open(r, true, false);
+				} catch (ModuleUnavailableException e) {
+				}
+			}
+			
+			BotUtils.typing(event0.getChannel(), false);
+		}, event, new ArrayList<>());
 	}
 }
