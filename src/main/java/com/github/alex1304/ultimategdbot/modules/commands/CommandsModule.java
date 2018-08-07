@@ -18,6 +18,7 @@ import com.github.alex1304.ultimategdbot.modules.commands.impl.gdevents.GDEvents
 import com.github.alex1304.ultimategdbot.modules.commands.impl.help.HelpCommand;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.leaderboard.LeaderboardMenu;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.level.LevelCommand;
+import com.github.alex1304.ultimategdbot.modules.commands.impl.levelsby.LevelsByCommand;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.modlist.ModListCommand;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.modules.ModulesCommand;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.profile.ProfileCommand;
@@ -97,6 +98,7 @@ public class CommandsModule implements Module {
 		registerCommand("restart", new RestartCommand());
 		registerCommand("shutdown", new ShutdownCommand());
 		registerCommand("system", new SystemCommand());
+		registerCommand("levelsby", new LevelsByCommand());
 	}
 	
 	/**
@@ -145,7 +147,7 @@ public class CommandsModule implements Module {
 		if (event.getAuthor().isBot())
 			return;
 		
-		String[] argArray = event.getMessage().getContent().split(" ");
+		String[] argArray = event.getMessage().getContent().split(" +");
 
 		if (argArray.length == 0)
 			return;

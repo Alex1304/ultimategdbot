@@ -44,11 +44,10 @@ public class ProfileCommand implements Command {
 			
 			accountID = us.getGdUserID();
 		} else {
-			accountID = GDUtils.guessGDUserIDFromString(keywords);
+			GDUser user = GDUtils.guessGDUserFromString(keywords);
+			accountID = user == null ? -1 : user.getAccountID();
 			if (accountID == -1)
 				throw new UnknownUserException();
-			if (accountID == -2)
-				throw new GDServersUnavailableException();
 		}
 		
 		final long finalAccountID = accountID;

@@ -8,6 +8,7 @@ import java.util.function.Supplier;
 
 import com.github.alex1304.jdash.component.GDComponentList;
 import com.github.alex1304.jdash.component.GDLevelPreview;
+import com.github.alex1304.jdash.component.GDUser;
 import com.github.alex1304.ultimategdbot.dbentities.AwardedLevel;
 import com.github.alex1304.ultimategdbot.dbentities.GuildSettings;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.setup.guildsettings.ChannelAwardedLevelsSetting;
@@ -81,7 +82,8 @@ public class GDAwardedConsumerBuilder extends GDEventConsumerBuilder<GDComponent
 				}
 			});
 			
-			List<IUser> linkedUsers = GDUtils.getDiscordUsersLinkedToGDAccount(GDUtils.guessGDUserIDFromString(lp.getCreatorName()));
+			GDUser creator = GDUtils.guessGDUserFromString(lp.getCreatorName());
+			List<IUser> linkedUsers = GDUtils.getDiscordUsersLinkedToGDAccount(creator == null ? -1 : creator.getAccountID());
 			linkedUsers.forEach(u -> BotUtils.sendMessage(u.getOrCreatePMChannel(), ((OptionalRoleTagMessage) messageToBroadcast.get()).getPrivateContent(), embed));
 
 			mb.broadcast();
