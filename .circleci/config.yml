@@ -70,7 +70,7 @@ jobs:
             - attach_workspace:
                 at: target
             - run: |
-                ssh $SSH_USER@$SSH_HOST "mkdir -p ~/ultimategdbot ; pgrep -f ultimategdbot-beta. | xargs kill -9"
+                ssh $SSH_USER@$SSH_HOST "mkdir -p ~/ultimategdbot ; pgrep -f ultimategdbot-beta | xargs kill -9"
                 scp target/ultimategdbot.jar $SSH_USER@$SSH_HOST:~/ultimategdbot/ultimategdbot-beta.jar
                 ssh $SSH_USER@$SSH_HOST "nohup java -jar ~/ultimategdbot/ultimategdbot-beta.jar >> ~/ultimategdbot/out-beta.log 2>&1 &"
     build_stable:
