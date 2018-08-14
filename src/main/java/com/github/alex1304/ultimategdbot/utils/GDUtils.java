@@ -162,7 +162,7 @@ public class GDUtils {
 				Emojis.DOWNLOADS + " " + lp.getDownloads() + "\t\t"
 						+ (lp.getLikes() < 0 ? Emojis.DISLIKE + " " : Emojis.LIKE + " ") + lp.getLikes() + "\t\t"
 						+ Emojis.LENGTH + " " + lp.getLength().toString().toUpperCase() + "\n"
-				+ "───────────────────\n", false);
+				+ "───────────\n", false);
 		
 		
 		String objCount = "**Object count:** ";
@@ -176,7 +176,7 @@ public class GDUtils {
 		
 		StringBuffer sb = new StringBuffer();
 		sb.append(formatSongSecondaryMetadata(lp.getSong()) + "\n");
-		sb.append("───────────────────\n");
+		sb.append("───────────\n");
 		sb.append("**Level ID:** " + lp.getId() + "\n");
 		sb.append("**Level version:** " + lp.getLevelVersion() + "\n");
 		sb.append("**Minimum GD version required to play this level:** " + formatGameVersion(lp.getGameVersion()) + "\n");
@@ -196,7 +196,7 @@ public class GDUtils {
 		}
 		
 		if (lp.getOriginalLevelID() > 0 || lp.getFeaturedScore() > 0 || lp.getObjectCount() > 40000)
-			sb.append("───────────────────\n");
+			sb.append("───────────\n");
 		if (lp.getOriginalLevelID() > 0)
 			sb.append(Emojis.COPY + " This level is a copy of " + lp.getOriginalLevelID() + "\n");
 		if (lp.getObjectCount() > 40000)
@@ -246,7 +246,7 @@ public class GDUtils {
 		}
 		
 		try {
-			eb.appendField("───────────────────", mod
+			eb.appendField("───────────", mod
 					+ Emojis.GLOBAL_RANK + "  **Global Rank:** "
 					+ (user.getGlobalRank() == 0 ? "*Unranked*" : user.getGlobalRank()) + "\n"
 					+ Emojis.YOUTUBE + "  **Youtube:** "
@@ -448,8 +448,41 @@ public class GDUtils {
 	 *            - the page number to display
 	 * @return String
 	 */
-	public static String levelListToString(GDComponentList<GDLevelPreview> levellist, int page) {
-		StringBuffer output = new StringBuffer();
+	public static EmbedObject levelListToEmbed(GDComponentList<GDLevelPreview> levellist, int page) {
+		EmbedBuilder eb = new EmbedBuilder();
+		int i = 1;
+		
+		eb.withTitle("Page " + (page + 1));
+		
+		for (GDLevelPreview lp : levellist) {
+			String coins = GDUtils.coinsToEmoji(lp.getCoinCount(), lp.hasCoinsVerified(), true);
+			eb.appendField(
+					String.format("`%02d` - %s%s | __**%s**__ by **%s** %s%s",
+							i,
+							GDUtils.difficultyToEmoji(lp),
+							coins.equals("None") ? "" : " " + coins,
+							lp.getName(),
+							lp.getCreatorName(),
+							lp.getOriginalLevelID() > 0 ? Emojis.COPY : "",
+							lp.getObjectCount() > 40000 ? Emojis.OBJECT_OVERFLOW : ""),
+					String.format("%s %d \t\t %s %d \t\t %s %s\n"
+							+ ":musical_note:  **%s**\n _ _",
+							String.valueOf(Emojis.DOWNLOADS),
+							lp.getDownloads(),
+							String.valueOf(Emojis.LIKE),
+							lp.getLikes(),
+							String.valueOf(Emojis.LENGTH),
+							String.valueOf(lp.getLength()),
+							GDUtils.formatSongPrimaryMetadata(lp.getSong())
+			), false);
+			i++;
+		}
+
+		if (levellist.isEmpty())
+			eb.appendField("No results found", " ", false);
+		
+		return eb.build();
+		/*StringBuffer output = new StringBuffer();
 		output.append("Page: ");
 		output.append(page + 1);
 		output.append("\n\n");
@@ -474,7 +507,7 @@ public class GDUtils {
 		if (levellist.isEmpty())
 			output.append("No results found.");
 		
-		return output.toString();
+		return output.toString();*/
 	}
 	
 	/**

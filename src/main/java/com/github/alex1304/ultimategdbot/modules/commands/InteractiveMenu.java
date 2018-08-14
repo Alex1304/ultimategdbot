@@ -14,6 +14,7 @@ import com.github.alex1304.ultimategdbot.modules.reply.Reply;
 import com.github.alex1304.ultimategdbot.modules.reply.ReplyModule;
 import com.github.alex1304.ultimategdbot.utils.BotUtils;
 
+import sx.blah.discord.api.internal.json.objects.EmbedObject;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
 import sx.blah.discord.handle.obj.IMessage;
 import sx.blah.discord.util.EmbedBuilder;
@@ -28,10 +29,11 @@ import sx.blah.discord.util.EmbedBuilder;
 public class InteractiveMenu implements Command {
 
 	private Map<String, Command> subCommandMap;
-	private String menuEmbedContent;
+	private EmbedObject menuEmbed;
 	private String menuContent;
 	private boolean closeOnTimeout;
 	private boolean readSubcommandsInArgs;
+	private boolean hasCustomEmbed;
 
 	public InteractiveMenu() {
 		this(true, true);
@@ -39,10 +41,11 @@ public class InteractiveMenu implements Command {
 	
 	public InteractiveMenu(boolean readSubcommandsInArgs, boolean closeOnTimeout) {
 		this.subCommandMap = new ConcurrentHashMap<>();
-		this.menuEmbedContent = "";
+		this.menuEmbed = null;
 		this.menuContent = "";
 		this.readSubcommandsInArgs = readSubcommandsInArgs;
 		this.closeOnTimeout = closeOnTimeout;
+		this.hasCustomEmbed = false;
 	}
 
 	/**
@@ -84,7 +87,6 @@ public class InteractiveMenu implements Command {
 			
 			StringBuffer menu = new StringBuffer();
 			
-			menu.append(menuEmbedContent);
 			menu.append('\n');
 			
 			if (closeOnTimeout)
@@ -93,9 +95,14 @@ public class InteractiveMenu implements Command {
 			else
 				menu.append("To close this menu, type `close`");
 			
-			EmbedBuilder eb = new EmbedBuilder();
-			eb.appendDescription(menu.toString());
-			IMessage menuMsg = BotUtils.sendMessage(event.getChannel(), menuContent, eb.build());
+			if (hasCustomEmbed)
+				menu.append("\n _ _");
+			
+			if (menuEmbed == null)
+				this.menuEmbed = new EmbedBuilder().build();
+			
+			this.menuEmbed.description += menu.toString();
+			IMessage menuMsg = BotUtils.sendMessage(event.getChannel(), menuContent, menuEmbed);
 			
 			Reply r = new Reply(menuMsg, event.getAuthor(), message -> {
 				List<String> newArgs = Arrays.asList(message.getContent().split(" "));
@@ -138,12 +145,12 @@ public class InteractiveMenu implements Command {
 	}
 
 	/**
-	 * Gets the menuEmbedContent
+	 * Gets the menuEmbed
 	 *
-	 * @return String
+	 * @return EmbedObject
 	 */
-	public String getMenuEmbedContent() {
-		return menuEmbedContent;
+	public EmbedObject getMenuEmbed() {
+		return menuEmbed;
 	}
 
 	/**
@@ -152,7 +159,10 @@ public class InteractiveMenu implements Command {
 	 * @param menuContent - String
 	 */
 	public void setMenuEmbedContent(String menuEmbedContent) {
-		this.menuEmbedContent = menuEmbedContent;
+		if (menuEmbed == null)
+			this.menuEmbed = new EmbedBuilder().appendDesc(menuEmbedContent).build();
+		else
+			this.menuEmbed.description = menuEmbedContent;
 	}
 
 	/**
@@ -171,5 +181,15 @@ public class InteractiveMenu implements Command {
 	 */
 	public void setMenuContent(String menuContent) {
 		this.menuContent = menuContent;
+	}
+
+	/**
+	 * Sets the menuEmbed
+	 *
+	 * @param menuEmbed - EmbedObject
+	 */
+	public void setMenuEmbed(EmbedObject menuEmbed) {
+		this.hasCustomEmbed = true;
+		this.menuEmbed = menuEmbed;
 	}
 }
