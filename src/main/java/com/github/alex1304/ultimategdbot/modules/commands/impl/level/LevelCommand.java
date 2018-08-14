@@ -20,6 +20,7 @@ import com.github.alex1304.ultimategdbot.utils.GDLevelSearchBuilder;
 import com.github.alex1304.ultimategdbot.utils.GDUtils;
 import com.github.alex1304.ultimategdbot.utils.Procedure;
 
+import sx.blah.discord.api.internal.json.objects.EmbedObject;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
 import sx.blah.discord.handle.obj.Permissions;
 
@@ -86,14 +87,15 @@ public class LevelCommand implements Command {
 		}
 		
 		if (!UltimateGDBot.isModuleAvailable("reply")) {
-			BotUtils.sendMessage(event.getChannel(), GDUtils.levelListToString(results, page) +
-					"\nAbility to navigate through search results is currently unavailable. Sorry for the inconvenience.");
+			EmbedObject em = GDUtils.levelListToEmbed(results, page);
+			em.description = "\nAbility to navigate through search results is currently unavailable. Sorry for the inconvenience.";
+			BotUtils.sendMessage(event.getChannel(), em);
 			return;
 		}
 		
 		NavigationMenu nm = new NavigationMenu(page, 9999, page -> new LevelCommand(page, requestObject, checkArgsValidity), event, args);
 		
-		nm.setMenuContent(GDUtils.levelListToString(results, page));
+		nm.setMenuEmbed(GDUtils.levelListToEmbed(results, page));
 		nm.setMenuEmbedContent("To view full info on a level, type `select` followed by the search "
 				+ "result number, ex. `select 2`\n");
 		

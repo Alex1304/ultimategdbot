@@ -22,6 +22,9 @@ import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedE
 public class LevelsByCommand implements Command {
 	@Override
 	public void runCommand(MessageReceivedEvent event, List<String> args) throws CommandFailedException {
+		if (args.isEmpty())
+			throw new CommandFailedException("Please specify a user");
+		
 		GDUser user = GDUtils.guessGDUserFromString(BotUtils.concatCommandArgs(args));
 		
 		if (user == null)
