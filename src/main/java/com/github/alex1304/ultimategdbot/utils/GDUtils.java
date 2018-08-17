@@ -142,28 +142,36 @@ public class GDUtils {
 	 *            - the level to convert to embed
 	 * @param lp
 	 *            - the level to convert to embed
+	 * @param full
+	 *            - whether to show full info on this level. If this is set to
+	 *            false, only important information will be rendered. If the
+	 *            given level isn't an instance of GDLevel, this boolean will be
+	 *            ignored and will always act as if it was false.
 	 * @return an EmbedObject representing the embedded level
 	 */
-	public static EmbedObject buildEmbedForGDLevel(AuthorObject author, GDLevelPreview lp) {
+	public static EmbedObject buildEmbedForGDLevel(AuthorObject author, GDLevelPreview lp, boolean full) {
 		EmbedBuilder eb = new EmbedBuilder();
 		
 		GDLevel lvl = null;
 		
 		if (lp instanceof GDLevel)
 			lvl = (GDLevel) lp;
+		
+		boolean useFull = full && lvl != null;
 
 		eb.withAuthorName(author.name);
 		eb.withAuthorIcon(author.icon_url);
 		eb.withThumbnail(getDifficultyImageForLevel(lp));
 		
-		eb.appendField(Emojis.PLAY + "  __" + lp.getName() + "__ by " + lp.getCreatorName() + "",
-				"**Description:** " + (lp.getDescription().isEmpty() ? "*(No description provided)*" : BotUtils.escapeMarkdown(lp.getDescription())), true);
-		eb.appendField("Coins: " + coinsToEmoji(lp.getCoinCount(), lp.hasCoinsVerified(), false),
-				Emojis.DOWNLOADS + " " + lp.getDownloads() + "\t\t"
-						+ (lp.getLikes() < 0 ? Emojis.DISLIKE + " " : Emojis.LIKE + " ") + lp.getLikes() + "\t\t"
-						+ Emojis.LENGTH + " " + lp.getLength().toString().toUpperCase() + "\n"
-				+ "───────────\n", false);
-		
+		String title = Emojis.PLAY + "  __" + lp.getName() + "__ by " + lp.getCreatorName() + "";
+		String description = "**Description:** " + (lp.getDescription().isEmpty() ? "*(No description provided)*"
+				: BotUtils.escapeMarkdown(lp.getDescription()));
+		String coins = "Coins: " + coinsToEmoji(lp.getCoinCount(), lp.hasCoinsVerified(), false);
+		String downloadLikesLength = Emojis.DOWNLOADS + " " + lp.getDownloads() + "    "
+				+ (lp.getLikes() < 0 ? Emojis.DISLIKE + " " : Emojis.LIKE + " ") + lp.getLikes() + "    "
+				+ Emojis.LENGTH + " " + lp.getLength().toString().toUpperCase();
+		String songInfo = ":musical_note:   " + formatSongPrimaryMetadata(lp.getSong());
+		String songInfo2 = formatSongSecondaryMetadata(lp.getSong());
 		
 		String objCount = "**Object count:** ";
 		if (lp.getObjectCount() > 0 || lp.getLevelVersion() >= 21) {
@@ -171,43 +179,72 @@ public class GDUtils {
 				objCount += ">";
 			objCount += lp.getObjectCount();
 		} else
-			objCount += "_Info unavailable for levels playable in GD 2.0 or older_";
+			objCount += "_Unknown_";
 		objCount += "\n";
 		
-		StringBuffer sb = new StringBuffer();
-		sb.append(formatSongSecondaryMetadata(lp.getSong()) + "\n");
-		sb.append("───────────\n");
-		sb.append("**Level ID:** " + lp.getId() + "\n");
-		sb.append("**Level version:** " + lp.getLevelVersion() + "\n");
-		sb.append("**Minimum GD version required to play this level:** " + formatGameVersion(lp.getGameVersion()) + "\n");
-		sb.append(objCount);
+		StringBuffer extraInfo = new StringBuffer();
 		
-		if (lvl != null) {
+		// Altering strings above according to whether we are showing full version
+		if (!useFull) {
+			if (lp.getOriginalLevelID() > 0)
+				title += " " + Emojis.COPY;
+			if (lp.getObjectCount() > 40000)
+				title += " " + Emojis.OBJECT_OVERFLOW;
+		} else {
+			extraInfo.append("**Level ID:** " + lp.getId() + "\n");
+			extraInfo.append("**Level version:** " + lp.getLevelVersion() + "\n");
+			extraInfo.append("**Minimum GD version required to play this level:** " + formatGameVersion(lp.getGameVersion()) + "\n");
+			extraInfo.append(objCount);
+
 			String pass = "";
-				if (lvl.getPass() == -2)
-					pass = "Yes, no passcode required";
-				else if (lvl.getPass() == -1)
-					pass = "No";
-				else
-					pass = "Yes, " + Emojis.LOCK + " passcode: " + String.format("%06d", lvl.getPass());
-			sb.append("**Copyable:** " + pass + "\n");
-			sb.append("**Uploaded:** " + lvl.getUploadTimestamp() + " ago\n");
-			sb.append("**Last updated:** " + lvl.getLastUpdatedTimestamp() + " ago\n");
+			if (lvl.getPass() == -2)
+				pass = "Yes, no passcode required";
+			else if (lvl.getPass() == -1)
+				pass = "No";
+			else
+				pass = "Yes, " + Emojis.LOCK + " passcode: " + String.format("%06d", lvl.getPass());
+			extraInfo.append("**Copyable:** " + pass + "\n");
+			extraInfo.append("**Uploaded:** " + lvl.getUploadTimestamp() + " ago\n");
+			extraInfo.append("**Last updated:** " + lvl.getLastUpdatedTimestamp() + " ago\n");
+			
+			if (lp.getOriginalLevelID() > 0 || lp.getObjectCount() > 40000)
+				extraInfo.append("_ _\n");
+			if (lp.getOriginalLevelID() > 0)
+				extraInfo.append(Emojis.COPY + " This level is a copy of " + lp.getOriginalLevelID() + "\n");
+			if (lp.getObjectCount() > 40000)
+				extraInfo.append(Emojis.OBJECT_OVERFLOW + " **This level may lag on low end devices**\n");
 		}
 		
-		if (lp.getOriginalLevelID() > 0 || lp.getFeaturedScore() > 0 || lp.getObjectCount() > 40000)
-			sb.append("───────────\n");
-		if (lp.getOriginalLevelID() > 0)
-			sb.append(Emojis.COPY + " This level is a copy of " + lp.getOriginalLevelID() + "\n");
-		if (lp.getObjectCount() > 40000)
-			sb.append(Emojis.OBJECT_OVERFLOW + " **This level may lag on low end devices**\n");
-		if (lp.getFeaturedScore() > 0)
-			sb.append(Emojis.ICON_NA_FEATURED + "This level has been placed in the Featured section with a score of **"
-						+ lp.getFeaturedScore() + "** (the higher this score is, the higher it's placed in the Featured section)\n");
+		// Appending fields depending on whether we use full
+		if (!useFull) {
+			eb.appendField(title, downloadLikesLength, false);
+			eb.appendField(coins, "**" + songInfo + "**\n_ _\n" + "Use `"
+					+ UltimateGDBot.property("ultimategdbot.prefix.canonical") + "level " + lp.getId()
+					+ "` to view more info about this level!", false);
+		} else {
+			eb.appendField(title, description, false);
+			eb.appendField(coins, downloadLikesLength + "\n_ _", false);
+			eb.appendField(songInfo, songInfo2 + "\n_ _\n" + extraInfo, false);
+		}
 		
-		eb.appendField(":musical_note:   " + formatSongPrimaryMetadata(lp.getSong()), sb.toString(), false);
-
 		return eb.build();
+	}
+	
+	/**
+	 * Builds an embed for the specified Geometry Dash level
+	 * 
+	 * @param authorName
+	 *            - authorName field of the embed
+	 * @param authorIcon
+	 *            - authorIcon field of the embed
+	 * @param lvl
+	 *            - the level to convert to embed
+	 * @param lp
+	 *            - the level to convert to embed
+	 * @return an EmbedObject representing the embedded level
+	 */
+	public static EmbedObject buildEmbedForGDLevel(AuthorObject author, GDLevelPreview lp) {
+		return buildEmbedForGDLevel(author, lp, true);
 	}
 	
 	/**
@@ -359,7 +396,7 @@ public class GDUtils {
 	 */
 	public static String formatSongSecondaryMetadata(GDSong song) {
 		if (song == null)
-			return ":warning: This level is using a song that doesn't exist at all on Newgrounds";
+			return ":warning: This level is using a song that doesn't exist on Newgrounds";
 		return song.isCustom() ? ("SongID: " + song.getSongID() + " - Size: " + song.getSongSize() + "MB\n"
 				+ Emojis.PLAY + " [Play on Newgrounds](https://www.newgrounds.com/audio/listen/" + song.getSongID() + ")  "
 				+ Emojis.DOWNLOAD_SONG + " [Download MP3](" + song.getDownloadURL() + ")") : "Geometry Dash native audio track";
@@ -479,35 +516,9 @@ public class GDUtils {
 		}
 
 		if (levellist.isEmpty())
-			eb.appendField("No results found", " ", false);
+			eb.appendField("No results found", "_ _", false);
 		
 		return eb.build();
-		/*StringBuffer output = new StringBuffer();
-		output.append("Page: ");
-		output.append(page + 1);
-		output.append("\n\n");
-		
-		int i = 1;
-		for (GDLevelPreview lp : levellist) {
-			String coins = GDUtils.coinsToEmoji(lp.getCoinCount(), lp.hasCoinsVerified(), true);
-			output.append(String.format("`%02d` - %s%s | __**%s**__ by **%s** (%d) %s%s\n"
-					+ "      Song: %s\n",
-					i,
-					GDUtils.difficultyToEmoji(lp),
-					coins.equals("None") ? "" : " " + coins,
-					lp.getName(),
-					lp.getCreatorName(),
-					lp.getId(),
-					lp.getOriginalLevelID() > 0 ? Emojis.COPY : "",
-					lp.getObjectCount() > 40000 ? Emojis.OBJECT_OVERFLOW : "",
-					GDUtils.formatSongPrimaryMetadata(lp.getSong())));
-			i++;
-		}
-		
-		if (levellist.isEmpty())
-			output.append("No results found.");
-		
-		return output.toString();*/
 	}
 	
 	/**
