@@ -44,7 +44,7 @@ public class GDTimelyConsumerBuilder extends GDEventConsumerBuilder<GDUpdatedCom
 			Map<Long, GuildSettings> channelToGS) {
 		
 		AuthorObject ao = embedAuthor.apply(component.getAfterUpdate().getTimelyNumber());
-		EmbedObject embed = GDUtils.buildEmbedForGDLevel(ao, component.getAfterUpdate());
+		EmbedObject embed = GDUtils.buildEmbedForGDLevel(ao, component.getAfterUpdate(), false);
 
 		MessageBroadcaster mb = new MessageBroadcaster(channels, channel -> {
 			GuildSettings gs = channelToGS.get(channel.getLongID());

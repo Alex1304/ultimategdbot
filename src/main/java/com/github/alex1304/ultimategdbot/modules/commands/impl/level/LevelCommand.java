@@ -96,8 +96,8 @@ public class LevelCommand implements Command {
 		NavigationMenu nm = new NavigationMenu(page, 9999, page -> new LevelCommand(page, requestObject, checkArgsValidity), event, args);
 		
 		nm.setMenuEmbed(GDUtils.levelListToEmbed(results, page));
-		nm.setMenuEmbedContent("To view full info on a level, type `select` followed by the search "
-				+ "result number, ex. `select 2`\n");
+		nm.setMenuEmbedContent("To view full info on a level, type `select` followed by the position "
+				+ "number, ex. `select 2`\n");
 		
 		nm.addSubCommand("select", (event0, args0) -> {
 			if (args0.isEmpty()) {
