@@ -14,6 +14,7 @@ import com.github.alex1304.ultimategdbot.modules.commands.impl.about.AboutComman
 import com.github.alex1304.ultimategdbot.modules.commands.impl.account.AccountCommand;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.checkmod.CheckModCommand;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.daily_weekly.DailyWeeklyCommand;
+import com.github.alex1304.ultimategdbot.modules.commands.impl.featuredinfo.FeaturedInfoCommand;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.gdevents.GDEventsCommand;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.help.HelpCommand;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.leaderboard.LeaderboardMenu;
@@ -99,6 +100,7 @@ public class CommandsModule implements Module {
 		registerCommand("shutdown", new ShutdownCommand());
 		registerCommand("system", new SystemCommand());
 		registerCommand("levelsby", new LevelsByCommand());
+		registerCommand("featuredinfo", new FeaturedInfoCommand());
 	}
 	
 	/**
