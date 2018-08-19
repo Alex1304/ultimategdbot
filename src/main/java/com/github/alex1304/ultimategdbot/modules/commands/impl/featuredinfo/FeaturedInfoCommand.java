@@ -26,7 +26,7 @@ import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedE
  */
 public class FeaturedInfoCommand implements Command {
 	
-	public static final int START_PAGE = 1_000;
+	public static final int START_PAGE = 10_000;
 
 	@Override
 	public void runCommand(MessageReceivedEvent event, List<String> args) throws CommandFailedException {
@@ -68,6 +68,8 @@ public class FeaturedInfoCommand implements Command {
 			lsb.setType(Constants.LEVEL_SEARCH_TYPE_FEATURED);
 			lsb.setPage(page);
 			lsb.setKeywords("-");
+			
+			System.out.println("Viewing page: " + page);
 			
 			try {
 				GDComponentList<GDLevelPreview> pageResults = UltimateGDBot.gdClient().fetch(lsb.build());
