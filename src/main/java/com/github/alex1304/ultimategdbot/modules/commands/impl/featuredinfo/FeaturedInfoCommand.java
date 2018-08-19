@@ -26,7 +26,7 @@ import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedE
  */
 public class FeaturedInfoCommand implements Command {
 	
-	public static final int START_PAGE = 10_000;
+	public static final int START_PAGE = 1_000;
 
 	@Override
 	public void runCommand(MessageReceivedEvent event, List<String> args) throws CommandFailedException {
@@ -74,10 +74,10 @@ public class FeaturedInfoCommand implements Command {
 				
 				if (!linearMode && (pageResults == null || pageResults.isEmpty() || score >= pageResults.get(0).getFeaturedScore())) {
 					pageMax = page;
-					page -= (pageMax - pageMin) / 2;
+					page -= Math.min(1, (pageMax - pageMin) / 2);
 				} else if (!linearMode && (score < pageResults.get(pageResults.size() - 1).getFeaturedScore())) {
 					pageMin = page;
-					page += (pageMax - pageMin) / 2;
+					page += Math.min(1, (pageMax - pageMin) / 2);
 				} else {
 					for (int i = 0 ; flvl == null && i < pageResults.size() ; i++) {
 						GDLevelPreview i_ = pageResults.get(i);
