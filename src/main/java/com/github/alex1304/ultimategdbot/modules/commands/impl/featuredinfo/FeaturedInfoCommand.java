@@ -76,10 +76,10 @@ public class FeaturedInfoCommand implements Command {
 				
 				if (!linearMode && (pageResults == null || pageResults.isEmpty() || score >= pageResults.get(0).getFeaturedScore())) {
 					pageMax = page;
-					page -= Math.min(1, (pageMax - pageMin) / 2);
+					page -= Math.max(1, (pageMax - pageMin) / 2);
 				} else if (!linearMode && (score < pageResults.get(pageResults.size() - 1).getFeaturedScore())) {
 					pageMin = page;
-					page += Math.min(1, (pageMax - pageMin) / 2);
+					page += Math.max(1, (pageMax - pageMin) / 2);
 				} else {
 					for (int i = 0 ; flvl == null && i < pageResults.size() ; i++) {
 						GDLevelPreview i_ = pageResults.get(i);
