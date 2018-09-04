@@ -44,6 +44,7 @@ public abstract class GuildSetting<I, O> {
 		theList.add(new GuildSettingMapping<>("role_awarded_levels", RoleAwardedLevelsSetting.class, x -> new RoleAwardedLevelsSetting(x)));
 		theList.add(new GuildSettingMapping<>("role_timely_levels", RoleTimelyLevelsSetting.class, x -> new RoleTimelyLevelsSetting(x)));
 		theList.add(new GuildSettingMapping<>("role_gd_moderators", RoleGDModeratorsSetting.class, x -> new RoleGDModeratorsSetting(x)));
+		theList.add(new GuildSettingMapping<>("channel_changelog", ChannelChangelogSetting.class, x -> new ChannelChangelogSetting(x)));
 		
 		return theList;
 	}

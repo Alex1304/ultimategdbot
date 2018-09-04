@@ -20,6 +20,7 @@ When you run this command, a menu opens and displays the current settings. If yo
 - `role_awarded_levels` - The role that the bot is supposed to tag when sending notifications on new rated and unrated levels. Expected value: the name or the mention of a Discord role, ex. `subscribers` or `@subscribers`
 - `role_timely_levels` - The role that the bot is supposed to tag when sending notifications on new Daily levels and Weekly demons.. Expected value: the name or the mention of a Discord role, ex. `subscribers` or `@subscribers`
 - `role_gd_moderators` - The role that the bot is supposed to tag when sending notifications on Geometry Dash moderators promotions/demotions. Expected value: the name or the mention of a Discord role, ex. `subscribers` or `@subscribers`
+- `channel_changelog` - This one is a bit special because it's unrelated to the gd events system itself. Here you can set a channel where the bot will send changelogs for major updates. Expected value: the name or the link of a Discord channel, ex. `general` or `#general`
 
 Let's say I want to make the bot send notifications for new awarded levels in a channel called `#botspam` and by tagging the role `@pingme` on each notification. I would run the following sequence of commands (each new line is a separate message):
 

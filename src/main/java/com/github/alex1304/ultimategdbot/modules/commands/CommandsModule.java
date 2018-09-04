@@ -12,6 +12,7 @@ import com.github.alex1304.ultimategdbot.exceptions.ModuleUnavailableException;
 import com.github.alex1304.ultimategdbot.modules.Module;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.about.AboutCommand;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.account.AccountCommand;
+import com.github.alex1304.ultimategdbot.modules.commands.impl.changelog.ChangelogCommand;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.checkmod.CheckModCommand;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.daily_weekly.DailyWeeklyCommand;
 import com.github.alex1304.ultimategdbot.modules.commands.impl.featuredinfo.FeaturedInfoCommand;
@@ -101,6 +102,7 @@ public class CommandsModule implements Module {
 		registerCommand("system", new SystemCommand());
 		registerCommand("levelsby", new LevelsByCommand());
 		registerCommand("featuredinfo", new FeaturedInfoCommand());
+		registerCommand("changelog", new ChangelogCommand());
 	}
 	
 	/**

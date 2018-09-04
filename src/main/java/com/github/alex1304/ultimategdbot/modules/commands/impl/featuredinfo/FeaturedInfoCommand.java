@@ -69,8 +69,6 @@ public class FeaturedInfoCommand implements Command {
 			lsb.setPage(page);
 			lsb.setKeywords("-");
 			
-			System.out.println("Viewing page: " + page);
-			
 			try {
 				GDComponentList<GDLevelPreview> pageResults = UltimateGDBot.gdClient().fetch(lsb.build());
 				

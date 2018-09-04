@@ -17,12 +17,13 @@ public class GuildSettings {
 	private long channelGDModerators;
 	private long channelTimelyLevels;
 	private long roleTimelyLevels;
+	private long channelChangelog;
 
 	public GuildSettings() {
 	}
 
 	public GuildSettings(long guildID, long roleAwardedLevels, long channelAwardedLevels, long roleGDModerators,
-			long channelGDModerators, long channelTimelyLevels, long roleTimelyLevels) {
+			long channelGDModerators, long channelTimelyLevels, long roleTimelyLevels, long channelChangelog) {
 		this.guildID = guildID;
 		this.roleAwardedLevels = roleAwardedLevels;
 		this.channelAwardedLevels = channelAwardedLevels;
@@ -30,6 +31,7 @@ public class GuildSettings {
 		this.channelGDModerators = channelGDModerators;
 		this.channelTimelyLevels = channelTimelyLevels;
 		this.roleTimelyLevels = roleTimelyLevels;
+		this.channelChangelog = channelChangelog;
 	}
 
 	/**
@@ -183,5 +185,23 @@ public class GuildSettings {
 	public void setGuildInstance(IGuild guildInstance) {
 		this.guildInstance = guildInstance;
 		this.guildID = guildInstance.getLongID();
+	}
+
+	/**
+	 * Gets the channelChangelog
+	 *
+	 * @return long
+	 */
+	public long getChannelChangelog() {
+		return channelChangelog;
+	}
+
+	/**
+	 * Sets the channelChangelog
+	 *
+	 * @param channelChangelog - long
+	 */
+	public void setChannelChangelog(long channelChangelog) {
+		this.channelChangelog = channelChangelog;
 	}
 }
