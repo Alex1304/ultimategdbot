@@ -1,1 +1,1 @@
-ALTER TABLE `guild_settings` ADD `channel_changelog` bigint(20) NOT NULL DEFAULT '0';
+ALTER TABLE `guild_settings` ADD `channel_changelog` BIGINT NOT NULL DEFAULT '0' AFTER `role_timely_levels`;
