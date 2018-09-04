@@ -5,8 +5,8 @@ import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
@@ -28,6 +28,7 @@ import sx.blah.discord.handle.obj.IChannel;
 import sx.blah.discord.handle.obj.IGuild;
 import sx.blah.discord.util.DiscordException;
 import sx.blah.discord.util.EmbedBuilder;
+import sx.blah.discord.util.MissingPermissionsException;
 import sx.blah.discord.util.RateLimitException;
 
 /**
@@ -110,8 +111,8 @@ public class ChangelogCommand implements Command {
 					it.remove();
 				} catch (RateLimitException e) {
 					longestRateLimitTime = Math.max(longestRateLimitTime, e.getRetryDelay());
-				} catch (DiscordException e) {
-					UltimateGDBot.logException(e);
+				} catch (DiscordException | MissingPermissionsException e) {
+					System.err.println("[Changelog command]" + e.getClass().getName() + " " + e.getMessage());
 					it.remove();
 				}
 			}
