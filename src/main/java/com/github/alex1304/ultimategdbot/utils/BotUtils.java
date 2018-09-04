@@ -433,5 +433,17 @@ public class BotUtils {
 		
 		return new StringBuffer(sb.toString().replaceFirst(escapeRegex(concatArgs.toString()), "")).reverse().toString();
 	}
+	
+	/**
+	 * Calls Thread.sleep(long) and ignores the InterruptedException.
+	 * 
+	 * @param millis - long
+	 */
+	public static void sleep(long millis) {
+		try {
+			Thread.sleep(millis);
+		} catch (InterruptedException e) {
+		}
+	}
 
 }

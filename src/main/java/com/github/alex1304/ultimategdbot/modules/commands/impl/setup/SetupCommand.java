@@ -83,7 +83,8 @@ public class SetupCommand implements Command {
 				BotUtils.sendMessage(event0.getChannel(), Emojis.SUCCESS + " Settings updated");
 			} catch (IllegalArgumentException e) {
 				reopenMenu.run();
-				throw new CommandFailedException("Unexpected value");
+				BotUtils.sleep(1000);
+				throw new CommandFailedException(e.getMessage().isEmpty() ? "Unexpected value" : e.getMessage());
 			}
 		});
 		

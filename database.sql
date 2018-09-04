@@ -71,7 +71,8 @@ CREATE TABLE `guild_settings` (
   `role_gd_moderators` bigint(20) NOT NULL DEFAULT '0',
   `channel_gd_moderators` bigint(20) NOT NULL DEFAULT '0',
   `channel_timely_levels` bigint(20) NOT NULL DEFAULT '0',
-  `role_timely_levels` bigint(20) NOT NULL DEFAULT '0'
+  `role_timely_levels` bigint(20) NOT NULL DEFAULT '0',
+  `channel_changelog` bigint(20) NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------

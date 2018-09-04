@@ -1,0 +1,1 @@
+ALTER TABLE `guild_settings` ADD `channel_changelog` bigint(20) NOT NULL DEFAULT '0';
