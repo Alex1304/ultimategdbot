@@ -20,5 +20,16 @@
 			</resource>
 		</resources>
 	</build>
+	
+	<dependencies>
+		<dependency>
+			<groupId>com.discord4j.discord4j</groupId>
+			<artifactId>discord4j-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.github.alex1304</groupId>
+			<artifactId>ultimategdbot-command-api</artifactId>
+		</dependency>
+	</dependencies>
 
 </project>

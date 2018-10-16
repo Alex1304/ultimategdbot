@@ -57,6 +57,21 @@
 						<goals>deploy</goals>
 					</configuration>
 				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-shade-plugin</artifactId>
+					<version>3.2.0</version>
+					<configuration>
+					</configuration>
+					<executions>
+						<execution>
+							<phase>package</phase>
+							<goals>
+								<goal>shade</goal>
+							</goals>
+						</execution>
+					</executions>
+				</plugin>
 			</plugins>
 		</pluginManagement>
 	</build>
@@ -140,9 +155,14 @@
 				<scope>test</scope>
 			</dependency>
 			<dependency>
+				<groupId>org.slf4j</groupId>
+				<artifactId>slf4j-simple</artifactId>
+				<version>1.7.25</version>
+			</dependency>
+			<dependency>
 				<groupId>com.discord4j.discord4j</groupId>
 				<artifactId>discord4j-core</artifactId>
-				<version>ae68630</version>
+				<version>v3-SNAPSHOT</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>

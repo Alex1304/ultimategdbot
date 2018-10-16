@@ -7,7 +7,7 @@ import com.github.alex1304.ultimategdbot.logic.Utils;
 
 import discord4j.core.spec.MessageCreateSpec;
 
-public class PingCommand implements DiscordCommand {
+public class PongCommand implements DiscordCommand {
 
 	@Override
 	public MessageCreateSpec execute(DiscordContext ctx) throws CommandFailedException {
