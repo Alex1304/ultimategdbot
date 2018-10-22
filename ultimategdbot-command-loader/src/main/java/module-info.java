@@ -1,0 +1,2 @@
+module ultimategdbot.command.loader {
+}

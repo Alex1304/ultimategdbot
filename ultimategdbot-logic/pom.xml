@@ -11,7 +11,7 @@
 
 	<artifactId>ultimategdbot-logic</artifactId>
 	<packaging>jar</packaging>
-	
+
 	<build>
 		<resources>
 			<resource>
@@ -20,7 +20,7 @@
 			</resource>
 		</resources>
 	</build>
-	
+
 	<dependencies>
 		<dependency>
 			<groupId>com.discord4j.discord4j</groupId>
@@ -29,6 +29,10 @@
 		<dependency>
 			<groupId>com.github.alex1304</groupId>
 			<artifactId>ultimategdbot-command-api</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.xeustechnologies</groupId>
+			<artifactId>jcl-core</artifactId>
 		</dependency>
 	</dependencies>
 
