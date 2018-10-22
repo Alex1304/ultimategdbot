@@ -147,7 +147,7 @@
 			<dependency>
 				<groupId>com.discord4j.discord4j</groupId>
 				<artifactId>discord4j-core</artifactId>
-				<version>v3-SNAPSHOT</version>
+				<version>b27dd7d</version>
 			</dependency>
 			<dependency>
 				<groupId>org.xeustechnologies</groupId>
