@@ -1,4 +1,4 @@
-package com.github.alex1304.ultimategdbot.logic;
+package com.github.alex1304.ultimategdbot.core;
 
 import java.util.Objects;
 import java.util.Properties;

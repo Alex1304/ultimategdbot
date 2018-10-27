@@ -9,7 +9,7 @@
 		<version>3.1.1-SNAPSHOT</version>
 	</parent>
 
-	<artifactId>ultimategdbot-logic</artifactId>
+	<artifactId>ultimategdbot-utils</artifactId>
 	<packaging>jar</packaging>
 
 	<build>
@@ -25,14 +25,6 @@
 		<dependency>
 			<groupId>com.discord4j.discord4j</groupId>
 			<artifactId>discord4j-core</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.github.alex1304</groupId>
-			<artifactId>ultimategdbot-command-api</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.xeustechnologies</groupId>
-			<artifactId>jcl-core</artifactId>
 		</dependency>
 	</dependencies>
 

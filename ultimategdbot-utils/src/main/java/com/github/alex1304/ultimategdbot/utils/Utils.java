@@ -1,4 +1,4 @@
-package com.github.alex1304.ultimategdbot.logic;
+package com.github.alex1304.ultimategdbot.utils;
 
 import discord4j.core.spec.EmbedCreateSpec;
 import discord4j.core.spec.MessageCreateSpec;

@@ -73,11 +73,7 @@
 		</dependency>
 		<dependency>
 			<groupId>com.github.alex1304</groupId>
-			<artifactId>ultimategdbot-command-impl</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.github.alex1304</groupId>
-			<artifactId>ultimategdbot-logic</artifactId>
+			<artifactId>ultimategdbot-utils</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>

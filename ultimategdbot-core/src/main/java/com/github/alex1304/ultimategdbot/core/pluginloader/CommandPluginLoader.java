@@ -1,42 +1,36 @@
-package com.github.alex1304.ultimategdbot.logic;
+package com.github.alex1304.ultimategdbot.core.pluginloader;
 
-import java.time.Duration;
 import java.util.Arrays;
-import java.util.Objects;
-import java.util.ServiceLoader;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.github.alex1304.ultimategdbot.command.api.CommandFailedException;
 import com.github.alex1304.ultimategdbot.command.api.DiscordCommand;
 import com.github.alex1304.ultimategdbot.command.api.DiscordContext;
+import com.github.alex1304.ultimategdbot.core.UltimateGDBot;
 
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import reactor.core.publisher.Flux;
+import reactor.core.scheduler.Schedulers;
 
-/**
- * Handles commands received by the bot. It uses the message create event from Discord to read commands.
- * Then, the proper command is executed according to the implementations given by a ServiceLoader of DiscordCommands.
- *
- * @author Alex1304
- *
- */
-public final class DiscordCommandHandler {
+public class CommandPluginLoader extends PluginLoader<DiscordCommand> {
 	
-	private final UltimateGDBot bot;
-	private final ClassLoader classLoader;
 	private final ConcurrentHashMap<String, DiscordCommand> commandMap;
-	
-	public DiscordCommandHandler(UltimateGDBot bot, ClassLoader classLoader) {
-		this.bot = Objects.requireNonNull(bot);
-		this.classLoader = Objects.requireNonNull(classLoader);
+
+	public CommandPluginLoader() {
+		super("./plugins/", DiscordCommand.class);
 		this.commandMap = new ConcurrentHashMap<>();
 	}
 	
-	/**
-	 * Binds the Discord message create event to the command handler so that commands can be executed.
-	 */
-	public void bind() {
+	@Override
+	public void load() {
+		super.load();
+		forEach(cmd -> commandMap.put(cmd.getName(), cmd));
+	}
+
+	@Override
+	public void bindPluginsToBot(UltimateGDBot bot) {
 		bot.getDiscordClient().getEventDispatcher().on(MessageCreateEvent.class)
+			.subscribeOn(Schedulers.elastic())
 			.filterWhen(event -> event.getMessage().getAuthor().map(u -> !u.isBot())) // Ignore bot accounts
 			.subscribe(event -> {
 				final var content = event.getMessage().getContent();
@@ -70,17 +64,6 @@ public final class DiscordCommandHandler {
 						});
 			});
 		});
-		
-		
-		Flux.interval(Duration.ofSeconds(5)).subscribe(i -> {
-			System.out.println("----- " + i + " -----");
-			commandMap.clear();
-			var commandLoader = ServiceLoader.load(DiscordCommand.class, classLoader);
-			commandLoader.stream().forEach(cmd -> {
-				commandMap.put(cmd.get().getName(), cmd.get());
-				System.out.println("Loaded command: " + cmd.get().getName());
-			});
-			
-		});
 	}
+
 }

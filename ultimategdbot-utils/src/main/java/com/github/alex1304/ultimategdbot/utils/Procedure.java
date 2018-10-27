@@ -1,4 +1,4 @@
-package com.github.alex1304.ultimategdbot.logic;
+package com.github.alex1304.ultimategdbot.utils;
 
 /**
  * A procedure is a functional interface that takes no parameter and returns no

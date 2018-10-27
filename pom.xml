@@ -94,9 +94,8 @@
 	<modules>
 		<module>ultimategdbot-core</module>
 		<module>ultimategdbot-command-api</module>
-		<module>ultimategdbot-command-impl</module>
 		<module>ultimategdbot-database</module>
-		<module>ultimategdbot-logic</module>
+		<module>ultimategdbot-utils</module>
 	</modules>
 
 	<repositories>
@@ -120,17 +119,12 @@
 			</dependency>
 			<dependency>
 				<groupId>com.github.alex1304</groupId>
-				<artifactId>ultimategdbot-command-impl</artifactId>
-				<version>${project.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>com.github.alex1304</groupId>
 				<artifactId>ultimategdbot-database</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>com.github.alex1304</groupId>
-				<artifactId>ultimategdbot-logic</artifactId>
+				<artifactId>ultimategdbot-utils</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 			<dependency>
