@@ -1,14 +1,13 @@
-package com.github.alex1304.ultimategdbot.core.pluginloader;
+package com.github.alex1304.ultimategdbot.core;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Objects;
 import java.util.ServiceLoader;
-import java.util.stream.Stream;
 
 import org.xeustechnologies.jcl.JarClassLoader;
 
-import com.github.alex1304.ultimategdbot.core.UltimateGDBot;
+import com.github.alex1304.ultimategdbot.command.api.Plugin;
+import com.github.alex1304.ultimategdbot.command.api.PluginContainer;
 
 /**
  * Allows to load plugins when the bot is running. A plugin is a JAR file that
@@ -29,7 +28,7 @@ import com.github.alex1304.ultimategdbot.core.UltimateGDBot;
  * @param <T> - The class of the interface that the plugins must implement in
  *        order to be loaded
  */
-public abstract class PluginLoader<T> implements Iterable<T> {
+public abstract class PluginLoader<T extends Plugin> {
 
 	private final String pluginDirectory;
 	private final JarClassLoader classloader;
@@ -38,10 +37,20 @@ public abstract class PluginLoader<T> implements Iterable<T> {
 	public PluginLoader(String pluginDirectory, Class<T> serviceClass) {
 		this.pluginDirectory = Objects.requireNonNull(pluginDirectory);
 		this.classloader = new JarClassLoader();
-		this.serviceloader = ServiceLoader.load(serviceClass, classloader);
+		this.serviceloader = ServiceLoader.load(Objects.requireNonNull(serviceClass), classloader);
 	}
 
-	public void load() {
+	/**
+	 * Loads the plugins located in the directory specified when instanciating the
+	 * plugin loader. Any previously loaded plugin will be removed if the plugin
+	 * could not be found during this call of load(). The plugin instances are stored
+	 * in the given pluginContainer object.
+	 * 
+	 * This method is thread-safe.
+	 * 
+	 * @param pluginContainer - PluginContainer
+	 */
+	public final synchronized void loadInto(PluginContainer<T> pluginContainer) {
 		var loadedClassesCopy = new HashMap<>(classloader.getLoadedClasses());
 
 		for (var entry : loadedClassesCopy.entrySet()) {
@@ -50,19 +59,11 @@ public abstract class PluginLoader<T> implements Iterable<T> {
 
 		classloader.add(pluginDirectory);
 		serviceloader.reload();
-	}
-
-	@Override
-	public final Iterator<T> iterator() {
-		return serviceloader.iterator();
-	}
-
-	public final Stream<T> stream() {
-		return serviceloader.stream().map(p -> p.get());
+		pluginContainer.syncFromLoader(serviceloader);
 	}
 
 	/**
-	 * Defines the way that the bot should execute code loaded from plugins
+	 * Defines the way that the bot should execute code loaded from plugins.
 	 */
-	public abstract void bindPluginsToBot(UltimateGDBot bot);
+	abstract void bind(UltimateGDBot bot);
 }

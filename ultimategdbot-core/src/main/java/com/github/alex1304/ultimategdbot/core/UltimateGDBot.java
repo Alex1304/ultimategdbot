@@ -3,6 +3,8 @@ package com.github.alex1304.ultimategdbot.core;
 import java.util.Objects;
 import java.util.Properties;
 
+import com.github.alex1304.ultimategdbot.core.CommandPluginLoader;
+
 import discord4j.core.DiscordClient;
 import discord4j.core.DiscordClientBuilder;
 import discord4j.core.object.entity.Guild;
@@ -36,11 +38,12 @@ public class UltimateGDBot {
 	private final Snowflake emojiGuild2;
 	
 	// Internal attributes
-	private DiscordClient discordClient;
+	private final DiscordClient discordClient;
+	private final CommandPluginLoader commandPluginLoader;
 	
 	private UltimateGDBot(String name, long clientID, String token, Snowflake ownerID, Snowflake officialGuildID,
 			Snowflake moderatorRoleID, String gdUrl, long gdAccountID, String gdAccountPassword, String fullPrefix,
-			String canonicalPrefix, String releaseChannel, Snowflake emojiGuild1, Snowflake emojiGuild2) {
+			String canonicalPrefix, String releaseChannel, Snowflake emojiGuild1, Snowflake emojiGuild2, DiscordClient discordClient, CommandPluginLoader commandPluginLoader) {
 		this.name = name;
 		this.clientID = clientID;
 		this.token = token;
@@ -55,6 +58,8 @@ public class UltimateGDBot {
 		this.releaseChannel = releaseChannel;
 		this.emojiGuild1 = emojiGuild1;
 		this.emojiGuild2 = emojiGuild2;
+		this.discordClient = discordClient;
+		this.commandPluginLoader = commandPluginLoader;
 	}
 
 	/**
@@ -193,6 +198,15 @@ public class UltimateGDBot {
 	}
 
 	/**
+	 * Gets the commandPluginLoader
+	 * 
+	 * @return CommandPluginLoader
+	 */
+	public CommandPluginLoader getCommandPluginLoader() {
+		return commandPluginLoader;
+	}
+
+	/**
 	 * Creates an instance of the bot using the given properties. The Discord client is built as well
 	 * 
 	 * @param props - The properties of the bot to build
@@ -215,6 +229,9 @@ public class UltimateGDBot {
 		var releaseChannel = Objects.requireNonNull(props.getProperty("ultimategdbot.release.channel"));
 		var emojiGuild1 = Snowflake.of(Objects.requireNonNull(props.getProperty("ultimategdbot.misc.emoji_guild_id.1")));
 		var emojiGuild2 = Snowflake.of(Objects.requireNonNull(props.getProperty("ultimategdbot.misc.emoji_guild_id.2")));
+
+		var builder = new DiscordClientBuilder(token);
+		var commandPluginLoader = new CommandPluginLoader();
 		
 		var bot = new UltimateGDBot(
 				name,
@@ -230,12 +247,12 @@ public class UltimateGDBot {
 				canonicalPrefix,
 				releaseChannel,
 				emojiGuild1,
-				emojiGuild2
+				emojiGuild2,
+				builder.build(),
+				commandPluginLoader
 		);
 		
-		var builder = new DiscordClientBuilder(token);
-		
-		bot.discordClient = builder.build();
+		commandPluginLoader.bind(bot);
 		
 		return bot;
 	}

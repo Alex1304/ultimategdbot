@@ -9,7 +9,7 @@ package com.github.alex1304.ultimategdbot.command.api;
  * @param <C> - The type of the context object
  * @param <V> - The type of the view object
  */
-public interface Command<C, V> {
+public interface Command<C, V> extends Plugin {
 
 	/**
 	 * Executes the command
@@ -31,6 +31,7 @@ public interface Command<C, V> {
 	 * 
 	 * @return a String
 	 */
+	@Override
 	default String getName() {
 		final var classname = this.getClass().getSimpleName().toLowerCase();
 		final var suffix = "command";

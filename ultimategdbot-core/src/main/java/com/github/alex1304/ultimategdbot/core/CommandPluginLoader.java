@@ -1,35 +1,32 @@
-package com.github.alex1304.ultimategdbot.core.pluginloader;
+package com.github.alex1304.ultimategdbot.core;
 
 import java.util.Arrays;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Objects;
 
 import com.github.alex1304.ultimategdbot.command.api.CommandFailedException;
 import com.github.alex1304.ultimategdbot.command.api.DiscordCommand;
 import com.github.alex1304.ultimategdbot.command.api.DiscordContext;
-import com.github.alex1304.ultimategdbot.core.UltimateGDBot;
+import com.github.alex1304.ultimategdbot.command.api.PluginContainer;
 
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Schedulers;
 
-public class CommandPluginLoader extends PluginLoader<DiscordCommand> {
-	
-	private final ConcurrentHashMap<String, DiscordCommand> commandMap;
+/**
+ * Plugin loader that loads implementations of bot commands
+ * 
+ * @author Alex1304
+ *
+ */
+public final class CommandPluginLoader extends PluginLoader<DiscordCommand> {
 
 	public CommandPluginLoader() {
 		super("./plugins/", DiscordCommand.class);
-		this.commandMap = new ConcurrentHashMap<>();
 	}
 	
 	@Override
-	public void load() {
-		super.load();
-		forEach(cmd -> commandMap.put(cmd.getName(), cmd));
-	}
-
-	@Override
-	public void bindPluginsToBot(UltimateGDBot bot) {
-		bot.getDiscordClient().getEventDispatcher().on(MessageCreateEvent.class)
+	public void bind(UltimateGDBot bot) {
+		Objects.requireNonNull(bot).getDiscordClient().getEventDispatcher().on(MessageCreateEvent.class)
 			.subscribeOn(Schedulers.elastic())
 			.filterWhen(event -> event.getMessage().getAuthor().map(u -> !u.isBot())) // Ignore bot accounts
 			.subscribe(event -> {
@@ -46,10 +43,11 @@ public class CommandPluginLoader extends PluginLoader<DiscordCommand> {
 							final var argsArray = text.split(" +"); // message contains at least the prefix, so it can't be an empty array
 							argsArray[0] = argsArray[0].substring(prefixUsed.length()); // extract command name
 							
-							final var cmd = commandMap.get(argsArray[0]);
+							final var cmd = PluginContainer.ofCommands().get(argsArray[0]);
 							
-							if (cmd == null)
+							if (cmd == null) {
 								return; // Silently fails if the command does not exist
+							}
 							
 							final var context = new DiscordContext(event, Arrays.asList(argsArray).subList(1, argsArray.length));
 							try {
