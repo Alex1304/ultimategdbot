@@ -1,4 +1,4 @@
-package com.github.alex1304.ultimategdbot.command.api;
+package com.github.alex1304.ultimategdbot.plugin.api;
 
 public class CommandFailedException extends Exception {
 

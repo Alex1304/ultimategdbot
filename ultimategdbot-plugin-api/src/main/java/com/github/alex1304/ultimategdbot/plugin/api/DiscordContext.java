@@ -1,20 +1,21 @@
-package com.github.alex1304.ultimategdbot.command.api;
+package com.github.alex1304.ultimategdbot.plugin.api;
 
 import java.util.List;
 
 import discord4j.core.event.domain.message.MessageCreateEvent;
 
 /**
- * Context for Discord bot commands
+ * Context for Discord bot commands. You can also execute other commands using
+ * the context of the current object.
  *
  * @author Alex1304
  *
  */
 public class DiscordContext {
-	
+
 	private final MessageCreateEvent event;
 	private final List<String> args;
-	
+
 	public DiscordContext(MessageCreateEvent event, List<String> args) {
 		this.event = event;
 		this.args = args;

@@ -1,4 +1,4 @@
-package com.github.alex1304.ultimategdbot.command.api;
+package com.github.alex1304.ultimategdbot.plugin.api;
 
 import java.util.HashSet;
 import java.util.Iterator;
@@ -12,9 +12,10 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Alex1304
  *
  */
-public class PluginContainer<T extends Plugin> {
+public class PluginContainer<T extends Plugin> implements Iterable<T> {
 	
-	private static PluginContainer<DiscordCommand> commands = null;
+	private static PluginContainer<Command> commands = null;
+	private static PluginContainer<Service> services = null;
 
 	private final ConcurrentHashMap<String, T> pluginMap;
 	private final HashSet<String> enabledPlugins;
@@ -123,13 +124,31 @@ public class PluginContainer<T extends Plugin> {
 	/**
 	 * Returns a unique instance of the plugin container for commands
 	 * 
-	 * @return PluginContainer&lt;DiscordCommand&gt;
+	 * @return PluginContainer&lt;Command&gt;
 	 */
-	public static synchronized PluginContainer<DiscordCommand> ofCommands() {
+	public static synchronized PluginContainer<Command> ofCommands() {
 		if (commands == null) {
 			commands = new PluginContainer<>();
 		}
 		
 		return commands;
+	}
+	
+	/**
+	 * Returns a unique instance of the plugin container for services
+	 * 
+	 * @return PluginContainer&lt;Service&gt;
+	 */
+	public static synchronized PluginContainer<Service> ofServices() {
+		if (services == null) {
+			services = new PluginContainer<>();
+		}
+		
+		return services;
+	}
+
+	@Override
+	public Iterator<T> iterator() {
+		return pluginMap.values().iterator();
 	}
 }

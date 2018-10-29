@@ -69,7 +69,7 @@
 		</dependency>
 		<dependency>
 			<groupId>com.github.alex1304</groupId>
-			<artifactId>ultimategdbot-command-api</artifactId>
+			<artifactId>ultimategdbot-plugin-api</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>com.github.alex1304</groupId>

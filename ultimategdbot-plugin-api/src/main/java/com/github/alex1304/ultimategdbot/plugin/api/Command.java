@@ -1,15 +1,15 @@
-package com.github.alex1304.ultimategdbot.command.api;
+package com.github.alex1304.ultimategdbot.plugin.api;
+
+import discord4j.core.spec.MessageCreateSpec;
 
 /**
  * Interface that bot commands should implement. A command takes a context in
  * parameter and returns a view.
  *
  * @author Alex1304
- *
- * @param <C> - The type of the context object
- * @param <V> - The type of the view object
+ * 
  */
-public interface Command<C, V> extends Plugin {
+public interface Command extends Plugin {
 
 	/**
 	 * Executes the command
@@ -19,7 +19,7 @@ public interface Command<C, V> extends Plugin {
 	 * @throws CommandFailedException if something goes wrong when executing the
 	 *                                command
 	 */
-	V execute(C ctx) throws CommandFailedException;
+	MessageCreateSpec execute(DiscordContext ctx) throws CommandFailedException;
 
 	/**
 	 * Gets the name of the command. By default, it is the name of the class

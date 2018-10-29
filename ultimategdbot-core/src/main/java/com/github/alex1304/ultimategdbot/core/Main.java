@@ -2,6 +2,8 @@ package com.github.alex1304.ultimategdbot.core;
 
 import java.util.Properties;
 
+import com.github.alex1304.ultimategdbot.plugin.api.UltimateGDBot;
+
 /**
  * Entry point of the program. Loads properties and starts services.
  * 
@@ -9,14 +11,20 @@ import java.util.Properties;
  */
 public class Main {
 	
-	public static final String PROPS_FILE = "/ultimategdbot.properties";
-	public static final String PLUGINS_DIR = "./plugins/";
+	static final String PROPS_FILE = "/ultimategdbot.properties";
 	
 	public static void main(String[] args) throws Exception {
-		var props = new Properties();
+		final var props = new Properties();
 		props.load(Main.class.getResourceAsStream(PROPS_FILE));
 		
-		var bot = UltimateGDBot.buildFromProperties(props);
+		final var bot = UltimateGDBot.buildFromProperties(props);
+		final var cmdLoader = new CommandPluginLoader();
+		final var srvLoader = new ServicePluginLoader();
+		final var nativeLoader = new NativeCommandLoader();
+		
+		cmdLoader.bind(bot);
+		srvLoader.bind(bot);
+		nativeLoader.bind(bot);
 		
 		bot.getDiscordClient().login().block();
 	}

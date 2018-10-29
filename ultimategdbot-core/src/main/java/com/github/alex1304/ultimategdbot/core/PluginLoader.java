@@ -6,8 +6,9 @@ import java.util.ServiceLoader;
 
 import org.xeustechnologies.jcl.JarClassLoader;
 
-import com.github.alex1304.ultimategdbot.command.api.Plugin;
-import com.github.alex1304.ultimategdbot.command.api.PluginContainer;
+import com.github.alex1304.ultimategdbot.plugin.api.Plugin;
+import com.github.alex1304.ultimategdbot.plugin.api.PluginContainer;
+import com.github.alex1304.ultimategdbot.plugin.api.UltimateGDBot;
 
 /**
  * Allows to load plugins when the bot is running. A plugin is a JAR file that
@@ -28,13 +29,15 @@ import com.github.alex1304.ultimategdbot.command.api.PluginContainer;
  * @param <T> - The class of the interface that the plugins must implement in
  *        order to be loaded
  */
-public abstract class PluginLoader<T extends Plugin> {
+abstract class PluginLoader<T extends Plugin> {
+	
+	static final String DEFAULT_PLUGIN_DIR = "./plugins/";
 
 	private final String pluginDirectory;
 	private final JarClassLoader classloader;
 	private final ServiceLoader<T> serviceloader;
 
-	public PluginLoader(String pluginDirectory, Class<T> serviceClass) {
+	PluginLoader(String pluginDirectory, Class<T> serviceClass) {
 		this.pluginDirectory = Objects.requireNonNull(pluginDirectory);
 		this.classloader = new JarClassLoader();
 		this.serviceloader = ServiceLoader.load(Objects.requireNonNull(serviceClass), classloader);
@@ -43,14 +46,14 @@ public abstract class PluginLoader<T extends Plugin> {
 	/**
 	 * Loads the plugins located in the directory specified when instanciating the
 	 * plugin loader. Any previously loaded plugin will be removed if the plugin
-	 * could not be found during this call of load(). The plugin instances are stored
-	 * in the given pluginContainer object.
+	 * could not be found during this call. The plugin instances are stored in the
+	 * given pluginContainer object.
 	 * 
 	 * This method is thread-safe.
 	 * 
 	 * @param pluginContainer - PluginContainer
 	 */
-	public final synchronized void loadInto(PluginContainer<T> pluginContainer) {
+	final synchronized void loadInto(PluginContainer<T> pluginContainer) {
 		var loadedClassesCopy = new HashMap<>(classloader.getLoadedClasses());
 
 		for (var entry : loadedClassesCopy.entrySet()) {

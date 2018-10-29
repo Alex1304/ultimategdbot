@@ -1,9 +1,7 @@
-package com.github.alex1304.ultimategdbot.core;
+package com.github.alex1304.ultimategdbot.plugin.api;
 
 import java.util.Objects;
 import java.util.Properties;
-
-import com.github.alex1304.ultimategdbot.core.CommandPluginLoader;
 
 import discord4j.core.DiscordClient;
 import discord4j.core.DiscordClientBuilder;
@@ -20,7 +18,9 @@ import reactor.core.publisher.Mono;
  *
  */
 public class UltimateGDBot {
-	
+
+	private static UltimateGDBot instance = null;
+
 	// Read from Properties
 	private final String name;
 	private final long clientID;
@@ -36,14 +36,14 @@ public class UltimateGDBot {
 	private final String releaseChannel;
 	private final Snowflake emojiGuild1;
 	private final Snowflake emojiGuild2;
-	
+
 	// Internal attributes
 	private final DiscordClient discordClient;
-	private final CommandPluginLoader commandPluginLoader;
-	
+
 	private UltimateGDBot(String name, long clientID, String token, Snowflake ownerID, Snowflake officialGuildID,
 			Snowflake moderatorRoleID, String gdUrl, long gdAccountID, String gdAccountPassword, String fullPrefix,
-			String canonicalPrefix, String releaseChannel, Snowflake emojiGuild1, Snowflake emojiGuild2, DiscordClient discordClient, CommandPluginLoader commandPluginLoader) {
+			String canonicalPrefix, String releaseChannel, Snowflake emojiGuild1, Snowflake emojiGuild2,
+			DiscordClient discordClient) {
 		this.name = name;
 		this.clientID = clientID;
 		this.token = token;
@@ -59,7 +59,6 @@ public class UltimateGDBot {
 		this.emojiGuild1 = emojiGuild1;
 		this.emojiGuild2 = emojiGuild2;
 		this.discordClient = discordClient;
-		this.commandPluginLoader = commandPluginLoader;
 	}
 
 	/**
@@ -198,23 +197,21 @@ public class UltimateGDBot {
 	}
 
 	/**
-	 * Gets the commandPluginLoader
-	 * 
-	 * @return CommandPluginLoader
-	 */
-	public CommandPluginLoader getCommandPluginLoader() {
-		return commandPluginLoader;
-	}
-
-	/**
-	 * Creates an instance of the bot using the given properties. The Discord client is built as well
+	 * Creates an instance of the bot using the given properties. The Discord client
+	 * is built as well. The freshly built bot is returned.
 	 * 
 	 * @param props - The properties of the bot to build
 	 * @return UltimateGDBot
-	 * @throws NullPointerException if a property is missing
-	 * @throws NumberFormatException if a property isn't a number when a number is expected
+	 * @throws IllegalStateException if an instance has already been created
+	 * @throws NullPointerException  if a property is missing
+	 * @throws NumberFormatException if a property isn't a number when a number is
+	 *                               expected
 	 */
 	public static UltimateGDBot buildFromProperties(Properties props) {
+		if (instance != null) {
+			throw new IllegalStateException("An instance of UltimateGDBot has already been created");
+		}
+		
 		var name = Objects.requireNonNull(props.getProperty("ultimategdbot.name"));
 		var clientID = Long.parseLong(Objects.requireNonNull(props.getProperty("ultimategdbot.client.id")));
 		var token = Objects.requireNonNull(props.getProperty("ultimategdbot.client.token"));
@@ -231,9 +228,8 @@ public class UltimateGDBot {
 		var emojiGuild2 = Snowflake.of(Objects.requireNonNull(props.getProperty("ultimategdbot.misc.emoji_guild_id.2")));
 
 		var builder = new DiscordClientBuilder(token);
-		var commandPluginLoader = new CommandPluginLoader();
 		
-		var bot = new UltimateGDBot(
+		instance = new UltimateGDBot(
 				name,
 				clientID,
 				token,
@@ -248,12 +244,25 @@ public class UltimateGDBot {
 				releaseChannel,
 				emojiGuild1,
 				emojiGuild2,
-				builder.build(),
-				commandPluginLoader
+				builder.build()
 		);
 		
-		commandPluginLoader.bind(bot);
-		
-		return bot;
+		return instance;
+	}
+
+	/**
+	 * Returns the unique instance of UltimateGDBot
+	 * 
+	 * @return UltimateGDBot
+	 * @throws IllegalStateException if the bot has neven been instanciated using
+	 *                               {@link UltimateGDBot#buildFromProperties(Properties)}
+	 */
+	public static UltimateGDBot getInstance() {
+		if (instance == null) {
+			throw new IllegalStateException(
+					"You must build the bot using buildFromProperties(Properties) first before calling getInstance()");
+		}
+
+		return instance;
 	}
 }

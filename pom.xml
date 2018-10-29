@@ -93,7 +93,7 @@
 
 	<modules>
 		<module>ultimategdbot-core</module>
-		<module>ultimategdbot-command-api</module>
+		<module>ultimategdbot-plugin-api</module>
 		<module>ultimategdbot-database</module>
 		<module>ultimategdbot-utils</module>
 	</modules>
@@ -114,7 +114,7 @@
 			</dependency>
 			<dependency>
 				<groupId>com.github.alex1304</groupId>
-				<artifactId>ultimategdbot-command-api</artifactId>
+				<artifactId>ultimategdbot-plugin-api</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 			<dependency>
