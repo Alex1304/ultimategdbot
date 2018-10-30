@@ -20,7 +20,7 @@ public class Main {
 		final var bot = UltimateGDBot.buildFromProperties(props);
 		final var cmdLoader = new CommandPluginLoader();
 		final var srvLoader = new ServicePluginLoader();
-		final var nativeLoader = new NativeCommandLoader();
+		final var nativeLoader = new NativeCommandLoader(cmdLoader, srvLoader);
 		
 		cmdLoader.bind(bot);
 		srvLoader.bind(bot);

@@ -47,9 +47,7 @@ abstract class PluginLoader<T extends Plugin> {
 	 * Loads the plugins located in the directory specified when instanciating the
 	 * plugin loader. Any previously loaded plugin will be removed if the plugin
 	 * could not be found during this call. The plugin instances are stored in the
-	 * given pluginContainer object.
-	 * 
-	 * This method is thread-safe.
+	 * given pluginContainer object. This method is thread-safe.
 	 * 
 	 * @param pluginContainer - PluginContainer
 	 */

@@ -19,8 +19,6 @@ import reactor.core.publisher.Mono;
  */
 public class UltimateGDBot {
 
-	private static UltimateGDBot instance = null;
-
 	// Read from Properties
 	private final String name;
 	private final long clientID;
@@ -208,10 +206,6 @@ public class UltimateGDBot {
 	 *                               expected
 	 */
 	public static UltimateGDBot buildFromProperties(Properties props) {
-		if (instance != null) {
-			throw new IllegalStateException("An instance of UltimateGDBot has already been created");
-		}
-		
 		var name = Objects.requireNonNull(props.getProperty("ultimategdbot.name"));
 		var clientID = Long.parseLong(Objects.requireNonNull(props.getProperty("ultimategdbot.client.id")));
 		var token = Objects.requireNonNull(props.getProperty("ultimategdbot.client.token"));
@@ -229,7 +223,7 @@ public class UltimateGDBot {
 
 		var builder = new DiscordClientBuilder(token);
 		
-		instance = new UltimateGDBot(
+		return new UltimateGDBot(
 				name,
 				clientID,
 				token,
@@ -246,23 +240,5 @@ public class UltimateGDBot {
 				emojiGuild2,
 				builder.build()
 		);
-		
-		return instance;
-	}
-
-	/**
-	 * Returns the unique instance of UltimateGDBot
-	 * 
-	 * @return UltimateGDBot
-	 * @throws IllegalStateException if the bot has neven been instanciated using
-	 *                               {@link UltimateGDBot#buildFromProperties(Properties)}
-	 */
-	public static UltimateGDBot getInstance() {
-		if (instance == null) {
-			throw new IllegalStateException(
-					"You must build the bot using buildFromProperties(Properties) first before calling getInstance()");
-		}
-
-		return instance;
 	}
 }

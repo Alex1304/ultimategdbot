@@ -22,8 +22,7 @@ public final class CommandExecutor {
 	 * or an error otherwise.
 	 * 
 	 * @param cmd - Command
-	 * @return Mono&lt;Boolean&gt;
-	 * @throws IllegalStateException if the command handler hasn't been defined
+	 * @return Mono&lt;MessageCreateSpec&gt;
 	 */
 	public static Mono<MessageCreateSpec> execute(Command cmd, DiscordContext ctx) {
 		return Mono.create(sink -> {
@@ -53,15 +52,14 @@ public final class CommandExecutor {
 			throws CommandFailedException {
 		var args = ctx.getArgs();
 		if (args.isEmpty()) {
-			throw new CommandFailedException(
-					"Missing argument(s). Use `" + UltimateGDBot.getInstance().getCanonicalPrefix()
-							+ "help <commandName>` to see syntax reference and usage examples");
+			throw new CommandFailedException("Missing argument(s). Use `" + ctx.getPrefixUsed() + "help "
+					+ ctx.getCommandName() + "` to see syntax reference and usage examples");
 		} else if (!subcommandMap.containsKey(args.get(0))) {
-			throw new CommandFailedException("Unrecognized argument \"" + args.get(0) + "\". Use `"
-					+ UltimateGDBot.getInstance().getCanonicalPrefix()
-					+ "help <commandName>` to see syntax reference and usage examples");
+			throw new CommandFailedException(
+					"Unrecognized argument \"" + args.get(0) + "\". Use `" + ctx.getBot().getCanonicalPrefix() + "help "
+							+ ctx.getCommandName() + "` to see syntax reference and usage examples");
 		}
 
-		return subcommandMap.get(args.get(0)).execute(new DiscordContext(ctx.getEvent(), args.subList(1, args.size())));
+		return subcommandMap.get(args.get(0)).execute(new DiscordContext(ctx, args.subList(1, args.size())));
 	}
 }

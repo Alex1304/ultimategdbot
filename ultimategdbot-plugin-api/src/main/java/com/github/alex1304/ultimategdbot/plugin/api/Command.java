@@ -9,6 +9,7 @@ import discord4j.core.spec.MessageCreateSpec;
  * @author Alex1304
  * 
  */
+@FunctionalInterface
 public interface Command extends Plugin {
 
 	/**
