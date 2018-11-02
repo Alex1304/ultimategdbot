@@ -2,6 +2,7 @@ package com.github.alex1304.ultimategdbot.core;
 
 import java.util.Properties;
 
+import com.github.alex1304.ultimategdbot.database.Database;
 import com.github.alex1304.ultimategdbot.plugin.api.UltimateGDBot;
 
 /**
@@ -16,6 +17,7 @@ public class Main {
 	public static void main(String[] args) throws Exception {
 		final var props = new Properties();
 		props.load(Main.class.getResourceAsStream(PROPS_FILE));
+		Database.init();
 		
 		final var bot = UltimateGDBot.buildFromProperties(props);
 		final var cmdLoader = new CommandPluginLoader();

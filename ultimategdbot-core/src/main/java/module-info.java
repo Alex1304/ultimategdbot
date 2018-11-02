@@ -5,6 +5,7 @@ module ultimategdbot.core {
 	requires jcl.core;
 	requires ultimategdbot.plugin.api;
 	requires ultimategdbot.utils;
+	requires ultimategdbot.database;
 	
 	uses com.github.alex1304.ultimategdbot.plugin.api.Command;
 	uses com.github.alex1304.ultimategdbot.plugin.api.Service;
