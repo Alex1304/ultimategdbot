@@ -2,7 +2,9 @@ package com.github.alex1304.ultimategdbot.database;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
 import org.hibernate.ObjectNotFoundException;
@@ -20,12 +22,19 @@ import org.hibernate.query.Query;
 public class Database {
 
 	private static SessionFactory sessionFactory = null;
+	private static Set<Class<?>> entities = new HashSet<>();
 
 	/**
 	 * Initializes the database and builds the session factory
 	 */
-	public static void init() {
+	public static void configure() {
 		Configuration config = new Configuration();
+		entities.forEach(entity -> config.addClass(entity));
+		
+		if (sessionFactory != null) {
+			sessionFactory.close();
+		}
+		
 		sessionFactory = config.buildSessionFactory();
 	}
 
@@ -35,10 +44,18 @@ public class Database {
 	 * @return Session
 	 */
 	public static Session newSession() {
-		if (sessionFactory == null)
-			throw new IllegalStateException("Database not initialized");
+		if (sessionFactory == null || sessionFactory.isClosed())
+			throw new IllegalStateException("Database not configured");
 
 		return sessionFactory.openSession();
+	}
+	
+	public void addEntityIfNotExists(Class<?> entityClass) {
+		if (entities.contains(entityClass)) {
+			return;
+		}
+		
+		entities.add(entityClass);
 	}
 
 	/**

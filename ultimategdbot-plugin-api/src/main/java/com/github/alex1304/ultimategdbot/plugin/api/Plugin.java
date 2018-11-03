@@ -14,4 +14,10 @@ public interface Plugin {
 	 * @return String
 	 */
 	String getName();
+	
+	/**
+	 * Code executed when the plugin is installed.
+	 * 
+	 */
+	void install() throws PluginInstallationException;
 }

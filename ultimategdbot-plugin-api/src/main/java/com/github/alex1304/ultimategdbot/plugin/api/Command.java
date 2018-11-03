@@ -42,4 +42,9 @@ public interface Command extends Plugin {
 
 		return classname;
 	}
+	
+	@Override
+	default void install() throws PluginInstallationException {
+		return;
+	}
 }

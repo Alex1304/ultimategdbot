@@ -6,6 +6,8 @@ import java.util.Objects;
 import java.util.ServiceLoader;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.xeustechnologies.jcl.JarClassLoader;
+
 /**
  * Loaded plugins are stored here.
  * 
@@ -53,11 +55,11 @@ public class PluginContainer<T extends Plugin> implements Iterable<T> {
 	 * 
 	 * @param pluginName - String
 	 */
-	public final void enable(String pluginName) {
+	public final void enable(String pluginName) throws PluginInstallationException {
 		if (!exists(Objects.requireNonNull(pluginName))) {
 			return;
 		}
-
+		pluginMap.get(pluginName).install();
 		enabledPlugins.add(pluginName);
 	}
 
@@ -103,7 +105,7 @@ public class PluginContainer<T extends Plugin> implements Iterable<T> {
 	 * 
 	 * @param loader - ServiceLoader
 	 */
-	public void syncFromLoader(ServiceLoader<T> loader) {
+	public void syncFromLoader(ServiceLoader<T> loader, JarClassLoader classloader) {
 		pluginMap.clear();
 
 		for (var plugin : loader) {
@@ -117,6 +119,7 @@ public class PluginContainer<T extends Plugin> implements Iterable<T> {
 			var enabled = enabledIterator.next();
 			if (!exists(enabled)) {
 				enabledIterator.remove();
+				classloader.unloadClass(pluginMap.get(enabled).getClass().getName());
 			}
 		}
 	}

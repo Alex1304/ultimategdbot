@@ -8,7 +8,7 @@ import com.github.alex1304.ultimategdbot.plugin.api.UltimateGDBot;
 
 import discord4j.core.event.domain.lifecycle.ReadyEvent;
 
-public class ServicePluginLoader extends PluginLoader<Service> {
+class ServicePluginLoader extends PluginLoader<Service> {
 
 	ServicePluginLoader() {
 		super(PluginLoader.DEFAULT_PLUGIN_DIR + "services/", Service.class);

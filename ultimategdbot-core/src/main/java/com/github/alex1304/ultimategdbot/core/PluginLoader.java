@@ -1,6 +1,5 @@
 package com.github.alex1304.ultimategdbot.core;
 
-import java.util.HashMap;
 import java.util.Objects;
 import java.util.ServiceLoader;
 
@@ -52,15 +51,9 @@ abstract class PluginLoader<T extends Plugin> {
 	 * @param pluginContainer - PluginContainer
 	 */
 	final synchronized void loadInto(PluginContainer<T> pluginContainer) {
-		var loadedClassesCopy = new HashMap<>(classloader.getLoadedClasses());
-
-		for (var entry : loadedClassesCopy.entrySet()) {
-			classloader.unloadClass(entry.getKey());
-		}
-
 		classloader.add(pluginDirectory);
 		serviceloader.reload();
-		pluginContainer.syncFromLoader(serviceloader);
+		pluginContainer.syncFromLoader(serviceloader, classloader);
 	}
 
 	/**

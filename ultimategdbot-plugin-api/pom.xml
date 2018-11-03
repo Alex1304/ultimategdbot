@@ -26,6 +26,10 @@
 			<groupId>com.discord4j.discord4j</groupId>
 			<artifactId>discord4j-core</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>org.xeustechnologies</groupId>
+			<artifactId>jcl-core</artifactId>
+		</dependency>
 	</dependencies>
 
 </project>
