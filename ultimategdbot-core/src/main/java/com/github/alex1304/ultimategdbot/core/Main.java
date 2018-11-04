@@ -3,6 +3,7 @@ package com.github.alex1304.ultimategdbot.core;
 import java.util.Properties;
 
 import com.github.alex1304.ultimategdbot.database.Database;
+import com.github.alex1304.ultimategdbot.plugin.api.PluginContainer;
 import com.github.alex1304.ultimategdbot.plugin.api.UltimateGDBot;
 
 /**
@@ -27,6 +28,11 @@ class Main {
 		cmdLoader.bind(bot);
 		srvLoader.bind(bot);
 		nativeLoader.bind(bot);
+
+		cmdLoader.loadInto(PluginContainer.ofCommands());
+		srvLoader.loadInto(PluginContainer.ofServices());
+		PluginContainer.ofCommands().forEach(plugin -> System.out.println("Loaded command: " + plugin.getName() + " [" + plugin.getClass().getName() + "]"));
+		PluginContainer.ofServices().forEach(plugin -> System.out.println("Loaded service: " + plugin.getName() + " [" + plugin.getClass().getName() + "]"));
 		
 		bot.getDiscordClient().login().block();
 	}

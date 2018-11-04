@@ -21,10 +21,13 @@ public class PluginContainer<T extends Plugin> implements Iterable<T> {
 
 	private final ConcurrentHashMap<String, T> pluginMap;
 	private final HashSet<String> enabledPlugins;
+	private final ConcurrentHashMap<String, JarClassLoader> pluginClassloaderMap;
+	
 
 	private PluginContainer() {
 		this.pluginMap = new ConcurrentHashMap<>();
 		this.enabledPlugins = new HashSet<>();
+		this.pluginClassloaderMap = new ConcurrentHashMap<>();
 	}
 
 	/**
@@ -110,6 +113,7 @@ public class PluginContainer<T extends Plugin> implements Iterable<T> {
 
 		for (var plugin : loader) {
 			pluginMap.put(plugin.getName(), plugin);
+			pluginClassloaderMap.put(plugin.getName(), classloader);
 		}
 
 		// Ensures that enabledPlugins doesn't have references to plugins that don't
@@ -119,7 +123,11 @@ public class PluginContainer<T extends Plugin> implements Iterable<T> {
 			var enabled = enabledIterator.next();
 			if (!exists(enabled)) {
 				enabledIterator.remove();
-				classloader.unloadClass(pluginMap.get(enabled).getClass().getName());
+				if (pluginClassloaderMap.contains(enabled)) {
+					var cl = pluginClassloaderMap.get(enabled);
+					cl.unloadClass(pluginMap.get(enabled).getClass().getName());
+					pluginClassloaderMap.remove(enabled);
+				}
 			}
 		}
 	}

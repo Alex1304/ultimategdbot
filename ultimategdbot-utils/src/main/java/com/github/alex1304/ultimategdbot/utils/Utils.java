@@ -65,5 +65,4 @@ public class Utils {
 		argsArray[0] = argsArray[0].substring(prefix.length());
 		return Arrays.asList(argsArray);
 	}
-
 }

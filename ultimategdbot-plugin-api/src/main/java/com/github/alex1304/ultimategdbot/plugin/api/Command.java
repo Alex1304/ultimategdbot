@@ -23,6 +23,15 @@ public interface Command extends Plugin {
 	MessageCreateSpec execute(DiscordContext ctx) throws CommandFailedException;
 
 	/**
+	 * Gets the set of roles required by the user running the command.
+	 * 
+	 * @return EnumSetBotRoles
+	 */
+	default BotRoles getRoleRequired() {
+		return BotRoles.USER;
+	}
+
+	/**
 	 * Gets the name of the command. By default, it is the name of the class
 	 * implementing the interface in lowercase minus the Command suffix if there is
 	 * any. For example, it would return {@code ping} if the class is named

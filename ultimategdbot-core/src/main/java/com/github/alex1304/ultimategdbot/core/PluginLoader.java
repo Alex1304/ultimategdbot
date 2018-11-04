@@ -33,13 +33,11 @@ abstract class PluginLoader<T extends Plugin> {
 	static final String DEFAULT_PLUGIN_DIR = "./plugins/";
 
 	private final String pluginDirectory;
-	private final JarClassLoader classloader;
-	private final ServiceLoader<T> serviceloader;
+	private final Class<T> serviceClass;
 
 	PluginLoader(String pluginDirectory, Class<T> serviceClass) {
 		this.pluginDirectory = Objects.requireNonNull(pluginDirectory);
-		this.classloader = new JarClassLoader();
-		this.serviceloader = ServiceLoader.load(Objects.requireNonNull(serviceClass), classloader);
+		this.serviceClass = Objects.requireNonNull(serviceClass);
 	}
 
 	/**
@@ -51,9 +49,9 @@ abstract class PluginLoader<T extends Plugin> {
 	 * @param pluginContainer - PluginContainer
 	 */
 	final synchronized void loadInto(PluginContainer<T> pluginContainer) {
+		var classloader = new JarClassLoader();
 		classloader.add(pluginDirectory);
-		serviceloader.reload();
-		pluginContainer.syncFromLoader(serviceloader, classloader);
+		pluginContainer.syncFromLoader(ServiceLoader.load(serviceClass, classloader), classloader);
 	}
 
 	/**
