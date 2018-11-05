@@ -23,7 +23,6 @@ public class PluginContainer<T extends Plugin> implements Iterable<T> {
 	private final HashSet<String> enabledPlugins;
 	private final ConcurrentHashMap<String, JarClassLoader> pluginClassloaderMap;
 	
-
 	private PluginContainer() {
 		this.pluginMap = new ConcurrentHashMap<>();
 		this.enabledPlugins = new HashSet<>();

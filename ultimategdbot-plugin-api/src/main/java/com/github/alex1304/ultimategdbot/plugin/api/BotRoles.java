@@ -6,6 +6,7 @@ import java.util.Objects;
 import discord4j.core.object.entity.GuildChannel;
 import discord4j.core.object.entity.User;
 import discord4j.core.object.util.Permission;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.function.Function3;
 
@@ -18,47 +19,36 @@ import reactor.function.Function3;
  */
 public enum BotRoles {
 	OWNER((bot, user, channel) -> user.flatMap(u -> bot.getOwner().map(o -> u.equals(o)))),
-	MODERATOR((bot, user,
-			channel) -> user.flatMap(u -> bot.getOfficialGuild()
+	MODERATOR((bot, user, channel) -> user.flatMap(u -> bot.getOfficialGuild()
 					.flatMap(og -> u.asMember(og.getId())
 							.flatMap(m -> bot.getModeratorRole().flatMap(mr -> m.getRoles().hasElement(mr)))))),
-	SERVER_ADMIN((bot, user,
-			channel) -> channel.flatMap(c -> user.flatMap(
-					u -> c.getEffectivePermissions(u.getId()).map(ps -> ps.contains(Permission.MANAGE_GUILD))))),
+	SERVER_ADMIN((bot, user, channel) -> channel.flatMap(c -> user
+			.flatMap(u -> c.getEffectivePermissions(u.getId())
+					.map(ps -> ps.contains(Permission.MANAGE_GUILD))))),
 	USER((bot, user, channel) -> Mono.just(true));
 
 	/**
-	 * Defines extended roles for each role.
+	 * Defines included roles for each role.
 	 */
 	static {
-		OWNER.setExtendedRoles(EnumSet.of(MODERATOR, SERVER_ADMIN, USER));
-		MODERATOR.setExtendedRoles(EnumSet.of(SERVER_ADMIN, USER));
-		SERVER_ADMIN.setExtendedRoles(EnumSet.of(USER));
-		USER.setExtendedRoles(EnumSet.noneOf(BotRoles.class));
+		OWNER.setIncludedRoles(EnumSet.noneOf(BotRoles.class));
+		MODERATOR.setIncludedRoles(EnumSet.of(OWNER));
+		SERVER_ADMIN.setIncludedRoles(EnumSet.of(OWNER, MODERATOR));
+		USER.setIncludedRoles(EnumSet.of(OWNER, MODERATOR, SERVER_ADMIN));
 	}
 
 	/**
 	 * Predicate that determines whether a user is granted to this role
 	 */
-	private Function3<UltimateGDBot, Mono<User>, Mono<GuildChannel>, Mono<Boolean>> conditionForUserToBeGranted;
+	private Function3<UltimateGDBot, Mono<User>, Mono<GuildChannel>, Mono<Boolean>> grantCondition;
 
 	/**
 	 * The set of roles that this role extends.
 	 */
-	private EnumSet<BotRoles> extendedRoles;
+	private EnumSet<BotRoles> includedRoles;
 
-	private BotRoles(
-			Function3<UltimateGDBot, Mono<User>, Mono<GuildChannel>, Mono<Boolean>> conditionForUserToBeGranted) {
-		this.conditionForUserToBeGranted = conditionForUserToBeGranted;
-	}
-
-	/**
-	 * Gets the extended roles
-	 * 
-	 * @return EnumSet of roles
-	 */
-	public EnumSet<BotRoles> getExtendedRoles() {
-		return extendedRoles;
+	private BotRoles(Function3<UltimateGDBot, Mono<User>, Mono<GuildChannel>, Mono<Boolean>> grantCondition) {
+		this.grantCondition = grantCondition;
 	}
 
 	/**
@@ -66,14 +56,22 @@ public enum BotRoles {
 	 * 
 	 * @param EnumSet of roles
 	 */
-	public void setExtendedRoles(EnumSet<BotRoles> extendedRoles) {
-		this.extendedRoles = Objects.requireNonNull(extendedRoles);
+	public void setIncludedRoles(EnumSet<BotRoles> includedRoles) {
+		this.includedRoles = Objects.requireNonNull(includedRoles);
 	}
 
 	public static Mono<Boolean> isGranted(UltimateGDBot bot, Mono<User> user, Mono<GuildChannel> channel,
 			BotRoles role) {
-		return Objects.requireNonNull(role).conditionForUserToBeGranted.apply(Objects.requireNonNull(bot),
-				Objects.requireNonNull(user), Objects.requireNonNull(channel));
+		// Null checks are done separately to improve code lisibility
+		Objects.requireNonNull(role);
+		Objects.requireNonNull(user);
+		Objects.requireNonNull(channel);
+		
+		return role.grantCondition.apply(bot, user, channel)
+				.flatMap(bool -> bool ? Mono.just(true) : Flux.fromIterable(role.includedRoles)
+						.map(r -> r.grantCondition.apply(bot, user, channel))
+						.filterWhen(isGranted -> isGranted.map(b -> !b))
+						.hasElements().map(b -> !b));
 	}
 
 	public static BotRoles highestFrom(EnumSet<BotRoles> set) {

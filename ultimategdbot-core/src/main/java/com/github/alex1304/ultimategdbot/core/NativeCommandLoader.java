@@ -67,7 +67,7 @@ class NativeCommandLoader {
 					sb.append("All plugins already loaded! No action needed.");
 				} else {
 					if (!pluginsAdded.isEmpty()) {
-						sb.append("**New plugins loaded:**\n```\n");
+						sb.append("**Plugins loaded:**\n```\n");
 						pluginsAdded.forEach(p -> {
 							sb.append(p);
 							sb.append('\n');
