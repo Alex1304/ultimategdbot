@@ -10,7 +10,7 @@ import discord4j.core.spec.MessageCreateSpec;
  * 
  */
 @FunctionalInterface
-public interface Command extends Plugin {
+public interface Command {
 
 	/**
 	 * Executes the command
@@ -41,7 +41,6 @@ public interface Command extends Plugin {
 	 * 
 	 * @return a String
 	 */
-	@Override
 	default String getName() {
 		final var classname = this.getClass().getSimpleName().toLowerCase();
 		final var suffix = "command";
@@ -52,8 +51,11 @@ public interface Command extends Plugin {
 		return classname;
 	}
 	
-	@Override
-	default void install() throws PluginInstallationException {
+	default void install() {
+		return;
+	}
+	
+	default void uninstall() {
 		return;
 	}
 }

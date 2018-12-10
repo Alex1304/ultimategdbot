@@ -56,7 +56,7 @@ public final class CommandExecutor {
 					+ ctx.getCommandName() + "` to see syntax reference and usage examples");
 		} else if (!subcommandMap.containsKey(args.get(0))) {
 			throw new CommandFailedException(
-					"Unrecognized argument \"" + args.get(0) + "\". Use `" + ctx.getBot().getCanonicalPrefix() + "help "
+					"Unrecognized argument \"" + args.get(0) + "\". Use `" + ctx.getBot().getPrefix() + "help "
 							+ ctx.getCommandName() + "` to see syntax reference and usage examples");
 		}
 

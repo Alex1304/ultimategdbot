@@ -1,10 +1,14 @@
 package com.github.alex1304.ultimategdbot.core;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.util.Properties;
+import java.util.ServiceLoader;
 
 import com.github.alex1304.ultimategdbot.database.Database;
-import com.github.alex1304.ultimategdbot.plugin.api.PluginContainer;
-import com.github.alex1304.ultimategdbot.plugin.api.UltimateGDBot;
+import com.github.alex1304.ultimategdbot.plugin.api.CommandContainer;
+import com.github.alex1304.ultimategdbot.plugin.api.Bot;
+import com.github.alex1304.ultimategdbot.plugin.api.Command;
 
 /**
  * Entry point of the program. Loads properties and starts services.
@@ -13,27 +17,29 @@ import com.github.alex1304.ultimategdbot.plugin.api.UltimateGDBot;
  */
 class Main {
 	
-	static final String PROPS_FILE = "/ultimategdbot.properties";
+	static final String PROPS_FILE = "./config/bot.properties";
+	static final String HIB_PROPS_FILE = "./config/hibernate.properties";
 	
 	public static void main(String[] args) throws Exception {
 		final var props = new Properties();
-		props.load(Main.class.getResourceAsStream(PROPS_FILE));
-		Database.configure();
+		final var hibProps = new Properties();
+		props.load(new FileInputStream(new File(PROPS_FILE)));
+		hibProps.load(new FileInputStream(new File(HIB_PROPS_FILE)));
+		Database.setProperties(hibProps);
+		final var bot = Bot.buildFromProperties(props);
+		final var cmdHandler = new PluginCommandHandler();
+		final var nativeHandler = new NativeCommandHandler(cmdHandler);
 		
-		final var bot = UltimateGDBot.buildFromProperties(props);
-		final var cmdLoader = new CommandPluginLoader();
-		final var srvLoader = new ServicePluginLoader();
-		final var nativeLoader = new NativeCommandLoader(cmdLoader, srvLoader);
-		
-		cmdLoader.bind(bot);
-		srvLoader.bind(bot);
-		nativeLoader.bind(bot);
+		cmdHandler.bind(bot);
+		nativeHandler.bind(bot);
 
-		cmdLoader.loadInto(PluginContainer.ofCommands());
-		srvLoader.loadInto(PluginContainer.ofServices());
-		PluginContainer.ofCommands().forEach(plugin -> System.out.println("Loaded command: " + plugin.getName() + " [" + plugin.getClass().getName() + "]"));
-		PluginContainer.ofServices().forEach(plugin -> System.out.println("Loaded service: " + plugin.getName() + " [" + plugin.getClass().getName() + "]"));
-		
+		CommandContainer.getInstance().syncFromLoader(ServiceLoader.load(Command.class));
+		CommandContainer.getInstance().forEach(cmd -> {
+			cmd.install();
+			System.out.println("Loaded initial command: " + cmd.getName() + " [" + cmd.getClass().getName() + "]");
+		});
+
+		Database.configure();
 		bot.getDiscordClient().login().block();
 	}
 }

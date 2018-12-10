@@ -6,7 +6,7 @@ module ultimategdbot.core {
 	requires ultimategdbot.plugin.api;
 	requires ultimategdbot.utils;
 	requires ultimategdbot.database;
+	requires java.xml.bind;
 	
 	uses com.github.alex1304.ultimategdbot.plugin.api.Command;
-	uses com.github.alex1304.ultimategdbot.plugin.api.Service;
 }

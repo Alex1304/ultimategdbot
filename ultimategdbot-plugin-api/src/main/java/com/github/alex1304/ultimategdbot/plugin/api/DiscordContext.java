@@ -14,13 +14,13 @@ import discord4j.core.event.domain.message.MessageCreateEvent;
  */
 public class DiscordContext {
 	
-	private final UltimateGDBot bot;
+	private final Bot bot;
 	private final MessageCreateEvent event;
 	private final List<String> args;
 	private final String prefixUsed;
 	private final String commandName;
 
-	public DiscordContext(UltimateGDBot bot, MessageCreateEvent event, List<String> args, String prefixUsed, String commandName) {
+	public DiscordContext(Bot bot, MessageCreateEvent event, List<String> args, String prefixUsed, String commandName) {
 		this.bot = Objects.requireNonNull(bot);
 		this.event = Objects.requireNonNull(event);
 		this.args = Objects.requireNonNull(args);
@@ -61,7 +61,7 @@ public class DiscordContext {
 	 * 
 	 * @return UltimateGDBot
 	 */
-	public UltimateGDBot getBot() {
+	public Bot getBot() {
 		return bot;
 	}
 

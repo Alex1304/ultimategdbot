@@ -1,10 +1,10 @@
 package com.github.alex1304.ultimategdbot.database;
 
+import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.Properties;
 import java.util.function.Consumer;
 
 import org.hibernate.ObjectNotFoundException;
@@ -22,20 +22,25 @@ import org.hibernate.query.Query;
 public class Database {
 
 	private static SessionFactory sessionFactory = null;
-	private static Set<Class<?>> entities = new HashSet<>();
+	private static Properties props = new Properties();
 
 	/**
 	 * Initializes the database and builds the session factory
 	 */
 	public static void configure() {
-		Configuration config = new Configuration();
-		entities.forEach(entity -> config.addClass(entity));
+		var config = new Configuration();
+		config.addProperties(props);
+		config.addDirectory(new File("./mappings"));
 		
 		if (sessionFactory != null) {
 			sessionFactory.close();
 		}
 		
 		sessionFactory = config.buildSessionFactory();
+	}
+	
+	public static void setProperties(Properties props) {
+		Database.props = props;
 	}
 
 	/**
@@ -48,14 +53,6 @@ public class Database {
 			throw new IllegalStateException("Database not configured");
 
 		return sessionFactory.openSession();
-	}
-	
-	public void addEntityIfNotExists(Class<?> entityClass) {
-		if (entities.contains(entityClass)) {
-			return;
-		}
-		
-		entities.add(entityClass);
 	}
 
 	/**

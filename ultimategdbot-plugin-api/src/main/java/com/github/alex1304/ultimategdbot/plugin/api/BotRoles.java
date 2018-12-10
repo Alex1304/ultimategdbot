@@ -18,7 +18,7 @@ import reactor.function.Function3;
  *
  */
 public enum BotRoles {
-	OWNER((bot, user, channel) -> user.flatMap(u -> bot.getOwner().map(o -> u.equals(o)))),
+	OWNER((bot, user, channel) -> user.flatMap(u -> bot.getDiscordClient().getApplicationInfo().flatMap(ai -> ai.getOwner().map(o -> u.equals(o))))),
 	MODERATOR((bot, user, channel) -> user.flatMap(u -> bot.getOfficialGuild()
 					.flatMap(og -> u.asMember(og.getId())
 							.flatMap(m -> bot.getModeratorRole().flatMap(mr -> m.getRoles().hasElement(mr)))))),
@@ -40,14 +40,14 @@ public enum BotRoles {
 	/**
 	 * Predicate that determines whether a user is granted to this role
 	 */
-	private Function3<UltimateGDBot, Mono<User>, Mono<GuildChannel>, Mono<Boolean>> grantCondition;
+	private Function3<Bot, Mono<User>, Mono<GuildChannel>, Mono<Boolean>> grantCondition;
 
 	/**
 	 * The set of roles that this role extends.
 	 */
 	private EnumSet<BotRoles> includedRoles;
 
-	private BotRoles(Function3<UltimateGDBot, Mono<User>, Mono<GuildChannel>, Mono<Boolean>> grantCondition) {
+	private BotRoles(Function3<Bot, Mono<User>, Mono<GuildChannel>, Mono<Boolean>> grantCondition) {
 		this.grantCondition = grantCondition;
 	}
 
@@ -60,7 +60,7 @@ public enum BotRoles {
 		this.includedRoles = Objects.requireNonNull(includedRoles);
 	}
 
-	public static Mono<Boolean> isGranted(UltimateGDBot bot, Mono<User> user, Mono<GuildChannel> channel,
+	public static Mono<Boolean> isGranted(Bot bot, Mono<User> user, Mono<GuildChannel> channel,
 			BotRoles role) {
 		// Null checks are done separately to improve code lisibility
 		Objects.requireNonNull(role);

@@ -36,7 +36,4 @@ hs_err_pid*
 *Backup
 /release.properties
 
-# plugins
-/plugins/
-!/plugins/commands/.gitkeep
-!/plugins/services/.gitkeep
+/mappings/*.hbm.xml
