@@ -18,6 +18,15 @@
 *.tar.gz
 *.rar
 
+
+# Maven
+/target/
+
+# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+hs_err_pid*
+
+/bin/*
+
 # temp files
 *~
 
@@ -26,13 +35,6 @@
 !.gitignore
 !.gitkeep
 !/.circleci/
-
-# Maven
-/target/
-
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
-hs_err_pid*
-/bin/
 
 *Backup
 /release.properties
