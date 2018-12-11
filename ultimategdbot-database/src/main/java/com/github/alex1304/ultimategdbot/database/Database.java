@@ -1,7 +1,9 @@
 package com.github.alex1304.ultimategdbot.database;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.Serializable;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -21,6 +23,7 @@ import org.hibernate.query.Query;
  */
 public class Database {
 
+	public static final String MAPPINGS_DIR = "./mappings";
 	private static SessionFactory sessionFactory = null;
 	private static Properties props = new Properties();
 
@@ -30,17 +33,24 @@ public class Database {
 	public static void configure() {
 		var config = new Configuration();
 		config.addProperties(props);
-		config.addDirectory(new File("./mappings"));
-		
+		config.addDirectory(new File(MAPPINGS_DIR));
+
 		if (sessionFactory != null) {
 			sessionFactory.close();
 		}
-		
+
 		sessionFactory = config.buildSessionFactory();
 	}
-	
+
 	public static void setProperties(Properties props) {
 		Database.props = props;
+	}
+
+	public static void requireMappingFile(String filename) throws FileNotFoundException {
+		var file = new File(MAPPINGS_DIR + "/" + filename);
+		if (!file.exists()) {
+			throw new FileNotFoundException("Mapping file " + filename + " could not be found.");
+		}
 	}
 
 	/**
@@ -73,6 +83,40 @@ public class Database {
 		try {
 			result = s.load(entityClass, key);
 		} catch (ObjectNotFoundException e) {
+		} finally {
+			s.close();
+		}
+
+		return result;
+	}
+
+	/**
+	 * Allows to find a database entity by its ID. If not found, a new entity with
+	 * the given ID is instanciated using reflection and is returned instead. If a
+	 * new entity has to be created, this method won't save it to the database. You
+	 * would need to call {@link Database#save(Object)} on the object returned by
+	 * this method in order to save it.
+	 * 
+	 * @param entityClass - class of the entity
+	 * @param key         - the ID
+	 * @param             <T> - The entity type
+	 * @param             <K> - the ID type
+	 * @return T
+	 * 
+	 */
+	public static <T, K extends Serializable> T findByIDOrCreate(Class<T> entityClass, K key) {
+		T result = null;
+		Session s = newSession();
+
+		try {
+			result = s.load(entityClass, key);
+		} catch (ObjectNotFoundException e) {
+			try {
+				result = entityClass.getConstructor().newInstance();
+			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+					| InvocationTargetException | NoSuchMethodException | SecurityException e1) {
+				throw new RuntimeException(e1);
+			}
 		} finally {
 			s.close();
 		}

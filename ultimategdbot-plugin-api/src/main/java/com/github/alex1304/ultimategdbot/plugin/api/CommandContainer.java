@@ -2,7 +2,6 @@ package com.github.alex1304.ultimategdbot.plugin.api;
 
 import java.util.Iterator;
 import java.util.Objects;
-import java.util.ServiceLoader;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
@@ -13,11 +12,11 @@ import java.util.stream.Stream;
  *
  */
 public class CommandContainer implements Iterable<Command> {
-	
+
 	private static CommandContainer commands = null;
 
 	private final ConcurrentHashMap<String, Command> commandMap;
-	
+
 	private CommandContainer() {
 		this.commandMap = new ConcurrentHashMap<>();
 	}
@@ -34,29 +33,18 @@ public class CommandContainer implements Iterable<Command> {
 	}
 
 	/**
-	 * Checks whether the given command name refers to an existing loaded command.
-	 * Returns {@code true} if so, {@code false} otherwise.
+	 * Adds all items into this container.
 	 * 
-	 * @param commandName - String
-	 * @return boolean
+	 * @param commands - ServiceLoader
 	 */
-	public final boolean exists(String commandName) {
-		return commandMap.contains(Objects.requireNonNull(commandName));
-	}
-
-	/**
-	 * Synchronizes the items of this container to match the items loaded by the
-	 * given ServiceLoader.
-	 * 
-	 * @param loader - ServiceLoader
-	 */
-	public void syncFromLoader(ServiceLoader<Command> loader) {
-		commandMap.clear();
-		for (var plugin : loader) {
-			commandMap.put(plugin.getName(), plugin);
+	public void addAll(Iterator<Command> commands) {
+		Objects.requireNonNull(commands);
+		while (commands.hasNext()) {
+			var cmd = commands.next();
+			commandMap.put(cmd.getName(), cmd);
 		}
 	}
-	
+
 	/**
 	 * Returns a unique instance of the plugin container for commands
 	 * 
@@ -66,15 +54,15 @@ public class CommandContainer implements Iterable<Command> {
 		if (commands == null) {
 			commands = new CommandContainer();
 		}
-		
+
 		return commands;
 	}
-	
+
 	@Override
 	public Iterator<Command> iterator() {
 		return commandMap.values().iterator();
 	}
-	
+
 	public Stream<Command> stream() {
 		return commandMap.values().stream();
 	}

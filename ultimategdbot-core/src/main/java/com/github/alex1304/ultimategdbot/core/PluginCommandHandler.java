@@ -6,8 +6,6 @@ import java.util.Objects;
 import com.github.alex1304.ultimategdbot.plugin.api.Bot;
 import com.github.alex1304.ultimategdbot.plugin.api.BotRoles;
 import com.github.alex1304.ultimategdbot.plugin.api.CommandContainer;
-import com.github.alex1304.ultimategdbot.plugin.api.CommandExecutor;
-import com.github.alex1304.ultimategdbot.plugin.api.CommandFailedException;
 import com.github.alex1304.ultimategdbot.plugin.api.DiscordContext;
 import com.github.alex1304.ultimategdbot.utils.Utils;
 
@@ -17,12 +15,13 @@ import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Schedulers;
 
 /**
- * Listens to Discord create message events in order to execute the commands provided by the plugins.
+ * Listens to Discord create message events in order to execute the commands
+ * provided by the plugins.
  * 
  * @author Alex1304
  */
 class PluginCommandHandler {
-	
+
 	/**
 	 * Defines the way that the bot should execute code loaded from plugins.
 	 */
@@ -42,39 +41,40 @@ class PluginCommandHandler {
 								.filter(prefix -> text.toLowerCase().startsWith(prefix.toLowerCase())).take(1)
 								.subscribe(prefixUsed -> {
 									List<String> args = Utils.extractArgs(text, prefixUsed);
-
 									final var cmd = CommandContainer.getInstance().get(args.get(0));
 
 									if (cmd == null) {
 										return; // Silently fails if the command does not exist
 									}
-									
+
 									event.getGuild().subscribe(g -> {
-										BotRoles.isGranted(bot, event.getMessage().getAuthor(), g.getChannelById(event.getMessage().getChannelId()), cmd.getRoleRequired())
-												.subscribe(isGranted -> {
+										BotRoles.isGranted(bot, event.getMessage().getAuthor(),
+												g.getChannelById(event.getMessage().getChannelId()),
+												cmd.getRoleRequired()).subscribe(isGranted -> {
 													if (!isGranted) {
-														event.getMessage().getChannel()
-															.flatMap(c -> c.createMessage(":no_entry_sign: You don't have permission to use this command."))
-															.subscribe();
+														event.getMessage().getChannel().flatMap(c -> c.createMessage(
+																":no_entry_sign: You don't have permission to use this command."))
+																.subscribe();
 														return;
 													}
-													
-													final var ctx = new DiscordContext(bot, event, args.subList(1, args.size()),
-															prefixUsed, args.get(0));
 
-													CommandExecutor.execute(cmd, ctx).doOnError(e -> {
-														if (e instanceof CommandFailedException) {
+													final var ctx = new DiscordContext(bot, event,
+															args.subList(1, args.size()), prefixUsed, args.get(0));
+
+													try {
+														cmd.execute(ctx).doOnError(e -> {
 															event.getMessage().getChannel()
-																	.flatMap(c -> c.createMessage(":no_entry_sign: " + e.getMessage()))
+																	.flatMap(c -> c.createMessage(
+																			":no_entry_sign: " + e.getMessage()))
 																	.subscribe();
-														} else {
-															event.getMessage().getChannel().flatMap(
-																	c -> c.createMessage(":no_entry_sign: An internal error occured"))
-																	.subscribe();
-															e.printStackTrace();
-														}
-													}).subscribe(mcs -> ctx.getEvent().getMessage().getChannel()
-															.flatMap(c -> c.createMessage(mcs)).subscribe());
+														}).subscribe();
+													} catch (RuntimeException e) {
+														event.getMessage().getChannel()
+																.flatMap(c -> c.createMessage(
+																		":no_entry_sign: An internal error occured"))
+																.subscribe();
+														e.printStackTrace();
+													}
 												});
 									});
 								});

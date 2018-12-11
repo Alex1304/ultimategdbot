@@ -9,7 +9,6 @@ import com.github.alex1304.ultimategdbot.plugin.api.Bot;
 import com.github.alex1304.ultimategdbot.plugin.api.Command;
 import com.github.alex1304.ultimategdbot.plugin.api.CommandContainer;
 import com.github.alex1304.ultimategdbot.plugin.api.CommandExecutor;
-import com.github.alex1304.ultimategdbot.plugin.api.CommandFailedException;
 import com.github.alex1304.ultimategdbot.plugin.api.DiscordContext;
 import com.github.alex1304.ultimategdbot.utils.Utils;
 
@@ -39,20 +38,17 @@ class NativeCommandHandler {
 	}
 
 	void registerCommands() {
-		put("ping", ctx -> Utils.messageOf(":ping_pong: Pong!"));
-
 		put("plugin", ctx -> {
 			var subcmd = new HashMap<String, Command>();
+
 			subcmd.put("list", ctx0 -> {
 				final var container = CommandContainer.getInstance();
 				final var sb = new StringBuilder("**Plugin list:\n```\n");
-				container.forEach(cmd -> {
-					cmd.install();
-					sb.append(cmd.getName()).append(" [").append(cmd.getClass().getName()).append(']').append('\n');
-				});
-				sb.append("```");
-				return Utils.messageOf(sb.toString());
+				container.forEach(cmd -> sb.append(cmd.getName()).append(" [").append(cmd.getClass().getName())
+						.append(']').append('\n'));
+				return Utils.reply(ctx0.getEvent(), sb.append("```").toString()).then();
 			});
+
 			return CommandExecutor.executeSubcommand(subcmd, ctx);
 		});
 	}
@@ -60,8 +56,9 @@ class NativeCommandHandler {
 	void bind(Bot bot) {
 		Objects.requireNonNull(bot).getDiscordClient().getEventDispatcher().on(MessageCreateEvent.class)
 				.subscribeOn(Schedulers.elastic())
-				.filterWhen(event -> event.getMessage().getAuthor().flatMap(a -> bot.getDiscordClient().getApplicationInfo()
-						.flatMap(ai -> ai.getOwner().map(o -> a.equals(o)))))
+				.filterWhen(event -> event.getMessage().getAuthor()
+						.flatMap(a -> bot.getDiscordClient().getApplicationInfo()
+								.flatMap(ai -> ai.getOwner().map(o -> a.equals(o)))))
 				.filterWhen(event -> event.getMessage().getChannel().map(c -> c.getType() == Type.DM))
 				.subscribe(event -> {
 					final var content = event.getMessage().getContent();
@@ -78,18 +75,20 @@ class NativeCommandHandler {
 					}
 
 					final var ctx = new DiscordContext(bot, event, args.subList(1, args.size()), "", args.get(0));
-					CommandExecutor.execute(cmd, ctx).doOnError(e -> {
-						if (e instanceof CommandFailedException) {
-							ctx.getEvent().getMessage().getChannel()
-									.flatMap(c -> c.createMessage(":no_entry_sign: " + e.getMessage())).subscribe();
-						} else {
-							ctx.getEvent().getMessage().getChannel()
-									.flatMap(c -> c.createMessage(":no_entry_sign: An internal error occured"))
+					try {
+						cmd.execute(ctx).doOnError(e -> {
+							event.getMessage().getChannel()
+									.flatMap(c -> c.createMessage(
+											":no_entry_sign: " + e.getMessage()))
 									.subscribe();
-							e.printStackTrace();
-						}
-					}).subscribe(mcs -> ctx.getEvent().getMessage().getChannel().flatMap(c -> c.createMessage(mcs))
-							.subscribe());
+						}).subscribe();
+					} catch (RuntimeException e) {
+						event.getMessage().getChannel()
+								.flatMap(c -> c.createMessage(
+										":no_entry_sign: An internal error occured"))
+								.subscribe();
+						e.printStackTrace();
+					}
 				});
 	}
 }
