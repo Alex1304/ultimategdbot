@@ -6,6 +6,7 @@ import java.util.Objects;
 import com.github.alex1304.ultimategdbot.plugin.api.Bot;
 import com.github.alex1304.ultimategdbot.plugin.api.BotRoles;
 import com.github.alex1304.ultimategdbot.plugin.api.CommandContainer;
+import com.github.alex1304.ultimategdbot.plugin.api.CommandFailedException;
 import com.github.alex1304.ultimategdbot.plugin.api.DiscordContext;
 import com.github.alex1304.ultimategdbot.utils.Utils;
 
@@ -67,6 +68,10 @@ class PluginCommandHandler {
 																	.flatMap(c -> c.createMessage(
 																			":no_entry_sign: " + e.getMessage()))
 																	.subscribe();
+
+															if (!(e instanceof CommandFailedException)) {
+																e.printStackTrace();
+															}
 														}).subscribe();
 													} catch (RuntimeException e) {
 														event.getMessage().getChannel()

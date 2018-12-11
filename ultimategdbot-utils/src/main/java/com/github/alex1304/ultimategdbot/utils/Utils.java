@@ -59,4 +59,45 @@ public class Utils {
 	public static Mono<Message> reply(MessageCreateEvent event, MessageCreateSpec message) {
 		return event.getMessage().getChannel().flatMap(c -> c.createMessage(message));
 	}
+
+	/**
+	 * Reads the value of an option in the arguments. An option is a special
+	 * argument starting with a dash for short options, and with double dash for
+	 * long options, basically like Unix shell commands.
+	 * 
+	 * @param optShort - the name of the short option to look for, WITHOUT the dash
+	 * @param optLong  - the name of the long option to look for, WITHOUT the double
+	 *                 dash
+	 * @param args     - the arguments
+	 * @param maxArgs  - stop reading the option value after {@code maxArgs}
+	 *                 arguments/words. This value may be negative, if so there
+	 *                 won't be any limit.
+	 * @return the String representig the read option value. Returns null if the
+	 *         option was not found. An empty string means that the option is
+	 *         present but has no value.
+	 */
+	public static String getArgOption(String optShort, String optLong, List<String> args, int maxArgs) {
+		final var optShortPrefix = "-";
+		final var optLongPrefix = "--";
+		final var isInfinite = maxArgs < 0;
+
+		StringBuilder sb = new StringBuilder();
+		var nbArgs = 0;
+		var space = "";
+		var capturing = false;
+		for (var arg : args) {
+			if (capturing) {
+				if (arg.startsWith(optShortPrefix) || (!isInfinite && nbArgs >= maxArgs)) {
+					return sb.toString();
+				}
+				sb.append(space).append(arg);
+				space = " ";
+				nbArgs++;
+			} else {
+				capturing = arg.equals(optShortPrefix + optShort) || arg.equals(optLongPrefix + optLong);
+			}
+		}
+
+		return capturing ? sb.toString() : null;
+	}
 }
