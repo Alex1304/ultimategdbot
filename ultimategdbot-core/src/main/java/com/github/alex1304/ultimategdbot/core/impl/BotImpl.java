@@ -5,9 +5,11 @@ import java.util.Properties;
 
 import com.github.alex1304.ultimategdbot.api.Bot;
 import com.github.alex1304.ultimategdbot.api.Database;
+import com.github.alex1304.ultimategdbot.core.handler.CommandHandler;
 
 import discord4j.core.DiscordClient;
 import discord4j.core.DiscordClientBuilder;
+import discord4j.core.event.domain.lifecycle.ReadyEvent;
 import discord4j.core.object.entity.Guild;
 import discord4j.core.object.entity.Role;
 import discord4j.core.object.util.Snowflake;
@@ -22,6 +24,7 @@ public class BotImpl implements Bot {
 	private final String releaseChannel;
 	private final DiscordClient client;
 	private final Database database;
+	private final CommandHandler commandHandler;
 	
 	private BotImpl(String token, String defaultPrefix, Snowflake supportServerId, Snowflake moderatorRoleId, String releaseChannel,
 			DiscordClient client, Database database) {
@@ -32,6 +35,7 @@ public class BotImpl implements Bot {
 		this.releaseChannel = releaseChannel;
 		this.client = client;
 		this.database = database;
+		this.commandHandler = new CommandHandler(this);
 	}
 
 	@Override
@@ -84,7 +88,8 @@ public class BotImpl implements Bot {
 	@Override
 	public void start() {
 		database.configure();
-		
+		commandHandler.loadCommands();
+		client.getEventDispatcher().on(ReadyEvent.class).subscribe(__ -> commandHandler.listen());
 		client.login().block();
 	}
 }
