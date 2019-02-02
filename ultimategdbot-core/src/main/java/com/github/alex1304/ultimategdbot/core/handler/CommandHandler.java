@@ -64,40 +64,42 @@ public class CommandHandler {
 					if (cmd == null) {
 						return;
 					}
-					cmd.getPermissionLevel().isGranted(ctx).flatMap(isGranted -> {
-						if (!isGranted) {
-							return Mono.error(new CommandPermissionDeniedException());
-						} else {
-							return cmd.execute(ctx);
-						}
-					}).doOnError(error -> {
-						var actions = cmd.getErrorActions();
-						if (error instanceof CommandFailedException) {
-							actions.getOrDefault(CommandFailedException.class, ctx0 -> {
-								ctx0.reply(":no_entry_sign: " + error.getMessage()).subscribe();
-							}).accept(ctx);
-						} else if (error instanceof CommandPermissionDeniedException) {
-							actions.getOrDefault(CommandFailedException.class, ctx0 -> {
-								ctx0.reply(":no_entry_sign: You don't have the required permissions to run this command.").subscribe();
-							}).accept(ctx);
-						} else if (error instanceof ClientException) {
-							actions.getOrDefault(ClientException.class, ctx0 -> {
-								var ce = (ClientException) error;
-								var h = ce.getErrorResponse();
-								var sj = new StringJoiner("", "```\n", "```\n");
-								h.getFields().forEach((k, v) -> sj.add(k).add(": ").add(String.valueOf(v)).add("\n"));
-								ctx0.reply(":no_entry_sign: Discord returned an error when executing this command: "
-										+ "`" + ce.getStatus().code() + " " + ce.getStatus().reasonPhrase() + "`\n"
-										+ sj.toString()
-										+ "Make sure that I have sufficient permissions in this server and try again.")
-								.subscribe();
-							}).accept(ctx);
-						} else {
-							actions.getOrDefault(error.getClass(), ctx0 -> {
-								ctx0.reply(":no_entry_sign: An internal error occured. A crash report has been sent to the developer.").subscribe();
-							}).accept(ctx);
-						}
-					}).subscribe();
+					cmd.getPermissionLevel().isGranted(ctx)
+							.filterWhen(__ -> ctx.getEvent().getMessage().getChannel().map(c -> cmd.getChannelTypesAllowed().contains(c.getType())))
+							.flatMap(isGranted -> {
+								if (!isGranted) {
+									return Mono.error(new CommandPermissionDeniedException());
+								} else {
+									return cmd.execute(ctx);
+								}
+							}).doOnError(error -> {
+								var actions = cmd.getErrorActions();
+								if (error instanceof CommandFailedException) {
+									actions.getOrDefault(CommandFailedException.class, (e, ctx0) -> {
+										ctx0.reply(":no_entry_sign: " + e.getMessage()).subscribe();
+									}).accept(error, ctx);
+								} else if (error instanceof CommandPermissionDeniedException) {
+									actions.getOrDefault(CommandFailedException.class, (e, ctx0) -> {
+										ctx0.reply(":no_entry_sign: You don't have the required permissions to run this command.").subscribe();
+									}).accept(error, ctx);
+								} else if (error instanceof ClientException) {
+									actions.getOrDefault(ClientException.class, (e, ctx0) -> {
+										var ce = (ClientException) e;
+										var h = ce.getErrorResponse();
+										var sj = new StringJoiner("", "```\n", "```\n");
+										h.getFields().forEach((k, v) -> sj.add(k).add(": ").add(String.valueOf(v)).add("\n"));
+										ctx0.reply(":no_entry_sign: Discord returned an error when executing this command: "
+												+ "`" + ce.getStatus().code() + " " + ce.getStatus().reasonPhrase() + "`\n"
+												+ sj.toString()
+												+ "Make sure that I have sufficient permissions in this server and try again.")
+										.subscribe();
+									}).accept(error, ctx);
+								} else {
+									actions.getOrDefault(error.getClass(), (e, ctx0) -> {
+										ctx0.reply(":no_entry_sign: An internal error occured. A crash report has been sent to the developer.").subscribe();
+									}).accept(error, ctx);
+								}
+							}).subscribe();
 				});
 	}
 

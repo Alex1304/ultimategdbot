@@ -3,7 +3,7 @@ package com.github.alex1304.ultimategdbot.api;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 import discord4j.core.object.entity.Channel;
 import reactor.core.publisher.Mono;
@@ -34,6 +34,13 @@ public interface Command {
 	 * @return the set of subcommands
 	 */
 	Set<Command> getSubcommands();
+	
+	/**
+	 * Gets the category name of the command.
+	 * 
+	 * @return the category name
+	 */
+	String getCategoryName();
 
 	/**
 	 * Gets the description of the command. The description is shown in the help
@@ -63,7 +70,7 @@ public interface Command {
 	 * 
 	 * @return the set of allowed type of channels
 	 */
-	EnumSet<Channel.Type> channelTypesAllowed();
+	EnumSet<Channel.Type> getChannelTypesAllowed();
 
 	/**
 	 * Allows to define an action to execute according to the type of error emitted
@@ -71,5 +78,5 @@ public interface Command {
 	 * 
 	 * @return a Map that associates a Throwable type to an executable action.
 	 */
-	Map<Class<? extends Throwable>, Consumer<Context>> getErrorActions();
+	Map<Class<? extends Throwable>, BiConsumer<Throwable, Context>> getErrorActions();
 }
