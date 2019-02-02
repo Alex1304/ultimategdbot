@@ -71,13 +71,13 @@ public class BotImpl implements Bot {
 	public static Bot buildFromProperties(Properties props, Properties hibernateProps) {
 		var token = Objects.requireNonNull(props.getProperty("token"));
 		var defaultPrefix = Objects.requireNonNull(props.getProperty("default_prefix"));
-		var officialGuildID = Snowflake.of(Objects.requireNonNull(props.getProperty("official_guild_id")));
-		var moderatorRoleID = Snowflake.of(Objects.requireNonNull(props.getProperty("moderator_role_id")));
+		var supportServerId = Snowflake.of(Objects.requireNonNull(props.getProperty("support_server_id")));
+		var moderatorRoleId = Snowflake.of(Objects.requireNonNull(props.getProperty("moderator_role_id")));
 		var releaseChannel = Objects.requireNonNull(props.getProperty("release_channel"));
 		var builder = new DiscordClientBuilder(token);
 		var database = new DatabaseImpl(hibernateProps);
 
-		return new BotImpl(token, defaultPrefix, officialGuildID, moderatorRoleID, releaseChannel, builder.build(), database);
+		return new BotImpl(token, defaultPrefix, supportServerId, moderatorRoleId, releaseChannel, builder.build(), database);
 	}
 
 	@Override
