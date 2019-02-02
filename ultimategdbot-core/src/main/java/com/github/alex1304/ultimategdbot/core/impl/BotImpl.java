@@ -1,9 +1,12 @@
 package com.github.alex1304.ultimategdbot.core.impl;
 
+import java.util.Collections;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.Set;
 
 import com.github.alex1304.ultimategdbot.api.Bot;
+import com.github.alex1304.ultimategdbot.api.Command;
 import com.github.alex1304.ultimategdbot.api.Database;
 import com.github.alex1304.ultimategdbot.core.handler.CommandHandler;
 
@@ -91,5 +94,10 @@ public class BotImpl implements Bot {
 		commandHandler.loadCommands();
 		client.getEventDispatcher().on(ReadyEvent.class).subscribe(__ -> commandHandler.listen());
 		client.login().block();
+	}
+
+	@Override
+	public Set<Command> getAvailableCommands() {
+		return Collections.unmodifiableSet(commandHandler.getAvailableCommands());
 	}
 }

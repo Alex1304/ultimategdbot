@@ -1,5 +1,7 @@
 package com.github.alex1304.ultimategdbot.api;
 
+import java.util.Set;
+
 import discord4j.core.DiscordClient;
 import discord4j.core.object.entity.Guild;
 import discord4j.core.object.entity.Role;
@@ -57,6 +59,13 @@ public interface Bot {
 	 * @return the database
 	 */
 	Database getDatabase();
+	
+	/**
+	 * Gets the available commands loaded on the bot.
+	 * 
+	 * @return an unmodifiable Set of commands
+	 */
+	Set<Command> getAvailableCommands();
 	
 	/**
 	 * Starts the bot.

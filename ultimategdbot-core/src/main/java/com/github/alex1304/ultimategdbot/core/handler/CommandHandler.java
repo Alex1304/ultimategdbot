@@ -2,9 +2,11 @@ package com.github.alex1304.ultimategdbot.core.handler;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.ServiceLoader;
+import java.util.Set;
 import java.util.StringJoiner;
 
 import com.github.alex1304.ultimategdbot.api.Bot;
@@ -25,10 +27,12 @@ public class CommandHandler {
 
 	private final Bot bot;
 	private final Map<String, Command> commands;
+	private final Set<Command> availableCommands;
 	
 	public CommandHandler(Bot bot) {
 		this.bot = Objects.requireNonNull(bot);
 		this.commands = new HashMap<>();
+		this.availableCommands = new HashSet<>();
 	}
 	
 	/**
@@ -38,6 +42,7 @@ public class CommandHandler {
 		var loader = ServiceLoader.load(Command.class);
 		for (var cmd : loader) {
 			System.out.printf("Loaded command: %s\n", cmd.getClass().getName());
+			availableCommands.add(cmd);
 			for (var alias : cmd.getAliases()) {
 				commands.put(alias, cmd);
 			}
@@ -94,5 +99,14 @@ public class CommandHandler {
 						}
 					}).subscribe();
 				});
+	}
+
+	/**
+	 * Gets a set of available commands.
+	 * 
+	 * @return the available commands
+	 */
+	public Set<Command> getAvailableCommands() {
+		return availableCommands;
 	}
 }
