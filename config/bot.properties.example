@@ -1,5 +1,5 @@
-token=MzU5NDA2NTE5MjI3MzgzODE4.Dx93ag.qdZSZngqejEfHcHifKN5hMlg_0w
-official_guild_id=357655103768887297
-moderator_role_id=368106954289184769
+token=<your_token_here>
+official_guild_id=<an_ID_here>
+moderator_role_id=<another_ID_here>
 prefix=!
-release_channel=dev
+release_channel=stable
