@@ -1,0 +1,8 @@
+com/github/alex1304/ultimategdbot/api/PermissionLevel.class
+com/github/alex1304/ultimategdbot/api/CommandFailedException.class
+module-info.class
+com/github/alex1304/ultimategdbot/api/entity/GuildSettings.class
+com/github/alex1304/ultimategdbot/api/Context.class
+com/github/alex1304/ultimategdbot/api/Database.class
+com/github/alex1304/ultimategdbot/api/Bot.class
+com/github/alex1304/ultimategdbot/api/Command.class

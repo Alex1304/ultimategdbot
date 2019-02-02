@@ -1,10 +1,15 @@
 module ultimategdbot.core {
+	requires transitive ultimategdbot.api;
 	requires reactor.core;
-	requires transitive discord4j.core.b27dd7d;
-	requires org.reactivestreams;
-	requires ultimategdbot.plugin.api;
-	requires ultimategdbot.utils;
-	requires ultimategdbot.database;
+	requires transitive org.hibernate.orm.core;
+	requires java.persistence;
+	requires java.naming;
+	requires java.sql;
+	requires discord4j.rest;
+	requires io.netty.codec.http;
 	
-	uses com.github.alex1304.ultimategdbot.plugin.api.Command;
+	exports com.github.alex1304.ultimategdbot.core.impl;
+	exports com.github.alex1304.ultimategdbot.core.handler;
+	
+	uses com.github.alex1304.ultimategdbot.api.Command;
 }

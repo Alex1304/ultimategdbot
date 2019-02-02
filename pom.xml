@@ -8,7 +8,7 @@
 	<version>4.0.0-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
-	<name>com.github.alex1304:ultimategdbot</name>
+	<name>ultimategdbot</name>
 	<url>http://ultimategdbot.readthedocs.io</url>
 
 	<description>An awesome Discord bot for Geometry Dash players!</description>
@@ -41,6 +41,11 @@
 			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
 		</snapshotRepository>
 	</distributionManagement>
+
+	<properties>
+		<java.version>11</java.version>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
 
 	<build>
 		<pluginManagement>
@@ -81,72 +86,14 @@
 		</pluginManagement>
 	</build>
 
-	<profiles>
-		<profile>
-			<id>release</id>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-source-plugin</artifactId>
-						<version>2.2.1</version>
-						<executions>
-							<execution>
-								<id>attach-sources</id>
-								<goals>
-									<goal>jar-no-fork</goal>
-								</goals>
-							</execution>
-						</executions>
-					</plugin>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-javadoc-plugin</artifactId>
-						<version>2.9.1</version>
-						<executions>
-							<execution>
-								<id>attach-javadocs</id>
-								<goals>
-									<goal>jar</goal>
-								</goals>
-							</execution>
-						</executions>
-					</plugin>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-gpg-plugin</artifactId>
-						<version>1.5</version>
-						<executions>
-							<execution>
-								<id>sign-artifacts</id>
-								<phase>verify</phase>
-								<goals>
-									<goal>sign</goal>
-								</goals>
-							</execution>
-						</executions>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
-	</profiles>
-
-	<properties>
-		<java.version>11</java.version>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-	</properties>
-
-	<modules>
-		<module>ultimategdbot-core</module>
-		<module>ultimategdbot-plugin-api</module>
-		<module>ultimategdbot-database</module>
-		<module>ultimategdbot-utils</module>
-	</modules>
-
 	<repositories>
 		<repository>
 			<id>jitpack.io</id>
 			<url>https://jitpack.io</url>
+		</repository>
+		<repository>
+			<id>jcenter</id>
+			<url>https://jcenter.bintray.com</url>
 		</repository>
 	</repositories>
 
@@ -154,30 +101,9 @@
 		<dependencies>
 			<dependency>
 				<groupId>com.github.alex1304</groupId>
-				<artifactId>ultimategdbot-core</artifactId>
+				<artifactId>ultimategdbot-api</artifactId>
 				<version>${project.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>com.github.alex1304</groupId>
-				<artifactId>ultimategdbot-plugin-api</artifactId>
-				<version>${project.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>com.github.alex1304</groupId>
-				<artifactId>ultimategdbot-database</artifactId>
-				<version>${project.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>com.github.alex1304</groupId>
-				<artifactId>ultimategdbot-utils</artifactId>
-				<version>${project.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>junit</groupId>
-				<artifactId>junit</artifactId>
-				<version>4.12</version>
-				<scope>test</scope>
-			</dependency>
+			</dependency>	
 			<dependency>
 				<groupId>org.slf4j</groupId>
 				<artifactId>slf4j-simple</artifactId>
@@ -186,7 +112,7 @@
 			<dependency>
 				<groupId>com.discord4j.discord4j</groupId>
 				<artifactId>discord4j-core</artifactId>
-				<version>b27dd7d</version>
+				<version>3.0.0.M1</version>
 			</dependency>
 			<dependency>
 				<groupId>org.jboss.spec.javax.transaction</groupId>
@@ -215,4 +141,9 @@
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
+
+	<modules>
+		<module>ultimategdbot-api</module>
+		<module>ultimategdbot-core</module>
+	</modules>
 </project>
