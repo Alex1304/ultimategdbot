@@ -22,8 +22,8 @@ import reactor.core.scheduler.Schedulers;
 /**
  * Registers and executes commands when called.
  */
-public class CommandHandler {
-
+public class CommandHandler implements Handler {
+	
 	private final Bot bot;
 	private final Map<String, Command> commands;
 	private final Map<Command, Map<String, Command>> subCommands;
@@ -39,7 +39,8 @@ public class CommandHandler {
 	/**
 	 * Loads commands from plugins.
 	 */
-	public void loadCommands() {
+	@Override
+	public void prepare() {
 		var loader = ServiceLoader.load(Plugin.class);
 		for (var plugin : loader) {
 			try {
@@ -78,19 +79,20 @@ public class CommandHandler {
 	/**
 	 * Listens to MessageCreateEvents to trigger commands.
 	 */
+	@Override
 	public void listen() {
 		bot.getDiscordClient().getEventDispatcher().on(MessageCreateEvent.class).subscribeOn(Schedulers.elastic())
 				.filter(event -> event.getMessage().getContent().isPresent())
 				.map(event -> new ContextImpl(event, Arrays.asList(event.getMessage().getContent().get().split(" +")), bot))
-				.filter(ctx -> {
+				.subscribe(ctx -> {
 					var prefix = ctx.getGuildSettings() != null ? ctx.getGuildSettings().getPrefix() : bot.getDefaultPrefix();
 					if (!ctx.getArgs().get(0).startsWith(prefix)) {
-						return false;
+						return;
 					}
 					var cmdName = ctx.getArgs().get(0).substring(prefix.length());
 					var cmd = commands.get(cmdName);
 					if (cmd == null) {
-						return false;
+						return;
 					}
 					var argsCpy = new ArrayList<>(ctx.getArgs());
 					while (argsCpy.size() > 1) {
@@ -105,8 +107,7 @@ public class CommandHandler {
 					}
 					var newCtx = ctx.getArgs().equals(argsCpy) ? ctx : new ContextImpl(ctx.getEvent(), argsCpy, ctx.getBot());
 					Command.invoke(cmd, newCtx);
-					return true;
-				}).subscribe();
+				});
 	}
 
 	/**

@@ -1,9 +1,12 @@
 package com.github.alex1304.ultimategdbot.api;
 
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 import discord4j.core.DiscordClient;
 import discord4j.core.object.entity.Guild;
+import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.Role;
 import reactor.core.publisher.Mono;
 
@@ -71,4 +74,13 @@ public interface Bot {
 	 * Starts the bot.
 	 */
 	void start();
+
+	/**
+	 * Opens a new reply menu with the given items.
+	 * 
+	 * @param ctx       - the context of the command this reply menu was opened from
+	 * @param msg       - The message containing the menu
+	 * @param menuItems - the menu items
+	 */
+	void openReplyMenu(Context ctx, Message msg, Map<String, Function<Context, Mono<Void>>> menuItems);
 }

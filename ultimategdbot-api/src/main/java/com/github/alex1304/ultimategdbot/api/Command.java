@@ -1,12 +1,15 @@
 package com.github.alex1304.ultimategdbot.api;
 
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 import discord4j.core.object.entity.Channel;
+import discord4j.core.object.entity.Channel.Type;
 import discord4j.rest.http.client.ClientException;
 import reactor.core.publisher.Mono;
 
@@ -115,5 +118,55 @@ public interface Command {
 						}).accept(error, ctx);
 					}
 				}).subscribe();
+	}
+	
+	/**
+	 * Executes a function that is treated as a command. 
+	 * 
+	 * @param executeFunc - the function to execute
+	 * @param ctx - the context to apply
+	 */
+	static void invoke(Function<Context, Mono<Void>> executeFunc, Context ctx) {
+		invoke(new Command() {
+			@Override
+			public Mono<Void> execute(Context ctx0) {
+				return executeFunc.apply(ctx0);
+			}
+
+			@Override
+			public Set<String> getAliases() {
+				return Collections.emptySet();
+			}
+
+			@Override
+			public Set<Command> getSubcommands() {
+				return Collections.emptySet();
+			}
+
+			@Override
+			public String getDescription() {
+				return "";
+			}
+
+			@Override
+			public String getSyntax() {
+				return "";
+			}
+
+			@Override
+			public PermissionLevel getPermissionLevel() {
+				return PermissionLevel.PUBLIC;
+			}
+
+			@Override
+			public EnumSet<Type> getChannelTypesAllowed() {
+				return EnumSet.of(Type.GUILD_TEXT, Type.DM);
+			}
+
+			@Override
+			public Map<Class<? extends Throwable>, BiConsumer<Throwable, Context>> getErrorActions() {
+				return Collections.emptyMap();
+			}
+		}, ctx);
 	}
 }

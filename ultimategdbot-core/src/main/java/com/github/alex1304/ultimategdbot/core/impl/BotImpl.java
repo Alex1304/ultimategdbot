@@ -1,19 +1,25 @@
 package com.github.alex1304.ultimategdbot.core.impl;
 
 import java.util.Collections;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
+import java.util.function.Function;
 
 import com.github.alex1304.ultimategdbot.api.Bot;
 import com.github.alex1304.ultimategdbot.api.Command;
+import com.github.alex1304.ultimategdbot.api.Context;
 import com.github.alex1304.ultimategdbot.api.Database;
 import com.github.alex1304.ultimategdbot.core.handler.CommandHandler;
+import com.github.alex1304.ultimategdbot.core.handler.Handler;
+import com.github.alex1304.ultimategdbot.core.handler.ReplyMenuHandler;
 
 import discord4j.core.DiscordClient;
 import discord4j.core.DiscordClientBuilder;
 import discord4j.core.event.domain.lifecycle.ReadyEvent;
 import discord4j.core.object.entity.Guild;
+import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.Role;
 import discord4j.core.object.util.Snowflake;
 import reactor.core.publisher.Mono;
@@ -27,7 +33,9 @@ public class BotImpl implements Bot {
 	private final String releaseChannel;
 	private final DiscordClient client;
 	private final Database database;
-	private final CommandHandler commandHandler;
+	private final CommandHandler cmdHandler;
+	private final ReplyMenuHandler replyMenuHandler;
+	private final Set<Handler> handlers;
 	
 	private BotImpl(String token, String defaultPrefix, Snowflake supportServerId, Snowflake moderatorRoleId, String releaseChannel,
 			DiscordClient client, Database database) {
@@ -38,7 +46,9 @@ public class BotImpl implements Bot {
 		this.releaseChannel = releaseChannel;
 		this.client = client;
 		this.database = database;
-		this.commandHandler = new CommandHandler(this);
+		this.cmdHandler = new CommandHandler(this);
+		this.replyMenuHandler = new ReplyMenuHandler(this);
+		this.handlers = Set.of(cmdHandler, replyMenuHandler);
 	}
 
 	@Override
@@ -91,13 +101,18 @@ public class BotImpl implements Bot {
 	@Override
 	public void start() {
 		database.configure();
-		commandHandler.loadCommands();
-		client.getEventDispatcher().on(ReadyEvent.class).subscribe(__ -> commandHandler.listen());
+		handlers.forEach(Handler::prepare);
+		client.getEventDispatcher().on(ReadyEvent.class).subscribe(__ -> handlers.forEach(Handler::listen));
 		client.login().block();
 	}
 
 	@Override
 	public Set<Command> getAvailableCommands() {
-		return Collections.unmodifiableSet(commandHandler.getAvailableCommands());
+		return Collections.unmodifiableSet(cmdHandler.getAvailableCommands());
+	}
+
+	@Override
+	public void openReplyMenu(Context ctx, Message msg, Map<String, Function<Context, Mono<Void>>> menuItems) {
+		replyMenuHandler.open(ctx, msg, menuItems);
 	}
 }
