@@ -8,7 +8,7 @@ import java.util.List;
  */
 public interface Database {
 	/**
-	 * Initializes the database and builds the session factory.
+	 * Initializes the database.
 	 */
 	public void configure();
 	
