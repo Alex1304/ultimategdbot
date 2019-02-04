@@ -71,6 +71,14 @@ public interface Bot {
 	Set<Command> getAvailableCommands();
 	
 	/**
+	 * Gets the maximum time in seconds that the bot should wait for a reply when a reply menu is open.
+	 * 
+	 * @return the value as int (in seconds)
+	 * @see Bot#openReplyMenu(Context, Message, Map, boolean, boolean)
+	 */
+	int getReplyMenuTimeout();
+	
+	/**
 	 * Starts the bot.
 	 */
 	void start();
@@ -78,9 +86,14 @@ public interface Bot {
 	/**
 	 * Opens a new reply menu with the given items.
 	 * 
-	 * @param ctx       - the context of the command this reply menu was opened from
-	 * @param msg       - The message containing the menu
-	 * @param menuItems - the menu items
+	 * @param ctx           - the context of the command this reply menu was opened
+	 *                      from
+	 * @param msg           - The message containing the menu
+	 * @param menuItems     - the menu items
+	 * @param deleteOnReply - Whether to delete {@code msg} when the user has given
+	 *                      a valid reply
+	 * @param deleteOnTimeout - Whether to delete {@code msg} when the user doesn't
+	 *                      reply and the menu times out.
 	 */
-	void openReplyMenu(Context ctx, Message msg, Map<String, Function<Context, Mono<Void>>> menuItems);
+	void openReplyMenu(Context ctx, Message msg, Map<String, Function<Context, Mono<Void>>> menuItems, boolean deleteOnReply, boolean deleteOnTimeout);
 }

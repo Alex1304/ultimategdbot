@@ -33,12 +33,13 @@ public class BotImpl implements Bot {
 	private final String releaseChannel;
 	private final DiscordClient client;
 	private final Database database;
+	private final int replyMenuTimeout;
 	private final CommandHandler cmdHandler;
 	private final ReplyMenuHandler replyMenuHandler;
 	private final Set<Handler> handlers;
 	
 	private BotImpl(String token, String defaultPrefix, Snowflake supportServerId, Snowflake moderatorRoleId, String releaseChannel,
-			DiscordClient client, Database database) {
+			DiscordClient client, Database database, int replyMenuTimeout) {
 		this.token = token;
 		this.defaultPrefix = defaultPrefix;
 		this.supportServerId = supportServerId;
@@ -46,6 +47,7 @@ public class BotImpl implements Bot {
 		this.releaseChannel = releaseChannel;
 		this.client = client;
 		this.database = database;
+		this.replyMenuTimeout = replyMenuTimeout;
 		this.cmdHandler = new CommandHandler(this);
 		this.replyMenuHandler = new ReplyMenuHandler(this);
 		this.handlers = Set.of(cmdHandler, replyMenuHandler);
@@ -89,8 +91,9 @@ public class BotImpl implements Bot {
 		var releaseChannel = Objects.requireNonNull(props.getProperty("release_channel"));
 		var builder = new DiscordClientBuilder(token);
 		var database = new DatabaseImpl(hibernateProps);
+		var replyMenuTimeout = Integer.parseInt(Objects.requireNonNull(props.getProperty("reply_menu_timeout")));
 
-		return new BotImpl(token, defaultPrefix, supportServerId, moderatorRoleId, releaseChannel, builder.build(), database);
+		return new BotImpl(token, defaultPrefix, supportServerId, moderatorRoleId, releaseChannel, builder.build(), database, replyMenuTimeout);
 	}
 
 	@Override
@@ -112,7 +115,12 @@ public class BotImpl implements Bot {
 	}
 
 	@Override
-	public void openReplyMenu(Context ctx, Message msg, Map<String, Function<Context, Mono<Void>>> menuItems) {
-		replyMenuHandler.open(ctx, msg, menuItems);
+	public void openReplyMenu(Context ctx, Message msg, Map<String, Function<Context, Mono<Void>>> menuItems, boolean deleteOnReply, boolean deleteOnTimeout) {
+		replyMenuHandler.open(ctx, msg, menuItems, deleteOnReply, deleteOnTimeout);
+	}
+
+	@Override
+	public int getReplyMenuTimeout() {
+		return replyMenuTimeout;
 	}
 }

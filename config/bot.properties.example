@@ -3,3 +3,4 @@ support_server_id=<an_ID_here>
 moderator_role_id=<another_ID_here>
 default_prefix=!
 release_channel=stable
+reply_menu_timeout=600

@@ -27,18 +27,31 @@ public class ReplyMenuHandler implements Handler {
 		final Context ctx;
 		final Message msg;
 		final Map<String, Function<Context, Mono<Void>>> menuItems;
-		ReplyMenu(Context ctx, Message msg, Map<String, Function<Context, Mono<Void>>> menuItems) {
+		final boolean deleteOnReply;
+		final boolean deleteOnTimeout;
+		ReplyMenu(Context ctx, Message msg, Map<String, Function<Context, Mono<Void>>> menuItems, boolean deleteOnReply, boolean deleteOnTimeout) {
 			this.ctx = ctx;
 			this.msg = msg;
 			this.menuItems = menuItems;
+			this.deleteOnReply = deleteOnReply;
+			this.deleteOnTimeout = deleteOnTimeout;
 		}
 		String toKey() {
 			return msg.getChannelId().asString() + ctx.getEvent().getMessage().getAuthorId().get().asString();
 		}
-		void close() {
-			msg.delete().subscribe();
+		void complete() {
+			if (deleteOnReply) {
+				msg.delete().subscribe();
+			}
 			openedReplyMenus.remove(toKey());
 			disposableMenus.remove(this).dispose();
+		}
+		void timeout() {
+			if (deleteOnTimeout) {
+				msg.delete().subscribe();
+			}
+			openedReplyMenus.remove(toKey());
+			disposableMenus.remove(this);
 		}
 	}
 
@@ -63,24 +76,30 @@ public class ReplyMenuHandler implements Handler {
 				.subscribe(ctx -> {
 					var replyMenu = openedReplyMenus.get(ctx.getEvent().getMessage().getChannelId().asString()
 							+ ctx.getEvent().getMessage().getAuthorId().get().asString());
-					var action = replyMenu.menuItems.get(ctx.getArgs().get(0));
-					if (action == null) {
-						return;
+					var replyItem = ctx.getArgs().get(0);
+					var action = replyMenu.menuItems.get(replyItem);
+					if (action != null) {
+						replyMenu.complete();
+						Command.invoke(action, ctx);
 					}
-					replyMenu.close();
-					Command.invoke(action, ctx);
+					if (replyItem.equalsIgnoreCase("close")) {
+						replyMenu.msg.delete().subscribe();
+						if (action == null) {
+							replyMenu.complete();
+						}
+					} 
 				});
 	}
 	
-	public void open(Context ctx, Message msg, Map<String, Function<Context, Mono<Void>>> menuItems) {
+	public void open(Context ctx, Message msg, Map<String, Function<Context, Mono<Void>>> menuItems, boolean deleteOnReply, boolean deleteOnTimeout) {
 		if (!msg.getAuthorId().isPresent()) {
 			return;
 		}
-		var rm = new ReplyMenu(ctx, msg, menuItems);
+		var rm = new ReplyMenu(ctx, msg, menuItems, deleteOnReply, deleteOnTimeout);
 		var existing = openedReplyMenus.put(rm.toKey(), rm);
 		if (existing != null) {
-			existing.close();
+			existing.complete();
 		}
-		disposableMenus.put(rm, Mono.delay(Duration.ofSeconds(10)).subscribe(__ -> rm.close()));
+		disposableMenus.put(rm, Mono.delay(Duration.ofSeconds(bot.getReplyMenuTimeout())).subscribe(__ -> rm.timeout()));
 	}
 }
