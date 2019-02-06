@@ -4,3 +4,5 @@ moderator_role_id=<another_ID_here>
 default_prefix=!
 release_channel=stable
 reply_menu_timeout=600
+debug_log_channel_id=<ID>
+emoji_guild_ids=<ID_1>,<ID_2>,<ID_3>,...

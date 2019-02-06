@@ -5,6 +5,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Properties;
 
+import com.github.alex1304.ultimategdbot.api.Bot;
 import com.github.alex1304.ultimategdbot.core.impl.BotImpl;
 
 public class Main {
@@ -21,8 +22,13 @@ public class Main {
 		try (var input = Files.newInputStream(HIB_PROPS_FILE)) {
 			hibProps.load(input);
 		}
-		var bot = BotImpl.buildFromProperties(props, hibProps);
-		bot.start();
+		Bot bot = null;
+		try {
+			bot = BotImpl.buildFromProperties(props, hibProps);
+		} catch (IllegalArgumentException e) {
+			System.err.println("Error when parsing " + PROPS_FILE + " file: " + e.getMessage());
+		}
+		bot.start();	
 	}
 
 }

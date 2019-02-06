@@ -2,12 +2,15 @@ package com.github.alex1304.ultimategdbot.api;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import discord4j.core.DiscordClient;
+import discord4j.core.object.entity.Channel;
 import discord4j.core.object.entity.Guild;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.Role;
+import discord4j.core.spec.MessageCreateSpec;
 import reactor.core.publisher.Mono;
 
 /**
@@ -62,6 +65,38 @@ public interface Bot {
 	 * @return the database
 	 */
 	Database getDatabase();
+	
+	/**
+	 * Gets the channel where the bot sends messages for debugging purposes.
+	 * 
+	 * @return a Mono emitting the debug log channel
+	 */
+	Mono<Channel> getDebugLogChannel();
+	
+	/**
+	 * Sends a message into the debug log channel.
+	 * 
+	 * @param message - the message to send
+	 * @return a Mono emitting the message sent
+	 */
+	Mono<Message> log(String message);
+	
+	/**
+	 * Sends a message into the debug log channel.
+	 * 
+	 * @param spec - the spec of the message to send
+	 * @return a Mono emitting the message sent
+	 */
+	Mono<Message> log(Consumer<MessageCreateSpec> spec);
+	
+	/**
+	 * Gets the String representation of an emoji installed on one of the emoji servers.
+	 * If the emoji is not found, the returned value is the given name wrapped in colons.
+	 * 
+	 * @param emojiName - the name of the emoji to look for
+	 * @return the emoji code corresponding to the given name
+	 */
+	Mono<String> getEmoji(String emojiName);
 	
 	/**
 	 * Gets the available commands loaded on the bot.
