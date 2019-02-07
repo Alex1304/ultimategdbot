@@ -3,12 +3,13 @@ package com.github.alex1304.ultimategdbot.core.handler;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.ServiceLoader;
 import java.util.Set;
+import java.util.StringJoiner;
 
 import com.github.alex1304.ultimategdbot.api.Bot;
 import com.github.alex1304.ultimategdbot.api.Command;
@@ -27,13 +28,13 @@ public class CommandHandler implements Handler {
 	private final Bot bot;
 	private final Map<String, Command> commands;
 	private final Map<Command, Map<String, Command>> subCommands;
-	private final Set<Command> availableCommands;
+	private final Map<Command, String> commandDocs;
 	
 	public CommandHandler(Bot bot) {
 		this.bot = Objects.requireNonNull(bot);
 		this.commands = new HashMap<>();
 		this.subCommands = new HashMap<>();
-		this.availableCommands = new HashSet<>();
+		this.commandDocs = new HashMap<>();
 	}
 	
 	/**
@@ -46,8 +47,8 @@ public class CommandHandler implements Handler {
 			try {
 				System.out.printf("Loading plugin: %s...\n", plugin.getName());
 				plugin.setup();
-				availableCommands.addAll(plugin.getProvidedCommands());
 				for (var cmd : plugin.getProvidedCommands()) {
+					
 					for (var alias : cmd.getAliases()) {
 						commands.put(alias, cmd);
 					}
@@ -66,6 +67,7 @@ public class CommandHandler implements Handler {
 							}
 						}
 						subCommands.put(element, subCmdMap);
+						commandDocs.put(element, generateDoc(element));
 						subCmdDeque.addAll(element.getSubcommands());
 					}
 					System.out.printf("\tLoaded command: %s %s\n", cmd.getClass().getName(), cmd.getAliases());
@@ -115,7 +117,62 @@ public class CommandHandler implements Handler {
 	 * 
 	 * @return the available commands
 	 */
-	public Set<Command> getAvailableCommands() {
-		return availableCommands;
+	public Map<Command, String> getCommandDocs() {
+		return commandDocs;
+	}
+	
+	/**
+	 * Gets a command instance by one of its alias
+	 * 
+	 * @param name - the name of the command
+	 * @return the command instance
+	 */
+	public Command getCommandByName(String name) {
+		return commands.get(name);
+	}
+	
+	private static String generateDoc(Command cmd) {
+		var prefix = "$(prefix)";
+		var aliases = joinAliases(cmd.getAliases());
+		var shortestAlias = shortestAlias(cmd.getAliases());
+		var sb = new StringBuilder();
+		sb.append("```diff\n");
+		sb.append(prefix);
+		sb.append(aliases);
+		sb.append(' ');
+		sb.append(cmd.getSyntax());
+		sb.append("\n```\n");
+		sb.append(cmd.getDescription());
+		if (!cmd.getSubcommands().isEmpty()) {
+			sb.append("\n\n**Subcommands:**\n```\n");
+			cmd.getSubcommands().forEach(scmd -> {
+				sb.append(prefix);
+				sb.append(shortestAlias);
+				sb.append(' ');
+				sb.append(joinAliases(scmd.getAliases()));
+				sb.append(' ');
+				sb.append(scmd.getSyntax());
+				sb.append("\n\t-> ");
+				sb.append(scmd.getDescription());
+				sb.append("\n");
+			});
+			sb.append("\n```\n");
+		}
+		return sb.toString();
+	}
+	
+	private static String joinAliases(Set<String> aliases) {
+		if (aliases.size() == 1) {
+			return aliases.stream().findAny().get();
+		} else {
+			var aliasJoiner = new StringJoiner("|");
+			aliases.stream().sorted((a, b) -> b.length() == a.length() ? a.compareTo(b) : b.length() - a.length())
+					.forEach(aliasJoiner::add);
+			return aliasJoiner.toString();
+		}
+	}
+	
+	private static String shortestAlias(Set<String> aliases) {
+		return aliases.stream().sorted(Comparator.comparing(String::length)).findFirst().get();
 	}
 }

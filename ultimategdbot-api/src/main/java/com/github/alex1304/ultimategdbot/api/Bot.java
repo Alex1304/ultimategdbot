@@ -1,7 +1,6 @@
 package com.github.alex1304.ultimategdbot.api;
 
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -99,11 +98,22 @@ public interface Bot {
 	Mono<String> getEmoji(String emojiName);
 	
 	/**
-	 * Gets the available commands loaded on the bot.
+	 * Retrieve a formatted documentation for the given command.
 	 * 
-	 * @return an unmodifiable Set of commands
+	 * @param cmd - the command to get the docs from
+	 * @param effectivePrefix - the prefix to use in the doc
+	 * @return the String corresponding to the formatted documentation corresponding to the command.
 	 */
-	Set<Command> getAvailableCommands();
+	String getCommandDoc(Command cmd, String effectivePrefix);
+	
+	/**
+	 * Retrieve a formatted documentation for the given command.
+	 * 
+	 * @param cmd - the name of the command to get the docs from
+	 * @param effectivePrefix - the prefix to use in the doc
+	 * @return the String corresponding to the formatted documentation corresponding to the command.
+	 */
+	String getCommandDoc(String cmdName, String effectivePrefix);
 	
 	/**
 	 * Gets the maximum time in seconds that the bot should wait for a reply when a reply menu is open.

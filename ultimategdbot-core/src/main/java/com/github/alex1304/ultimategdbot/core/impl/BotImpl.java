@@ -1,7 +1,6 @@
 package com.github.alex1304.ultimategdbot.core.impl;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -198,8 +197,17 @@ public class BotImpl implements Bot {
 	}
 
 	@Override
-	public Set<Command> getAvailableCommands() {
-		return Collections.unmodifiableSet(cmdHandler.getAvailableCommands());
+	public String getCommandDoc(Command cmd, String effectivePrefix) {
+		return cmdHandler.getCommandDocs().getOrDefault(cmd, "No documentation available for this command.").replaceAll("\\$\\(prefix\\)", effectivePrefix);
+	}
+
+	@Override
+	public String getCommandDoc(String cmdName, String effectivePrefix) {
+		var cmd = cmdHandler.getCommandByName(cmdName);
+		if (cmd == null) {
+			return "This command was not found.";
+		}
+		return getCommandDoc(cmd, effectivePrefix);
 	}
 
 	@Override

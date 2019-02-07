@@ -43,6 +43,13 @@ public interface Context {
 	GuildSettings getGuildSettings();
 	
 	/**
+	 * Gets the prefix applied to the guild this command is run.
+	 * 
+	 * @return the effective prefix
+	 */
+	String getEffectivePrefix();
+	
+	/**
 	 * Sends a message in the same channel the command was sent.
 	 * 
 	 * @param message - the message content of the reply

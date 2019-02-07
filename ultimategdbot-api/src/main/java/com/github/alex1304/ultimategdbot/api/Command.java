@@ -99,6 +99,10 @@ public interface Command {
 						actions.getOrDefault(CommandFailedException.class, (e, ctx0) -> {
 							ctx0.reply(":no_entry_sign: You don't have the required permissions to run this command.").subscribe();
 						}).accept(error, ctx);
+					} else if (error instanceof InvalidSyntaxException) {
+						actions.getOrDefault(InvalidSyntaxException.class, (e, ctx0) -> {
+							ctx0.reply(":no_entry_sign: Invalid syntax.\n" + ctx0.getBot().getCommandDoc(cmd, ctx0.getEffectivePrefix())).subscribe();
+						}).accept(error, ctx);
 					} else if (error instanceof ClientException) {
 						actions.getOrDefault(ClientException.class, (e, ctx0) -> {
 							var ce = (ClientException) e;

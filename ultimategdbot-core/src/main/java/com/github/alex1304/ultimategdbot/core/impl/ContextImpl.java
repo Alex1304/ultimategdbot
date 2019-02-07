@@ -69,4 +69,9 @@ public class ContextImpl implements Context {
 	public Mono<Message> reply(Consumer<? super MessageCreateSpec> spec) {
 		return event.getMessage().getChannel().flatMap(c -> c.createMessage(spec));
 	}
+
+	@Override
+	public String getEffectivePrefix() {
+		return guildSettings == null ? bot.getDefaultPrefix() : guildSettings.getPrefix();
+	}
 }
