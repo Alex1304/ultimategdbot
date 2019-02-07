@@ -22,11 +22,12 @@ public class Main {
 		try (var input = Files.newInputStream(HIB_PROPS_FILE)) {
 			hibProps.load(input);
 		}
-		Bot bot = null;
+		Bot bot;
 		try {
 			bot = BotImpl.buildFromProperties(props, hibProps);
 		} catch (IllegalArgumentException e) {
 			System.err.println("Error when parsing " + PROPS_FILE + " file: " + e.getMessage());
+			return;
 		}
 		bot.start();	
 	}
