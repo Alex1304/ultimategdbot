@@ -6,6 +6,7 @@ module ultimategdbot.core {
 	requires java.persistence;
 	requires java.naming;
 	requires java.sql;
+	requires discord4j.rest;
 	
 	exports com.github.alex1304.ultimategdbot.core.impl;
 	exports com.github.alex1304.ultimategdbot.core.handler;

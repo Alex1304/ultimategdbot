@@ -139,6 +139,14 @@ public interface Bot {
 	 *                      a valid reply
 	 * @param deleteOnTimeout - Whether to delete {@code msg} when the user doesn't
 	 *                      reply and the menu times out.
+	 * @return the identifier of the opened reply, or an empty string if the menu could not be opened.
 	 */
-	void openReplyMenu(Context ctx, Message msg, Map<String, Function<Context, Mono<Void>>> menuItems, boolean deleteOnReply, boolean deleteOnTimeout);
+	String openReplyMenu(Context ctx, Message msg, Map<String, Function<Context, Mono<Void>>> menuItems, boolean deleteOnReply, boolean deleteOnTimeout);
+	
+	/**
+	 * Closes a reply menu using its identifier.
+	 * 
+	 * @param identifier - the identifier of the reply menu to close
+	 */
+	void closeReplyMenu(String identifier);
 }

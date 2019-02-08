@@ -41,14 +41,17 @@ public class ReplyMenuHandler implements Handler {
 		}
 		void complete() {
 			if (deleteOnReply) {
-				msg.delete().subscribe();
+				msg.delete().doOnError(__ -> {}).subscribe();
 			}
 			openedReplyMenus.remove(toKey());
-			disposableMenus.remove(this).dispose();
+			var d = disposableMenus.remove(this);
+			if (d != null) {
+				d.dispose();
+			}
 		}
 		void timeout() {
 			if (deleteOnTimeout) {
-				msg.delete().subscribe();
+				msg.delete().doOnError(__ -> {}).subscribe();
 			}
 			openedReplyMenus.remove(toKey());
 			disposableMenus.remove(this);
@@ -78,28 +81,34 @@ public class ReplyMenuHandler implements Handler {
 							+ ctx.getEvent().getMessage().getAuthorId().get().asString());
 					var replyItem = ctx.getArgs().get(0);
 					var action = replyMenu.menuItems.get(replyItem);
-					if (action != null) {
-						replyMenu.complete();
-						Command.invoke(action, ctx);
+					if (action == null) {
+						return;
 					}
-					if (replyItem.equalsIgnoreCase("close")) {
-						replyMenu.msg.delete().subscribe();
-						if (action == null) {
-							replyMenu.complete();
-						}
-					} 
+					Command.invoke(action, ctx);
+					replyMenu.complete();
 				});
 	}
 	
-	public void open(Context ctx, Message msg, Map<String, Function<Context, Mono<Void>>> menuItems, boolean deleteOnReply, boolean deleteOnTimeout) {
+	public String open(Context ctx, Message msg, Map<String, Function<Context, Mono<Void>>> menuItems, boolean deleteOnReply, boolean deleteOnTimeout) {
 		if (!msg.getAuthorId().isPresent()) {
-			return;
+			return "";
 		}
 		var rm = new ReplyMenu(ctx, msg, menuItems, deleteOnReply, deleteOnTimeout);
-		var existing = openedReplyMenus.put(rm.toKey(), rm);
+		var key = rm.toKey();
+		var existing = openedReplyMenus.put(key, rm);
 		if (existing != null) {
 			existing.complete();
 		}
 		disposableMenus.put(rm, Mono.delay(Duration.ofSeconds(bot.getReplyMenuTimeout())).subscribe(__ -> rm.timeout()));
+		return key;
+	}
+
+	public void close(String identifier) {
+		var rm = openedReplyMenus.get(identifier);
+		if (rm == null) {
+			return;
+		}
+		rm.msg.delete().doOnError(__ -> {}).subscribe();
+		rm.complete();
 	}
 }

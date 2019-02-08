@@ -64,4 +64,40 @@ public interface Context {
 	 * @return a Mono emitting the message sent
 	 */
 	Mono<Message> reply(Consumer<? super MessageCreateSpec> spec);
+	
+	/**
+	 * Adds a variable in this context. If a variable of the same name exists, it is
+	 * overwritten.
+	 * 
+	 * @param name - the name of the variable
+	 * @param val  - the value of the variable
+	 */
+	void setVar(String name, Object val);
+	
+	/**
+	 * Adds a variable in this context. If a variable of the same name exists,
+	 * nothing happens.
+	 * 
+	 * @param name - the name of the variable
+	 * @param val  - the value of the variable
+	 */
+	void setVarIfNotExists(String name, Object val);
+	
+	/**
+	 * Gets the value of a variable.
+	 * 
+	 * @param name - the variable name
+	 * @param type - the type of the variable
+	 * @return the value of the variable, or null if not found or exists in the wrong type
+	 */
+	<T> T getVar(String name, Class<T> type);
+	
+	/**
+	 * Gets the value of a variable. If not found, the provided default value is returned instead.
+	 * 
+	 * @param name - the variable name
+	 * @param defaultVal - the default value to return if not found
+	 * @return the value of the variable, or the default value if not found or exists in the wrong type
+	 */
+	<T> T getVarOrDefault(String name, T defaultVal);
 }

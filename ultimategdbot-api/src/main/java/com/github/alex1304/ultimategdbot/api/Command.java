@@ -119,6 +119,7 @@ public interface Command {
 						actions.getOrDefault(error.getClass(), (e, ctx0) -> {
 							ctx0.reply(":no_entry_sign: An internal error occured. A crash report has been sent to the developer. Sorry for the inconvenience.")
 									.subscribe();
+							e.printStackTrace();
 						}).accept(error, ctx);
 					}
 				}).subscribe();

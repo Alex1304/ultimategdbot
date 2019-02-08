@@ -38,35 +38,50 @@ public class ReplyMenuBuilder {
 	}
 
 	public void addItem(String key, String view, Function<Context, Mono<Void>> action) {
-		this.menuEntries.put(key, new Entry(view, action));
+		Objects.requireNonNull(key);
+		Objects.requireNonNull(view);
+		Objects.requireNonNull(action);
+		menuEntries.put(key, new Entry(view, action));
+	}
+	
+	private void addItem(String key, String view) {
+		addItem(key, view, __ -> Mono.empty());
 	}
 	
 	public void removeItem(String key) {
-		this.menuEntries.remove(key);
+		menuEntries.remove(key);
 	}
 	
 	public Mono<Message> build(String content, Consumer<EmbedCreateSpec> embed) {
-		var closeView = "\nTo close this menu, type `close`";
+		var closeView = "To close this menu, type `close`";
 		if (deleteOnTimeout) {
 			var timeout = Duration.ofSeconds(ctx.getBot().getReplyMenuTimeout());
 			var time = (timeout.toMinutesPart() > 0 ? timeout.toMinutesPart() + "min " : "")
 					+ (timeout.toSecondsPart() > 0 ? timeout.toSecondsPart() + "s " : "");
-			closeView = "\nThis menu will close after " + time + " of inactivity, or type `close`";
+			closeView = "This menu will close after " + time + " of inactivity, or type `close`";
 		}
-		addItem("close", closeView, ctx0 -> Mono.empty());
+		addItem("close", closeView);
 		var menuItems = new LinkedHashMap<String, Function<Context, Mono<Void>>>();
 		return ctx.reply(mcs -> {
 			var sb = new StringBuilder();
 			menuEntries.forEach((k, v) -> {
 				menuItems.put(k, v.action);
-				sb.append(v.view);
-				sb.append('\n');
+				if (!v.view.isEmpty()) {
+					sb.append(v.view);
+					sb.append('\n');
+				}
 			});
 			if (content != null && !content.isBlank()) {
 				mcs.setContent(content);
 			}
 			mcs.setEmbed(embed.andThen(ecs -> ecs.addField("Actions:", sb.toString(), false)));
-		}).doOnNext(message -> ctx.getBot().openReplyMenu(ctx, message, menuItems, deleteOnReply, deleteOnTimeout));
+		}).doOnNext(message -> {
+			var rmid = ctx.getBot().openReplyMenu(ctx, message, menuItems, deleteOnReply, deleteOnTimeout);
+			menuItems.put("close", ctx0 -> {
+				ctx0.getBot().closeReplyMenu(rmid);
+				return Mono.empty();
+			});
+		});
 	}
 	
 	public Mono<Message> build(String content) {

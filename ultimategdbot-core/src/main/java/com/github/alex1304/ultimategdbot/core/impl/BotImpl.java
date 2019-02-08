@@ -2,6 +2,7 @@ package com.github.alex1304.ultimategdbot.core.impl;
 
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -211,7 +212,16 @@ public class BotImpl implements Bot {
 	}
 
 	@Override
-	public void openReplyMenu(Context ctx, Message msg, Map<String, Function<Context, Mono<Void>>> menuItems, boolean deleteOnReply, boolean deleteOnTimeout) {
-		replyMenuHandler.open(ctx, msg, menuItems, deleteOnReply, deleteOnTimeout);
+	public String openReplyMenu(Context ctx, Message msg, Map<String, Function<Context, Mono<Void>>> menuItems, boolean deleteOnReply, boolean deleteOnTimeout) {
+		Objects.requireNonNull(ctx);
+		Objects.requireNonNull(msg);
+		Objects.requireNonNull(menuItems);
+		return replyMenuHandler.open(ctx, msg, menuItems, deleteOnReply, deleteOnTimeout);
+	}
+
+	@Override
+	public void closeReplyMenu(String identifier) {
+		Objects.requireNonNull(identifier);
+		replyMenuHandler.close(identifier);
 	}
 }
