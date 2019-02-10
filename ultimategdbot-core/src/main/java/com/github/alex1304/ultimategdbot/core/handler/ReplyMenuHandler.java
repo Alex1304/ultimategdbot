@@ -95,10 +95,11 @@ public class ReplyMenuHandler implements Handler {
 		}
 		var rm = new ReplyMenu(ctx, msg, menuItems, deleteOnReply, deleteOnTimeout);
 		var key = rm.toKey();
-		var existing = openedReplyMenus.put(key, rm);
+		var existing = openedReplyMenus.get(key);
 		if (existing != null) {
-			existing.complete();
+			existing.timeout();
 		}
+		openedReplyMenus.put(key, rm);
 		disposableMenus.put(rm, Mono.delay(Duration.ofSeconds(bot.getReplyMenuTimeout())).subscribe(__ -> rm.timeout()));
 		return key;
 	}

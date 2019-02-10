@@ -7,5 +7,6 @@ module ultimategdbot.api {
 	
 	exports com.github.alex1304.ultimategdbot.api.entity;
 	exports com.github.alex1304.ultimategdbot.api.utils;
+	exports com.github.alex1304.ultimategdbot.api.utils.reply;
 	exports com.github.alex1304.ultimategdbot.api;
 }

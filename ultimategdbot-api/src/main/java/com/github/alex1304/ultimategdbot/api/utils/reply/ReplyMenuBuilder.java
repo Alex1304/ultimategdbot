@@ -1,13 +1,16 @@
-package com.github.alex1304.ultimategdbot.api.utils;
+package com.github.alex1304.ultimategdbot.api.utils.reply;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 import com.github.alex1304.ultimategdbot.api.Context;
+import com.github.alex1304.ultimategdbot.api.utils.Utils;
 
 import discord4j.core.object.entity.Message;
 import discord4j.core.spec.EmbedCreateSpec;
@@ -25,31 +28,70 @@ public class ReplyMenuBuilder {
 			this.action = Objects.requireNonNull(action);
 		}
 	}
-	
+	static final Function<String, List<String>> CHUNK_FUNC = str -> {
+		var chunks = new ArrayList<String>();
+		var strLines = str.split("\n");
+		var charactersRead = 0;
+		final var breakpoint = 1990;
+		var currentChunk = new StringBuilder();
+		var inCodeblock = false;
+		for (var line : strLines) {
+			inCodeblock = Utils.occurrences(line, "```") % 2 == 1 ? !inCodeblock : inCodeblock;
+			var old = charactersRead;
+			charactersRead += line.length();
+			if (old / breakpoint != charactersRead / breakpoint) {
+				if (inCodeblock) {
+					currentChunk.append("```\n");
+				}
+				chunks.add(currentChunk.substring(0, Math.min(currentChunk.length(), breakpoint)).toString());
+				currentChunk.delete(0, currentChunk.length());
+			} else {
+				if (!chunks.isEmpty() && currentChunk.length() == 0 && inCodeblock) {
+					currentChunk.append("```\n");
+				}
+				currentChunk.append(line);
+				currentChunk.append('\n');
+			}
+		}
+		if (currentChunk.length() != 0) {
+			chunks.add(currentChunk.toString());
+		}
+		return chunks;
+	};
 	private final Map<String, Entry> menuEntries;
-	private final Context ctx;
+	final Context ctx;
 	private final boolean deleteOnReply, deleteOnTimeout;
+	private String header;
 	
 	public ReplyMenuBuilder(Context ctx, boolean deleteOnReply, boolean deleteOnTimeout) {
 		this.menuEntries = new LinkedHashMap<>();
 		this.ctx = Objects.requireNonNull(ctx);
 		this.deleteOnReply = deleteOnReply;
 		this.deleteOnTimeout = deleteOnTimeout;
+		this.header = "_ _";
 	}
 
-	public void addItem(String key, String view, Function<Context, Mono<Void>> action) {
+	public final void addItem(String key, String view, Function<Context, Mono<Void>> action) {
 		Objects.requireNonNull(key);
 		Objects.requireNonNull(view);
 		Objects.requireNonNull(action);
 		menuEntries.put(key, new Entry(view, action));
 	}
 	
-	private void addItem(String key, String view) {
+	private final void addItem(String key, String view) {
 		addItem(key, view, __ -> Mono.empty());
 	}
 	
-	public void removeItem(String key) {
+	public final void removeItem(String key) {
 		menuEntries.remove(key);
+	}
+	
+	public void setHeader(String header) {
+		Objects.requireNonNull(header);
+		if (header.isBlank()) {
+			throw new IllegalArgumentException("Header must not be blank");
+		}
+		this.header = header;
 	}
 	
 	public Mono<Message> build(String content, Consumer<EmbedCreateSpec> embed) {
@@ -74,7 +116,7 @@ public class ReplyMenuBuilder {
 			if (content != null && !content.isBlank()) {
 				mcs.setContent(content);
 			}
-			mcs.setEmbed(embed.andThen(ecs -> ecs.addField("Actions:", sb.toString(), false)));
+			mcs.setEmbed(embed.andThen(ecs -> ecs.addField(header, sb.toString(), false)));
 		}).doOnNext(message -> {
 			var rmid = ctx.getBot().openReplyMenu(ctx, message, menuItems, deleteOnReply, deleteOnTimeout);
 			menuItems.put("close", ctx0 -> {
@@ -84,7 +126,7 @@ public class ReplyMenuBuilder {
 		});
 	}
 	
-	public Mono<Message> build(String content) {
+	public final Mono<Message> build(String content) {
 		return build(content, ecs -> {});
 	}
 }

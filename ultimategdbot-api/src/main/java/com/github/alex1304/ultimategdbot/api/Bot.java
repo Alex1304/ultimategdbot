@@ -98,24 +98,6 @@ public interface Bot {
 	Mono<String> getEmoji(String emojiName);
 	
 	/**
-	 * Retrieve a formatted documentation for the given command.
-	 * 
-	 * @param cmd - the command to get the docs from
-	 * @param effectivePrefix - the prefix to use in the doc
-	 * @return the String corresponding to the formatted documentation corresponding to the command.
-	 */
-	String getCommandDoc(Command cmd, String effectivePrefix);
-	
-	/**
-	 * Retrieve a formatted documentation for the given command.
-	 * 
-	 * @param cmd - the name of the command to get the docs from
-	 * @param effectivePrefix - the prefix to use in the doc
-	 * @return the String corresponding to the formatted documentation corresponding to the command.
-	 */
-	String getCommandDoc(String cmdName, String effectivePrefix);
-	
-	/**
 	 * Gets the maximum time in seconds that the bot should wait for a reply when a reply menu is open.
 	 * 
 	 * @return the value as int (in seconds)
@@ -149,4 +131,12 @@ public interface Bot {
 	 * @param identifier - the identifier of the reply menu to close
 	 */
 	void closeReplyMenu(String identifier);
+	
+	/**
+	 * Gets the command corresponding to the given name.
+	 * 
+	 * @param name - the name of the command
+	 * @return the corresponding Command instance, or null if not found
+	 */
+	Command getCommandForName(String name);
 }

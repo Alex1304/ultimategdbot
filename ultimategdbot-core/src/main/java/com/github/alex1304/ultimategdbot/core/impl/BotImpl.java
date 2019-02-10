@@ -198,20 +198,6 @@ public class BotImpl implements Bot {
 	}
 
 	@Override
-	public String getCommandDoc(Command cmd, String effectivePrefix) {
-		return cmdHandler.getCommandDocs().getOrDefault(cmd, "No documentation available for this command.").replaceAll("\\$\\(prefix\\)", effectivePrefix);
-	}
-
-	@Override
-	public String getCommandDoc(String cmdName, String effectivePrefix) {
-		var cmd = cmdHandler.getCommandByName(cmdName);
-		if (cmd == null) {
-			return "This command was not found.";
-		}
-		return getCommandDoc(cmd, effectivePrefix);
-	}
-
-	@Override
 	public String openReplyMenu(Context ctx, Message msg, Map<String, Function<Context, Mono<Void>>> menuItems, boolean deleteOnReply, boolean deleteOnTimeout) {
 		Objects.requireNonNull(ctx);
 		Objects.requireNonNull(msg);
@@ -223,5 +209,10 @@ public class BotImpl implements Bot {
 	public void closeReplyMenu(String identifier) {
 		Objects.requireNonNull(identifier);
 		replyMenuHandler.close(identifier);
+	}
+
+	@Override
+	public Command getCommandForName(String name) {
+		return cmdHandler.getCommandForName(name);
 	}
 }

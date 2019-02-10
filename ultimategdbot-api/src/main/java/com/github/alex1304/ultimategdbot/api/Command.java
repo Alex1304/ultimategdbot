@@ -101,7 +101,7 @@ public interface Command {
 						}).accept(error, ctx);
 					} else if (error instanceof InvalidSyntaxException) {
 						actions.getOrDefault(InvalidSyntaxException.class, (e, ctx0) -> {
-							ctx0.reply(":no_entry_sign: Invalid syntax.\n" + ctx0.getBot().getCommandDoc(cmd, ctx0.getEffectivePrefix())).subscribe();
+							ctx0.reply(":no_entry_sign: Invalid syntax. Check out `" + ctx0.getEffectivePrefix() + "help " + ctx.getArgs().get(0) + "` if you need assistance.").subscribe();
 						}).accept(error, ctx);
 					} else if (error instanceof ClientException) {
 						actions.getOrDefault(ClientException.class, (e, ctx0) -> {
