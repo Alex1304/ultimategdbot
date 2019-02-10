@@ -86,6 +86,7 @@ public class ReplyMenuHandler implements Handler {
 					}
 					Command.invoke(action, ctx);
 					replyMenu.complete();
+					ctx.getEvent().getMessage().delete().doOnError(__ -> {}).subscribe();
 				});
 	}
 	
