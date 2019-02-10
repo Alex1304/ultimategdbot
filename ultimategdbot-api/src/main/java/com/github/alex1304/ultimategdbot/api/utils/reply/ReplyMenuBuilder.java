@@ -48,6 +48,7 @@ public class ReplyMenuBuilder {
 			} else {
 				if (!chunks.isEmpty() && currentChunk.length() == 0 && inCodeblock) {
 					currentChunk.append("```\n");
+					inCodeblock = false;
 				}
 				currentChunk.append(line);
 				currentChunk.append('\n');
