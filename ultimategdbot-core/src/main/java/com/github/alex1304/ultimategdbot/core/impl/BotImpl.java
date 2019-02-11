@@ -8,6 +8,8 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import org.hibernate.MappingException;
+
 import com.github.alex1304.ultimategdbot.api.Bot;
 import com.github.alex1304.ultimategdbot.api.Command;
 import com.github.alex1304.ultimategdbot.api.Context;
@@ -191,8 +193,13 @@ public class BotImpl implements Bot {
 
 	@Override
 	public void start() {
-		database.configure();
 		handlers.forEach(Handler::prepare);
+		try {
+			database.configure();
+		} catch (MappingException e) {
+			System.err.println("Oops! There is an error in the database mapping configuration!");
+			throw e;
+		}
 		client.getEventDispatcher().on(ReadyEvent.class).subscribe(__ -> handlers.forEach(Handler::listen));
 		client.login().block();
 	}

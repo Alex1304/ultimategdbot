@@ -11,8 +11,8 @@ import java.util.ServiceLoader;
 import com.github.alex1304.ultimategdbot.api.Bot;
 import com.github.alex1304.ultimategdbot.api.Command;
 import com.github.alex1304.ultimategdbot.api.Plugin;
-import com.github.alex1304.ultimategdbot.api.PluginSetupException;
 import com.github.alex1304.ultimategdbot.core.impl.ContextImpl;
+import com.github.alex1304.ultimategdbot.core.impl.DatabaseImpl;
 
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import reactor.core.scheduler.Schedulers;
@@ -39,35 +39,30 @@ public class CommandHandler implements Handler {
 	public void prepare() {
 		var loader = ServiceLoader.load(Plugin.class);
 		for (var plugin : loader) {
-			try {
-				System.out.printf("Loading plugin: %s...\n", plugin.getName());
-				plugin.setup();
-				for (var cmd : plugin.getProvidedCommands()) {
-					
-					for (var alias : cmd.getAliases()) {
-						commands.put(alias, cmd);
-					}
-					// Add all subcommands
-					var subCmdDeque = new ArrayDeque<Command>();
-					subCmdDeque.push(cmd);
-					while (!subCmdDeque.isEmpty()) {
-						var element = subCmdDeque.pop();
-						if (subCommands.containsKey(element)) {
-							continue;
-						}
-						var subCmdMap = new HashMap<String, Command>();
-						for (var subcmd : element.getSubcommands()) {
-							for (var alias : subcmd.getAliases()) {
-								subCmdMap.put(alias, subcmd);
-							}
-						}
-						subCommands.put(element, subCmdMap);
-						subCmdDeque.addAll(element.getSubcommands());
-					}
-					System.out.printf("\tLoaded command: %s %s\n", cmd.getClass().getName(), cmd.getAliases());
+			System.out.printf("Loading plugin: %s...\n", plugin.getName());
+			((DatabaseImpl) bot.getDatabase()).addAllMappingResources(plugin.getDatabaseMappingResources());
+			for (var cmd : plugin.getProvidedCommands()) {
+				for (var alias : cmd.getAliases()) {
+					commands.put(alias, cmd);
 				}
-			} catch (PluginSetupException e) {
-				System.out.printf("WARNING: Unable to load plugin %s: %s\n", plugin.getName(), e.getMessage());
+				// Add all subcommands
+				var subCmdDeque = new ArrayDeque<Command>();
+				subCmdDeque.push(cmd);
+				while (!subCmdDeque.isEmpty()) {
+					var element = subCmdDeque.pop();
+					if (subCommands.containsKey(element)) {
+						continue;
+					}
+					var subCmdMap = new HashMap<String, Command>();
+					for (var subcmd : element.getSubcommands()) {
+						for (var alias : subcmd.getAliases()) {
+							subCmdMap.put(alias, subcmd);
+						}
+					}
+					subCommands.put(element, subCmdMap);
+					subCmdDeque.addAll(element.getSubcommands());
+				}
+				System.out.printf("\tLoaded command: %s %s\n", cmd.getClass().getName(), cmd.getAliases());
 			}
 		}
 	}

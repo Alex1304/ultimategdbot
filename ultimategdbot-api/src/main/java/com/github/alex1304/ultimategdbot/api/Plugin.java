@@ -21,13 +21,11 @@ public interface Plugin {
 	String getName();
 	
 	/**
-	 * Called once when the plugin is loaded on startup. You can make verifications
-	 * here to ensure that your plugin has everything needed to run properly. If it
-	 * isn't the case, you can throw a {@link PluginSetupException} to cancel the
-	 * loading of this plugin and display a warning message on bot startup.
+	 * Gets a set of resource names that corresponds to database mapping files.
+	 * Mapping files usually end with *.hbm.xml and should be located at the root of
+	 * the {@code src/main/resources} directory of the plugin
 	 * 
-	 * @throws PluginSetupException if the plugin is not in a state that allows it
-	 *                              to be properly loaded.
+	 * @return a set containing the name of all mapping files used in the plugin.
 	 */
-	void setup() throws PluginSetupException;
+	Set<String> getDatabaseMappingResources();
 }

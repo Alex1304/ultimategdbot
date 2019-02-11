@@ -2,9 +2,11 @@ package com.github.alex1304.ultimategdbot.core.impl;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.Set;
 import java.util.function.Consumer;
 
 import org.hibernate.ObjectNotFoundException;
@@ -20,22 +22,33 @@ public class DatabaseImpl implements Database {
 	
 	private final Properties props;
 	private SessionFactory sessionFactory = null;
+	private final Set<String> resourceNames;
 	
 	public DatabaseImpl(Properties props) {
 		this.props = Objects.requireNonNull(props);
+		this.resourceNames = new HashSet<>();
+	}
+	
+	private void addNativeResources() {
+		resourceNames.add("GuildSettings.hbm.xml");
 	}
 
 	@Override
 	public void configure() {
 		var config = new Configuration();
 		config.addProperties(props);
-		config.addInputStream(this.getClass().getResourceAsStream("/GuildSettings.hbm.xml"));
-
+		addNativeResources();
+		for (var resource : resourceNames) {
+			config.addResource("/" + resource);
+		}
 		if (sessionFactory != null) {
 			sessionFactory.close();
 		}
-
 		sessionFactory = config.buildSessionFactory();
+	}
+
+	public void addAllMappingResources(Set<String> resourceNames) {
+		this.resourceNames.addAll(Objects.requireNonNull(resourceNames));
 	}
 
 	@Override
