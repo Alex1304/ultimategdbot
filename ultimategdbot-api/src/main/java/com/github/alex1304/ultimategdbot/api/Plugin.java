@@ -3,7 +3,7 @@ package com.github.alex1304.ultimategdbot.api;
 import java.util.Map;
 import java.util.Set;
 
-import com.github.alex1304.ultimategdbot.api.guildconf.GuildConfEntry;
+import com.github.alex1304.ultimategdbot.api.guildsettings.GuildSettingsEntry;
 
 /**
  * Represents a plugin. A plugin has a name and provides a list of commands.
@@ -35,7 +35,8 @@ public interface Plugin {
 	/**
 	 * Gets a map of configuration entries for guilds. Anything added here will be listed when using the setup command.
 	 * 
+	 * @param bot - the bot instance
 	 * @return the guild configuration entries
 	 */
-	Map<String, GuildConfEntry<?, ?>> getGuildConfigurationEntries();
+	Map<String, GuildSettingsEntry<?, ?>> getGuildConfigurationEntries(Bot bot);
 }

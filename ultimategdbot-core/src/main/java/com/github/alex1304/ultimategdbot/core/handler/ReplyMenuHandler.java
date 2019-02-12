@@ -66,10 +66,6 @@ public class ReplyMenuHandler implements Handler {
 	}
 
 	@Override
-	public void prepare() {
-	}
-
-	@Override
 	public void listen() {
 		bot.getDiscordClient().getEventDispatcher().on(MessageCreateEvent.class).subscribeOn(Schedulers.elastic())
 				.filter(event -> event.getMessage().getContent().isPresent()

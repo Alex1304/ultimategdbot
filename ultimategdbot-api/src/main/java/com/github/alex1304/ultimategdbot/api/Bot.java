@@ -5,6 +5,8 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import com.github.alex1304.ultimategdbot.api.guildsettings.GuildSettingsEntry;
+
 import discord4j.core.DiscordClient;
 import discord4j.core.object.entity.Channel;
 import discord4j.core.object.entity.Guild;
@@ -147,4 +149,14 @@ public interface Bot {
 	 * @return the set of plugins
 	 */
 	Set<Plugin> getPlugins();
+
+	/**
+	 * Gets the guild settings entries loaded from plugins. Unlike
+	 * {@link Context#getGuildSettings()}, this does not get the values for a
+	 * specific guild, it gives functions to retrieve the values from any guild.
+	 * 
+	 * @return an unmodifiable Map containing the guild settings keys and their
+	 *         associated values.
+	 */
+	Map<Plugin, Map<String, GuildSettingsEntry<?, ?>>> getGuildSettingsEntries();
 }

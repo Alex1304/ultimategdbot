@@ -4,8 +4,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import com.github.alex1304.ultimategdbot.api.entity.GuildSettings;
-
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.entity.Message;
 import discord4j.core.spec.MessageCreateSpec;
@@ -35,13 +33,6 @@ public interface Context {
 	 * @return the bot
 	 */
 	Bot getBot();
-	
-	/**
-	 * Gets the settings for the guild this command has been run in.
-	 * 
-	 * @return the guild settings, or null if the command has been used in a DM.
-	 */
-	GuildSettings getGuildSettings();
 	
 	/**
 	 * Gets the prefix applied to the guild this command is run.
@@ -107,7 +98,7 @@ public interface Context {
 	 * 
 	 * @return an unmodifiable Map containing the guild settings keys and their associated values.
 	 */
-	Map<Plugin, Map<String, String>> getGuildSettings0();
+	Map<Plugin, Map<String, String>> getGuildSettings();
 	
 	/**
 	 * Edits an entry of the guild settings.

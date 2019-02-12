@@ -1,12 +1,14 @@
 package com.github.alex1304.ultimategdbot.core.impl;
 
 import java.io.Serializable;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import org.hibernate.ObjectNotFoundException;
@@ -28,16 +30,11 @@ public class DatabaseImpl implements Database {
 		this.props = Objects.requireNonNull(props);
 		this.resourceNames = new HashSet<>();
 	}
-	
-	private void addNativeResources() {
-		resourceNames.add("GuildSettings.hbm.xml");
-	}
 
 	@Override
 	public void configure() {
 		var config = new Configuration();
 		config.addProperties(props);
-		addNativeResources();
 		for (var resource : resourceNames) {
 			config.addResource("/" + resource);
 		}
@@ -63,6 +60,23 @@ public class DatabaseImpl implements Database {
 			s.close();
 		}
 
+		return result;
+	}
+
+	@Override
+	public <T, K extends Serializable> T findByIDOrCreate(Class<T> entityClass, K key, BiConsumer<? super T, K> keySetter) {
+		var result = findByID(entityClass, key);
+		if (result != null) {
+			return result;
+		}
+		try {
+			result = entityClass.getConstructor().newInstance();
+			keySetter.accept(result, key);
+			save(result);
+		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+				| InvocationTargetException | NoSuchMethodException | SecurityException e) {
+			throw new RuntimeException("An error occured when creating a database entity", e);
+		}
 		return result;
 	}
 

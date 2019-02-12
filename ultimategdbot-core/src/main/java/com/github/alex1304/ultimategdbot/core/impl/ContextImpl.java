@@ -10,7 +10,7 @@ import java.util.function.Consumer;
 import com.github.alex1304.ultimategdbot.api.Bot;
 import com.github.alex1304.ultimategdbot.api.Context;
 import com.github.alex1304.ultimategdbot.api.Plugin;
-import com.github.alex1304.ultimategdbot.api.entity.GuildSettings;
+import com.github.alex1304.ultimategdbot.core.nativeplugin.NativeGuildSettings;
 
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.entity.Message;
@@ -23,7 +23,7 @@ public class ContextImpl implements Context {
 	private final MessageCreateEvent event;
 	private final List<String> args;
 	private final Bot bot;
-	private final GuildSettings guildSettings; // null if DM message
+	private final NativeGuildSettings guildSettings; // null if DM message
 	private Map<String, Object> variables;
 
 	public ContextImpl(MessageCreateEvent event, List<String> args, Bot bot) {
@@ -36,13 +36,10 @@ public class ContextImpl implements Context {
 			return;
 		}
 		var id = guildIdOpt.get().asLong();
-		var guildSettings = bot.getDatabase().findByID(GuildSettings.class, id);
-		if (guildSettings == null) {
-			guildSettings = new GuildSettings();
-			guildSettings.setGuildId(id);
-			guildSettings.setPrefix(bot.getDefaultPrefix());
-			bot.getDatabase().save(guildSettings);
-		}
+		var guildSettings = bot.getDatabase().findByIDOrCreate(NativeGuildSettings.class, id, (gs, gid) -> {
+			gs.setGuildId(gid);
+			gs.setPrefix(bot.getDefaultPrefix());
+		});
 		this.guildSettings = guildSettings;
 		this.variables = new ConcurrentHashMap<>();
 	}
@@ -60,11 +57,6 @@ public class ContextImpl implements Context {
 	@Override
 	public Bot getBot() {
 		return bot;
-	}
-
-	@Override
-	public GuildSettings getGuildSettings() {
-		return guildSettings;
 	}
 
 	@Override
@@ -127,20 +119,32 @@ public class ContextImpl implements Context {
 	}
 
 	@Override
-	public Map<Plugin, Map<String, String>> getGuildSettings0() {
-		var map = new HashMap<Plugin, Map<String, String>>();
-		for (var plugin : bot.getPlugins()) {
-			var entries = new HashMap<String, String>();
-			plugin.getGuildConfigurationEntries().forEach((k, v) -> {
-				//entries.put(k, v.get);
-			});
+	public Map<Plugin, Map<String, String>> getGuildSettings() {
+		if (!event.getGuildId().isPresent()) {
+			throw new UnsupportedOperationException("Cannot perform this operation outside of a guild");
 		}
-		return null;
+		var map = new HashMap<Plugin, Map<String, String>>();
+		bot.getGuildSettingsEntries().forEach((k, v) -> {
+			var entries = new HashMap<String, String>();
+			v.forEach((k0, v0) -> {
+				entries.put(k0, v0.valueFromDatabaseAsString(bot.getDatabase(), event.getGuildId().get().asLong()));
+			});
+			map.put(k, entries);
+		});
+		return map;
 	}
 
 	@Override
 	public void setGuildSetting(String key, String val) {
-		// TODO Auto-generated method stub
-		
+		if (!event.getGuildId().isPresent()) {
+			throw new UnsupportedOperationException("Cannot perform this operation outside of a guild");
+		}
+		for (var map : bot.getGuildSettingsEntries().values()) {
+			var entry = map.get(key);
+			if (entry != null) {
+				entry.valueAsStringToDatabase(bot.getDatabase(), val, event.getGuildId().get().asLong());
+				return;
+			}
+		}
 	}
 }

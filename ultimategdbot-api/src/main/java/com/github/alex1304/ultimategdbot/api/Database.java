@@ -2,6 +2,7 @@ package com.github.alex1304.ultimategdbot.api;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.function.BiConsumer;
 
 /**
  * Manages interactions with the database.
@@ -22,6 +23,18 @@ public interface Database {
 	 * @return the entity found, or <code>null</code> if not found.
 	 */
 	<T, K extends Serializable> T findByID(Class<T> entityClass, K key);
+	
+	/**
+	 * Allows to find a database entity by its ID. If not found, a new entity is created
+	 * 
+	 * @param entityClass - class of the entity
+	 * @param key         - the ID
+	 * @param keySetter   - the biconsumer that assigns the ID to the newly created entity
+	 * @param             <T> - The entity type
+	 * @param             <K> - the ID type
+	 * @return the entity found, or <code>null</code> if not found.
+	 */
+	<T, K extends Serializable> T findByIDOrCreate(Class<T> entityClass, K key, BiConsumer<? super T, K> keySetter);
 	
 	/**
 	 * Makes a simple query to the database.

@@ -1,20 +1,17 @@
 package com.github.alex1304.ultimategdbot.core.handler;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
-import java.util.ServiceLoader;
 import java.util.Set;
 
 import com.github.alex1304.ultimategdbot.api.Bot;
 import com.github.alex1304.ultimategdbot.api.Command;
 import com.github.alex1304.ultimategdbot.api.Plugin;
 import com.github.alex1304.ultimategdbot.core.impl.ContextImpl;
-import com.github.alex1304.ultimategdbot.core.impl.DatabaseImpl;
 
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import reactor.core.scheduler.Schedulers;
@@ -37,42 +34,6 @@ public class CommandHandler implements Handler {
 	}
 	
 	/**
-	 * Loads commands from plugins.
-	 */
-	@Override
-	public void prepare() {
-		var loader = ServiceLoader.load(Plugin.class);
-		for (var plugin : loader) {
-			System.out.printf("Loading plugin: %s...\n", plugin.getName());
-			((DatabaseImpl) bot.getDatabase()).addAllMappingResources(plugin.getDatabaseMappingResources());
-			for (var cmd : plugin.getProvidedCommands()) {
-				for (var alias : cmd.getAliases()) {
-					commands.put(alias, cmd);
-				}
-				// Add all subcommands
-				var subCmdDeque = new ArrayDeque<Command>();
-				subCmdDeque.push(cmd);
-				while (!subCmdDeque.isEmpty()) {
-					var element = subCmdDeque.pop();
-					if (subCommands.containsKey(element)) {
-						continue;
-					}
-					var subCmdMap = new HashMap<String, Command>();
-					for (var subcmd : element.getSubcommands()) {
-						for (var alias : subcmd.getAliases()) {
-							subCmdMap.put(alias, subcmd);
-						}
-					}
-					subCommands.put(element, subCmdMap);
-					subCmdDeque.addAll(element.getSubcommands());
-				}
-				System.out.printf("\tLoaded command: %s %s\n", cmd.getClass().getName(), cmd.getAliases());
-			}
-			plugins.add(plugin);
-		}
-	}
-	
-	/**
 	 * Listens to MessageCreateEvents to trigger commands.
 	 */
 	@Override
@@ -80,12 +41,9 @@ public class CommandHandler implements Handler {
 		bot.getDiscordClient().getEventDispatcher().on(MessageCreateEvent.class).subscribeOn(Schedulers.elastic())
 				.filter(event -> event.getMessage().getContent().isPresent())
 				.map(event -> new ContextImpl(event, Arrays.asList(event.getMessage().getContent().get().split(" +")), bot))
+				.filter(ctx -> ctx.getArgs().get(0).startsWith(ctx.getEffectivePrefix()))
 				.subscribe(ctx -> {
-					var prefix = ctx.getGuildSettings() != null ? ctx.getGuildSettings().getPrefix() : bot.getDefaultPrefix();
-					if (!ctx.getArgs().get(0).startsWith(prefix)) {
-						return;
-					}
-					var cmdName = ctx.getArgs().get(0).substring(prefix.length());
+					var cmdName = ctx.getArgs().get(0).substring(ctx.getEffectivePrefix().length());
 					var cmd = commands.get(cmdName);
 					if (cmd == null) {
 						return;
@@ -134,5 +92,13 @@ public class CommandHandler implements Handler {
 	
 	public Set<Plugin> getPlugins() {
 		return plugins;
+	}
+
+	public Map<String, Command> getCommands() {
+		return commands;
+	}
+
+	public Map<Command, Map<String, Command>> getSubCommands() {
+		return subCommands;
 	}
 }

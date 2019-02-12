@@ -4,7 +4,13 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.StringJoiner;
 
+import com.github.alex1304.ultimategdbot.api.Bot;
 import com.github.alex1304.ultimategdbot.api.Command;
+
+import discord4j.core.object.entity.Channel;
+import discord4j.core.object.entity.Role;
+import discord4j.core.object.util.Snowflake;
+import reactor.core.publisher.Mono;
 
 /**
  * Contains various utility methods.
@@ -71,5 +77,25 @@ public class Utils {
 			}
 		}
 		return res;
+	}
+
+	public static Mono<Channel> stringToChannel(Bot bot, String str) {
+		Snowflake s;
+		try {
+			s = Snowflake.of(str);
+		} catch (NumberFormatException e) {
+			s = Snowflake.of(str.substring(2, str.length() - 1));
+		}
+		return bot.getDiscordClient().getChannelById(s);
+	}
+
+	public static Mono<Role> stringToRole(Bot bot, Snowflake guildId, String str) {
+		Snowflake s;
+		try {
+			s = Snowflake.of(str);
+		} catch (NumberFormatException e) {
+			s = Snowflake.of(str.substring(3, str.length() - 1));
+		}
+		return bot.getDiscordClient().getRoleById(guildId, s);
 	}
 }

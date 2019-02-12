@@ -5,8 +5,7 @@ module ultimategdbot.api {
 	requires discord4j.rest;
 	requires io.netty.codec.http;
 	
-	exports com.github.alex1304.ultimategdbot.api.entity;
-	exports com.github.alex1304.ultimategdbot.api.guildconf;
+	exports com.github.alex1304.ultimategdbot.api.guildsettings;
 	exports com.github.alex1304.ultimategdbot.api.utils;
 	exports com.github.alex1304.ultimategdbot.api.utils.reply;
 	exports com.github.alex1304.ultimategdbot.api;

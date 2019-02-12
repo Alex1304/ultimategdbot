@@ -1,9 +1,13 @@
 package com.github.alex1304.ultimategdbot.core.impl;
 
+import java.util.ArrayDeque;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -15,6 +19,7 @@ import com.github.alex1304.ultimategdbot.api.Command;
 import com.github.alex1304.ultimategdbot.api.Context;
 import com.github.alex1304.ultimategdbot.api.Database;
 import com.github.alex1304.ultimategdbot.api.Plugin;
+import com.github.alex1304.ultimategdbot.api.guildsettings.GuildSettingsEntry;
 import com.github.alex1304.ultimategdbot.core.handler.CommandHandler;
 import com.github.alex1304.ultimategdbot.core.handler.Handler;
 import com.github.alex1304.ultimategdbot.core.handler.ReplyMenuHandler;
@@ -41,7 +46,7 @@ public class BotImpl implements Bot {
 	private final Snowflake moderatorRoleId;
 	private final String releaseChannel;
 	private final DiscordClient client;
-	private final Database database;
+	private final DatabaseImpl database;
 	private final int replyMenuTimeout;
 	private final Snowflake debugLogChannelId;
 	private final Snowflake[] emojiGuildIds;
@@ -49,9 +54,10 @@ public class BotImpl implements Bot {
 	private final CommandHandler cmdHandler;
 	private final ReplyMenuHandler replyMenuHandler;
 	private final Set<Handler> handlers;
+	private final Map<Plugin, Map<String, GuildSettingsEntry<?, ?>>> guildSettingsEntries;
 	
 	private BotImpl(String token, String defaultPrefix, Snowflake supportServerId, Snowflake moderatorRoleId, String releaseChannel,
-			DiscordClient client, Database database, int replyMenuTimeout, Snowflake debugLogChannelId, Snowflake[] emojiGuildIds) {
+			DiscordClient client, DatabaseImpl database, int replyMenuTimeout, Snowflake debugLogChannelId, Snowflake[] emojiGuildIds) {
 		this.token = token;
 		this.defaultPrefix = defaultPrefix;
 		this.supportServerId = supportServerId;
@@ -66,6 +72,7 @@ public class BotImpl implements Bot {
 		this.cmdHandler = new CommandHandler(this);
 		this.replyMenuHandler = new ReplyMenuHandler(this);
 		this.handlers = Set.of(cmdHandler, replyMenuHandler);
+		this.guildSettingsEntries = new HashMap<>();
 	}
 
 	@Override
@@ -194,7 +201,36 @@ public class BotImpl implements Bot {
 
 	@Override
 	public void start() {
-		handlers.forEach(Handler::prepare);
+		var loader = ServiceLoader.load(Plugin.class);
+		for (var plugin : loader) {
+			System.out.printf("Loading plugin: %s...\n", plugin.getName());
+			database.addAllMappingResources(plugin.getDatabaseMappingResources());
+			guildSettingsEntries.put(plugin, plugin.getGuildConfigurationEntries(this));
+			for (var cmd : plugin.getProvidedCommands()) {
+				for (var alias : cmd.getAliases()) {
+					cmdHandler.getCommands().put(alias, cmd);
+				}
+				// Add all subcommands
+				var subCmdDeque = new ArrayDeque<Command>();
+				subCmdDeque.push(cmd);
+				while (!subCmdDeque.isEmpty()) {
+					var element = subCmdDeque.pop();
+					if (cmdHandler.getSubCommands().containsKey(element)) {
+						continue;
+					}
+					var subCmdMap = new HashMap<String, Command>();
+					for (var subcmd : element.getSubcommands()) {
+						for (var alias : subcmd.getAliases()) {
+							subCmdMap.put(alias, subcmd);
+						}
+					}
+					cmdHandler.getSubCommands().put(element, subCmdMap);
+					subCmdDeque.addAll(element.getSubcommands());
+				}
+				System.out.printf("\tLoaded command: %s %s\n", cmd.getClass().getName(), cmd.getAliases());
+			}
+			cmdHandler.getPlugins().add(plugin);
+		}
 		try {
 			database.configure();
 		} catch (MappingException e) {
@@ -226,6 +262,11 @@ public class BotImpl implements Bot {
 
 	@Override
 	public Set<Plugin> getPlugins() {
-		return cmdHandler.getPlugins();
+		return Collections.unmodifiableSet(cmdHandler.getPlugins());
+	}
+
+	@Override
+	public Map<Plugin, Map<String, GuildSettingsEntry<?, ?>>> getGuildSettingsEntries() {
+		return Collections.unmodifiableMap(guildSettingsEntries);
 	}
 }
