@@ -1,6 +1,7 @@
 package com.github.alex1304.ultimategdbot.api;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -139,4 +140,11 @@ public interface Bot {
 	 * @return the corresponding Command instance, or null if not found
 	 */
 	Command getCommandForName(String name);
+	
+	/**
+	 * Gets the list of plugins loaded into the bot.
+	 * 
+	 * @return the set of plugins
+	 */
+	Set<Plugin> getPlugins();
 }

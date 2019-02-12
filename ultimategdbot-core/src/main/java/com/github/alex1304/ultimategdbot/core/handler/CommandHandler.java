@@ -4,9 +4,11 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.ServiceLoader;
+import java.util.Set;
 
 import com.github.alex1304.ultimategdbot.api.Bot;
 import com.github.alex1304.ultimategdbot.api.Command;
@@ -25,11 +27,13 @@ public class CommandHandler implements Handler {
 	private final Bot bot;
 	private final Map<String, Command> commands;
 	private final Map<Command, Map<String, Command>> subCommands;
+	private final Set<Plugin> plugins;
 	
 	public CommandHandler(Bot bot) {
 		this.bot = Objects.requireNonNull(bot);
 		this.commands = new HashMap<>();
 		this.subCommands = new HashMap<>();
+		this.plugins = new HashSet<>();
 	}
 	
 	/**
@@ -64,6 +68,7 @@ public class CommandHandler implements Handler {
 				}
 				System.out.printf("\tLoaded command: %s %s\n", cmd.getClass().getName(), cmd.getAliases());
 			}
+			plugins.add(plugin);
 		}
 	}
 	
@@ -125,5 +130,9 @@ public class CommandHandler implements Handler {
 			parts.add(0, String.join(" ", arg1, arg2));
 		}
 		return cmd;
+	}
+	
+	public Set<Plugin> getPlugins() {
+		return plugins;
 	}
 }

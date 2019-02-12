@@ -1,5 +1,6 @@
 package com.github.alex1304.ultimategdbot.core.impl;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -8,6 +9,7 @@ import java.util.function.Consumer;
 
 import com.github.alex1304.ultimategdbot.api.Bot;
 import com.github.alex1304.ultimategdbot.api.Context;
+import com.github.alex1304.ultimategdbot.api.Plugin;
 import com.github.alex1304.ultimategdbot.api.entity.GuildSettings;
 
 import discord4j.core.event.domain.message.MessageCreateEvent;
@@ -122,5 +124,23 @@ public class ContextImpl implements Context {
 			return defaultVal;
 		}
 		return (T) val;
+	}
+
+	@Override
+	public Map<Plugin, Map<String, String>> getGuildSettings0() {
+		var map = new HashMap<Plugin, Map<String, String>>();
+		for (var plugin : bot.getPlugins()) {
+			var entries = new HashMap<String, String>();
+			plugin.getGuildConfigurationEntries().forEach((k, v) -> {
+				//entries.put(k, v.get);
+			});
+		}
+		return null;
+	}
+
+	@Override
+	public void setGuildSetting(String key, String val) {
+		// TODO Auto-generated method stub
+		
 	}
 }

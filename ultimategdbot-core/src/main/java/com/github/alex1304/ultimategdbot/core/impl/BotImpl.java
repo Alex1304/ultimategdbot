@@ -14,6 +14,7 @@ import com.github.alex1304.ultimategdbot.api.Bot;
 import com.github.alex1304.ultimategdbot.api.Command;
 import com.github.alex1304.ultimategdbot.api.Context;
 import com.github.alex1304.ultimategdbot.api.Database;
+import com.github.alex1304.ultimategdbot.api.Plugin;
 import com.github.alex1304.ultimategdbot.core.handler.CommandHandler;
 import com.github.alex1304.ultimategdbot.core.handler.Handler;
 import com.github.alex1304.ultimategdbot.core.handler.ReplyMenuHandler;
@@ -221,5 +222,10 @@ public class BotImpl implements Bot {
 	@Override
 	public Command getCommandForName(String name) {
 		return cmdHandler.getCommandForName(name);
+	}
+
+	@Override
+	public Set<Plugin> getPlugins() {
+		return cmdHandler.getPlugins();
 	}
 }

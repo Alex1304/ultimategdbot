@@ -1,6 +1,7 @@
 package com.github.alex1304.ultimategdbot.api;
 
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 import com.github.alex1304.ultimategdbot.api.entity.GuildSettings;
@@ -100,4 +101,19 @@ public interface Context {
 	 * @return the value of the variable, or the default value if not found or exists in the wrong type
 	 */
 	<T> T getVarOrDefault(String name, T defaultVal);
+	
+	/**
+	 * Gets the guild settings
+	 * 
+	 * @return an unmodifiable Map containing the guild settings keys and their associated values.
+	 */
+	Map<Plugin, Map<String, String>> getGuildSettings0();
+	
+	/**
+	 * Edits an entry of the guild settings.
+	 * 
+	 * @param key - the setting key
+	 * @param val - the setting value
+	 */
+	void setGuildSetting(String key, String val);
 }
