@@ -3,59 +3,56 @@ package com.github.alex1304.ultimategdbot.core.nativeplugin;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.function.BiConsumer;
 
 import com.github.alex1304.ultimategdbot.api.Command;
+import com.github.alex1304.ultimategdbot.api.CommandFailedException;
 import com.github.alex1304.ultimategdbot.api.Context;
+import com.github.alex1304.ultimategdbot.api.InvalidSyntaxException;
 import com.github.alex1304.ultimategdbot.api.PermissionLevel;
-import com.github.alex1304.ultimategdbot.api.utils.reply.PaginatedReplyMenuBuilder;
 
 import discord4j.core.object.entity.Channel.Type;
 import reactor.core.publisher.Mono;
 
-public class SetupCommand implements Command {
+public class SetupSetCommand implements Command {
 
 	@Override
 	public Mono<Void> execute(Context ctx) {
-		var rb = new PaginatedReplyMenuBuilder(this, ctx, true, false);
-		var sb = new StringBuilder();
-		ctx.getGuildSettings().forEach((plugin, entries) -> {
-			sb.append("**__").append(plugin.getName()).append("__**\n");
-			if (entries.isEmpty()) {
-				sb.append("_(Nothing to configure here)_\n");
-				return;
-			}
-			entries.forEach((k, v) -> {
-				sb.append('`');
-				sb.append(k);
-				sb.append("`: ");
-				sb.append(v);
-				sb.append('\n');
-			});
-			sb.append('\n');
-		});
-		return rb.build(sb.toString().stripTrailing()).then();
+		if (ctx.getArgs().size() < 3) {
+			return Mono.error(new InvalidSyntaxException(this));
+		}
+		var arg1 = ctx.getArgs().get(1);
+		var arg2 = String.join(" ", ctx.getArgs().subList(2, ctx.getArgs().size()));
+		try {
+			ctx.setGuildSetting(arg1, arg2);
+		} catch (NoSuchElementException e) {
+			return Mono.error(new CommandFailedException("There is no settings entry with key `" + arg1 + "`."));
+		} catch (IllegalArgumentException e) {
+			return Mono.error(new CommandFailedException("Cannot assign this value to key `" + arg1 + "`: " + e.getMessage()));
+		}
+		return ctx.reply(":white_check_mark: Settings updated!").then();
 	}
 
 	@Override
 	public Set<String> getAliases() {
-		return Set.of("setup", "settings", "configure", "config");
+		return Set.of("set");
 	}
 
 	@Override
 	public Set<Command> getSubcommands() {
-		return Set.of(new SetupSetCommand());
+		return Collections.emptySet();
 	}
 
 	@Override
 	public String getDescription() {
-		return "View and edit bot setup for this guild.";
+		return "Assigns a new value to one of the guild configuration entries.";
 	}
 
 	@Override
 	public String getSyntax() {
-		return "";
+		return "<key> <value>";
 	}
 
 	@Override

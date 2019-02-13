@@ -1,5 +1,6 @@
 package com.github.alex1304.ultimategdbot.core.nativeplugin;
 
+import java.time.Duration;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Map;
@@ -9,7 +10,6 @@ import java.util.function.BiConsumer;
 import com.github.alex1304.ultimategdbot.api.Command;
 import com.github.alex1304.ultimategdbot.api.CommandFailedException;
 import com.github.alex1304.ultimategdbot.api.Context;
-import com.github.alex1304.ultimategdbot.api.InvalidSyntaxException;
 import com.github.alex1304.ultimategdbot.api.PermissionLevel;
 import com.github.alex1304.ultimategdbot.api.utils.Utils;
 import com.github.alex1304.ultimategdbot.api.utils.reply.PaginatedReplyMenuBuilder;
@@ -21,11 +21,34 @@ public class HelpCommand implements Command {
 
 	@Override
 	public Mono<Void> execute(Context ctx) {
-		if (ctx.getArgs().size() == 1) {
-			// TODO command list
-			return Mono.error(new InvalidSyntaxException(this));
-		}
 		var rb = new PaginatedReplyMenuBuilder(this, ctx, true, false);
+		if (ctx.getArgs().size() == 1) {
+			var sb = new StringBuffer("Here is the list of commands you can use in this channel:\n\n");
+			return ctx.getEvent().getMessage().getChannel().doOnNext(c -> {
+				System.out.println(ctx.getBot().getCommandsFromPlugins());
+				ctx.getBot().getCommandsFromPlugins().forEach((plugin, cmdSet) -> {
+					sb.append("**__").append(plugin.getName()).append("__**\n");
+					cmdSet.stream()
+							.filter(cmd -> cmd.getChannelTypesAllowed().contains(c.getType()))
+							.filter(cmd -> {
+								try {
+									return cmd.getPermissionLevel().isGranted(ctx).blockOptional(Duration.ofSeconds(1)).get();
+								} catch (Exception e) {
+									return false;
+								}
+							})
+							.forEach(cmd -> {
+								sb.append('`');
+								sb.append(ctx.getEffectivePrefix());
+								sb.append(String.join("|", cmd.getAliases()));
+								sb.append("`: ");
+								sb.append(cmd.getDescription());
+								sb.append('\n');
+							});
+					sb.append('\n');
+				});
+			}).flatMap(__ -> rb.build(sb.toString().stripTrailing())).then();
+		}
 		var cmdName = String.join(" ", ctx.getArgs().subList(1, ctx.getArgs().size()));
 		var cmd = ctx.getBot().getCommandForName(cmdName);
 		if (cmd == null) {

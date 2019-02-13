@@ -3,6 +3,7 @@ package com.github.alex1304.ultimategdbot.core.impl;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
@@ -10,7 +11,7 @@ import java.util.function.Consumer;
 import com.github.alex1304.ultimategdbot.api.Bot;
 import com.github.alex1304.ultimategdbot.api.Context;
 import com.github.alex1304.ultimategdbot.api.Plugin;
-import com.github.alex1304.ultimategdbot.core.nativeplugin.NativeGuildSettings;
+import com.github.alex1304.ultimategdbot.api.guildsettings.NativeGuildSettings;
 
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.entity.Message;
@@ -24,12 +25,13 @@ public class ContextImpl implements Context {
 	private final List<String> args;
 	private final Bot bot;
 	private final NativeGuildSettings guildSettings; // null if DM message
-	private Map<String, Object> variables;
+	private final Map<String, Object> variables;
 
 	public ContextImpl(MessageCreateEvent event, List<String> args, Bot bot) {
 		this.event = Objects.requireNonNull(event);
 		this.args = Objects.requireNonNull(args);
 		this.bot = Objects.requireNonNull(bot);
+		this.variables = new ConcurrentHashMap<>();
 		var guildIdOpt = event.getGuildId();
 		if (!guildIdOpt.isPresent()) {
 			this.guildSettings = null;
@@ -41,7 +43,6 @@ public class ContextImpl implements Context {
 			gs.setPrefix(bot.getDefaultPrefix());
 		});
 		this.guildSettings = guildSettings;
-		this.variables = new ConcurrentHashMap<>();
 	}
 
 	@Override
@@ -139,12 +140,17 @@ public class ContextImpl implements Context {
 		if (!event.getGuildId().isPresent()) {
 			throw new UnsupportedOperationException("Cannot perform this operation outside of a guild");
 		}
+		var found = false;
 		for (var map : bot.getGuildSettingsEntries().values()) {
 			var entry = map.get(key);
 			if (entry != null) {
+				found = true;
 				entry.valueAsStringToDatabase(bot.getDatabase(), val, event.getGuildId().get().asLong());
 				return;
 			}
+		}
+		if (!found) {
+			throw new NoSuchElementException();
 		}
 	}
 }

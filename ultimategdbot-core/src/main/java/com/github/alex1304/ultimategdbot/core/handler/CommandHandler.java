@@ -23,12 +23,14 @@ public class CommandHandler implements Handler {
 	
 	private final Bot bot;
 	private final Map<String, Command> commands;
+	private final Map<Plugin, Set<Command>> commandsByPlugins;
 	private final Map<Command, Map<String, Command>> subCommands;
 	private final Set<Plugin> plugins;
 	
 	public CommandHandler(Bot bot) {
 		this.bot = Objects.requireNonNull(bot);
 		this.commands = new HashMap<>();
+		this.commandsByPlugins = new HashMap<>();
 		this.subCommands = new HashMap<>();
 		this.plugins = new HashSet<>();
 	}
@@ -96,6 +98,10 @@ public class CommandHandler implements Handler {
 
 	public Map<String, Command> getCommands() {
 		return commands;
+	}
+
+	public Map<Plugin, Set<Command>> getCommandsByPlugins() {
+		return commandsByPlugins;
 	}
 
 	public Map<Command, Map<String, Command>> getSubCommands() {

@@ -2,6 +2,7 @@ package com.github.alex1304.ultimategdbot.api.guildsettings;
 
 import java.util.Objects;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import com.github.alex1304.ultimategdbot.api.Database;
@@ -17,11 +18,11 @@ public class GuildSettingsEntry<E extends GuildSettings, D> {
 	private final Class<E> entityClass;
 	private final Function<E, D> valueGetter;
 	private final BiConsumer<E, D> valueSetter;
-	private final Function<String, D> stringToValue;
-	private final Function<D, String> valueToString;
+	private final BiFunction<String, Long, D> stringToValue;
+	private final BiFunction<D, Long, String> valueToString;
 	
 	public GuildSettingsEntry(Class<E> entityClass, Function<E, D> valueGetter,
-			BiConsumer<E, D> valueSetter, Function<String, D> stringToValue, Function<D, String> valueToString) {
+			BiConsumer<E, D> valueSetter, BiFunction<String, Long, D> stringToValue, BiFunction<D, Long, String> valueToString) {
 		this.entityClass = Objects.requireNonNull(entityClass);
 		this.valueGetter = Objects.requireNonNull(valueGetter);
 		this.valueSetter = Objects.requireNonNull(valueSetter);
@@ -40,16 +41,16 @@ public class GuildSettingsEntry<E extends GuildSettings, D> {
 	
 	public String valueFromDatabaseAsString(Database db, long guildId) {
 		var val = valueFromDatabase(db, guildId);
-		return valueToString.apply(val);
+		return valueToString.apply(val, guildId);
 	}
 	
 	public void valueToDatabase(Database db, D value, long guildId) {
 		var entity = db.findByIDOrCreate(entityClass, guildId, GuildSettings::setGuildId);
 		valueSetter.accept(entity, value);
-		db.save(value);
+		db.save(entity);
 	}
 	
 	public void valueAsStringToDatabase(Database db, String strVal, long guildId) {
-		valueToDatabase(db, stringToValue.apply(strVal), guildId);
+		valueToDatabase(db, stringToValue.apply(strVal, guildId), guildId);
 	}
 }

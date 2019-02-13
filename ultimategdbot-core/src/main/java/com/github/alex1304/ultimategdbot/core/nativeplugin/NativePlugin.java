@@ -8,12 +8,14 @@ import com.github.alex1304.ultimategdbot.api.Bot;
 import com.github.alex1304.ultimategdbot.api.Command;
 import com.github.alex1304.ultimategdbot.api.Plugin;
 import com.github.alex1304.ultimategdbot.api.guildsettings.GuildSettingsEntry;
+import com.github.alex1304.ultimategdbot.api.guildsettings.NativeGuildSettings;
+import com.github.alex1304.ultimategdbot.api.utils.GuildSettingsValueConverter;
 
 public class NativePlugin implements Plugin {
 
 	@Override
 	public Set<Command> getProvidedCommands() {
-		return Set.of(new SetupCommand());
+		return Set.of(new HelpCommand(), new PingCommand(), new SetupCommand());
 	}
 
 	@Override
@@ -29,8 +31,21 @@ public class NativePlugin implements Plugin {
 	@Override
 	public Map<String, GuildSettingsEntry<?, ?>> getGuildConfigurationEntries(Bot bot) {
 		var map = new HashMap<String, GuildSettingsEntry<?, ?>>();
-		map.put("prefix", new GuildSettingsEntry<>(NativeGuildSettings.class, NativeGuildSettings::getPrefix, NativeGuildSettings::setPrefix, String::toString, String::toString));
-		map.put("server_mod_role", new GuildSettingsEntry<>(NativeGuildSettings.class, NativeGuildSettings::getServerModRoleId, NativeGuildSettings::setServerModRoleId, str -> Long.parseLong(str.substring(3, str.length() - 1)), String::valueOf));
+		var valueConverter = new GuildSettingsValueConverter(bot);
+		map.put("prefix", new GuildSettingsEntry<>(
+				NativeGuildSettings.class,
+				NativeGuildSettings::getPrefix,
+				NativeGuildSettings::setPrefix,
+				valueConverter::convertStringToString,
+				valueConverter::convertStringToString
+		));
+		map.put("server_mod_role", new GuildSettingsEntry<>(
+				NativeGuildSettings.class,
+				NativeGuildSettings::getServerModRoleId,
+				NativeGuildSettings::setServerModRoleId,
+				valueConverter::convertStringToRoleID,
+				valueConverter::convertRoleIDToString
+		));
 		return map;
 	}
 

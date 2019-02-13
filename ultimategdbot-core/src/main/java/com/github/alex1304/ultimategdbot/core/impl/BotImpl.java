@@ -206,7 +206,9 @@ public class BotImpl implements Bot {
 			System.out.printf("Loading plugin: %s...\n", plugin.getName());
 			database.addAllMappingResources(plugin.getDatabaseMappingResources());
 			guildSettingsEntries.put(plugin, plugin.getGuildConfigurationEntries(this));
-			for (var cmd : plugin.getProvidedCommands()) {
+			var cmdSet = plugin.getProvidedCommands();
+			cmdHandler.getCommandsByPlugins().put(plugin, cmdSet);
+			for (var cmd : cmdSet) {
 				for (var alias : cmd.getAliases()) {
 					cmdHandler.getCommands().put(alias, cmd);
 				}
@@ -215,17 +217,18 @@ public class BotImpl implements Bot {
 				subCmdDeque.push(cmd);
 				while (!subCmdDeque.isEmpty()) {
 					var element = subCmdDeque.pop();
+					var elementSubcmds = element.getSubcommands();
 					if (cmdHandler.getSubCommands().containsKey(element)) {
 						continue;
 					}
 					var subCmdMap = new HashMap<String, Command>();
-					for (var subcmd : element.getSubcommands()) {
+					for (var subcmd : elementSubcmds) {
 						for (var alias : subcmd.getAliases()) {
 							subCmdMap.put(alias, subcmd);
 						}
 					}
 					cmdHandler.getSubCommands().put(element, subCmdMap);
-					subCmdDeque.addAll(element.getSubcommands());
+					subCmdDeque.addAll(elementSubcmds);
 				}
 				System.out.printf("\tLoaded command: %s %s\n", cmd.getClass().getName(), cmd.getAliases());
 			}
@@ -261,8 +264,8 @@ public class BotImpl implements Bot {
 	}
 
 	@Override
-	public Set<Plugin> getPlugins() {
-		return Collections.unmodifiableSet(cmdHandler.getPlugins());
+	public Map<Plugin, Set<Command>> getCommandsFromPlugins() {
+		return Collections.unmodifiableMap(cmdHandler.getCommandsByPlugins());
 	}
 
 	@Override

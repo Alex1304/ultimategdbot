@@ -105,6 +105,9 @@ public interface Context {
 	 * 
 	 * @param key - the setting key
 	 * @param val - the setting value
+	 * @throws NoSuchElementException if no entry is found for the given key
+	 * @throws IllegalArgumentException if the given value is not accepted by the entry 
+	 * @throws UnsupportedOperationException if this method is called in a context that is outside of a Discord guild
 	 */
 	void setGuildSetting(String key, String val);
 }

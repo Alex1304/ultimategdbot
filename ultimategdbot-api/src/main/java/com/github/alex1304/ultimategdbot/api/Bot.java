@@ -144,11 +144,11 @@ public interface Bot {
 	Command getCommandForName(String name);
 	
 	/**
-	 * Gets the list of plugins loaded into the bot.
+	 * Returns the set of all available commands mapped by their respective plugins.
 	 * 
-	 * @return the set of plugins
+	 * @return a Map that associates plugins with the commands they provide
 	 */
-	Set<Plugin> getPlugins();
+	Map<Plugin, Set<Command>> getCommandsFromPlugins();
 
 	/**
 	 * Gets the guild settings entries loaded from plugins. Unlike

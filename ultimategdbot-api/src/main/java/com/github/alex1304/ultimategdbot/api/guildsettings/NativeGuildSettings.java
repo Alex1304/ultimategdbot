@@ -1,6 +1,4 @@
-package com.github.alex1304.ultimategdbot.core.nativeplugin;
-
-import com.github.alex1304.ultimategdbot.api.guildsettings.GuildSettings;
+package com.github.alex1304.ultimategdbot.api.guildsettings;
 
 public class NativeGuildSettings implements GuildSettings {
 	
