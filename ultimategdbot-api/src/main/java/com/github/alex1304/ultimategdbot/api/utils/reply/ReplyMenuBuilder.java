@@ -1,16 +1,13 @@
 package com.github.alex1304.ultimategdbot.api.utils.reply;
 
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 import com.github.alex1304.ultimategdbot.api.Context;
-import com.github.alex1304.ultimategdbot.api.utils.Utils;
 
 import discord4j.core.object.entity.Message;
 import discord4j.core.spec.EmbedCreateSpec;
@@ -28,37 +25,6 @@ public class ReplyMenuBuilder {
 			this.action = Objects.requireNonNull(action);
 		}
 	}
-	static final Function<String, List<String>> CHUNK_FUNC = str -> {
-		var chunks = new ArrayList<String>();
-		var strLines = str.split("\n");
-		var charactersRead = 0;
-		final var breakpoint = 1990;
-		var currentChunk = new StringBuilder();
-		var inCodeblock = false;
-		for (var line : strLines) {
-			inCodeblock = Utils.occurrences(line, "```") % 2 == 1 ? !inCodeblock : inCodeblock;
-			var old = charactersRead;
-			charactersRead += line.length();
-			if (old / breakpoint != charactersRead / breakpoint) {
-				if (inCodeblock) {
-					currentChunk.append("```\n");
-				}
-				chunks.add(currentChunk.substring(0, Math.min(currentChunk.length(), breakpoint)).toString());
-				currentChunk.delete(0, currentChunk.length());
-			} else {
-				if (!chunks.isEmpty() && currentChunk.length() == 0 && inCodeblock) {
-					currentChunk.append("```\n");
-					inCodeblock = false;
-				}
-				currentChunk.append(line);
-				currentChunk.append('\n');
-			}
-		}
-		if (currentChunk.length() != 0) {
-			chunks.add(currentChunk.toString());
-		}
-		return chunks;
-	};
 	private final Map<String, Entry> menuEntries;
 	final Context ctx;
 	private final boolean deleteOnReply, deleteOnTimeout;

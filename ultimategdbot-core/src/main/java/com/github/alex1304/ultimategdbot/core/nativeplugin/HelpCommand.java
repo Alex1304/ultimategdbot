@@ -21,11 +21,13 @@ public class HelpCommand implements Command {
 
 	@Override
 	public Mono<Void> execute(Context ctx) {
+		if (ctx.getArgs().size() == 4) {
+			return Mono.error(new RuntimeException("Fake error don't worry"));
+		}
 		var rb = new PaginatedReplyMenuBuilder(this, ctx, true, false);
 		if (ctx.getArgs().size() == 1) {
 			var sb = new StringBuffer("Here is the list of commands you can use in this channel:\n\n");
 			return ctx.getEvent().getMessage().getChannel().doOnNext(c -> {
-				System.out.println(ctx.getBot().getCommandsFromPlugins());
 				ctx.getBot().getCommandsFromPlugins().forEach((plugin, cmdSet) -> {
 					sb.append("**__").append(plugin.getName()).append("__**\n");
 					cmdSet.stream()
@@ -40,7 +42,7 @@ public class HelpCommand implements Command {
 							.forEach(cmd -> {
 								sb.append('`');
 								sb.append(ctx.getEffectivePrefix());
-								sb.append(String.join("|", cmd.getAliases()));
+								sb.append(Utils.joinAliases(cmd.getAliases()));
 								sb.append("`: ");
 								sb.append(cmd.getDescription());
 								sb.append('\n');

@@ -1,5 +1,7 @@
 package com.github.alex1304.ultimategdbot.api;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Map;
@@ -7,6 +9,8 @@ import java.util.Set;
 import java.util.StringJoiner;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+
+import com.github.alex1304.ultimategdbot.api.utils.Utils;
 
 import discord4j.core.object.entity.Channel;
 import discord4j.core.object.entity.Channel.Type;
@@ -119,7 +123,13 @@ public interface Command {
 						actions.getOrDefault(error.getClass(), (e, ctx0) -> {
 							ctx0.reply(":no_entry_sign: An internal error occured. A crash report has been sent to the developer. Sorry for the inconvenience.")
 									.subscribe();
-							e.printStackTrace();
+							var sw = new StringWriter();
+							var pw = new PrintWriter(sw);
+							pw.println(":no_entry_sign: An internal error occured while executing a command.");
+							pw.println("User input: `" + ctx0.getEvent().getMessage().getContent().orElseGet(() -> "(No content)") + "`");
+							pw.println("Full stack trace:");
+							e.printStackTrace(pw);
+							Utils.sendMultipleSimpleMessagesToOneChannel(ctx.getBot().getDebugLogChannel(), Utils.chunkMessage(sw.toString())).subscribe();
 						}).accept(error, ctx);
 					}
 				}).subscribe();

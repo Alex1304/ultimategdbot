@@ -1,15 +1,20 @@
 package com.github.alex1304.ultimategdbot.api.utils;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.StringJoiner;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
-import com.github.alex1304.ultimategdbot.api.Bot;
 import com.github.alex1304.ultimategdbot.api.Command;
 
 import discord4j.core.object.entity.Channel;
-import discord4j.core.object.entity.Role;
-import discord4j.core.object.util.Snowflake;
+import discord4j.core.object.entity.Message;
+import discord4j.core.object.entity.MessageChannel;
+import discord4j.core.spec.MessageCreateSpec;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
@@ -57,7 +62,7 @@ public class Utils {
 		return sb.toString();
 	}
 	
-	private static String joinAliases(Set<String> aliases) {
+	public static String joinAliases(Set<String> aliases) {
 		if (aliases.size() == 1) {
 			return aliases.stream().findAny().get();
 		} else {
@@ -70,7 +75,7 @@ public class Utils {
 	
 	public static int occurrences(String str, String substr) {
 		int res = 0;
-		for (var i = 0 ; i < str.length() - substr.length() - 1 ; i++) {
+		for (var i = 0 ; i < str.length() - substr.length() + 1 ; i++) {
 			var substr0 = str.substring(i, i + substr.length());
 			if (substr.equals(substr0)) {
 				res++;
@@ -78,24 +83,46 @@ public class Utils {
 		}
 		return res;
 	}
-
-	public static Mono<Channel> stringToChannel(Bot bot, String str) {
-		Snowflake s;
-		try {
-			s = Snowflake.of(str);
-		} catch (NumberFormatException e) {
-			s = Snowflake.of(str.substring(2, str.length() - 1));
+	
+	public static List<String> chunkMessage(String superLongMessage) {
+		var chunks = new ArrayList<String>();
+		var charactersRead = 0;
+		final var breakpoint = 1990;
+		var currentChunk = new StringBuilder();
+		var inCodeblock = false;
+		for (var line : superLongMessage.lines().collect(Collectors.toList())) {
+			inCodeblock = occurrences(line, "```") % 2 == 1 ? !inCodeblock : inCodeblock;
+			var old = charactersRead;
+			charactersRead += line.length();
+			if (old / breakpoint != charactersRead / breakpoint) {
+				if (inCodeblock) {
+					currentChunk.append("```\n");
+				}
+				chunks.add(currentChunk.substring(0, Math.min(currentChunk.length(), breakpoint)).toString());
+				currentChunk.delete(0, currentChunk.length());
+			} else {
+				if (!chunks.isEmpty() && currentChunk.length() == 0 && inCodeblock) {
+					currentChunk.append("```\n");
+				}
+				currentChunk.append(line);
+				currentChunk.append('\n');
+			}
 		}
-		return bot.getDiscordClient().getChannelById(s);
+		if (currentChunk.length() != 0) {
+			chunks.add(currentChunk.toString());
+		}
+		return chunks;
 	}
-
-	public static Mono<Role> stringToRole(Bot bot, Snowflake guildId, String str) {
-		Snowflake s;
-		try {
-			s = Snowflake.of(str);
-		} catch (NumberFormatException e) {
-			s = Snowflake.of(str.substring(3, str.length() - 1));
-		}
-		return bot.getDiscordClient().getRoleById(guildId, s);
+	
+	public static Flux<Message> sendMultipleMessagesToOneChannel(Mono<Channel> channel, Iterable<Consumer<MessageCreateSpec>> specs) {
+		return channel.ofType(MessageChannel.class).flatMapMany(c -> Flux.fromIterable(specs).flatMap(spec -> c.createMessage(spec)));
+	}
+	
+	public static Flux<Message> sendMultipleSimpleMessagesToOneChannel(Mono<Channel> channel, Iterable<String> strings) {
+		return channel.ofType(MessageChannel.class).flatMapMany(c -> Flux.fromIterable(strings).flatMap(spec -> c.createMessage(spec)));
+	}
+	
+	public static Flux<Message> sendOneMessageToMultipleChannels(Flux<Channel> channels, Consumer<MessageCreateSpec> spec) {
+		return channels.ofType(MessageChannel.class).flatMap(c -> c.createMessage(spec));
 	}
 }
