@@ -21,9 +21,6 @@ public class HelpCommand implements Command {
 
 	@Override
 	public Mono<Void> execute(Context ctx) {
-		if (ctx.getArgs().size() == 4) {
-			return Mono.error(new RuntimeException("Fake error don't worry"));
-		}
 		var rb = new PaginatedReplyMenuBuilder(this, ctx, true, false);
 		if (ctx.getArgs().size() == 1) {
 			var sb = new StringBuffer("Here is the list of commands you can use in this channel:\n\n");

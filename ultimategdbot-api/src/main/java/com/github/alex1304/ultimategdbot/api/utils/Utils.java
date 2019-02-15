@@ -101,8 +101,10 @@ public class Utils {
 				chunks.add(currentChunk.substring(0, Math.min(currentChunk.length(), breakpoint)).toString());
 				currentChunk.delete(0, currentChunk.length());
 			} else {
-				if (!chunks.isEmpty() && currentChunk.length() == 0 && inCodeblock) {
-					currentChunk.append("```\n");
+				if (!chunks.isEmpty() && currentChunk.length() == 0) {
+					if (inCodeblock) {
+						currentChunk.append("```\n");
+					}
 				}
 				currentChunk.append(line);
 				currentChunk.append('\n');
