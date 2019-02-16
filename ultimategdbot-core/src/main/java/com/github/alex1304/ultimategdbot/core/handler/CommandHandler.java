@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -11,6 +12,7 @@ import java.util.Set;
 import com.github.alex1304.ultimategdbot.api.Bot;
 import com.github.alex1304.ultimategdbot.api.Command;
 import com.github.alex1304.ultimategdbot.api.Plugin;
+import com.github.alex1304.ultimategdbot.api.utils.Utils;
 import com.github.alex1304.ultimategdbot.core.impl.ContextImpl;
 
 import discord4j.core.event.domain.message.MessageCreateEvent;
@@ -42,8 +44,9 @@ public class CommandHandler implements Handler {
 	public void listen() {
 		bot.getDiscordClient().getEventDispatcher().on(MessageCreateEvent.class).subscribeOn(Schedulers.elastic())
 				.filter(event -> event.getMessage().getContent().isPresent())
-				.map(event -> new ContextImpl(event, Arrays.asList(event.getMessage().getContent().get().split(" +")), bot))
-				.filter(ctx -> ctx.getArgs().get(0).startsWith(ctx.getEffectivePrefix()))
+				.map(event -> new ContextImpl(event, new ArrayList<>(), bot))
+				.filter(ctx -> ctx.getEvent().getMessage().getContent().get().startsWith(ctx.getEffectivePrefix()))
+				.doOnNext(ctx -> ctx.getArgs().addAll(Utils.parseArgs(ctx.getEvent().getMessage().getContent().get(), ctx.getEffectivePrefix())))
 				.subscribe(ctx -> {
 					var cmdName = ctx.getArgs().get(0).substring(ctx.getEffectivePrefix().length());
 					var cmd = commands.get(cmdName);
@@ -74,7 +77,7 @@ public class CommandHandler implements Handler {
 	 * @return the command instance
 	 */
 	public Command getCommandForName(String name) {
-		var parts = new ArrayList<>(Arrays.asList(name.split(" +")));
+		var parts = new LinkedList<>(Arrays.asList(name.split(" +")));
 		var cmd = commands.get(parts.get(0));
 		if (cmd == null) {
 			return null;

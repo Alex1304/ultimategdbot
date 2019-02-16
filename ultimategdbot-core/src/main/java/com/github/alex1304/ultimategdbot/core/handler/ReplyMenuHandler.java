@@ -1,7 +1,6 @@
 package com.github.alex1304.ultimategdbot.core.handler;
 
 import java.time.Duration;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -10,6 +9,7 @@ import java.util.function.Function;
 import com.github.alex1304.ultimategdbot.api.Bot;
 import com.github.alex1304.ultimategdbot.api.Command;
 import com.github.alex1304.ultimategdbot.api.Context;
+import com.github.alex1304.ultimategdbot.api.utils.Utils;
 import com.github.alex1304.ultimategdbot.core.impl.ContextImpl;
 
 import discord4j.core.event.domain.message.MessageCreateEvent;
@@ -38,7 +38,7 @@ public class ReplyMenuHandler implements Handler {
 			this.deleteOnTimeout = deleteOnTimeout;
 		}
 		String toKey() {
-			return msg.getChannelId().asString() + ctx.getEvent().getMessage().getAuthorId().get().asString();
+			return msg.getChannelId().asString() + ctx.getEvent().getMessage().getAuthor().get().getId().asString();
 		}
 		void complete() {
 			if (deleteOnReply) {
@@ -69,13 +69,13 @@ public class ReplyMenuHandler implements Handler {
 	public void listen() {
 		bot.getDiscordClient().getEventDispatcher().on(MessageCreateEvent.class).subscribeOn(Schedulers.elastic())
 				.filter(event -> event.getMessage().getContent().isPresent()
-						&& event.getMessage().getAuthorId().isPresent()
+						&& event.getMessage().getAuthor().isPresent()
 						&& openedReplyMenus.containsKey(event.getMessage().getChannelId().asString()
-								+ event.getMessage().getAuthorId().get().asString()))
-				.map(event -> new ContextImpl(event, Arrays.asList(event.getMessage().getContent().get().split(" +")), bot))
+								+ event.getMessage().getAuthor().get().getId().asString()))
+				.map(event -> new ContextImpl(event, Utils.parseArgs(event.getMessage().getContent().get()), bot))
 				.subscribe(ctx -> {
 					var replyMenu = openedReplyMenus.get(ctx.getEvent().getMessage().getChannelId().asString()
-							+ ctx.getEvent().getMessage().getAuthorId().get().asString());
+							+ ctx.getEvent().getMessage().getAuthor().get().getId().asString());
 					var replyItem = ctx.getArgs().get(0);
 					var action = replyMenu.menuItems.get(replyItem);
 					if (action == null) {
@@ -90,7 +90,7 @@ public class ReplyMenuHandler implements Handler {
 	}
 	
 	public String open(Context ctx, Message msg, Map<String, Function<Context, Mono<Void>>> menuItems, boolean deleteOnReply, boolean deleteOnTimeout) {
-		if (!msg.getAuthorId().isPresent()) {
+		if (!msg.getAuthor().isPresent()) {
 			return "";
 		}
 		var rm = new ReplyMenu(ctx, msg, menuItems, deleteOnReply, deleteOnTimeout);

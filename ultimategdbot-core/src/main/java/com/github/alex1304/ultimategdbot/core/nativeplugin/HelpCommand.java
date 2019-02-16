@@ -51,7 +51,7 @@ public class HelpCommand implements Command {
 		var cmdName = String.join(" ", ctx.getArgs().subList(1, ctx.getArgs().size()));
 		var cmd = ctx.getBot().getCommandForName(cmdName);
 		if (cmd == null) {
-			return Mono.error(new CommandFailedException("This command does not exist"));
+			return Mono.error(new CommandFailedException("The command \"" + cmdName + "\" does not exist."));
 		}
 		return rb.build(Utils.generateDefaultDocumentation(cmd, ctx.getEffectivePrefix(), cmdName)).then();
 	}

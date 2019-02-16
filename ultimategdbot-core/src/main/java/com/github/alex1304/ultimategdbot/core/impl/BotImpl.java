@@ -1,9 +1,9 @@
 package com.github.alex1304.ultimategdbot.core.impl;
 
 import java.util.ArrayDeque;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
@@ -20,6 +20,7 @@ import com.github.alex1304.ultimategdbot.api.Context;
 import com.github.alex1304.ultimategdbot.api.Database;
 import com.github.alex1304.ultimategdbot.api.Plugin;
 import com.github.alex1304.ultimategdbot.api.guildsettings.GuildSettingsEntry;
+import com.github.alex1304.ultimategdbot.api.utils.PropertyParser;
 import com.github.alex1304.ultimategdbot.core.handler.CommandHandler;
 import com.github.alex1304.ultimategdbot.core.handler.Handler;
 import com.github.alex1304.ultimategdbot.core.handler.ReplyMenuHandler;
@@ -49,7 +50,7 @@ public class BotImpl implements Bot {
 	private final DatabaseImpl database;
 	private final int replyMenuTimeout;
 	private final Snowflake debugLogChannelId;
-	private final Snowflake[] emojiGuildIds;
+	private final List<Snowflake> emojiGuildIds;
 	
 	private final CommandHandler cmdHandler;
 	private final ReplyMenuHandler replyMenuHandler;
@@ -57,7 +58,7 @@ public class BotImpl implements Bot {
 	private final Map<Plugin, Map<String, GuildSettingsEntry<?, ?>>> guildSettingsEntries;
 	
 	private BotImpl(String token, String defaultPrefix, Snowflake supportServerId, Snowflake moderatorRoleId, String releaseChannel,
-			DiscordClient client, DatabaseImpl database, int replyMenuTimeout, Snowflake debugLogChannelId, Snowflake[] emojiGuildIds) {
+			DiscordClient client, DatabaseImpl database, int replyMenuTimeout, Snowflake debugLogChannelId, List<Snowflake> emojiGuildIds) {
 		this.token = token;
 		this.defaultPrefix = defaultPrefix;
 		this.supportServerId = supportServerId;
@@ -136,7 +137,7 @@ public class BotImpl implements Bot {
 	public Mono<String> getEmoji(String emojiName) {
 		return Mono.<String>create(sink -> {
 			client.getGuilds()
-					.filter(g -> Arrays.stream(emojiGuildIds).anyMatch(id -> g.getId().equals(id)))
+					.filter(g -> emojiGuildIds.stream().anyMatch(id -> g.getId().equals(id)))
 					.reduce(Flux.<GuildEmoji>empty(), (flux, g) -> flux.mergeWith(g.getEmojis()))
 					.doOnSuccess(flux -> {
 						if (flux == null) {
@@ -161,42 +162,20 @@ public class BotImpl implements Bot {
 	}
 
 	public static Bot buildFromProperties(Properties props, Properties hibernateProps) {
-		var token = parseProperty(props, "token", String::toString);
-		var defaultPrefix = parseProperty(props, "default_prefix", String::toString);
-		var supportServerId = parseProperty(props, "support_server_id", Snowflake::of);
-		var moderatorRoleId = parseProperty(props, "moderator_role_id", Snowflake::of);
-		var releaseChannel = parseProperty(props, "release_channel", String::toString);
+		var propParser = new PropertyParser(props);
+		var token = propParser.parseAsString("token");
+		var defaultPrefix = propParser.parseAsString("default_prefix");
+		var supportServerId =  propParser.parse("support_server_id", Snowflake::of);
+		var moderatorRoleId = propParser.parse("moderator_role_id", Snowflake::of);
+		var releaseChannel = propParser.parseAsString("release_channel");
 		var builder = new DiscordClientBuilder(token);
 		var database = new DatabaseImpl(hibernateProps);
-		var replyMenuTimeout = parseProperty(props, "reply_menu_timeout", Integer::parseInt);
-		var debugLogChannelId = parseProperty(props, "debug_log_channel_id", Snowflake::of);
-		var emojiGuildIds = parseProperty(props, "emoji_guild_ids", value -> {
-			var parts = value.split(",");
-			var result = new Snowflake[parts.length];
-			for (var i = 0 ; i < parts.length ; i++) {
-				try {
-					result[i] = Snowflake.of(parts[i]);
-				} catch (NumberFormatException e) {
-					throw new IllegalArgumentException("The value '" + parts[i] + "' is not a valid ID for the property 'emoji_guild_ids'");
-				}
-			}
-			return result;
-		});
+		var replyMenuTimeout = propParser.parseAsInt("reply_menu_timeout");
+		var debugLogChannelId = propParser.parse("debug_log_channel_id", Snowflake::of);
+		var emojiGuildIds = propParser.parseAsList("emoji_guild_ids", ",", Snowflake::of);
 
 		return new BotImpl(token, defaultPrefix, supportServerId, moderatorRoleId, releaseChannel, builder.build(),
 				database, replyMenuTimeout, debugLogChannelId, emojiGuildIds);
-	}
-	
-	private static <P> P parseProperty(Properties props, String name, Function<String, P> parser) {
-		var prop = props.getProperty(name);
-		if (prop == null) {
-			throw new IllegalArgumentException("The property '" + name + "' is missing");
-		}
-		try {
-			return parser.apply(prop);
-		} catch (NumberFormatException e) {
-			throw new IllegalArgumentException("The property '" + name + "' was expected to be a numeric value");
-		}
 	}
 
 	@Override

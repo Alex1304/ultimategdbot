@@ -72,7 +72,11 @@ public class ContextImpl implements Context {
 				return;
 			}
 			var ce = (ClientException) e;
-			event.getMessage().getAuthor().flatMap(a -> a.getPrivateChannel())
+			var author = event.getMessage().getAuthor();
+			if (!author.isPresent()) {
+				return;
+			}
+			author.get().getPrivateChannel()
 					.flatMap(pc -> pc.createMessage("I was unable to send a reply to your command in <#"
 							+ event.getMessage().getChannelId()
 							+ ">. Make sure that I have permissions to talk and send embeds there.\nError response: `"

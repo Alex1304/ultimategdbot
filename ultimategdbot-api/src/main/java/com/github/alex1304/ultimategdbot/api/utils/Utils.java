@@ -127,4 +127,36 @@ public class Utils {
 	public static Flux<Message> sendOneMessageToMultipleChannels(Flux<Channel> channels, Consumer<MessageCreateSpec> spec) {
 		return channels.ofType(MessageChannel.class).flatMap(c -> c.createMessage(spec));
 	}
+	
+	public static List<String> parseArgs(String input, String prefix) {
+		if (input.startsWith(prefix)) {
+			var inputWithoutPrefix = input.substring(prefix.length());
+			return parseArgs("\"" + prefix + "\"" + inputWithoutPrefix);
+		}
+		return parseArgs(input);
+	}
+	
+	public static List<String> parseArgs(String input) {
+		var args = new ArrayList<String>();
+		var buffer = new StringBuilder();
+		var inQuotes = false;
+		for (var arg : input.split("[ \n\t]")) {
+			buffer.append((buffer.length() > 0 ? " " : "") + arg);
+			if (occurrences(arg, "\"") % 2 == 1) {
+				inQuotes = !inQuotes;
+			}
+			var isSpaceEscaped = false;
+			if (!inQuotes && arg.endsWith("\\")) {
+				buffer.deleteCharAt(buffer.length() - 1);
+				isSpaceEscaped = true;
+			}
+			if (!inQuotes && !isSpaceEscaped) {
+				args.add(buffer.toString().replaceAll("\"", ""));
+				buffer.delete(0, buffer.length());
+			}
+		}
+		args.add(buffer.toString().replaceAll("\"", ""));
+		args.removeIf(String::isEmpty);
+		return args;
+	}
 }

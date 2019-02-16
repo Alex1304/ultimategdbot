@@ -10,20 +10,22 @@ import reactor.core.publisher.Mono;
 @FunctionalInterface
 public interface PermissionLevel {
 	
-	public static final PermissionLevel BOT_OWNER = ctx -> ctx.getEvent().getMessage().getAuthor()
-			.flatMap(u -> ctx.getBot().getDiscordClient().getApplicationInfo()
-					.flatMap(ai -> ai.getOwner())
-					.map(o -> u.equals(o)))
+	public static final PermissionLevel BOT_OWNER = ctx -> ctx.getBot().getDiscordClient().getApplicationInfo()
+			.filter(__ -> ctx.getEvent().getMessage().getAuthor().isPresent())
+			.flatMap(ai -> ai.getOwner())
+			.map(ctx.getEvent().getMessage().getAuthor().get()::equals)
 			.defaultIfEmpty(false).onErrorReturn(false);
 	
-	public static final PermissionLevel BOT_MODERATOR = ctx -> ctx.getEvent().getMessage().getAuthor()
-			.flatMap(u -> ctx.getBot().getSupportServer().flatMap(ss -> u.asMember(ss.getId())))
+	public static final PermissionLevel BOT_MODERATOR = ctx -> ctx.getBot().getSupportServer()
+			.filter(__ -> ctx.getEvent().getMessage().getAuthor().isPresent())
+			.flatMap(ss -> ctx.getEvent().getMessage().getAuthor().get().asMember(ss.getId()))
 			.flatMap(m -> ctx.getBot().getModeratorRole().flatMap(mr -> m.getRoles().hasElement(mr)))
 			.defaultIfEmpty(false).onErrorReturn(false);
 	
 	public static final PermissionLevel SERVER_ADMIN = ctx -> ctx.getEvent().getMessage().getChannel()
+			.filter(__ -> ctx.getEvent().getMessage().getAuthor().isPresent())
 			.ofType(GuildChannel.class)
-			.flatMap(c -> ctx.getEvent().getMessage().getAuthor().flatMap(u -> c.getEffectivePermissions(u.getId()))
+			.flatMap(c -> c.getEffectivePermissions(ctx.getEvent().getMessage().getAuthor().get().getId())
 			.map(ps -> ps.contains(Permission.MANAGE_GUILD)))
 			.defaultIfEmpty(false).onErrorReturn(false);
 	
