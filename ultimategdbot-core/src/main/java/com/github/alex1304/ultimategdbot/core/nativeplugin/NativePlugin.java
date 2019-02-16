@@ -36,7 +36,7 @@ public class NativePlugin implements Plugin {
 				NativeGuildSettings.class,
 				NativeGuildSettings::getPrefix,
 				NativeGuildSettings::setPrefix,
-				valueConverter::convertStringToString,
+				valueConverter::convertNonBlankStringToString,
 				valueConverter::convertStringToString
 		));
 		map.put("server_mod_role", new GuildSettingsEntry<>(

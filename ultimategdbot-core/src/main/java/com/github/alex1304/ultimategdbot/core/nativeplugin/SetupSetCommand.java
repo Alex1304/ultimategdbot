@@ -28,9 +28,9 @@ public class SetupSetCommand implements Command {
 		try {
 			ctx.setGuildSetting(arg1, arg2);
 		} catch (NoSuchElementException e) {
-			return Mono.error(new CommandFailedException("There is no settings entry with key `" + arg1 + "`."));
+			return Mono.error(new CommandFailedException("There is no configuration entry with key `" + arg1 + "`."));
 		} catch (IllegalArgumentException e) {
-			return Mono.error(new CommandFailedException("Cannot assign this value to key `" + arg1 + "`: " + e.getMessage()));
+			return Mono.error(new CommandFailedException("Cannot assign this value as `" + arg1 + "`: " + e.getMessage()));
 		}
 		return ctx.reply(":white_check_mark: Settings updated!").then();
 	}

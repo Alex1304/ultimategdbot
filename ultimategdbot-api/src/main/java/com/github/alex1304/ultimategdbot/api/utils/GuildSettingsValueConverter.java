@@ -20,6 +20,13 @@ public class GuildSettingsValueConverter {
 		this.bot = Objects.requireNonNull(bot);
 	}
 	
+	public String convertNonBlankStringToString(String str, long guildId) {
+		if (str.isBlank()) {
+			throw new IllegalArgumentException("Cannot be blank");
+		}
+		return str;
+	}
+	
 	public String convertStringToString(String str, long guildId) {
 		return str;
 	}
