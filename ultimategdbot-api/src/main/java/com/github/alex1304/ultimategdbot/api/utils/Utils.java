@@ -141,8 +141,11 @@ public class Utils {
 		var buffer = new StringBuilder();
 		var inQuotes = false;
 		for (var arg : input.split("[ \n\t]")) {
+			if (arg.isEmpty()) {
+				continue;
+			}
 			buffer.append((buffer.length() > 0 ? " " : "") + arg);
-			if (occurrences(arg, "\"") % 2 == 1) {
+			if ((occurrences(arg, "\"") - occurrences(arg, "\\\"")) % 2 == 1) {
 				inQuotes = !inQuotes;
 			}
 			var isSpaceEscaped = false;
@@ -151,12 +154,24 @@ public class Utils {
 				isSpaceEscaped = true;
 			}
 			if (!inQuotes && !isSpaceEscaped) {
-				args.add(buffer.toString().replaceAll("\"", ""));
+				args.add(removeQuotesUnlessEscaped(buffer.toString()));
 				buffer.delete(0, buffer.length());
 			}
 		}
-		args.add(buffer.toString().replaceAll("\"", ""));
-		args.removeIf(String::isEmpty);
+		if (buffer.length() != 0) {
+			args.add(removeQuotesUnlessEscaped(buffer.toString()));
+		}
 		return args;
+	}
+	
+	public static String removeQuotesUnlessEscaped(String text) {
+		var sb = new StringBuilder();
+		char prev = 0;
+		for (var c : text.toCharArray()) {
+			if (prev != '\\' && c == '"') continue;
+			sb.append(c);
+			prev = c;
+		}
+		return sb.toString();
 	}
 }
