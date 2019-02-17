@@ -129,7 +129,7 @@ public class Utils {
 	}
 	
 	public static List<String> parseArgs(String input, String prefix) {
-		if (input.startsWith(prefix)) {
+		if (prefix.equalsIgnoreCase(input.substring(0, Math.min(input.length(), prefix.length())))) {
 			var inputWithoutPrefix = input.substring(prefix.length());
 			return parseArgs("\"" + prefix + "\"" + inputWithoutPrefix);
 		}

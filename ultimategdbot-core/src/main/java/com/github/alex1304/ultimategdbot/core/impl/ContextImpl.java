@@ -13,6 +13,7 @@ import com.github.alex1304.ultimategdbot.api.Bot;
 import com.github.alex1304.ultimategdbot.api.Context;
 import com.github.alex1304.ultimategdbot.api.Plugin;
 import com.github.alex1304.ultimategdbot.api.guildsettings.NativeGuildSettings;
+import com.github.alex1304.ultimategdbot.api.utils.Utils;
 
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.entity.Message;
@@ -97,8 +98,8 @@ public class ContextImpl implements Context {
 			return effectivePrefix;
 		}
 		this.hasPrefixBeenChecked = true;
-		var content = event.getMessage().getContent().orElse(null);
-		if (content == null) {
+		var content = Utils.removeQuotesUnlessEscaped(event.getMessage().getContent().orElse(""));
+		if (content.isEmpty()) {
 			return null;
 		}
 		var botId = bot.getDiscordClient().getSelfId();
