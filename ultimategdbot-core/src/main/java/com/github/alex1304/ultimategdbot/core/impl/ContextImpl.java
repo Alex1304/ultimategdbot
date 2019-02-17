@@ -7,6 +7,7 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import com.github.alex1304.ultimategdbot.api.Bot;
 import com.github.alex1304.ultimategdbot.api.Context;
@@ -26,6 +27,8 @@ public class ContextImpl implements Context {
 	private final Bot bot;
 	private final NativeGuildSettings guildSettings; // null if DM message
 	private final Map<String, Object> variables;
+	private String effectivePrefix;
+	private boolean hasPrefixBeenChecked;
 
 	public ContextImpl(MessageCreateEvent event, List<String> args, Bot bot) {
 		this.event = Objects.requireNonNull(event);
@@ -43,6 +46,8 @@ public class ContextImpl implements Context {
 			gs.setPrefix(bot.getDefaultPrefix());
 		});
 		this.guildSettings = guildSettings;
+		this.effectivePrefix = null;
+		this.hasPrefixBeenChecked = false;
 	}
 
 	@Override
@@ -88,7 +93,39 @@ public class ContextImpl implements Context {
 
 	@Override
 	public String getEffectivePrefix() {
-		return guildSettings == null ? bot.getDefaultPrefix() : guildSettings.getPrefix();
+		if (hasPrefixBeenChecked) {
+			return effectivePrefix;
+		}
+		this.hasPrefixBeenChecked = true;
+		var content = event.getMessage().getContent().orElse(null);
+		if (content == null) {
+			return null;
+		}
+		var botId = bot.getDiscordClient().getSelfId();
+		var mention = "";
+		var mentionNick = "";
+		if (botId.isPresent()) {
+			mention = "<@" + botId.get().asString() + "> ";
+			mentionNick = "<@!" + botId.get().asString() + "> ";
+		}
+		final Predicate<String> isPrefix = str -> {
+			var res = str.equalsIgnoreCase(content.substring(0, Math.min(str.length(), content.length())));
+			if (res) {
+				this.effectivePrefix = str;
+			}
+			return res;
+		};
+		if (!mention.isEmpty() && isPrefix.test(mention)) {
+			return mention;
+		} else if (!mentionNick.isEmpty() && isPrefix.test(mentionNick)) {
+			return mentionNick;
+		} else if (guildSettings != null && isPrefix.test(guildSettings.getPrefix())) {
+			return guildSettings.getPrefix();
+		} else if (isPrefix.test(bot.getDefaultPrefix())) {
+			return bot.getDefaultPrefix();
+		} else {
+			return null;
+		}
 	}
 
 	@Override

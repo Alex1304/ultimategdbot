@@ -45,7 +45,7 @@ public class CommandHandler implements Handler {
 		bot.getDiscordClient().getEventDispatcher().on(MessageCreateEvent.class).subscribeOn(Schedulers.elastic())
 				.filter(event -> event.getMessage().getContent().isPresent())
 				.map(event -> new ContextImpl(event, new ArrayList<>(), bot))
-				.filter(ctx -> ctx.getEvent().getMessage().getContent().get().startsWith(ctx.getEffectivePrefix()))
+				.filter(ctx -> ctx.getEffectivePrefix() != null)
 				.doOnNext(ctx -> ctx.getArgs().addAll(Utils.parseArgs(ctx.getEvent().getMessage().getContent().get(), ctx.getEffectivePrefix())))
 				.subscribe(ctx -> {
 					var cmdName = ctx.getArgs().get(0).substring(ctx.getEffectivePrefix().length());
