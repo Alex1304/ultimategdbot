@@ -7,6 +7,7 @@ import java.util.Set;
 import com.github.alex1304.ultimategdbot.api.Bot;
 import com.github.alex1304.ultimategdbot.api.Command;
 import com.github.alex1304.ultimategdbot.api.Plugin;
+import com.github.alex1304.ultimategdbot.api.PluginSetupException;
 import com.github.alex1304.ultimategdbot.api.guildsettings.GuildSettingsEntry;
 import com.github.alex1304.ultimategdbot.api.guildsettings.NativeGuildSettings;
 import com.github.alex1304.ultimategdbot.api.utils.GuildSettingsValueConverter;
@@ -49,4 +50,8 @@ public class NativePlugin implements Plugin {
 		return map;
 	}
 
+	@Override
+	public void setup() throws PluginSetupException {
+		return;
+	}
 }

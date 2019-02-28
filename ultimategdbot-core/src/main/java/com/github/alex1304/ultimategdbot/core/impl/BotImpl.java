@@ -19,6 +19,7 @@ import com.github.alex1304.ultimategdbot.api.Command;
 import com.github.alex1304.ultimategdbot.api.Context;
 import com.github.alex1304.ultimategdbot.api.Database;
 import com.github.alex1304.ultimategdbot.api.Plugin;
+import com.github.alex1304.ultimategdbot.api.PluginSetupException;
 import com.github.alex1304.ultimategdbot.api.guildsettings.GuildSettingsEntry;
 import com.github.alex1304.ultimategdbot.api.utils.PropertyParser;
 import com.github.alex1304.ultimategdbot.core.handler.CommandHandler;
@@ -182,36 +183,42 @@ public class BotImpl implements Bot {
 	public void start() {
 		var loader = ServiceLoader.load(Plugin.class);
 		for (var plugin : loader) {
-			System.out.printf("Loading plugin: %s...\n", plugin.getName());
-			database.addAllMappingResources(plugin.getDatabaseMappingResources());
-			guildSettingsEntries.put(plugin, plugin.getGuildConfigurationEntries(this));
-			var cmdSet = plugin.getProvidedCommands();
-			cmdHandler.getCommandsByPlugins().put(plugin, cmdSet);
-			for (var cmd : cmdSet) {
-				for (var alias : cmd.getAliases()) {
-					cmdHandler.getCommands().put(alias, cmd);
-				}
-				// Add all subcommands
-				var subCmdDeque = new ArrayDeque<Command>();
-				subCmdDeque.push(cmd);
-				while (!subCmdDeque.isEmpty()) {
-					var element = subCmdDeque.pop();
-					var elementSubcmds = element.getSubcommands();
-					if (cmdHandler.getSubCommands().containsKey(element)) {
-						continue;
+			try {
+				System.out.printf("Loading plugin: %s...\n", plugin.getName());
+				plugin.setup();
+				database.addAllMappingResources(plugin.getDatabaseMappingResources());
+				guildSettingsEntries.put(plugin, plugin.getGuildConfigurationEntries(this));
+				var cmdSet = plugin.getProvidedCommands();
+				cmdHandler.getCommandsByPlugins().put(plugin, cmdSet);
+				for (var cmd : cmdSet) {
+					for (var alias : cmd.getAliases()) {
+						cmdHandler.getCommands().put(alias, cmd);
 					}
-					var subCmdMap = new HashMap<String, Command>();
-					for (var subcmd : elementSubcmds) {
-						for (var alias : subcmd.getAliases()) {
-							subCmdMap.put(alias, subcmd);
+					// Add all subcommands
+					var subCmdDeque = new ArrayDeque<Command>();
+					subCmdDeque.push(cmd);
+					while (!subCmdDeque.isEmpty()) {
+						var element = subCmdDeque.pop();
+						var elementSubcmds = element.getSubcommands();
+						if (cmdHandler.getSubCommands().containsKey(element)) {
+							continue;
 						}
+						var subCmdMap = new HashMap<String, Command>();
+						for (var subcmd : elementSubcmds) {
+							for (var alias : subcmd.getAliases()) {
+								subCmdMap.put(alias, subcmd);
+							}
+						}
+						cmdHandler.getSubCommands().put(element, subCmdMap);
+						subCmdDeque.addAll(elementSubcmds);
 					}
-					cmdHandler.getSubCommands().put(element, subCmdMap);
-					subCmdDeque.addAll(elementSubcmds);
+					System.out.printf("\tLoaded command: %s %s\n", cmd.getClass().getName(), cmd.getAliases());
 				}
-				System.out.printf("\tLoaded command: %s %s\n", cmd.getClass().getName(), cmd.getAliases());
+				cmdHandler.getPlugins().add(plugin);
+			} catch (PluginSetupException e) {
+				System.out.println("WARNING: Failed to load plugin " + plugin.getName());
+				e.printStackTrace();
 			}
-			cmdHandler.getPlugins().add(plugin);
 		}
 		try {
 			database.configure();

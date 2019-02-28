@@ -39,4 +39,15 @@ public interface Plugin {
 	 * @return the guild configuration entries
 	 */
 	Map<String, GuildSettingsEntry<?, ?>> getGuildConfigurationEntries(Bot bot);
+	
+	/**
+	 * Code executed when the plugin is loaded. This allows the plugin to perform
+	 * additional configuration.
+	 * 
+	 * @throws PluginSetupException exception that this method may throw to indicate
+	 *                              that something went wrong when setting up the
+	 *                              plugin. If this exception is thrown, the loading
+	 *                              process of this plugin is cancelled.
+	 */
+	void setup() throws PluginSetupException;
 }
