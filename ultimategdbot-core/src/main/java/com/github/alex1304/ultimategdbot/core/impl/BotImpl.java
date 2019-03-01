@@ -1,5 +1,7 @@
 package com.github.alex1304.ultimategdbot.core.impl;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.HashMap;
@@ -19,12 +21,13 @@ import com.github.alex1304.ultimategdbot.api.Command;
 import com.github.alex1304.ultimategdbot.api.Context;
 import com.github.alex1304.ultimategdbot.api.Database;
 import com.github.alex1304.ultimategdbot.api.Plugin;
-import com.github.alex1304.ultimategdbot.api.PluginSetupException;
 import com.github.alex1304.ultimategdbot.api.guildsettings.GuildSettingsEntry;
 import com.github.alex1304.ultimategdbot.api.utils.PropertyParser;
+import com.github.alex1304.ultimategdbot.api.utils.Utils;
 import com.github.alex1304.ultimategdbot.core.handler.CommandHandler;
 import com.github.alex1304.ultimategdbot.core.handler.Handler;
 import com.github.alex1304.ultimategdbot.core.handler.ReplyMenuHandler;
+import com.github.alex1304.ultimategdbot.core.main.Main;
 
 import discord4j.core.DiscordClient;
 import discord4j.core.DiscordClientBuilder;
@@ -52,6 +55,7 @@ public class BotImpl implements Bot {
 	private final int replyMenuTimeout;
 	private final Snowflake debugLogChannelId;
 	private final List<Snowflake> emojiGuildIds;
+	private final Properties pluginsProps;
 	
 	private final CommandHandler cmdHandler;
 	private final ReplyMenuHandler replyMenuHandler;
@@ -59,7 +63,7 @@ public class BotImpl implements Bot {
 	private final Map<Plugin, Map<String, GuildSettingsEntry<?, ?>>> guildSettingsEntries;
 	
 	private BotImpl(String token, String defaultPrefix, Snowflake supportServerId, Snowflake moderatorRoleId, String releaseChannel,
-			DiscordClient client, DatabaseImpl database, int replyMenuTimeout, Snowflake debugLogChannelId, List<Snowflake> emojiGuildIds) {
+			DiscordClient client, DatabaseImpl database, int replyMenuTimeout, Snowflake debugLogChannelId, List<Snowflake> emojiGuildIds, Properties pluginsProps) {
 		this.token = token;
 		this.defaultPrefix = defaultPrefix;
 		this.supportServerId = supportServerId;
@@ -70,6 +74,7 @@ public class BotImpl implements Bot {
 		this.replyMenuTimeout = replyMenuTimeout;
 		this.debugLogChannelId = debugLogChannelId;
 		this.emojiGuildIds = emojiGuildIds;
+		this.pluginsProps = pluginsProps;
 		
 		this.cmdHandler = new CommandHandler(this);
 		this.replyMenuHandler = new ReplyMenuHandler(this);
@@ -135,6 +140,26 @@ public class BotImpl implements Bot {
 	}
 
 	@Override
+	public Flux<Message> logStackTrace(Context ctx, Throwable t) {
+		var sw = new StringWriter();
+		var pw = new PrintWriter(sw);
+		pw.println(":no_entry_sign: **An internal error occured while executing a command.**");
+		pw.println("__User input:__ `" + ctx.getEvent().getMessage().getContent().orElseGet(() -> "(No content)") + "`");
+		pw.println("__Full stack trace:__");
+		t.printStackTrace(pw);
+		var chunks = Utils.chunkMessage(sw.toString());
+		var i = 0;
+		for (var chunk : List.copyOf(chunks)) {
+			if (i != 0) {
+				chunks.set(i, "_   _ " + chunk.substring(1));
+			}
+			i++;
+		}
+		System.out.println(chunks);
+		return Utils.sendMultipleSimpleMessagesToOneChannel(getDebugLogChannel(), chunks);
+	}
+
+	@Override
 	public Mono<String> getEmoji(String emojiName) {
 		return Mono.<String>create(sink -> {
 			client.getGuilds()
@@ -162,8 +187,8 @@ public class BotImpl implements Bot {
 		}).defaultIfEmpty(":" + emojiName + ":");
 	}
 
-	public static Bot buildFromProperties(Properties props, Properties hibernateProps) {
-		var propParser = new PropertyParser(props);
+	public static Bot buildFromProperties(Properties props, Properties hibernateProps, Properties pluginsProps) {
+		var propParser = new PropertyParser(Main.PROPS_FILE.toString(), props);
 		var token = propParser.parseAsString("token");
 		var defaultPrefix = propParser.parseAsString("default_prefix");
 		var supportServerId =  propParser.parse("support_server_id", Snowflake::of);
@@ -176,16 +201,17 @@ public class BotImpl implements Bot {
 		var emojiGuildIds = propParser.parseAsList("emoji_guild_ids", ",", Snowflake::of);
 
 		return new BotImpl(token, defaultPrefix, supportServerId, moderatorRoleId, releaseChannel, builder.build(),
-				database, replyMenuTimeout, debugLogChannelId, emojiGuildIds);
+				database, replyMenuTimeout, debugLogChannelId, emojiGuildIds, pluginsProps);
 	}
 
 	@Override
 	public void start() {
 		var loader = ServiceLoader.load(Plugin.class);
+		var parser = new PropertyParser(Main.PLUGINS_PROPS_FILE.toString(), pluginsProps);
 		for (var plugin : loader) {
 			try {
 				System.out.printf("Loading plugin: %s...\n", plugin.getName());
-				plugin.setup();
+				plugin.setup(parser);
 				database.addAllMappingResources(plugin.getDatabaseMappingResources());
 				guildSettingsEntries.put(plugin, plugin.getGuildConfigurationEntries(this));
 				var cmdSet = plugin.getProvidedCommands();
@@ -215,7 +241,7 @@ public class BotImpl implements Bot {
 					System.out.printf("\tLoaded command: %s %s\n", cmd.getClass().getName(), cmd.getAliases());
 				}
 				cmdHandler.getPlugins().add(plugin);
-			} catch (PluginSetupException e) {
+			} catch (RuntimeException e) {
 				System.out.println("WARNING: Failed to load plugin " + plugin.getName());
 				e.printStackTrace();
 			}

@@ -1,17 +1,12 @@
 package com.github.alex1304.ultimategdbot.api;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
-
-import com.github.alex1304.ultimategdbot.api.utils.Utils;
 
 import discord4j.core.object.entity.Channel;
 import discord4j.core.object.entity.Channel.Type;
@@ -124,22 +119,7 @@ public interface Command {
 						actions.getOrDefault(error.getClass(), (e, ctx0) -> {
 							ctx0.reply(":no_entry_sign: An internal error occured. A crash report has been sent to the developer. Sorry for the inconvenience.")
 									.subscribe();
-							var sw = new StringWriter();
-							var pw = new PrintWriter(sw);
-							pw.println(":no_entry_sign: **An internal error occured while executing a command.**");
-							pw.println("__User input:__ `" + ctx0.getEvent().getMessage().getContent().orElseGet(() -> "(No content)") + "`");
-							pw.println("__Full stack trace:__");
-							e.printStackTrace(pw);
-							var chunks = Utils.chunkMessage(sw.toString());
-							var i = 0;
-							for (var chunk : List.copyOf(chunks)) {
-								if (i != 0) {
-									chunks.set(i, "_   _ " + chunk.substring(1));
-								}
-								i++;
-							}
-							System.out.println(chunks);
-							Utils.sendMultipleSimpleMessagesToOneChannel(ctx.getBot().getDebugLogChannel(), chunks).subscribe();
+							ctx0.getBot().logStackTrace(ctx0, e).subscribe();
 						}).accept(error, ctx);
 					}
 				}).subscribe();

@@ -7,13 +7,18 @@ import java.util.Set;
 import com.github.alex1304.ultimategdbot.api.Bot;
 import com.github.alex1304.ultimategdbot.api.Command;
 import com.github.alex1304.ultimategdbot.api.Plugin;
-import com.github.alex1304.ultimategdbot.api.PluginSetupException;
 import com.github.alex1304.ultimategdbot.api.guildsettings.GuildSettingsEntry;
 import com.github.alex1304.ultimategdbot.api.guildsettings.NativeGuildSettings;
 import com.github.alex1304.ultimategdbot.api.utils.GuildSettingsValueConverter;
+import com.github.alex1304.ultimategdbot.api.utils.PropertyParser;
 
 public class NativePlugin implements Plugin {
 
+	@Override
+	public void setup(PropertyParser parser) {
+		return;
+	}
+	
 	@Override
 	public Set<Command> getProvidedCommands() {
 		return Set.of(new HelpCommand(), new PingCommand(), new SetupCommand(), new TestArgsCommand());
@@ -48,10 +53,5 @@ public class NativePlugin implements Plugin {
 				valueConverter::convertRoleIDToString
 		));
 		return map;
-	}
-
-	@Override
-	public void setup() throws PluginSetupException {
-		return;
 	}
 }
