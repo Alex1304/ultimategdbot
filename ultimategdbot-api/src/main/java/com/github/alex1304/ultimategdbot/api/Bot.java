@@ -77,6 +77,13 @@ public interface Bot {
 	Mono<Channel> getDebugLogChannel();
 
 	/**
+	 * Gets the channel where the bot can send attachments for its embeds.
+	 * 
+	 * @return a Mono emitting the attachments channel
+	 */
+	Mono<Channel> getAttachmentsChannel();
+
+	/**
 	 * Sends a message into the debug log channel.
 	 * 
 	 * @param message the message to send

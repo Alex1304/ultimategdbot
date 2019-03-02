@@ -54,6 +54,7 @@ public class BotImpl implements Bot {
 	private final DatabaseImpl database;
 	private final int replyMenuTimeout;
 	private final Snowflake debugLogChannelId;
+	private final Snowflake attachmentsChannelId;
 	private final List<Snowflake> emojiGuildIds;
 	private final Properties pluginsProps;
 	
@@ -63,7 +64,7 @@ public class BotImpl implements Bot {
 	private final Map<Plugin, Map<String, GuildSettingsEntry<?, ?>>> guildSettingsEntries;
 	
 	private BotImpl(String token, String defaultPrefix, Snowflake supportServerId, Snowflake moderatorRoleId, String releaseChannel,
-			DiscordClient client, DatabaseImpl database, int replyMenuTimeout, Snowflake debugLogChannelId, List<Snowflake> emojiGuildIds, Properties pluginsProps) {
+			DiscordClient client, DatabaseImpl database, int replyMenuTimeout, Snowflake debugLogChannelId, Snowflake attachmentsChannelId, List<Snowflake> emojiGuildIds, Properties pluginsProps) {
 		this.token = token;
 		this.defaultPrefix = defaultPrefix;
 		this.supportServerId = supportServerId;
@@ -73,6 +74,7 @@ public class BotImpl implements Bot {
 		this.database = database;
 		this.replyMenuTimeout = replyMenuTimeout;
 		this.debugLogChannelId = debugLogChannelId;
+		this.attachmentsChannelId = attachmentsChannelId;
 		this.emojiGuildIds = emojiGuildIds;
 		this.pluginsProps = pluginsProps;
 		
@@ -125,6 +127,11 @@ public class BotImpl implements Bot {
 	@Override
 	public Mono<Channel> getDebugLogChannel() {
 		return client.getChannelById(debugLogChannelId);
+	}
+
+	@Override
+	public Mono<Channel> getAttachmentsChannel() {
+		return client.getChannelById(attachmentsChannelId);
 	}
 
 	@Override
@@ -198,10 +205,11 @@ public class BotImpl implements Bot {
 		var database = new DatabaseImpl(hibernateProps);
 		var replyMenuTimeout = propParser.parseAsInt("reply_menu_timeout");
 		var debugLogChannelId = propParser.parse("debug_log_channel_id", Snowflake::of);
+		var attachmentsChannelId = propParser.parse("attachments_channel_id", Snowflake::of);
 		var emojiGuildIds = propParser.parseAsList("emoji_guild_ids", ",", Snowflake::of);
 
 		return new BotImpl(token, defaultPrefix, supportServerId, moderatorRoleId, releaseChannel, builder.build(),
-				database, replyMenuTimeout, debugLogChannelId, emojiGuildIds, pluginsProps);
+				database, replyMenuTimeout, debugLogChannelId, attachmentsChannelId, emojiGuildIds, pluginsProps);
 	}
 
 	@Override
