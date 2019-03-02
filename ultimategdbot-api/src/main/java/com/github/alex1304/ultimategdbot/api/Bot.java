@@ -118,7 +118,7 @@ public interface Bot {
 	 * @param emojiName the name of the emoji to look for
 	 * @return the emoji code corresponding to the given name
 	 */
-	Mono<String> getEmoji(String emojiName);
+	String getEmoji(String emojiName);
 
 	/**
 	 * Gets the maximum time in seconds that the bot should wait for a reply when a

@@ -167,7 +167,8 @@ public class BotImpl implements Bot {
 	}
 
 	@Override
-	public Mono<String> getEmoji(String emojiName) {
+	public String getEmoji(String emojiName) {
+		var defaultVal = ":" + emojiName + ":";
 		return Mono.<String>create(sink -> {
 			client.getGuilds()
 					.filter(g -> emojiGuildIds.stream().anyMatch(id -> g.getId().equals(id)))
@@ -191,7 +192,7 @@ public class BotImpl implements Bot {
 					})
 					.doOnError(sink::error)
 					.subscribe();
-		}).defaultIfEmpty(":" + emojiName + ":");
+		}).defaultIfEmpty(defaultVal).onErrorReturn(defaultVal).block();
 	}
 
 	public static Bot buildFromProperties(Properties props, Properties hibernateProps, Properties pluginsProps) {
