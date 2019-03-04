@@ -1,6 +1,7 @@
 package com.github.alex1304.ultimategdbot.api.utils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -173,5 +174,29 @@ public class Utils {
 			prev = c;
 		}
 		return sb.toString();
+	}
+	
+	/**
+	 * Escapes characters used in Markdown syntax using a backslash
+	 * 
+	 * @param text the Markdown text to escape
+	 * @return String
+	 */
+	public static String escapeMarkdown(String text) {
+		List<Character> resultList = new ArrayList<>();
+		Character[] charsToEscape = { '\\', '_', '*', '~', '`', ':', '@', '#' };
+		List<Character> charsToEscapeList = Arrays.asList(charsToEscape);
+		
+		for (char c : text.toCharArray()) {
+			if (charsToEscapeList.contains(c))
+				resultList.add('\\');
+			resultList.add(c);
+		}
+		
+		char[] result = new char[resultList.size()];
+		for (int i = 0 ; i < result.length ; i++)
+			result[i] = resultList.get(i);
+		
+		return new String(result);
 	}
 }
