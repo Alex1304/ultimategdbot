@@ -60,7 +60,7 @@ public interface Bot {
 	 * 
 	 * @return the discord client
 	 */
-	DiscordClient getDiscordClient();
+	Flux<DiscordClient> getDiscordClients();
 
 	/**
 	 * Gets the database of the bot.

@@ -13,7 +13,9 @@ import reactor.core.publisher.Mono;
 @FunctionalInterface
 public interface PermissionLevel {
 	
-	static final PermissionLevel BOT_OWNER = ctx -> ctx.getBot().getDiscordClient().getApplicationInfo()
+	static final PermissionLevel BOT_OWNER = ctx -> ctx.getBot().getDiscordClients()
+			.flatMap(client -> client.getApplicationInfo())
+			.next()
 			.filter(__ -> ctx.getEvent().getMessage().getAuthor().isPresent())
 			.flatMap(ai -> ai.getOwner())
 			.map(ctx.getEvent().getMessage().getAuthor().get()::equals)

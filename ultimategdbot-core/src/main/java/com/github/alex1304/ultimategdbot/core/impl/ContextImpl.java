@@ -102,7 +102,7 @@ public class ContextImpl implements Context {
 		if (content.isEmpty()) {
 			return null;
 		}
-		var botId = bot.getDiscordClient().getSelfId();
+		var botId = bot.getDiscordClients().blockFirst().getSelfId();
 		var mention = "";
 		var mentionNick = "";
 		if (botId.isPresent()) {

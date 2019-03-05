@@ -16,7 +16,6 @@ import com.github.alex1304.ultimategdbot.api.utils.Utils;
 import com.github.alex1304.ultimategdbot.core.impl.ContextImpl;
 
 import discord4j.core.event.domain.message.MessageCreateEvent;
-import reactor.core.scheduler.Schedulers;
 
 /**
  * Registers and executes commands when called.
@@ -42,7 +41,7 @@ public class CommandHandler implements Handler {
 	 */
 	@Override
 	public void listen() {
-		bot.getDiscordClient().getEventDispatcher().on(MessageCreateEvent.class).subscribeOn(Schedulers.elastic())
+		bot.getDiscordClients().flatMap(client -> client.getEventDispatcher().on(MessageCreateEvent.class))
 				.filter(event -> event.getMessage().getContent().isPresent())
 				.map(event -> new ContextImpl(event, new ArrayList<>(), bot))
 				.filter(ctx -> ctx.getEffectivePrefix() != null)

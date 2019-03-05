@@ -16,7 +16,6 @@ import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.entity.Message;
 import reactor.core.Disposable;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 
 public class ReplyMenuHandler implements Handler {
 	
@@ -67,7 +66,7 @@ public class ReplyMenuHandler implements Handler {
 
 	@Override
 	public void listen() {
-		bot.getDiscordClient().getEventDispatcher().on(MessageCreateEvent.class).subscribeOn(Schedulers.elastic())
+		bot.getDiscordClients().flatMap(client -> client.getEventDispatcher().on(MessageCreateEvent.class))
 				.filter(event -> event.getMessage().getContent().isPresent()
 						&& event.getMessage().getAuthor().isPresent()
 						&& openedReplyMenus.containsKey(event.getMessage().getChannelId().asString()

@@ -85,12 +85,11 @@ public class GuildSettingsValueConverter {
 				roleId = Snowflake.of(str.substring(3, str.length() - 1));
 			} catch (NumberFormatException | StringIndexOutOfBoundsException e0) {
 				try {
-					roleId = bot.getDiscordClient().getGuildById(Snowflake.of(guildId))
+					roleId = bot.getDiscordClients().flatMap(client -> client.getGuildById(Snowflake.of(guildId)))
 							.flatMap(g -> g.getRoles()
 									.filter(r -> r.getName().equalsIgnoreCase(str))
-									.map(Role::getId)
-									.take(1)
-									.singleOrEmpty())
+									.map(Role::getId))
+							.next()
 							.blockOptional(Duration.ofSeconds(1)).get();
 				} catch (RuntimeException e1) {
 					throw new IllegalArgumentException("Could not convert '" + str + "' to a valid role");
@@ -106,7 +105,7 @@ public class GuildSettingsValueConverter {
 		}
 		String str;
 		try {
-			var role = bot.getDiscordClient().getRoleById(Snowflake.of(guildId), Snowflake.of(roleId))
+			var role = bot.getDiscordClients().flatMap(client -> client.getRoleById(Snowflake.of(guildId), Snowflake.of(roleId))).next()
 					.blockOptional(Duration.ofSeconds(1)).get();
 			str = '@' + role.getName() + " (" + role.getId().asLong() + ")";
 		} catch (RuntimeException e) {
@@ -127,13 +126,12 @@ public class GuildSettingsValueConverter {
 				channelId = Snowflake.of(str.substring(2, str.length() - 1));
 			} catch (NumberFormatException | StringIndexOutOfBoundsException e0) {
 				try {
-					channelId = bot.getDiscordClient().getGuildById(Snowflake.of(guildId))
+					channelId = bot.getDiscordClients().flatMap(client -> client.getGuildById(Snowflake.of(guildId)))
 							.flatMap(g -> g.getChannels()
 									.filter(c -> c.getType() == channelType)
 									.filter(c -> c.getName().equalsIgnoreCase(str))
-									.map(Channel::getId)
-									.take(1)
-									.singleOrEmpty())
+									.map(Channel::getId))
+							.next()
 							.blockOptional(Duration.ofSeconds(1)).get();
 				} catch (RuntimeException e1) {
 					throw new IllegalArgumentException("Could not convert '" + str + "' to a valid role");
@@ -161,7 +159,8 @@ public class GuildSettingsValueConverter {
 		}
 		String str;
 		try {
-			var channel = bot.getDiscordClient().getChannelById(Snowflake.of(roleId))
+			var channel = bot.getDiscordClients().flatMap(client -> client.getChannelById(Snowflake.of(roleId)))
+					.next()
 					.ofType(GuildChannel.class)
 					.blockOptional(Duration.ofSeconds(1)).get();
 			str = channel.getType() == Type.GUILD_TEXT ? channel.getMention() : channel.getName() + " (" + channel.getId().asLong() + ")";

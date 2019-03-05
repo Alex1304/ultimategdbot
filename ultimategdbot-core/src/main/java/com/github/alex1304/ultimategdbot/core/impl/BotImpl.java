@@ -31,6 +31,7 @@ import com.github.alex1304.ultimategdbot.core.main.Main;
 
 import discord4j.core.DiscordClient;
 import discord4j.core.DiscordClientBuilder;
+import discord4j.core.event.domain.guild.GuildCreateEvent;
 import discord4j.core.event.domain.lifecycle.ReadyEvent;
 import discord4j.core.object.entity.Channel;
 import discord4j.core.object.entity.Guild;
@@ -39,9 +40,11 @@ import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.MessageChannel;
 import discord4j.core.object.entity.Role;
 import discord4j.core.object.util.Snowflake;
+import discord4j.core.shard.ShardingClientBuilder;
 import discord4j.core.spec.MessageCreateSpec;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 public class BotImpl implements Bot {
 	
@@ -50,7 +53,7 @@ public class BotImpl implements Bot {
 	private final Snowflake supportServerId;
 	private final Snowflake moderatorRoleId;
 	private final String releaseChannel;
-	private final DiscordClient client;
+	private final Flux<DiscordClient> discordClients;
 	private final DatabaseImpl database;
 	private final int replyMenuTimeout;
 	private final Snowflake debugLogChannelId;
@@ -64,13 +67,13 @@ public class BotImpl implements Bot {
 	private final Map<Plugin, Map<String, GuildSettingsEntry<?, ?>>> guildSettingsEntries;
 	
 	private BotImpl(String token, String defaultPrefix, Snowflake supportServerId, Snowflake moderatorRoleId, String releaseChannel,
-			DiscordClient client, DatabaseImpl database, int replyMenuTimeout, Snowflake debugLogChannelId, Snowflake attachmentsChannelId, List<Snowflake> emojiGuildIds, Properties pluginsProps) {
+			Flux<DiscordClient> discordClients, DatabaseImpl database, int replyMenuTimeout, Snowflake debugLogChannelId, Snowflake attachmentsChannelId, List<Snowflake> emojiGuildIds, Properties pluginsProps) {
 		this.token = token;
 		this.defaultPrefix = defaultPrefix;
 		this.supportServerId = supportServerId;
 		this.moderatorRoleId = moderatorRoleId;
 		this.releaseChannel = releaseChannel;
-		this.client = client;
+		this.discordClients = discordClients;
 		this.database = database;
 		this.replyMenuTimeout = replyMenuTimeout;
 		this.debugLogChannelId = debugLogChannelId;
@@ -96,12 +99,12 @@ public class BotImpl implements Bot {
 
 	@Override
 	public Mono<Guild> getSupportServer() {
-		return client.getGuildById(supportServerId);
+		return discordClients.flatMap(client -> client.getGuildById(supportServerId)).next();
 	}
 
 	@Override
 	public Mono<Role> getModeratorRole() {
-		return client.getRoleById(supportServerId, moderatorRoleId);
+		return discordClients.flatMap(client -> client.getRoleById(supportServerId, moderatorRoleId)).next();
 	}
 
 	@Override
@@ -110,8 +113,8 @@ public class BotImpl implements Bot {
 	}
 
 	@Override
-	public DiscordClient getDiscordClient() {
-		return client;
+	public Flux<DiscordClient> getDiscordClients() {
+		return discordClients;
 	}
 
 	@Override
@@ -126,12 +129,12 @@ public class BotImpl implements Bot {
 
 	@Override
 	public Mono<Channel> getDebugLogChannel() {
-		return client.getChannelById(debugLogChannelId);
+		return discordClients.flatMap(client -> client.getChannelById(debugLogChannelId)).next();
 	}
 
 	@Override
 	public Mono<Channel> getAttachmentsChannel() {
-		return client.getChannelById(attachmentsChannelId);
+		return discordClients.flatMap(client -> client.getChannelById(attachmentsChannelId)).next();
 	}
 
 	@Override
@@ -141,7 +144,8 @@ public class BotImpl implements Bot {
 
 	@Override
 	public Mono<Message> log(Consumer<MessageCreateSpec> spec) {
-		return client.getChannelById(debugLogChannelId)
+		return discordClients.flatMap(client -> client.getChannelById(debugLogChannelId))
+				.next()
 				.ofType(MessageChannel.class)
 				.flatMap(c -> c.createMessage(spec));
 	}
@@ -169,47 +173,33 @@ public class BotImpl implements Bot {
 	@Override
 	public String getEmoji(String emojiName) {
 		var defaultVal = ":" + emojiName + ":";
-		return Mono.<String>create(sink -> {
-			client.getGuilds()
-					.filter(g -> emojiGuildIds.stream().anyMatch(id -> g.getId().equals(id)))
-					.reduce(Flux.<GuildEmoji>empty(), (flux, g) -> flux.mergeWith(g.getEmojis()))
-					.doOnSuccess(flux -> {
-						if (flux == null) {
-							sink.success();
-						}
-						flux.filter(em -> em.getName().equalsIgnoreCase(emojiName))
-							.take(1)
-							.map(GuildEmoji::asFormat)
-							.singleOrEmpty()
-							.doOnSuccess(result -> {
-								if (result == null) {
-									sink.success();
-								}
-								sink.success(result);
-							})
-							.doOnError(sink::error)
-							.subscribe();
-					})
-					.doOnError(sink::error)
-					.subscribe();
-		}).defaultIfEmpty(defaultVal).onErrorReturn(defaultVal).block();
+		return discordClients.flatMap(DiscordClient::getGuilds)
+				.filter(g -> emojiGuildIds.stream().anyMatch(g.getId()::equals))
+				.flatMap(Guild::getEmojis)
+				.filter(emoji -> emoji.getName().equalsIgnoreCase(emojiName))
+				.next()
+				.map(GuildEmoji::asFormat)
+				.defaultIfEmpty(defaultVal).onErrorReturn(defaultVal).block();
 	}
 
 	public static Bot buildFromProperties(Properties props, Properties hibernateProps, Properties pluginsProps) {
 		var propParser = new PropertyParser(Main.PROPS_FILE.toString(), props);
 		var token = propParser.parseAsString("token");
 		var defaultPrefix = propParser.parseAsString("default_prefix");
-		var supportServerId =  propParser.parse("support_server_id", Snowflake::of);
+		var supportServerId = propParser.parse("support_server_id", Snowflake::of);
 		var moderatorRoleId = propParser.parse("moderator_role_id", Snowflake::of);
 		var releaseChannel = propParser.parseAsString("release_channel");
-		var builder = new DiscordClientBuilder(token);
+		var discordClients = new ShardingClientBuilder(token).build()
+				.map(dcb -> dcb.setEventScheduler(Schedulers.elastic()))
+				.map(DiscordClientBuilder::build)
+				.cache();
 		var database = new DatabaseImpl(hibernateProps);
 		var replyMenuTimeout = propParser.parseAsInt("reply_menu_timeout");
 		var debugLogChannelId = propParser.parse("debug_log_channel_id", Snowflake::of);
 		var attachmentsChannelId = propParser.parse("attachments_channel_id", Snowflake::of);
 		var emojiGuildIds = propParser.parseAsList("emoji_guild_ids", ",", Snowflake::of);
 
-		return new BotImpl(token, defaultPrefix, supportServerId, moderatorRoleId, releaseChannel, builder.build(),
+		return new BotImpl(token, defaultPrefix, supportServerId, moderatorRoleId, releaseChannel, discordClients,
 				database, replyMenuTimeout, debugLogChannelId, attachmentsChannelId, emojiGuildIds, pluginsProps);
 	}
 
@@ -261,8 +251,16 @@ public class BotImpl implements Bot {
 			System.err.println("Oops! There is an error in the database mapping configuration!");
 			throw e;
 		}
-		client.getEventDispatcher().on(ReadyEvent.class).subscribe(__ -> handlers.forEach(Handler::listen));
-		client.login().block();
+		discordClients.flatMap(client -> client.getEventDispatcher().on(ReadyEvent.class))
+				.map(readyEvent -> readyEvent.getGuilds().size())
+				.flatMap(size -> discordClients.flatMap(client0 -> client0.getEventDispatcher().on(GuildCreateEvent.class))
+						.take(size)
+						.collectList())
+				.subscribe(guildCreateEvents -> {
+					System.out.println("Successfully connected to " + guildCreateEvents.size() + " guilds");
+					handlers.forEach(Handler::listen);
+				});
+		discordClients.flatMap(DiscordClient::login).blockLast();
 	}
 
 	@Override
