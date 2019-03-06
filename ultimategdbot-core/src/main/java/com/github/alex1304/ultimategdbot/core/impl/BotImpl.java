@@ -39,6 +39,8 @@ import discord4j.core.object.entity.GuildEmoji;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.MessageChannel;
 import discord4j.core.object.entity.Role;
+import discord4j.core.object.presence.Activity;
+import discord4j.core.object.presence.Presence;
 import discord4j.core.object.util.Snowflake;
 import discord4j.core.shard.ShardingClientBuilder;
 import discord4j.core.spec.MessageCreateSpec;
@@ -65,9 +67,11 @@ public class BotImpl implements Bot {
 	private final ReplyMenuHandler replyMenuHandler;
 	private final Set<Handler> handlers;
 	private final Map<Plugin, Map<String, GuildSettingsEntry<?, ?>>> guildSettingsEntries;
-	
-	private BotImpl(String token, String defaultPrefix, Snowflake supportServerId, Snowflake moderatorRoleId, String releaseChannel,
-			Flux<DiscordClient> discordClients, DatabaseImpl database, int replyMenuTimeout, Snowflake debugLogChannelId, Snowflake attachmentsChannelId, List<Snowflake> emojiGuildIds, Properties pluginsProps) {
+
+	private BotImpl(String token, String defaultPrefix, Snowflake supportServerId, Snowflake moderatorRoleId,
+			String releaseChannel, Flux<DiscordClient> discordClients, DatabaseImpl database, int replyMenuTimeout,
+			Snowflake debugLogChannelId, Snowflake attachmentsChannelId, List<Snowflake> emojiGuildIds,
+			Properties pluginsProps) {
 		this.token = token;
 		this.defaultPrefix = defaultPrefix;
 		this.supportServerId = supportServerId;
@@ -189,16 +193,44 @@ public class BotImpl implements Bot {
 		var supportServerId = propParser.parse("support_server_id", Snowflake::of);
 		var moderatorRoleId = propParser.parse("moderator_role_id", Snowflake::of);
 		var releaseChannel = propParser.parseAsString("release_channel");
-		var discordClients = new ShardingClientBuilder(token).build()
-				.map(dcb -> dcb.setEventScheduler(Schedulers.elastic()))
-				.map(DiscordClientBuilder::build)
-				.cache();
 		var database = new DatabaseImpl(hibernateProps);
 		var replyMenuTimeout = propParser.parseAsInt("reply_menu_timeout");
 		var debugLogChannelId = propParser.parse("debug_log_channel_id", Snowflake::of);
 		var attachmentsChannelId = propParser.parse("attachments_channel_id", Snowflake::of);
 		var emojiGuildIds = propParser.parseAsList("emoji_guild_ids", ",", Snowflake::of);
-
+		var activity = propParser.parseOrDefault("presence_activity", value -> {
+			if (value.isEmpty() || value.equalsIgnoreCase("none") || value.equalsIgnoreCase("null")) {
+				return null;
+			} else if (value.matches("playing:.+")) {
+				return Activity.playing(value.split(":")[1]);
+			} else if (value.matches("watching:.+")) {
+				return Activity.watching(value.split(":")[1]);
+			} else if (value.matches("listening:.+")) {
+				return Activity.listening(value.split(":")[1]);
+			} else if (value.matches("streaming:[^:]+:[^:]+")) {
+				var split = value.split(":");
+				return Activity.streaming(split[1], split[2]);
+			}
+			System.err.println("presence_activity: Expected one of: ''|'none'|'null', 'playing:<text>', 'watching:<text>', 'listening:<text>'"
+					+ " or 'streaming:<url>' in lower case. Defaulting to no activity");
+			return null;
+		}, null);
+		var presenceStatus = propParser.parseOrDefault("presence_status", value -> {
+			switch (value) {
+				case "online": return Presence.online(activity);
+				case "idle": return Presence.idle(activity);
+				case "dnd": return Presence.doNotDisturb(activity);
+				case "invisible": return Presence.invisible();
+				default:
+					System.err.println("presence_status: Expected one of 'online', 'idle', 'dnd', 'invisible'. Defaulting to 'online'.");
+					return Presence.online(activity);
+			}
+		}, Presence.online(activity));
+		var discordClients = new ShardingClientBuilder(token).build()
+				.map(dcb -> dcb.setEventScheduler(Schedulers.elastic()))
+				.map(dcb -> dcb.setInitialPresence(presenceStatus))
+				.map(DiscordClientBuilder::build)
+				.cache();
 		return new BotImpl(token, defaultPrefix, supportServerId, moderatorRoleId, releaseChannel, discordClients,
 				database, replyMenuTimeout, debugLogChannelId, attachmentsChannelId, emojiGuildIds, pluginsProps);
 	}
@@ -251,15 +283,26 @@ public class BotImpl implements Bot {
 			System.err.println("Oops! There is an error in the database mapping configuration!");
 			throw e;
 		}
-		discordClients.flatMap(client -> client.getEventDispatcher().on(ReadyEvent.class))
+		discordClients.count().flatMap(shardCount -> discordClients.flatMap(client -> client.getEventDispatcher().on(ReadyEvent.class))
 				.map(readyEvent -> readyEvent.getGuilds().size())
-				.flatMap(size -> discordClients.flatMap(client0 -> client0.getEventDispatcher().on(GuildCreateEvent.class))
+				.flatMap(size -> discordClients.flatMap(client -> client.getEventDispatcher().on(GuildCreateEvent.class))
 						.take(size)
 						.collectList())
-				.subscribe(guildCreateEvents -> {
-					System.out.println("Successfully connected to " + guildCreateEvents.size() + " guilds");
+				.take(shardCount)
+				.collectList()
+				.doOnNext(guildCreateEvents -> {
+					var sb = new StringBuilder("Bot started!\n");
+					for (var shardGuildCreateEvents : guildCreateEvents) {
+						shardGuildCreateEvents.stream().findAny().ifPresent(gce -> {
+							var shardNum = gce.getClient().getConfig().getShardIndex();
+							sb.append("> Shard ").append(shardNum).append(": successfully connected to ").append(shardGuildCreateEvents.size()).append(" guilds\n");
+						});
+					}
+					sb.append("Serving " + guildCreateEvents.stream().mapToInt(List::size).sum() + " guilds across " + shardCount + " shards!");
+					System.out.println(sb);
+					Utils.sendMultipleSimpleMessagesToOneChannel(getDebugLogChannel(), Utils.chunkMessage(sb.toString())).subscribe();
 					handlers.forEach(Handler::listen);
-				});
+				})).subscribe();
 		discordClients.flatMap(DiscordClient::login).blockLast();
 	}
 
