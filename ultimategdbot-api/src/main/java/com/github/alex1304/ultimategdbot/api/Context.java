@@ -37,9 +37,9 @@ public interface Context {
 	/**
 	 * Gets the prefix applied to the guild this command is run.
 	 * 
-	 * @return the effective prefix
+	 * @return a Mono emitting the effective prefix
 	 */
-	String getEffectivePrefix();
+	Mono<String> getEffectivePrefix();
 	
 	/**
 	 * Sends a message in the same channel the command was sent.

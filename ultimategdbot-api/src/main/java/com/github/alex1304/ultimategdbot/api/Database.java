@@ -1,8 +1,10 @@
 package com.github.alex1304.ultimategdbot.api;
 
 import java.io.Serializable;
-import java.util.List;
 import java.util.function.BiConsumer;
+
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 /**
  * Manages interactions with the database.
@@ -20,9 +22,9 @@ public interface Database {
 	 * @param key         - the ID
 	 * @param             <T> - The entity type
 	 * @param             <K> - the ID type
-	 * @return the entity found, or <code>null</code> if not found.
+	 * @return a Mono emitting the entity, if found
 	 */
-	<T, K extends Serializable> T findByID(Class<T> entityClass, K key);
+	<T, K extends Serializable> Mono<T> findByID(Class<T> entityClass, K key);
 	
 	/**
 	 * Allows to find a database entity by its ID. If not found, a new entity is created
@@ -32,9 +34,9 @@ public interface Database {
 	 * @param keySetter   - the biconsumer that assigns the ID to the newly created entity
 	 * @param             <T> - The entity type
 	 * @param             <K> - the ID type
-	 * @return the entity found, or <code>null</code> if not found.
+	 * @return a Mono emitting the entity, if found
 	 */
-	<T, K extends Serializable> T findByIDOrCreate(Class<T> entityClass, K key, BiConsumer<? super T, K> keySetter);
+	<T, K extends Serializable> Mono<T> findByIDOrCreate(Class<T> entityClass, K key, BiConsumer<? super T, K> keySetter);
 	
 	/**
 	 * Makes a simple query to the database.
@@ -42,23 +44,23 @@ public interface Database {
 	 * @param query  - the HQL query
 	 * @param params - the query params
 	 * @param        <T> - the entity type
-	 * @return a list containing the results of the query
+	 * @return a Flux emitting the results of the query
 	 */
-	<T> List<T> query(Class<T> entityClass, String query, Object... params);
+	<T> Flux<T> query(Class<T> entityClass, String query, Object... params);
 	
 	/**
 	 * Saves an object in database
 	 * 
 	 * @param obj - the object to save
-	 * @return whether it has saved without issues
+	 * @return a Mono that completes when it has saved
 	 */
-	boolean save(Object obj);
+	Mono<Void> save(Object obj);
 	
 	/**
 	 * Deletes an object from database
 	 * 
 	 * @param obj - the object to save
-	 * @return whether it has deleted without issues
+	 * @return a Mono that completes when it has deleted
 	 */
-	boolean delete(Object obj);
+	Mono<Void> delete(Object obj);
 }

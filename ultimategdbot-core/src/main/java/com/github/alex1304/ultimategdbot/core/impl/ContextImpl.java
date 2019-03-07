@@ -5,9 +5,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 
 import com.github.alex1304.ultimategdbot.api.Bot;
 import com.github.alex1304.ultimategdbot.api.Context;
@@ -15,21 +15,21 @@ import com.github.alex1304.ultimategdbot.api.Plugin;
 import com.github.alex1304.ultimategdbot.api.guildsettings.NativeGuildSettings;
 import com.github.alex1304.ultimategdbot.api.utils.Utils;
 
+import discord4j.core.DiscordClient;
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.entity.Message;
 import discord4j.core.spec.MessageCreateSpec;
 import discord4j.rest.http.client.ClientException;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuples;
 
 public class ContextImpl implements Context {
 	
 	private final MessageCreateEvent event;
 	private final List<String> args;
 	private final Bot bot;
-	private final NativeGuildSettings guildSettings; // null if DM message
+	private final Mono<NativeGuildSettings> guildSettings; // null if DM message
 	private final Map<String, Object> variables;
-	private String effectivePrefix;
-	private boolean hasPrefixBeenChecked;
 
 	public ContextImpl(MessageCreateEvent event, List<String> args, Bot bot) {
 		this.event = Objects.requireNonNull(event);
@@ -42,13 +42,10 @@ public class ContextImpl implements Context {
 			return;
 		}
 		var id = guildIdOpt.get().asLong();
-		var guildSettings = bot.getDatabase().findByIDOrCreate(NativeGuildSettings.class, id, (gs, gid) -> {
+		this.guildSettings = bot.getDatabase().findByIDOrCreate(NativeGuildSettings.class, id, (gs, gid) -> {
 			gs.setGuildId(gid);
 			gs.setPrefix(bot.getDefaultPrefix());
-		});
-		this.guildSettings = guildSettings;
-		this.effectivePrefix = null;
-		this.hasPrefixBeenChecked = false;
+		}).cache();
 	}
 
 	@Override
@@ -93,40 +90,38 @@ public class ContextImpl implements Context {
 	}
 
 	@Override
-	public String getEffectivePrefix() {
-		if (hasPrefixBeenChecked) {
-			return effectivePrefix;
-		}
-		this.hasPrefixBeenChecked = true;
-		var content = Utils.removeQuotesUnlessEscaped(event.getMessage().getContent().orElse(""));
-		if (content.isEmpty()) {
-			return null;
-		}
-		var botId = bot.getDiscordClients().blockFirst().getSelfId();
-		var mention = "";
-		var mentionNick = "";
-		if (botId.isPresent()) {
-			mention = "<@" + botId.get().asString() + "> ";
-			mentionNick = "<@!" + botId.get().asString() + "> ";
-		}
-		final Predicate<String> isPrefix = str -> {
-			var res = str.equalsIgnoreCase(content.substring(0, Math.min(str.length(), content.length())));
-			if (res) {
-				this.effectivePrefix = str;
-			}
-			return res;
-		};
-		if (!mention.isEmpty() && isPrefix.test(mention)) {
-			return mention;
-		} else if (!mentionNick.isEmpty() && isPrefix.test(mentionNick)) {
-			return mentionNick;
-		} else if (guildSettings != null && isPrefix.test(guildSettings.getPrefix())) {
-			return guildSettings.getPrefix();
-		} else if (isPrefix.test(bot.getDefaultPrefix())) {
-			return bot.getDefaultPrefix();
-		} else {
-			return null;
-		}
+	public Mono<String> getEffectivePrefix() {
+		return bot.getDiscordClients().next()
+				.map(DiscordClient::getSelfId)
+				.filter(Optional::isPresent)
+				.map(botId -> Tuples.of("<@" + botId.get().asString() + "> ", "<@!" + botId.get().asString() + "> "))
+				.map(mentions -> Tuples.of(mentions.getT1(), mentions.getT2(), Utils.removeQuotesUnlessEscaped(event.getMessage().getContent().orElse(""))))
+				.filter(t3 -> !t3.getT3().isEmpty())
+				;
+//				.flatMap(botId -> {
+//					var content = Utils.removeQuotesUnlessEscaped(event.getMessage().getContent().orElse(""));
+//					if (content.isEmpty()) {
+//						return Mono.empty();
+//					}
+//					var mention = "";
+//					var mentionNick = "";
+//					if (botId.isPresent()) {
+//						mention = "<@" + botId.get().asString() + "> ";
+//						mentionNick = "<@!" + botId.get().asString() + "> ";
+//					}
+//					final Predicate<String> isPrefix = str -> str.equalsIgnoreCase(content.substring(0, Math.min(str.length(), content.length())));
+//					if (!mention.isEmpty() && isPrefix.test(mention)) {
+//						return Mono.just(mention);
+//					} else if (!mentionNick.isEmpty() && isPrefix.test(mentionNick)) {
+//						return Mono.just(mentionNick);
+//					} else if (guildSettings != null && isPrefix.test(guildSettings.getPrefix())) {
+//						return guildSettings.map(NativeGuildSettings::getPrefix);
+//					} else if (isPrefix.test(bot.getDefaultPrefix())) {
+//						return Mono.just(bot.getDefaultPrefix());
+//					} else {
+//						return Mono.empty();
+//					}
+//				});
 	}
 
 	@Override

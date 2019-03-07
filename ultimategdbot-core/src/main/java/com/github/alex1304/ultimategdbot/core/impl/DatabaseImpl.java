@@ -20,6 +20,10 @@ import org.hibernate.query.Query;
 
 import com.github.alex1304.ultimategdbot.api.Database;
 
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
+
 public class DatabaseImpl implements Database {
 	
 	private final Properties props;
@@ -49,62 +53,55 @@ public class DatabaseImpl implements Database {
 	}
 
 	@Override
-	public <T, K extends Serializable> T findByID(Class<T> entityClass, K key) {
-		T result = null;
-		Session s = newSession();
-
-		try {
-			result = s.load(entityClass, key);
-		} catch (ObjectNotFoundException e) {
-		} finally {
-			s.close();
-		}
-
-		return result;
+	public <T, K extends Serializable> Mono<T> findByID(Class<T> entityClass, K key) {
+		return Mono.fromCallable(() -> {
+			T result = null;
+			var s = newSession();
+			try {
+				result = s.load(entityClass, key);
+			} catch (ObjectNotFoundException e) {
+			} finally {
+				s.close();
+			}
+			return result;
+		}).subscribeOn(Schedulers.elastic());
 	}
 
 	@Override
-	public <T, K extends Serializable> T findByIDOrCreate(Class<T> entityClass, K key, BiConsumer<? super T, K> keySetter) {
-		var result = findByID(entityClass, key);
-		if (result != null) {
-			return result;
-		}
-		try {
-			result = entityClass.getConstructor().newInstance();
+	public <T, K extends Serializable> Mono<T> findByIDOrCreate(Class<T> entityClass, K key, BiConsumer<? super T, K> keySetter) {
+		return findByID(entityClass, key).switchIfEmpty(Mono.fromCallable(() -> {
+			T result = entityClass.getConstructor().newInstance();
 			keySetter.accept(result, key);
 			save(result);
-		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-				| InvocationTargetException | NoSuchMethodException | SecurityException e) {
-			throw new RuntimeException("An error occured when creating a database entity", e);
-		}
-		return result;
+			return result;
+		}).subscribeOn(Schedulers.elastic()).onErrorMap(e -> new RuntimeException("An error occured when creating a database entity", e)));
 	}
 
 	@Override
-	public <T> List<T> query(Class<T> entityClass, String query, Object... params) {
-		Session s = newSession();
-		List<T> list = new ArrayList<>();
-
-		try {
-			Query<T> q = s.createQuery(query, entityClass);
-			for (int i = 0; i < params.length; i++) {
-				q.setParameter(i, params[i]);
+	public <T> Flux<T> query(Class<T> entityClass, String query, Object... params) {
+		return Mono.fromCallable(() -> {
+			var s = newSession();
+			var list = new ArrayList<T>();
+			try {
+				var q = s.createQuery(query, entityClass);
+				for (int i = 0; i < params.length; i++) {
+					q.setParameter(i, params[i]);
+				}
+				list.addAll(q.getResultList());
+			} finally {
+				s.close();
 			}
-			list.addAll(q.getResultList());
-		} finally {
-			s.close();
-		}
-
-		return list;
+			return list;
+		}).subscribeOn(Schedulers.elastic()).flatMapMany(Flux::fromIterable);
 	}
 
 	@Override
-	public boolean save(Object obj) {
+	public Mono<Void> save(Object obj) {
 		return performTransaction(session -> session.saveOrUpdate(obj), false);
 	}
 
 	@Override
-	public boolean delete(Object obj) {
+	public Mono<Void> delete(Object obj) {
 		return performTransaction(session -> session.delete(obj), true);
 	}
 
@@ -115,26 +112,24 @@ public class DatabaseImpl implements Database {
 		return sessionFactory.openSession();
 	}
 
-	private boolean performTransaction(Consumer<Session> txConsumer, boolean flush) {
-		Session s = newSession();
-		Transaction tx = null;
-		boolean success = false;
-
-		try {
-			tx = s.beginTransaction();
-			txConsumer.accept(s);
-			if (flush)
-				s.flush();
-			tx.commit();
-			success = true;
-		} catch (RuntimeException e) {
-			if (tx != null)
-				tx.rollback();
-			e.printStackTrace();
-		} finally {
-			s.close();
-		}
-
-		return success;
+	private Mono<Void> performTransaction(Consumer<Session> txConsumer, boolean flush) {
+		return Mono.<Void>fromCallable(() -> {
+			var s = newSession();
+			Transaction tx = null;
+			try {
+				tx = s.beginTransaction();
+				txConsumer.accept(s);
+				if (flush)
+					s.flush();
+				tx.commit();
+			} catch (RuntimeException e) {
+				if (tx != null)
+					tx.rollback();
+				throw e;
+			} finally {
+				s.close();
+			}
+			return null;
+		}).subscribeOn(Schedulers.elastic()).onErrorMap(e -> new RuntimeException("Error while performing database transaction", e));
 	}
 }
