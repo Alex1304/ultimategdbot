@@ -98,16 +98,17 @@ public interface Context {
 	 * 
 	 * @return an unmodifiable Map containing the guild settings keys and their associated values.
 	 */
-	Map<Plugin, Map<String, String>> getGuildSettings();
+	Mono<Map<Plugin, Map<String, String>>> getGuildSettings();
 	
 	/**
 	 * Edits an entry of the guild settings.
 	 * 
 	 * @param key - the setting key
 	 * @param val - the setting value
+	 * @return 
 	 * @throws NoSuchElementException if no entry is found for the given key
 	 * @throws IllegalArgumentException if the given value is not accepted by the entry 
 	 * @throws UnsupportedOperationException if this method is called in a context that is outside of a Discord guild
 	 */
-	void setGuildSetting(String key, String val);
+	Mono<Void> setGuildSetting(String key, String val);
 }

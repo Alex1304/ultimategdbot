@@ -20,7 +20,7 @@ public class SetupCommand implements Command {
 	public Mono<Void> execute(Context ctx) {
 		var rb = new PaginatedReplyMenuBuilder(this, ctx, true, false);
 		var sb = new StringBuilder();
-		ctx.getGuildSettings().forEach((plugin, entries) -> {
+		return ctx.getGuildSettings().doOnNext(map -> map.forEach((plugin, entries) -> {
 			sb.append("**__").append(plugin.getName()).append("__**\n");
 			if (entries.isEmpty()) {
 				sb.append("_(Nothing to configure here)_\n");
@@ -34,8 +34,7 @@ public class SetupCommand implements Command {
 				sb.append('\n');
 			});
 			sb.append('\n');
-		});
-		return rb.build(sb.toString().stripTrailing()).then();
+		})).flatMap(__ -> rb.build(sb.toString().stripTrailing())).then();
 	}
 
 	@Override
@@ -72,5 +71,4 @@ public class SetupCommand implements Command {
 	public Map<Class<? extends Throwable>, BiConsumer<Throwable, Context>> getErrorActions() {
 		return Collections.emptyMap();
 	}
-
 }

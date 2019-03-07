@@ -1,5 +1,6 @@
 package com.github.alex1304.ultimategdbot.core.impl;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +21,7 @@ import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.entity.Message;
 import discord4j.core.spec.MessageCreateSpec;
 import discord4j.rest.http.client.ClientException;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
 
@@ -28,7 +30,7 @@ public class ContextImpl implements Context {
 	private final MessageCreateEvent event;
 	private final List<String> args;
 	private final Bot bot;
-	private final Mono<NativeGuildSettings> guildSettings; // null if DM message
+	private final Mono<NativeGuildSettings> guildSettings;
 	private final Map<String, Object> variables;
 
 	public ContextImpl(MessageCreateEvent event, List<String> args, Bot bot) {
@@ -94,34 +96,17 @@ public class ContextImpl implements Context {
 		return bot.getDiscordClients().next()
 				.map(DiscordClient::getSelfId)
 				.filter(Optional::isPresent)
-				.map(botId -> Tuples.of("<@" + botId.get().asString() + "> ", "<@!" + botId.get().asString() + "> "))
-				.map(mentions -> Tuples.of(mentions.getT1(), mentions.getT2(), Utils.removeQuotesUnlessEscaped(event.getMessage().getContent().orElse(""))))
-				.filter(t3 -> !t3.getT3().isEmpty())
-				;
-//				.flatMap(botId -> {
-//					var content = Utils.removeQuotesUnlessEscaped(event.getMessage().getContent().orElse(""));
-//					if (content.isEmpty()) {
-//						return Mono.empty();
-//					}
-//					var mention = "";
-//					var mentionNick = "";
-//					if (botId.isPresent()) {
-//						mention = "<@" + botId.get().asString() + "> ";
-//						mentionNick = "<@!" + botId.get().asString() + "> ";
-//					}
-//					final Predicate<String> isPrefix = str -> str.equalsIgnoreCase(content.substring(0, Math.min(str.length(), content.length())));
-//					if (!mention.isEmpty() && isPrefix.test(mention)) {
-//						return Mono.just(mention);
-//					} else if (!mentionNick.isEmpty() && isPrefix.test(mentionNick)) {
-//						return Mono.just(mentionNick);
-//					} else if (guildSettings != null && isPrefix.test(guildSettings.getPrefix())) {
-//						return guildSettings.map(NativeGuildSettings::getPrefix);
-//					} else if (isPrefix.test(bot.getDefaultPrefix())) {
-//						return Mono.just(bot.getDefaultPrefix());
-//					} else {
-//						return Mono.empty();
-//					}
-//				});
+				.map(Optional::get)
+				.map(botId -> Tuples.of("<@" + botId.asString() + "> ", "<@!" + botId.asString() + "> ",
+						Utils.removeQuotesUnlessEscaped(event.getMessage().getContent().orElse(""))))
+				.filter(tuple -> !tuple.getT3().isEmpty())
+				.flatMap(tuple -> guildSettings.flatMap(gs -> {
+					var content = tuple.getT3();
+					var guildSpecificPrefix = gs.getPrefix() == null ? bot.getDefaultPrefix() : gs.getPrefix();
+					return Flux.just(tuple.getT1(), tuple.getT2(), guildSpecificPrefix)
+							.filter(str -> str.equalsIgnoreCase(content.substring(0, Math.min(str.length(), content.length()))))
+							.next();
+				}));
 	}
 
 	@Override
@@ -157,37 +142,36 @@ public class ContextImpl implements Context {
 	}
 
 	@Override
-	public Map<Plugin, Map<String, String>> getGuildSettings() {
+	public Mono<Map<Plugin, Map<String, String>>> getGuildSettings() {
 		if (!event.getGuildId().isPresent()) {
 			throw new UnsupportedOperationException("Cannot perform this operation outside of a guild");
 		}
-		var map = new HashMap<Plugin, Map<String, String>>();
-		bot.getGuildSettingsEntries().forEach((k, v) -> {
-			var entries = new HashMap<String, String>();
-			v.forEach((k0, v0) -> {
-				entries.put(k0, v0.valueFromDatabaseAsString(bot.getDatabase(), event.getGuildId().get().asLong()));
-			});
-			map.put(k, entries);
-		});
-		return map;
+		return Flux.just(new HashMap<Plugin, Map<String, String>>())
+				.flatMap(map -> Flux.fromIterable(bot.getGuildSettingsEntries().entrySet())
+						.flatMap(guildSettingsEntriesByPlugin -> Flux.just(new HashMap<String, String>())
+								.flatMap(entries -> Flux.fromIterable(guildSettingsEntriesByPlugin.getValue().entrySet())
+										.flatMap(entry -> entry.getValue().valueFromDatabaseAsString(bot.getDatabase(), event.getGuildId().get().asLong())
+												.map(strVal -> {
+													entries.put(entry.getKey(), strVal);
+													return map;
+												}))
+										.takeLast(1)
+										.doOnNext(__ -> map.put(guildSettingsEntriesByPlugin.getKey(), entries)))))
+				.map(Collections::unmodifiableMap)
+				.next();
 	}
 
 	@Override
-	public void setGuildSetting(String key, String val) {
+	public Mono<Void> setGuildSetting(String key, String val) {
 		if (!event.getGuildId().isPresent()) {
 			throw new UnsupportedOperationException("Cannot perform this operation outside of a guild");
 		}
-		var found = false;
 		for (var map : bot.getGuildSettingsEntries().values()) {
 			var entry = map.get(key);
 			if (entry != null) {
-				found = true;
-				entry.valueAsStringToDatabase(bot.getDatabase(), val, event.getGuildId().get().asLong());
-				return;
+				return entry.valueAsStringToDatabase(bot.getDatabase(), val, event.getGuildId().get().asLong());
 			}
 		}
-		if (!found) {
-			throw new NoSuchElementException();
-		}
+		return Mono.error(new NoSuchElementException());
 	}
 }

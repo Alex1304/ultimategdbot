@@ -44,10 +44,9 @@ public class CommandHandler implements Handler {
 		bot.getDiscordClients().flatMap(client -> client.getEventDispatcher().on(MessageCreateEvent.class))
 				.filter(event -> event.getMessage().getContent().isPresent())
 				.map(event -> new ContextImpl(event, new ArrayList<>(), bot))
-				.filter(ctx -> ctx.getEffectivePrefix() != null)
-				.doOnNext(ctx -> ctx.getArgs().addAll(Utils.parseArgs(ctx.getEvent().getMessage().getContent().get(), ctx.getEffectivePrefix())))
-				.subscribe(ctx -> {
-					var cmdName = ctx.getArgs().get(0).substring(ctx.getEffectivePrefix().length());
+				.flatMap(ctx -> ctx.getEffectivePrefix().doOnNext(prefix -> {
+					ctx.getArgs().addAll(Utils.parseArgs(ctx.getEvent().getMessage().getContent().get(), prefix));
+					var cmdName = ctx.getArgs().get(0).substring(prefix.length());
 					var cmd = commands.get(cmdName);
 					if (cmd == null) {
 						return;
@@ -66,7 +65,7 @@ public class CommandHandler implements Handler {
 					}
 					var newCtx = ctx.getArgs().equals(argsCpy) ? ctx : new ContextImpl(ctx.getEvent(), argsCpy, ctx.getBot());
 					Command.invoke(cmd, newCtx);
-				});
+				})).subscribe();
 	}
 	
 	/**

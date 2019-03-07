@@ -7,6 +7,8 @@ import java.util.function.Function;
 
 import com.github.alex1304.ultimategdbot.api.Database;
 
+import reactor.core.publisher.Mono;
+
 /**
  * Represents a guild configuration entry.
  *
@@ -34,23 +36,21 @@ public class GuildSettingsEntry<E extends GuildSettings, D> {
 		return entityClass;
 	}
 	
-	public D valueFromDatabase(Database db, long guildId) {
-		var entity = db.findByIDOrCreate(entityClass, guildId, GuildSettings::setGuildId);
-		return valueGetter.apply(entity);
+	public Mono<D> valueFromDatabase(Database db, long guildId) {
+		return db.findByIDOrCreate(entityClass, guildId, GuildSettings::setGuildId).map(valueGetter::apply);
 	}
 	
-	public String valueFromDatabaseAsString(Database db, long guildId) {
-		var val = valueFromDatabase(db, guildId);
-		return valueToString.apply(val, guildId);
+	public Mono<String> valueFromDatabaseAsString(Database db, long guildId) {
+		return valueFromDatabase(db, guildId).map(val -> valueToString.apply(val, guildId));
 	}
 	
-	public void valueToDatabase(Database db, D value, long guildId) {
-		var entity = db.findByIDOrCreate(entityClass, guildId, GuildSettings::setGuildId);
-		valueSetter.accept(entity, value);
-		db.save(entity);
+	public Mono<Void> valueToDatabase(Database db, D value, long guildId) {
+		return db.findByIDOrCreate(entityClass, guildId, GuildSettings::setGuildId)
+				.doOnNext(entity -> valueSetter.accept(entity, value))
+				.flatMap(db::save);
 	}
 	
-	public void valueAsStringToDatabase(Database db, String strVal, long guildId) {
-		valueToDatabase(db, stringToValue.apply(strVal, guildId), guildId);
+	public Mono<Void> valueAsStringToDatabase(Database db, String strVal, long guildId) {
+		return valueToDatabase(db, stringToValue.apply(strVal, guildId), guildId);
 	}
 }

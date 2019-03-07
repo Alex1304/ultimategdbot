@@ -25,14 +25,19 @@ public class SetupSetCommand implements Command {
 		}
 		var arg1 = ctx.getArgs().get(1);
 		var arg2 = String.join(" ", ctx.getArgs().subList(2, ctx.getArgs().size()));
-		try {
-			ctx.setGuildSetting(arg1, arg2);
-		} catch (NoSuchElementException e) {
-			return Mono.error(new CommandFailedException("There is no configuration entry with key `" + arg1 + "`."));
-		} catch (IllegalArgumentException e) {
-			return Mono.error(new CommandFailedException("Cannot assign this value as `" + arg1 + "`: " + e.getMessage()));
-		}
-		return ctx.reply(":white_check_mark: Settings updated!").then();
+		return ctx.setGuildSetting(arg1, arg2)
+				.onErrorMap(NoSuchElementException.class, e -> new CommandFailedException("There is no configuration entry with key `" + arg1 + "`."))
+				.onErrorMap(IllegalArgumentException.class, e -> new CommandFailedException("Cannot assign this value as `" + arg1 + "`: " + e.getMessage()))
+				.then(ctx.reply(":white_check_mark: Settings updated!"))
+				.then();
+//		try {
+//			ctx.setGuildSetting(arg1, arg2);
+//		} catch (NoSuchElementException e) {
+//			return Mono.error(new CommandFailedException("There is no configuration entry with key `" + arg1 + "`."));
+//		} catch (IllegalArgumentException e) {
+//			return Mono.error(new CommandFailedException("Cannot assign this value as `" + arg1 + "`: " + e.getMessage()));
+//		}
+//		return ctx.reply(":white_check_mark: Settings updated!").then();
 	}
 
 	@Override

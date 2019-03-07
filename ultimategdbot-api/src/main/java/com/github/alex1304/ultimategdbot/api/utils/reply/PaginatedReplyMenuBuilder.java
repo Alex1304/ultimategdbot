@@ -75,6 +75,6 @@ public class PaginatedReplyMenuBuilder extends ReplyMenuBuilder {
 				}
 			});
 		}
-		return super.build(pages.get(page), embed);
+		return super.build(pages.isEmpty() ? "" : pages.get(page), embed);
 	}
 }
