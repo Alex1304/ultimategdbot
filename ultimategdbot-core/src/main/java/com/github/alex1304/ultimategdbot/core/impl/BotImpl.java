@@ -4,6 +4,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayDeque;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +12,7 @@ import java.util.Objects;
 import java.util.Properties;
 import java.util.ServiceLoader;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -175,7 +177,7 @@ public class BotImpl implements Bot {
 	}
 
 	@Override
-	public String getEmoji(String emojiName) {
+	public Mono<String> getEmoji(String emojiName) {
 		var defaultVal = ":" + emojiName + ":";
 		return discordClients.flatMap(DiscordClient::getGuilds)
 				.filter(g -> emojiGuildIds.stream().anyMatch(g.getId()::equals))
@@ -183,7 +185,7 @@ public class BotImpl implements Bot {
 				.filter(emoji -> emoji.getName().equalsIgnoreCase(emojiName))
 				.next()
 				.map(GuildEmoji::asFormat)
-				.defaultIfEmpty(defaultVal).onErrorReturn(defaultVal).block();
+				.defaultIfEmpty(defaultVal).onErrorReturn(defaultVal);
 	}
 
 	public static Bot buildFromProperties(Properties props, Properties hibernateProps, Properties pluginsProps) {
@@ -226,8 +228,14 @@ public class BotImpl implements Bot {
 					return Presence.online(activity);
 			}
 		}, Presence.online(activity));
+		var useImmediateScheduler = propParser.parseOrDefault("use_immediate_scheduler", Boolean::parseBoolean, false);
+		if (useImmediateScheduler) {
+			System.out.println("Note: Immediate scheduler has been selected for Discord client requests. If some of the plugins have commands "
+					+ "performing blocking operations, they are likely to throw exceptions and not work properly. If you have such issues, change "
+					+ "'use_immediate_scheduler' to 'false' in bot.properties.");
+		}
 		var discordClients = new ShardingClientBuilder(token).build()
-				.map(dcb -> dcb.setEventScheduler(Schedulers.elastic()))
+				.map(dcb -> dcb.setEventScheduler(useImmediateScheduler ? Schedulers.immediate() : Schedulers.elastic()))
 				.map(dcb -> dcb.setInitialPresence(presenceStatus))
 				.map(DiscordClientBuilder::build)
 				.cache();
@@ -245,8 +253,9 @@ public class BotImpl implements Bot {
 				plugin.setup(parser);
 				database.addAllMappingResources(plugin.getDatabaseMappingResources());
 				guildSettingsEntries.put(plugin, plugin.getGuildConfigurationEntries(this));
-				var cmdSet = plugin.getProvidedCommands();
-				cmdHandler.getCommandsByPlugins().put(plugin, cmdSet);
+				var cmdSet = new TreeSet<Command>(Comparator.comparing(cmd -> Utils.joinAliases(cmd.getAliases())));
+				cmdSet.addAll(plugin.getProvidedCommands());
+				cmdHandler.getCommandsByPlugins().put(plugin, Collections.unmodifiableSet(cmdSet));
 				for (var cmd : cmdSet) {
 					for (var alias : cmd.getAliases()) {
 						cmdHandler.getCommands().put(alias, cmd);

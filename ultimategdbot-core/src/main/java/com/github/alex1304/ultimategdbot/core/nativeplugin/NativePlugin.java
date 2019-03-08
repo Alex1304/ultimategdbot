@@ -42,15 +42,15 @@ public class NativePlugin implements Plugin {
 				NativeGuildSettings.class,
 				NativeGuildSettings::getPrefix,
 				NativeGuildSettings::setPrefix,
-				valueConverter::convertNonBlankStringToString,
-				valueConverter::convertStringToString
+				(value, guildId) -> valueConverter.justCheck(value, guildId, x -> !x.isBlank(), "Cannot be blank"),
+				valueConverter::noConversion
 		));
 		map.put("server_mod_role", new GuildSettingsEntry<>(
 				NativeGuildSettings.class,
 				NativeGuildSettings::getServerModRoleId,
 				NativeGuildSettings::setServerModRoleId,
-				valueConverter::convertStringToRoleID,
-				valueConverter::convertRoleIDToString
+				valueConverter::toRoleId,
+				valueConverter::fromRoleId
 		));
 		return map;
 	}

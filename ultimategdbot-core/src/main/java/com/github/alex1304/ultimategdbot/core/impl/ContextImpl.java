@@ -1,12 +1,14 @@
 package com.github.alex1304.ultimategdbot.core.impl;
 
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
@@ -144,21 +146,22 @@ public class ContextImpl implements Context {
 	@Override
 	public Mono<Map<Plugin, Map<String, String>>> getGuildSettings() {
 		if (!event.getGuildId().isPresent()) {
-			throw new UnsupportedOperationException("Cannot perform this operation outside of a guild");
+			return Mono.error(new UnsupportedOperationException("Cannot perform this operation outside of a guild"));
 		}
-		return Flux.just(new HashMap<Plugin, Map<String, String>>())
-				.flatMap(map -> Flux.fromIterable(bot.getGuildSettingsEntries().entrySet())
-						.flatMap(guildSettingsEntriesByPlugin -> Flux.just(new HashMap<String, String>())
-								.flatMap(entries -> Flux.fromIterable(guildSettingsEntriesByPlugin.getValue().entrySet())
-										.flatMap(entry -> entry.getValue().valueFromDatabaseAsString(bot.getDatabase(), event.getGuildId().get().asLong())
-												.map(strVal -> {
-													entries.put(entry.getKey(), strVal);
-													return map;
-												}))
-										.takeLast(1)
-										.doOnNext(__ -> map.put(guildSettingsEntriesByPlugin.getKey(), entries)))))
-				.map(Collections::unmodifiableMap)
-				.next();
+		var result = new TreeMap<Plugin, Map<String, String>>(Comparator.comparing(Plugin::getName));
+		var entriesForEachPlugin = new TreeMap<String, String>();
+		// Flux.fromIterable(..).flatMap(...)       // Is used as a reactive way to iterate a collection, flatMap being used as a forEach
+		//         .takeLast(1).doOnNext(__ -> ...) // Allows to execute an action after the iteration is done.
+		return Flux.fromIterable(bot.getGuildSettingsEntries().entrySet())
+				.flatMap(guildSettingsEntriesByPlugin -> Flux.fromIterable(guildSettingsEntriesByPlugin.getValue().entrySet())
+						.flatMap(entry -> entry.getValue().valueFromDatabaseAsString(bot.getDatabase(), event.getGuildId().get().asLong())
+								.doOnNext(strVal -> entriesForEachPlugin.put(entry.getKey(), strVal)))
+						.takeLast(1)
+						.doOnNext(__ -> {
+							result.put(guildSettingsEntriesByPlugin.getKey(), new HashMap<>(entriesForEachPlugin));
+							entriesForEachPlugin.clear(); // We are done with this plugin, clear the map so that it can be used for next plugins
+						}))
+				.then(Mono.just(Collections.unmodifiableMap(result)));
 	}
 
 	@Override

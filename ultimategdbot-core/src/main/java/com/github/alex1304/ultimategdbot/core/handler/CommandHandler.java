@@ -2,12 +2,14 @@ package com.github.alex1304.ultimategdbot.core.handler;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.TreeMap;
 
 import com.github.alex1304.ultimategdbot.api.Bot;
 import com.github.alex1304.ultimategdbot.api.Command;
@@ -31,7 +33,7 @@ public class CommandHandler implements Handler {
 	public CommandHandler(Bot bot) {
 		this.bot = Objects.requireNonNull(bot);
 		this.commands = new HashMap<>();
-		this.commandsByPlugins = new HashMap<>();
+		this.commandsByPlugins = new TreeMap<>(Comparator.comparing(Plugin::getName));
 		this.subCommands = new HashMap<>();
 		this.plugins = new HashSet<>();
 	}

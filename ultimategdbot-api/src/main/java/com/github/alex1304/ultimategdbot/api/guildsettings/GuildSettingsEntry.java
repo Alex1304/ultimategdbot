@@ -20,11 +20,11 @@ public class GuildSettingsEntry<E extends GuildSettings, D> {
 	private final Class<E> entityClass;
 	private final Function<E, D> valueGetter;
 	private final BiConsumer<E, D> valueSetter;
-	private final BiFunction<String, Long, D> stringToValue;
-	private final BiFunction<D, Long, String> valueToString;
+	private final BiFunction<String, Long, Mono<D>> stringToValue;
+	private final BiFunction<D, Long, Mono<String>> valueToString;
 	
 	public GuildSettingsEntry(Class<E> entityClass, Function<E, D> valueGetter,
-			BiConsumer<E, D> valueSetter, BiFunction<String, Long, D> stringToValue, BiFunction<D, Long, String> valueToString) {
+			BiConsumer<E, D> valueSetter, BiFunction<String, Long, Mono<D>> stringToValue, BiFunction<D, Long, Mono<String>> valueToString) {
 		this.entityClass = Objects.requireNonNull(entityClass);
 		this.valueGetter = Objects.requireNonNull(valueGetter);
 		this.valueSetter = Objects.requireNonNull(valueSetter);
@@ -41,7 +41,7 @@ public class GuildSettingsEntry<E extends GuildSettings, D> {
 	}
 	
 	public Mono<String> valueFromDatabaseAsString(Database db, long guildId) {
-		return valueFromDatabase(db, guildId).map(val -> valueToString.apply(val, guildId));
+		return valueFromDatabase(db, guildId).flatMap(val -> valueToString.apply(val, guildId));
 	}
 	
 	public Mono<Void> valueToDatabase(Database db, D value, long guildId) {
@@ -51,6 +51,6 @@ public class GuildSettingsEntry<E extends GuildSettings, D> {
 	}
 	
 	public Mono<Void> valueAsStringToDatabase(Database db, String strVal, long guildId) {
-		return valueToDatabase(db, stringToValue.apply(strVal, guildId), guildId);
+		return stringToValue.apply(strVal, guildId).flatMap(value -> valueToDatabase(db, value, guildId));
 	}
 }
