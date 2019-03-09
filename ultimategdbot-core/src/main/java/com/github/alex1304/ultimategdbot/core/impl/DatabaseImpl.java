@@ -43,6 +43,7 @@ public class DatabaseImpl implements Database {
 			sessionFactory.close();
 		}
 		sessionFactory = config.buildSessionFactory();
+		sessionFactory.getStatistics().setStatisticsEnabled(true);
 	}
 
 	public void addAllMappingResources(Set<String> resourceNames) {
@@ -100,6 +101,10 @@ public class DatabaseImpl implements Database {
 	@Override
 	public Mono<Void> delete(Object obj) {
 		return performTransaction(session -> session.delete(obj), true);
+	}
+	
+	public SessionFactory getSessionFactory() {
+		return sessionFactory;
 	}
 
 	private Session newSession() {

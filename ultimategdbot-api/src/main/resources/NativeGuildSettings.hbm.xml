@@ -2,6 +2,7 @@
 <!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
 <hibernate-mapping default-lazy="false">
 	<class name="com.github.alex1304.ultimategdbot.api.guildsettings.NativeGuildSettings" table="native_guild_settings">
+		<cache usage="read-write" />
 		<id name="guildId" type="long" column="guild_id">
 			<generator class="assigned" />
 		</id>

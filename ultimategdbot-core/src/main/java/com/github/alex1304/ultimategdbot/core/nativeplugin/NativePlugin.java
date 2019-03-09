@@ -21,12 +21,12 @@ public class NativePlugin implements Plugin {
 	
 	@Override
 	public Set<Command> getProvidedCommands() {
-		return Set.of(new HelpCommand(), new PingCommand(), new SetupCommand());
+		return Set.of(new HelpCommand(), new PingCommand(), new SetupCommand(), new DbstatsCommand());
 	}
 
 	@Override
 	public String getName() {
-		return "Native";
+		return "Core";
 	}
 
 	@Override
