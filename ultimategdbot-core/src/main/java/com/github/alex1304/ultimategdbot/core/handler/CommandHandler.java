@@ -44,7 +44,7 @@ public class CommandHandler implements Handler {
 	@Override
 	public void listen() {
 		bot.getDiscordClients().flatMap(client -> client.getEventDispatcher().on(MessageCreateEvent.class))
-				.filter(event -> event.getMessage().getContent().isPresent())
+				.filter(event -> event.getMessage().getContent().isPresent() && event.getMessage().getAuthor().isPresent())
 				.map(event -> new ContextImpl(event, new ArrayList<>(), bot))
 				.flatMap(ctx -> ctx.getEffectivePrefix().doOnNext(prefix -> {
 					ctx.getArgs().addAll(Utils.parseArgs(ctx.getEvent().getMessage().getContent().get(), prefix));

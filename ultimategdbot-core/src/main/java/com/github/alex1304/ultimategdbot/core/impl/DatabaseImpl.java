@@ -9,7 +9,6 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import org.hibernate.ObjectNotFoundException;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
@@ -37,7 +36,7 @@ public class DatabaseImpl implements Database {
 		var config = new Configuration();
 		config.addProperties(props);
 		for (var resource : resourceNames) {
-			config.addResource("/" + resource);
+			config.addResource(resource);
 		}
 		if (sessionFactory != null) {
 			sessionFactory.close();
@@ -53,15 +52,9 @@ public class DatabaseImpl implements Database {
 	@Override
 	public <T, K extends Serializable> Mono<T> findByID(Class<T> entityClass, K key) {
 		return Mono.fromCallable(() -> {
-			T result = null;
-			var s = newSession();
-			try {
-				result = s.load(entityClass, key);
-			} catch (ObjectNotFoundException e) {
-			} finally {
-				s.close();
+			try (var s = newSession()) {
+				return s.get(entityClass, key);
 			}
-			return result;
 		}).subscribeOn(Schedulers.elastic());
 	}
 
@@ -78,16 +71,13 @@ public class DatabaseImpl implements Database {
 	@Override
 	public <T> Flux<T> query(Class<T> entityClass, String query, Object... params) {
 		return Mono.fromCallable(() -> {
-			var s = newSession();
 			var list = new ArrayList<T>();
-			try {
+			try (var s = newSession()) {
 				var q = s.createQuery(query, entityClass);
 				for (int i = 0; i < params.length; i++) {
 					q.setParameter(i, params[i]);
 				}
 				list.addAll(q.getResultList());
-			} finally {
-				s.close();
 			}
 			return list;
 		}).subscribeOn(Schedulers.elastic()).flatMapMany(Flux::fromIterable);
@@ -116,9 +106,8 @@ public class DatabaseImpl implements Database {
 
 	private Mono<Void> performTransaction(Consumer<Session> txConsumer, boolean flush) {
 		return Mono.<Void>fromCallable(() -> {
-			var s = newSession();
 			Transaction tx = null;
-			try {
+			try (var s = newSession()) {
 				tx = s.beginTransaction();
 				txConsumer.accept(s);
 				if (flush)
@@ -128,8 +117,6 @@ public class DatabaseImpl implements Database {
 				if (tx != null)
 					tx.rollback();
 				throw e;
-			} finally {
-				s.close();
 			}
 			return null;
 		}).subscribeOn(Schedulers.elastic()).onErrorMap(e -> new RuntimeException("Error while performing database transaction", e));

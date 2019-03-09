@@ -31,7 +31,7 @@ public class NativePlugin implements Plugin {
 
 	@Override
 	public Set<String> getDatabaseMappingResources() {
-		return Set.of("NativeGuildSettings.hbm.xml");
+		return Set.of("/NativeGuildSettings.hbm.xml");
 	}
 
 	@Override
