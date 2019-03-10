@@ -7,7 +7,7 @@ import java.util.function.Consumer;
 import com.github.alex1304.ultimategdbot.api.Command;
 import com.github.alex1304.ultimategdbot.api.CommandFailedException;
 import com.github.alex1304.ultimategdbot.api.Context;
-import com.github.alex1304.ultimategdbot.api.utils.Utils;
+import com.github.alex1304.ultimategdbot.api.utils.BotUtils;
 
 import discord4j.core.object.entity.Message;
 import discord4j.core.spec.EmbedCreateSpec;
@@ -31,7 +31,7 @@ public class PaginatedReplyMenuBuilder extends ReplyMenuBuilder {
 		@SuppressWarnings("unchecked")
 		var pages = (List<String>) ctx.getVar("pages", List.class);
 		if (pages == null) {
-			pages = Utils.chunkMessage(content);
+			pages = BotUtils.chunkMessage(content);
 			ctx.setVar("pages", pages);
 			ctx.setVar("page", 0);
 			ctx.setVar("pageMax", pages.size() - 1);

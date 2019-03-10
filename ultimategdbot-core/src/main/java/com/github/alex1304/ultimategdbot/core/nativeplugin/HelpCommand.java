@@ -10,7 +10,7 @@ import com.github.alex1304.ultimategdbot.api.Command;
 import com.github.alex1304.ultimategdbot.api.CommandFailedException;
 import com.github.alex1304.ultimategdbot.api.Context;
 import com.github.alex1304.ultimategdbot.api.PermissionLevel;
-import com.github.alex1304.ultimategdbot.api.utils.Utils;
+import com.github.alex1304.ultimategdbot.api.utils.BotUtils;
 import com.github.alex1304.ultimategdbot.api.utils.reply.PaginatedReplyMenuBuilder;
 
 import discord4j.core.object.entity.Channel.Type;
@@ -34,7 +34,7 @@ public class HelpCommand implements Command {
 										.doOnNext(cmd -> {
 											sb.append('`');
 											sb.append(prefix);
-											sb.append(Utils.joinAliases(cmd.getAliases()));
+											sb.append(BotUtils.joinAliases(cmd.getAliases()));
 											sb.append("`: ");
 											sb.append(cmd.getDescription());
 											sb.append('\n');
@@ -47,7 +47,7 @@ public class HelpCommand implements Command {
 			if (cmd == null) {
 				return Mono.error(new CommandFailedException("The command \"" + cmdName + "\" does not exist."));
 			}
-			return rb.build(Utils.generateDefaultDocumentation(cmd, prefix, cmdName));
+			return rb.build(BotUtils.generateDefaultDocumentation(cmd, prefix, cmdName));
 		}).then();
 	}
 

@@ -14,7 +14,7 @@ import java.util.TreeMap;
 import com.github.alex1304.ultimategdbot.api.Bot;
 import com.github.alex1304.ultimategdbot.api.Command;
 import com.github.alex1304.ultimategdbot.api.Plugin;
-import com.github.alex1304.ultimategdbot.api.utils.Utils;
+import com.github.alex1304.ultimategdbot.api.utils.BotUtils;
 import com.github.alex1304.ultimategdbot.core.impl.ContextImpl;
 
 import discord4j.core.event.domain.message.MessageCreateEvent;
@@ -47,7 +47,7 @@ public class CommandHandler implements Handler {
 				.filter(event -> event.getMessage().getContent().isPresent() && event.getMessage().getAuthor().isPresent())
 				.map(event -> new ContextImpl(event, new ArrayList<>(), bot))
 				.flatMap(ctx -> ctx.getEffectivePrefix().doOnNext(prefix -> {
-					ctx.getArgs().addAll(Utils.parseArgs(ctx.getEvent().getMessage().getContent().get(), prefix));
+					ctx.getArgs().addAll(BotUtils.parseArgs(ctx.getEvent().getMessage().getContent().get(), prefix));
 					var cmdName = ctx.getArgs().get(0).substring(prefix.length());
 					var cmd = commands.get(cmdName);
 					if (cmd == null) {

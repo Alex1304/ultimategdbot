@@ -16,7 +16,7 @@ import com.github.alex1304.ultimategdbot.api.Bot;
 import com.github.alex1304.ultimategdbot.api.Context;
 import com.github.alex1304.ultimategdbot.api.Plugin;
 import com.github.alex1304.ultimategdbot.api.guildsettings.NativeGuildSettings;
-import com.github.alex1304.ultimategdbot.api.utils.Utils;
+import com.github.alex1304.ultimategdbot.api.utils.BotUtils;
 
 import discord4j.core.DiscordClient;
 import discord4j.core.event.domain.message.MessageCreateEvent;
@@ -100,7 +100,7 @@ public class ContextImpl implements Context {
 				.filter(Optional::isPresent)
 				.map(Optional::get)
 				.map(botId -> Tuples.of("<@" + botId.asString() + "> ", "<@!" + botId.asString() + "> ",
-						Utils.removeQuotesUnlessEscaped(event.getMessage().getContent().orElse(""))))
+						BotUtils.removeQuotesUnlessEscaped(event.getMessage().getContent().orElse(""))))
 				.filter(tuple -> !tuple.getT3().isEmpty())
 				.flatMap(tuple -> guildSettings.flatMap(gs -> {
 					var content = tuple.getT3();

@@ -25,7 +25,7 @@ import com.github.alex1304.ultimategdbot.api.Database;
 import com.github.alex1304.ultimategdbot.api.Plugin;
 import com.github.alex1304.ultimategdbot.api.guildsettings.GuildSettingsEntry;
 import com.github.alex1304.ultimategdbot.api.utils.PropertyParser;
-import com.github.alex1304.ultimategdbot.api.utils.Utils;
+import com.github.alex1304.ultimategdbot.api.utils.BotUtils;
 import com.github.alex1304.ultimategdbot.core.handler.CommandHandler;
 import com.github.alex1304.ultimategdbot.core.handler.Handler;
 import com.github.alex1304.ultimategdbot.core.handler.ReplyMenuHandler;
@@ -164,7 +164,7 @@ public class BotImpl implements Bot {
 		pw.println("__User input:__ `" + ctx.getEvent().getMessage().getContent().orElseGet(() -> "(No content)") + "`");
 		pw.println("__Full stack trace:__");
 		t.printStackTrace(pw);
-		var chunks = Utils.chunkMessage(sw.toString());
+		var chunks = BotUtils.chunkMessage(sw.toString());
 		var i = 0;
 		for (var chunk : List.copyOf(chunks)) {
 			if (i != 0) {
@@ -173,7 +173,7 @@ public class BotImpl implements Bot {
 			i++;
 		}
 		System.out.println(chunks);
-		return Utils.sendMultipleSimpleMessagesToOneChannel(getDebugLogChannel(), chunks);
+		return BotUtils.sendMultipleSimpleMessagesToOneChannel(getDebugLogChannel(), chunks);
 	}
 
 	@Override
@@ -237,6 +237,7 @@ public class BotImpl implements Bot {
 		var discordClients = new ShardingClientBuilder(token).build()
 				.map(dcb -> dcb.setEventScheduler(useImmediateScheduler ? Schedulers.immediate() : Schedulers.elastic()))
 				.map(dcb -> dcb.setInitialPresence(presenceStatus))
+				.map(dcb -> dcb.setInitialPresence(presenceStatus))
 				.map(DiscordClientBuilder::build)
 				.cache();
 		return new BotImpl(token, defaultPrefix, supportServerId, moderatorRoleId, releaseChannel, discordClients,
@@ -253,7 +254,7 @@ public class BotImpl implements Bot {
 				plugin.setup(parser);
 				database.addAllMappingResources(plugin.getDatabaseMappingResources());
 				guildSettingsEntries.put(plugin, plugin.getGuildConfigurationEntries(this));
-				var cmdSet = new TreeSet<Command>(Comparator.comparing(cmd -> Utils.joinAliases(cmd.getAliases())));
+				var cmdSet = new TreeSet<Command>(Comparator.comparing(cmd -> BotUtils.joinAliases(cmd.getAliases())));
 				cmdSet.addAll(plugin.getProvidedCommands());
 				cmdHandler.getCommandsByPlugins().put(plugin, Collections.unmodifiableSet(cmdSet));
 				for (var cmd : cmdSet) {
@@ -309,7 +310,7 @@ public class BotImpl implements Bot {
 					}
 					sb.append("Serving " + guildCreateEvents.stream().mapToInt(List::size).sum() + " guilds across " + shardCount + " shards!");
 					System.out.println(sb);
-					Utils.sendMultipleSimpleMessagesToOneChannel(getDebugLogChannel(), Utils.chunkMessage(sb.toString())).subscribe();
+					BotUtils.sendMultipleSimpleMessagesToOneChannel(getDebugLogChannel(), BotUtils.chunkMessage(sb.toString())).subscribe();
 					handlers.forEach(Handler::listen);
 				})).subscribe();
 		discordClients.flatMap(DiscordClient::login).blockLast();

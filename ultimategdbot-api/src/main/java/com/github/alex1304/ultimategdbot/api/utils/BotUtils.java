@@ -14,6 +14,7 @@ import com.github.alex1304.ultimategdbot.api.Command;
 import discord4j.core.object.entity.Channel;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.MessageChannel;
+import discord4j.core.object.entity.User;
 import discord4j.core.spec.MessageCreateSpec;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -21,8 +22,8 @@ import reactor.core.publisher.Mono;
 /**
  * Contains various utility methods.
  */
-public class Utils {
-	private Utils() {
+public class BotUtils {
+	private BotUtils() {
 	}
 	
 	/**
@@ -198,5 +199,14 @@ public class Utils {
 			result[i] = resultList.get(i);
 		
 		return new String(result);
+	}
+	
+	/**
+	 * Formats the username of the user specified as argument with the format username#discriminator
+	 * @param user - The user whom username will be formatted
+	 * @return The formatted username as String.
+	 */
+	public static String formatDiscordUsername(User user) {
+		return escapeMarkdown(user.getUsername() + "#" + user.getDiscriminator());
 	}
 }

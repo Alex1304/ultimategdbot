@@ -9,7 +9,7 @@ import java.util.function.Function;
 import com.github.alex1304.ultimategdbot.api.Bot;
 import com.github.alex1304.ultimategdbot.api.Command;
 import com.github.alex1304.ultimategdbot.api.Context;
-import com.github.alex1304.ultimategdbot.api.utils.Utils;
+import com.github.alex1304.ultimategdbot.api.utils.BotUtils;
 import com.github.alex1304.ultimategdbot.core.impl.ContextImpl;
 
 import discord4j.core.event.domain.message.MessageCreateEvent;
@@ -71,7 +71,7 @@ public class ReplyMenuHandler implements Handler {
 						&& event.getMessage().getAuthor().isPresent()
 						&& openedReplyMenus.containsKey(event.getMessage().getChannelId().asString()
 								+ event.getMessage().getAuthor().get().getId().asString()))
-				.map(event -> new ContextImpl(event, Utils.parseArgs(event.getMessage().getContent().get()), bot))
+				.map(event -> new ContextImpl(event, BotUtils.parseArgs(event.getMessage().getContent().get()), bot))
 				.subscribe(ctx -> {
 					var replyMenu = openedReplyMenus.get(ctx.getEvent().getMessage().getChannelId().asString()
 							+ ctx.getEvent().getMessage().getAuthor().get().getId().asString());
