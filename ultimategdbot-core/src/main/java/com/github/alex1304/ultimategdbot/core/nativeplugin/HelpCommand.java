@@ -16,6 +16,7 @@ import com.github.alex1304.ultimategdbot.api.utils.reply.PaginatedReplyMenuBuild
 import discord4j.core.object.entity.Channel.Type;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuples;
 
 public class HelpCommand implements Command {
 
@@ -27,19 +28,24 @@ public class HelpCommand implements Command {
 				var sb = new StringBuffer("Here is the list of commands you can use in this channel:\n\n");
 				return ctx.getEvent().getMessage().getChannel()
 						.flatMap(c -> Flux.fromIterable(ctx.getBot().getCommandsFromPlugins().entrySet())
-								.doOnNext(entry -> sb.append("**__").append(entry.getKey().getName()).append("__**\n"))
-								.flatMap(entry -> Flux.fromIterable(entry.getValue())
-										.filter(cmd -> cmd.getChannelTypesAllowed().contains(c.getType()))
-										.filterWhen(cmd -> cmd.getPermissionLevel().isGranted(ctx))
-										.doOnNext(cmd -> {
-											sb.append('`');
-											sb.append(prefix);
-											sb.append(BotUtils.joinAliases(cmd.getAliases()));
-											sb.append("`: ");
-											sb.append(cmd.getDescription());
-											sb.append('\n');
-										}))
-								.last())
+								.flatMapSequential(entry -> Flux.fromIterable(entry.getValue())
+											.filter(cmd -> cmd.getChannelTypesAllowed().contains(c.getType()))
+											.filterWhen(cmd -> cmd.getPermissionLevel().isGranted(ctx))
+											.collectList()
+											.map(cmdList -> Tuples.of(entry.getKey().getName(), cmdList)))
+								.doOnNext(tuple -> {
+									sb.append("**__").append(tuple.getT1()).append("__**\n");
+									tuple.getT2().forEach(cmd -> {
+										sb.append('`');
+										sb.append(prefix);
+										sb.append(BotUtils.joinAliases(cmd.getAliases()));
+										sb.append("`: ");
+										sb.append(cmd.getDescription());
+										sb.append('\n');
+									});
+								})
+								.takeLast(1)
+								.next())
 						.flatMap(__ -> rb.build(sb.toString().stripTrailing()));
 			}
 			var cmdName = String.join(" ", ctx.getArgs().subList(1, ctx.getArgs().size()));
