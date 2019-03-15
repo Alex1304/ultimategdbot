@@ -13,6 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 import com.github.alex1304.ultimategdbot.api.Bot;
+import com.github.alex1304.ultimategdbot.api.Command;
 import com.github.alex1304.ultimategdbot.api.Context;
 import com.github.alex1304.ultimategdbot.api.Plugin;
 import com.github.alex1304.ultimategdbot.api.guildsettings.NativeGuildSettings;
@@ -29,27 +30,25 @@ import reactor.util.function.Tuples;
 
 public class ContextImpl implements Context {
 	
+	private final Command originalCommand;
 	private final MessageCreateEvent event;
 	private final List<String> args;
 	private final Bot bot;
-	private final Mono<NativeGuildSettings> guildSettings;
 	private final Map<String, Object> variables;
+	private final String prefixUsed;
 
-	public ContextImpl(MessageCreateEvent event, List<String> args, Bot bot) {
+	public ContextImpl(Command originalCommand, MessageCreateEvent event, List<String> args, Bot bot, String prefixUsed) {
+		this.originalCommand = Objects.requireNonNull(originalCommand);
 		this.event = Objects.requireNonNull(event);
 		this.args = Objects.requireNonNull(args);
 		this.bot = Objects.requireNonNull(bot);
 		this.variables = new ConcurrentHashMap<>();
-		var guildIdOpt = event.getGuildId();
-		if (!guildIdOpt.isPresent()) {
-			this.guildSettings = null;
-			return;
-		}
-		var id = guildIdOpt.get().asLong();
-		this.guildSettings = bot.getDatabase().findByIDOrCreate(NativeGuildSettings.class, id, (gs, gid) -> {
-			gs.setGuildId(gid);
-			gs.setPrefix(bot.getDefaultPrefix());
-		}).cache();
+		this.prefixUsed = Objects.requireNonNull(prefixUsed);
+	}
+
+	@Override
+	public Command getCommand() {
+		return originalCommand;
 	}
 
 	@Override
@@ -97,21 +96,8 @@ public class ContextImpl implements Context {
 	}
 
 	@Override
-	public Mono<String> getEffectivePrefix() {
-		return bot.getDiscordClients().next()
-				.map(DiscordClient::getSelfId)
-				.filter(Optional::isPresent)
-				.map(Optional::get)
-				.map(botId -> Tuples.of("<@" + botId.asString() + "> ", "<@!" + botId.asString() + "> ",
-						BotUtils.removeQuotesUnlessEscaped(event.getMessage().getContent().orElse(""))))
-				.filter(tuple -> !tuple.getT3().isEmpty())
-				.flatMap(tuple -> guildSettings.flatMap(gs -> {
-					var content = tuple.getT3();
-					var guildSpecificPrefix = gs.getPrefix() == null ? bot.getDefaultPrefix() : gs.getPrefix();
-					return Flux.just(tuple.getT1(), tuple.getT2(), guildSpecificPrefix)
-							.filter(str -> str.equalsIgnoreCase(content.substring(0, Math.min(str.length(), content.length()))))
-							.next();
-				}));
+	public String getPrefixUsed() {
+		return prefixUsed;
 	}
 
 	@Override
@@ -179,5 +165,26 @@ public class ContextImpl implements Context {
 			}
 		}
 		return Mono.error(new NoSuchElementException());
+	}
+	
+	public static Mono<String> findPrefixUsed(Bot bot, MessageCreateEvent event) {
+		var guildIdOpt = event.getGuildId();
+		var guildSettings = guildIdOpt.isPresent() ? bot.getDatabase().findByIDOrCreate(NativeGuildSettings.class, guildIdOpt.get().asLong(), (gs, gid) -> {
+			gs.setGuildId(gid);
+			gs.setPrefix(bot.getDefaultPrefix());
+		}) : Mono.<NativeGuildSettings>empty();
+		return bot.getDiscordClients().next()
+				.map(DiscordClient::getSelfId)
+				.filter(Optional::isPresent)
+				.map(Optional::get)
+				.map(botId -> Tuples.of("<@" + botId.asString() + "> ", "<@!" + botId.asString() + "> ",
+						BotUtils.removeQuotesUnlessEscaped(event.getMessage().getContent().orElse(""))))
+				.filter(tuple -> !tuple.getT3().isEmpty())
+				.flatMap(tuple -> guildSettings
+						.map(gs -> Tuples.of(tuple.getT1(), tuple.getT2(), tuple.getT3(), gs.getPrefix() == null ? bot.getDefaultPrefix() : gs.getPrefix()))
+						.defaultIfEmpty(Tuples.of(tuple.getT1(), tuple.getT2(), tuple.getT3(), bot.getDefaultPrefix())))
+				.flatMap(tuple -> Flux.just(tuple.getT1(), tuple.getT2(), tuple.getT4())
+							.filter(str -> str.equalsIgnoreCase(tuple.getT3().substring(0, Math.min(str.length(), tuple.getT3().length()))))
+							.next());
 	}
 }

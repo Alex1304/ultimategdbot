@@ -42,35 +42,32 @@ public class PaginatedReplyMenuBuilder extends ReplyMenuBuilder {
 		if (page < pageMax) {
 			addItem("next", "To go to next page, type `next`", ctx0 -> {
 				ctx.setVar("page", ctx.getVarOrDefault("page", 0) + 1);
-				Command.invoke(cmd, ctx);
+				ctx.getBot().getCommandKernel().invokeCommand(cmd, ctx).subscribe();
 				return Mono.empty();
 			});
 		}
 		if (page > 0) {
 			addItem("prev", "To go to previous page, type `prev`", ctx0 -> {
 				ctx.setVar("page", ctx.getVarOrDefault("page", 0) - 1);
-				Command.invoke(cmd, ctx);
+				ctx.getBot().getCommandKernel().invokeCommand(cmd, ctx).subscribe();
 				return Mono.empty();
 			});
 		}
 		if (pageMax > 0) {
 			addItem("page", "To go to a specific page, type `page` followed by the page number, ex `page 3`", ctx0 -> {
 				if (ctx0.getArgs().size() == 1) {
-					Command.invoke(cmd, ctx);
 					return Mono.error(new CommandFailedException("Please specify a page number"));
 				}
 				try {
 					var page0 = Integer.parseUnsignedInt(ctx0.getArgs().get(1)) - 1;
 					var pageMax0 = ctx.getVar("pageMax", Integer.class);
 					if (page0 > pageMax0) {
-						Command.invoke(cmd, ctx);
 						return Mono.error(new CommandFailedException("Page number out of range"));
 					}
 					ctx.setVar("page", page0);
-					Command.invoke(cmd, ctx);
+					ctx.getBot().getCommandKernel().invokeCommand(cmd, ctx).subscribe();
 					return Mono.empty();
 				} catch (NumberFormatException e) {
-					Command.invoke(cmd, ctx);
 					return Mono.error(new CommandFailedException("Please specify a valid page number"));
 				}
 			});

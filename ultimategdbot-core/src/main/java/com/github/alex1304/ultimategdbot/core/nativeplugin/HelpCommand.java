@@ -22,22 +22,21 @@ public class HelpCommand implements Command {
 
 	@Override
 	public Mono<Void> execute(Context ctx) {
-		return ctx.getEffectivePrefix().flatMap(prefix -> {
 			var rb = new PaginatedReplyMenuBuilder(this, ctx, true, false);
 			if (ctx.getArgs().size() == 1) {
 				var sb = new StringBuffer("Here is the list of commands you can use in this channel:\n\n");
 				return ctx.getEvent().getMessage().getChannel()
-						.flatMap(c -> Flux.fromIterable(ctx.getBot().getCommandsFromPlugins().entrySet())
+						.flatMap(c -> Flux.fromIterable(ctx.getBot().getCommandKernel().getCommandsGroupedByPlugins().entrySet())
 								.flatMapSequential(entry -> Flux.fromIterable(entry.getValue())
 											.filter(cmd -> cmd.getChannelTypesAllowed().contains(c.getType()))
 											.filterWhen(cmd -> cmd.getPermissionLevel().isGranted(ctx))
 											.collectList()
-											.map(cmdList -> Tuples.of(entry.getKey().getName(), cmdList)))
+											.map(cmdList -> Tuples.of(entry.getKey(), cmdList)))
 								.doOnNext(tuple -> {
 									sb.append("**__").append(tuple.getT1()).append("__**\n");
 									tuple.getT2().forEach(cmd -> {
 										sb.append('`');
-										sb.append(prefix);
+										sb.append(ctx.getPrefixUsed());
 										sb.append(BotUtils.joinAliases(cmd.getAliases()));
 										sb.append("`: ");
 										sb.append(cmd.getDescription());
@@ -46,15 +45,14 @@ public class HelpCommand implements Command {
 								})
 								.takeLast(1)
 								.next())
-						.flatMap(__ -> rb.build(sb.toString().stripTrailing()));
+						.flatMap(__ -> rb.build(sb.toString().stripTrailing())).then();
 			}
 			var cmdName = String.join(" ", ctx.getArgs().subList(1, ctx.getArgs().size()));
-			var cmd = ctx.getBot().getCommandForName(cmdName);
-			if (cmd == null) {
+			var cmd = ctx.getBot().getCommandKernel().parseCommandLine(cmdName);
+			if (cmd.isEmpty()) {
 				return Mono.error(new CommandFailedException("The command \"" + cmdName + "\" does not exist."));
 			}
-			return rb.build(BotUtils.generateDefaultDocumentation(cmd, prefix, cmdName));
-		}).then();
+			return rb.build(BotUtils.generateDefaultDocumentation(cmd.get().getT1(), ctx.getPrefixUsed(), cmdName)).then();
 	}
 
 	@Override

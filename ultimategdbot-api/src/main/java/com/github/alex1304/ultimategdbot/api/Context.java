@@ -2,6 +2,7 @@ package com.github.alex1304.ultimategdbot.api;
 
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.function.Consumer;
 
 import discord4j.core.event.domain.message.MessageCreateEvent;
@@ -13,6 +14,13 @@ import reactor.core.publisher.Mono;
  * Context of a bot command.
  */
 public interface Context {
+	/**
+	 * Gets the command that created this context.
+	 * 
+	 * @return the original command
+	 */
+	Command getCommand();
+	
 	/**
 	 * Gets the message create event associated to this command.
 	 *
@@ -35,11 +43,11 @@ public interface Context {
 	Bot getBot();
 	
 	/**
-	 * Gets the prefix applied to the guild this command is run.
+	 * Gets the prefix used in the command that created this context.
 	 * 
-	 * @return a Mono emitting the effective prefix
+	 * @return the prefix used
 	 */
-	Mono<String> getEffectivePrefix();
+	String getPrefixUsed();
 	
 	/**
 	 * Sends a message in the same channel the command was sent.

@@ -8,27 +8,24 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Properties;
 import java.util.ServiceLoader;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import org.hibernate.MappingException;
 
 import com.github.alex1304.ultimategdbot.api.Bot;
 import com.github.alex1304.ultimategdbot.api.Command;
+import com.github.alex1304.ultimategdbot.api.CommandKernel;
 import com.github.alex1304.ultimategdbot.api.Context;
 import com.github.alex1304.ultimategdbot.api.Database;
 import com.github.alex1304.ultimategdbot.api.Plugin;
 import com.github.alex1304.ultimategdbot.api.guildsettings.GuildSettingsEntry;
-import com.github.alex1304.ultimategdbot.api.utils.PropertyParser;
 import com.github.alex1304.ultimategdbot.api.utils.BotUtils;
-import com.github.alex1304.ultimategdbot.core.handler.CommandHandler;
-import com.github.alex1304.ultimategdbot.core.handler.Handler;
-import com.github.alex1304.ultimategdbot.core.handler.ReplyMenuHandler;
+import com.github.alex1304.ultimategdbot.api.utils.PropertyParser;
 import com.github.alex1304.ultimategdbot.core.main.Main;
 
 import discord4j.core.DiscordClient;
@@ -64,10 +61,7 @@ public class BotImpl implements Bot {
 	private final Snowflake attachmentsChannelId;
 	private final List<Snowflake> emojiGuildIds;
 	private final Properties pluginsProps;
-	
-	private final CommandHandler cmdHandler;
-	private final ReplyMenuHandler replyMenuHandler;
-	private final Set<Handler> handlers;
+	private CommandKernel cmdKernel;
 	private final Map<Plugin, Map<String, GuildSettingsEntry<?, ?>>> guildSettingsEntries;
 
 	private BotImpl(String token, String defaultPrefix, Snowflake supportServerId, Snowflake moderatorRoleId,
@@ -86,10 +80,7 @@ public class BotImpl implements Bot {
 		this.attachmentsChannelId = attachmentsChannelId;
 		this.emojiGuildIds = emojiGuildIds;
 		this.pluginsProps = pluginsProps;
-		
-		this.cmdHandler = new CommandHandler(this);
-		this.replyMenuHandler = new ReplyMenuHandler(this);
-		this.handlers = Set.of(cmdHandler, replyMenuHandler);
+		this.cmdKernel = null;
 		this.guildSettingsEntries = new HashMap<>();
 	}
 
@@ -248,6 +239,9 @@ public class BotImpl implements Bot {
 	public void start() {
 		var loader = ServiceLoader.load(Plugin.class);
 		var parser = new PropertyParser(Main.PLUGINS_PROPS_FILE.toString(), pluginsProps);
+		var commandsByPlugins = new TreeMap<String, Set<Command>>();
+		var commandsByAliases = new HashMap<String, Command>();
+		var subCommands = new HashMap<Command, Map<String, Command>>();
 		for (var plugin : loader) {
 			try {
 				System.out.printf("Loading plugin: %s...\n", plugin.getName());
@@ -256,10 +250,10 @@ public class BotImpl implements Bot {
 				guildSettingsEntries.put(plugin, plugin.getGuildConfigurationEntries(this));
 				var cmdSet = new TreeSet<Command>(Comparator.comparing(cmd -> BotUtils.joinAliases(cmd.getAliases())));
 				cmdSet.addAll(plugin.getProvidedCommands());
-				cmdHandler.getCommandsByPlugins().put(plugin, Collections.unmodifiableSet(cmdSet));
+				commandsByPlugins.put(plugin.getName(), Collections.unmodifiableSet(cmdSet));
 				for (var cmd : cmdSet) {
 					for (var alias : cmd.getAliases()) {
-						cmdHandler.getCommands().put(alias, cmd);
+						commandsByAliases.put(alias, cmd);
 					}
 					// Add all subcommands
 					var subCmdDeque = new ArrayDeque<Command>();
@@ -267,7 +261,7 @@ public class BotImpl implements Bot {
 					while (!subCmdDeque.isEmpty()) {
 						var element = subCmdDeque.pop();
 						var elementSubcmds = element.getSubcommands();
-						if (cmdHandler.getSubCommands().containsKey(element)) {
+						if (subCommands.containsKey(element)) {
 							continue;
 						}
 						var subCmdMap = new HashMap<String, Command>();
@@ -276,17 +270,17 @@ public class BotImpl implements Bot {
 								subCmdMap.put(alias, subcmd);
 							}
 						}
-						cmdHandler.getSubCommands().put(element, subCmdMap);
+						subCommands.put(element, subCmdMap);
 						subCmdDeque.addAll(elementSubcmds);
 					}
 					System.out.printf("\tLoaded command: %s %s\n", cmd.getClass().getName(), cmd.getAliases());
 				}
-				cmdHandler.getPlugins().add(plugin);
 			} catch (RuntimeException e) {
 				System.out.println("WARNING: Failed to load plugin " + plugin.getName());
 				e.printStackTrace();
 			}
 		}
+		this.cmdKernel = new CommandKernelImpl(this, commandsByAliases, subCommands, commandsByPlugins);
 		try {
 			database.configure();
 		} catch (MappingException e) {
@@ -311,37 +305,18 @@ public class BotImpl implements Bot {
 					sb.append("Serving " + guildCreateEvents.stream().mapToInt(List::size).sum() + " guilds across " + shardCount + " shards!");
 					System.out.println(sb);
 					BotUtils.sendMultipleSimpleMessagesToOneChannel(getDebugLogChannel(), BotUtils.chunkMessage(sb.toString())).subscribe();
-					handlers.forEach(Handler::listen);
+					cmdKernel.start();
 				})).subscribe();
 		discordClients.flatMap(DiscordClient::login).blockLast();
 	}
 
 	@Override
-	public String openReplyMenu(Context ctx, Message msg, Map<String, Function<Context, Mono<Void>>> menuItems, boolean deleteOnReply, boolean deleteOnTimeout) {
-		Objects.requireNonNull(ctx);
-		Objects.requireNonNull(msg);
-		Objects.requireNonNull(menuItems);
-		return replyMenuHandler.open(ctx, msg, menuItems, deleteOnReply, deleteOnTimeout);
-	}
-
-	@Override
-	public void closeReplyMenu(String identifier) {
-		Objects.requireNonNull(identifier);
-		replyMenuHandler.close(identifier);
-	}
-
-	@Override
-	public Command getCommandForName(String name) {
-		return cmdHandler.getCommandForName(name);
-	}
-
-	@Override
-	public Map<Plugin, Set<Command>> getCommandsFromPlugins() {
-		return Collections.unmodifiableMap(cmdHandler.getCommandsByPlugins());
-	}
-
-	@Override
 	public Map<Plugin, Map<String, GuildSettingsEntry<?, ?>>> getGuildSettingsEntries() {
 		return Collections.unmodifiableMap(guildSettingsEntries);
+	}
+
+	@Override
+	public CommandKernel getCommandKernel() {
+		return cmdKernel;
 	}
 }

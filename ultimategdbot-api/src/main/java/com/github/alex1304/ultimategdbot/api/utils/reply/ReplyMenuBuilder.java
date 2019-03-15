@@ -85,9 +85,9 @@ public class ReplyMenuBuilder {
 			}
 			mcs.setEmbed(embed.andThen(ecs -> ecs.addField(header, sb.toString(), false)));
 		}).doOnNext(message -> {
-			var rmid = ctx.getBot().openReplyMenu(ctx, message, menuItems, deleteOnReply, deleteOnTimeout);
+			var rmid = ctx.getBot().getCommandKernel().openReplyMenu(ctx, message, menuItems, deleteOnReply, deleteOnTimeout);
 			menuItems.put("close", ctx0 -> {
-				ctx0.getBot().closeReplyMenu(rmid);
+				ctx0.getBot().getCommandKernel().closeReplyMenu(rmid);
 				return Mono.empty();
 			});
 		});

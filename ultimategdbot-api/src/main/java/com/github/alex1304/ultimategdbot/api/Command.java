@@ -1,16 +1,13 @@
 package com.github.alex1304.ultimategdbot.api;
 
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.StringJoiner;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import discord4j.core.object.entity.Channel;
 import discord4j.core.object.entity.Channel.Type;
-import discord4j.rest.http.client.ClientException;
 import reactor.core.publisher.Mono;
 
 /**
@@ -77,64 +74,18 @@ public interface Command {
 	 * @return a Map that associates a Throwable type to an executable action.
 	 */
 	Map<Class<? extends Throwable>, BiConsumer<Throwable, Context>> getErrorActions();
-	
+
 	/**
-	 * Executes the command with the supplied context.
+	 * Creates a new Command instance which action is the provided function, and
+	 * other attributes (alias, error actions, allowed channels, permission level,
+	 * etc) are inherited from the given base command.
 	 * 
-	 * @param cmd - the command to invoke
-	 * @param ctx - the context to apply
+	 * @param other       the base command
+	 * @param executeFunc the action of the new command
+	 * @return a new Command
 	 */
-	static void invoke(Command cmd, Context ctx) {
-		ctx.getEvent().getMessage().getChannel()
-				.filter(c -> cmd.getChannelTypesAllowed().contains(c.getType()))
-				.flatMap(c -> cmd.getPermissionLevel().isGranted(ctx))
-				.flatMap(isGranted -> isGranted ? cmd.execute(ctx) : Mono.error(new CommandPermissionDeniedException()))
-				.doOnError(error -> {
-					var actions = cmd.getErrorActions();
-					if (error instanceof CommandFailedException) {
-						actions.getOrDefault(CommandFailedException.class, (e, ctx0) -> {
-							ctx0.reply(":no_entry_sign: " + e.getMessage()).subscribe();
-						}).accept(error, ctx);
-					} else if (error instanceof CommandPermissionDeniedException) {
-						actions.getOrDefault(CommandFailedException.class, (e, ctx0) -> {
-							ctx0.reply(":no_entry_sign: You don't have the required permissions to run this command.").subscribe();
-						}).accept(error, ctx);
-					} else if (error instanceof InvalidSyntaxException) {
-						actions.getOrDefault(InvalidSyntaxException.class, (e, ctx0) -> {
-							ctx0.getEffectivePrefix().flatMap(prefix -> 
-									ctx0.reply(":no_entry_sign: Invalid syntax. Check out `" + prefix + "help " + ctx.getArgs().get(0)
-											+ "` if you need assistance.")).subscribe();
-						}).accept(error, ctx);
-					} else if (error instanceof ClientException) {
-						actions.getOrDefault(ClientException.class, (e, ctx0) -> {
-							var ce = (ClientException) e;
-							var h = ce.getErrorResponse();
-							var sj = new StringJoiner("", "```\n", "```\n");
-							h.getFields().forEach((k, v) -> sj.add(k).add(": ").add(String.valueOf(v)).add("\n"));
-							ctx0.reply(":no_entry_sign: Discord returned an error when executing this command: "
-									+ "`" + ce.getStatus().code() + " " + ce.getStatus().reasonPhrase() + "`\n"
-									+ sj.toString()
-									+ "Make sure that I have sufficient permissions in this server and try again.")
-							.subscribe();
-						}).accept(error, ctx);
-					} else {
-						actions.getOrDefault(error.getClass(), (e, ctx0) -> {
-							ctx0.reply(":no_entry_sign: An internal error occured. A crash report has been sent to the developer. Sorry for the inconvenience.")
-									.subscribe();
-							ctx0.getBot().logStackTrace(ctx0, e).subscribe();
-						}).accept(error, ctx);
-					}
-				}).subscribe();
-	}
-	
-	/**
-	 * Executes a function that is treated as a command. 
-	 * 
-	 * @param executeFunc - the function to execute
-	 * @param ctx - the context to apply
-	 */
-	static void invoke(Function<Context, Mono<Void>> executeFunc, Context ctx) {
-		invoke(new Command() {
+	static Command forkedFrom(Command other, Function<Context, Mono<Void>> executeFunc) {
+		return new Command() {
 			@Override
 			public Mono<Void> execute(Context ctx0) {
 				return executeFunc.apply(ctx0);
@@ -142,38 +93,38 @@ public interface Command {
 
 			@Override
 			public Set<String> getAliases() {
-				return Collections.emptySet();
+				return other.getAliases();
 			}
 
 			@Override
 			public Set<Command> getSubcommands() {
-				return Collections.emptySet();
+				return other.getSubcommands();
 			}
 
 			@Override
 			public String getDescription() {
-				return "";
+				return other.getDescription();
 			}
 
 			@Override
 			public String getSyntax() {
-				return "";
+				return other.getSyntax();
 			}
 
 			@Override
 			public PermissionLevel getPermissionLevel() {
-				return PermissionLevel.PUBLIC;
+				return other.getPermissionLevel();
 			}
 
 			@Override
 			public EnumSet<Type> getChannelTypesAllowed() {
-				return EnumSet.of(Type.GUILD_TEXT, Type.DM);
+				return other.getChannelTypesAllowed();
 			}
 
 			@Override
 			public Map<Class<? extends Throwable>, BiConsumer<Throwable, Context>> getErrorActions() {
-				return Collections.emptyMap();
+				return other.getErrorActions();
 			}
-		}, ctx);
+		};
 	}
 }

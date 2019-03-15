@@ -12,8 +12,7 @@ module ultimategdbot.core {
 	
 	exports com.github.alex1304.ultimategdbot.core.impl;
 	exports com.github.alex1304.ultimategdbot.core.nativeplugin;
-	exports com.github.alex1304.ultimategdbot.core.handler;
-	
+
 	provides com.github.alex1304.ultimategdbot.api.Plugin with com.github.alex1304.ultimategdbot.core.nativeplugin.NativePlugin;
 	
 	uses com.github.alex1304.ultimategdbot.api.Plugin;
