@@ -190,11 +190,17 @@ public class CommandKernelImpl implements CommandKernel {
 									+ "Make sure that I have sufficient permissions in this server and try again.")
 							.subscribe();
 						}).accept(error, ctx))
-				.doOnError(error -> actions.getOrDefault(error.getClass(), (e, ctx0) -> {
-							ctx0.reply(":no_entry_sign: An internal error occured. A crash report has been sent to the developer. Sorry for the inconvenience.")
-									.subscribe();
-							ctx0.getBot().logStackTrace(ctx0, e).subscribe();
-						}).accept(error, ctx));
+				.doOnError(error -> {
+					if (error instanceof CommandFailedException || error instanceof CommandPermissionDeniedException
+							|| error instanceof InvalidSyntaxException || error instanceof ClientException) {
+						return;
+					}
+					actions.getOrDefault(error.getClass(), (e, ctx0) -> {
+						ctx0.reply(":no_entry_sign: An internal error occured. A crash report has been sent to the developer. Sorry for the inconvenience.")
+								.subscribe();
+						ctx0.getBot().logStackTrace(ctx0, e).subscribe();
+					}).accept(error, ctx);
+				});
 	}
 
 	@Override

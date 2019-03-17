@@ -6,6 +6,7 @@ import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -242,12 +243,13 @@ public class BotImpl implements Bot {
 		var commandsByPlugins = new TreeMap<String, Set<Command>>();
 		var commandsByAliases = new HashMap<String, Command>();
 		var subCommands = new HashMap<Command, Map<String, Command>>();
+		var successfullyLoadedPlugins = new HashSet<Plugin>();
 		for (var plugin : loader) {
 			try {
 				System.out.printf("Loading plugin: %s...\n", plugin.getName());
-				plugin.setup(parser);
+				plugin.setup(this, parser);
 				database.addAllMappingResources(plugin.getDatabaseMappingResources());
-				guildSettingsEntries.put(plugin, plugin.getGuildConfigurationEntries(this));
+				guildSettingsEntries.put(plugin, plugin.getGuildConfigurationEntries());
 				var cmdSet = new TreeSet<Command>(Comparator.comparing(cmd -> BotUtils.joinAliases(cmd.getAliases())));
 				cmdSet.addAll(plugin.getProvidedCommands());
 				commandsByPlugins.put(plugin.getName(), Collections.unmodifiableSet(cmdSet));
@@ -275,6 +277,7 @@ public class BotImpl implements Bot {
 					}
 					System.out.printf("\tLoaded command: %s %s\n", cmd.getClass().getName(), cmd.getAliases());
 				}
+				successfullyLoadedPlugins.add(plugin);
 			} catch (RuntimeException e) {
 				System.out.println("WARNING: Failed to load plugin " + plugin.getName());
 				e.printStackTrace();
@@ -305,6 +308,7 @@ public class BotImpl implements Bot {
 					sb.append("Serving " + guildCreateEvents.stream().mapToInt(List::size).sum() + " guilds across " + shardCount + " shards!");
 					System.out.println(sb);
 					BotUtils.sendMultipleSimpleMessagesToOneChannel(getDebugLogChannel(), BotUtils.chunkMessage(sb.toString())).subscribe();
+					successfullyLoadedPlugins.forEach(Plugin::onBotReady);
 					cmdKernel.start();
 				})).subscribe();
 		discordClients.flatMap(DiscordClient::login).blockLast();

@@ -31,4 +31,14 @@ public class NativeGuildSettings implements GuildSettings {
 	public void setServerModRoleId(long serverModRoleId) {
 		this.serverModRoleId = serverModRoleId;
 	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return obj instanceof NativeGuildSettings && ((NativeGuildSettings) obj).guildId == guildId;
+	}
+	
+	@Override
+	public int hashCode() {
+		return Long.hashCode(guildId);
+	}
 }

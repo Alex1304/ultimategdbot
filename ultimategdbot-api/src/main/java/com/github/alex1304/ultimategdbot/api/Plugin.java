@@ -12,15 +12,21 @@ import com.github.alex1304.ultimategdbot.api.utils.PropertyParser;
 public interface Plugin {
 	/**
 	 * Code executed when the plugin is loaded. This allows the plugin to perform
-	 * additional configuration.
+	 * additional configuration. Throwing an unchecked exception here will cancel
+	 * the loading of this plugin and will display a warning in the standard output.
+	 * Other plugins won't be affected.
 	 * 
-	 * @param parser contains everything defined in plugins.properties, ready to be parsed
-	 * @throws PluginSetupException exception that this method may throw to indicate
-	 *                              that something went wrong when setting up the
-	 *                              plugin. If this exception is thrown, the loading
-	 *                              process of this plugin is cancelled.
+	 * @param bot the bot instance
+	 * @param parser contains everything defined in plugins.properties, ready to be
+	 *               parsed
 	 */
-	void setup(PropertyParser parser);
+	void setup(Bot bot, PropertyParser parser);
+	
+	/**
+	 * Action to execute when the bot is ready. This method should never throw any
+	 * exception.
+	 */
+	void onBotReady();
 	
 	/**
 	 * Gets the set of commands that this plugin provides.
@@ -51,5 +57,5 @@ public interface Plugin {
 	 * @param bot - the bot instance
 	 * @return the guild configuration entries
 	 */
-	Map<String, GuildSettingsEntry<?, ?>> getGuildConfigurationEntries(Bot bot);
+	Map<String, GuildSettingsEntry<?, ?>> getGuildConfigurationEntries();
 }

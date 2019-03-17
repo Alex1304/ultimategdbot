@@ -13,9 +13,16 @@ import com.github.alex1304.ultimategdbot.api.utils.GuildSettingsValueConverter;
 import com.github.alex1304.ultimategdbot.api.utils.PropertyParser;
 
 public class NativePlugin implements Plugin {
+	
+	private Bot bot;
 
 	@Override
-	public void setup(PropertyParser parser) {
+	public void setup(Bot bot, PropertyParser parser) {
+		this.bot = bot;
+	}
+
+	@Override
+	public void onBotReady() {
 		return;
 	}
 	
@@ -35,7 +42,7 @@ public class NativePlugin implements Plugin {
 	}
 
 	@Override
-	public Map<String, GuildSettingsEntry<?, ?>> getGuildConfigurationEntries(Bot bot) {
+	public Map<String, GuildSettingsEntry<?, ?>> getGuildConfigurationEntries() {
 		var map = new HashMap<String, GuildSettingsEntry<?, ?>>();
 		var valueConverter = new GuildSettingsValueConverter(bot);
 		map.put("prefix", new GuildSettingsEntry<>(

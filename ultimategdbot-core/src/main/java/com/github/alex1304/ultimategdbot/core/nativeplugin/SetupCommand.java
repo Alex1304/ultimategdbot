@@ -19,7 +19,7 @@ public class SetupCommand implements Command {
 	@Override
 	public Mono<Void> execute(Context ctx) {
 		var rb = new PaginatedReplyMenuBuilder(this, ctx, true, false);
-		var sb = new StringBuilder();
+		var sb = new StringBuffer();
 		return ctx.getGuildSettings().doOnNext(map -> map.forEach((plugin, entries) -> {
 			sb.append("**__").append(plugin.getName()).append("__**\n");
 			if (entries.isEmpty()) {

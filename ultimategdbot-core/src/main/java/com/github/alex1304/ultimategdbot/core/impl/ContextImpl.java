@@ -142,8 +142,8 @@ public class ContextImpl implements Context {
 		// Flux.fromIterable(..).flatMap(...)       // Is used as a reactive way to iterate a collection, flatMap being used as a forEach
 		//         .takeLast(1).doOnNext(__ -> ...) // Allows to execute an action after the iteration is done.
 		return Flux.fromIterable(bot.getGuildSettingsEntries().entrySet())
-				.flatMap(guildSettingsEntriesByPlugin -> Flux.fromIterable(guildSettingsEntriesByPlugin.getValue().entrySet())
-						.flatMap(entry -> entry.getValue().valueFromDatabaseAsString(bot.getDatabase(), event.getGuildId().get().asLong())
+				.concatMap(guildSettingsEntriesByPlugin -> Flux.fromIterable(guildSettingsEntriesByPlugin.getValue().entrySet())
+						.concatMap(entry -> entry.getValue().valueFromDatabaseAsString(bot.getDatabase(), event.getGuildId().get().asLong())
 								.doOnNext(strVal -> entriesForEachPlugin.put(entry.getKey(), strVal)))
 						.takeLast(1)
 						.doOnNext(__ -> {

@@ -1,6 +1,6 @@
 package com.github.alex1304.ultimategdbot.api;
 
-public class InvalidSyntaxException extends Exception {
+public class InvalidSyntaxException extends RuntimeException {
 	private static final long serialVersionUID = -4784391332427416131L;
 	
 	private final Command cmd;

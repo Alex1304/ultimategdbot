@@ -42,6 +42,7 @@ public class HelpCommand implements Command {
 										sb.append(cmd.getDescription());
 										sb.append('\n');
 									});
+									sb.append('\n');
 								})
 								.takeLast(1)
 								.next())

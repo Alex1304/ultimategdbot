@@ -3,7 +3,7 @@ package com.github.alex1304.ultimategdbot.api;
 /**
  * Thrown when something goes wrong during the execution of a command.
  */
-public class CommandFailedException extends Exception {
+public class CommandFailedException extends RuntimeException {
 
 	private static final long serialVersionUID = -7535649738459999884L;
 
