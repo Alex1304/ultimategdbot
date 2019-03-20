@@ -13,6 +13,7 @@ import com.github.alex1304.ultimategdbot.api.PermissionLevel;
 import com.github.alex1304.ultimategdbot.api.utils.BotUtils;
 import com.github.alex1304.ultimategdbot.api.utils.reply.PaginatedReplyMenuBuilder;
 
+import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.Channel.Type;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -22,7 +23,7 @@ public class HelpCommand implements Command {
 
 	@Override
 	public Mono<Void> execute(Context ctx) {
-			var rb = new PaginatedReplyMenuBuilder(this, ctx, true, false);
+			var rb = new PaginatedReplyMenuBuilder(this, ctx, true, false, Message.MAX_CONTENT_LENGTH - 10);
 			if (ctx.getArgs().size() == 1) {
 				var sb = new StringBuffer("Here is the list of commands you can use in this channel:\n\n");
 				return ctx.getEvent().getMessage().getChannel()

@@ -15,10 +15,15 @@ import reactor.core.publisher.Mono;
 
 public class PaginatedReplyMenuBuilder extends ReplyMenuBuilder {
 	private final Command cmd;
+	private final int maxPageLength;
 
-	public PaginatedReplyMenuBuilder(Command cmd, Context ctx, boolean deleteOnReply, boolean deleteOnTimeout) {
+	public PaginatedReplyMenuBuilder(Command cmd, Context ctx, boolean deleteOnReply, boolean deleteOnTimeout, int maxPageLength) {
 		super(ctx, deleteOnReply, deleteOnTimeout);
+		if (maxPageLength <= 0) {
+			throw new IllegalArgumentException("maxPageLength <= 0");
+		}
 		this.cmd = Objects.requireNonNull(cmd);
+		this.maxPageLength = maxPageLength;
 	}
 	
 	@Override
@@ -31,7 +36,7 @@ public class PaginatedReplyMenuBuilder extends ReplyMenuBuilder {
 		@SuppressWarnings("unchecked")
 		var pages = (List<String>) ctx.getVar("pages", List.class);
 		if (pages == null) {
-			pages = BotUtils.chunkMessage(content);
+			pages = BotUtils.chunkMessage(content, maxPageLength);
 			ctx.setVar("pages", pages);
 			ctx.setVar("page", 0);
 			ctx.setVar("pageMax", pages.size() - 1);

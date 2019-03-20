@@ -11,6 +11,7 @@ import com.github.alex1304.ultimategdbot.api.Context;
 import com.github.alex1304.ultimategdbot.api.PermissionLevel;
 import com.github.alex1304.ultimategdbot.api.utils.reply.PaginatedReplyMenuBuilder;
 
+import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.Channel.Type;
 import reactor.core.publisher.Mono;
 
@@ -18,7 +19,7 @@ public class SetupCommand implements Command {
 
 	@Override
 	public Mono<Void> execute(Context ctx) {
-		var rb = new PaginatedReplyMenuBuilder(this, ctx, true, false);
+		var rb = new PaginatedReplyMenuBuilder(this, ctx, true, false, Message.MAX_CONTENT_LENGTH - 10);
 		var sb = new StringBuffer();
 		return ctx.getGuildSettings().doOnNext(map -> map.forEach((plugin, entries) -> {
 			sb.append("**__").append(plugin.getName()).append("__**\n");

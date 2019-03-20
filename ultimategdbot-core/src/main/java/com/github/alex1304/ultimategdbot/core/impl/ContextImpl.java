@@ -73,26 +73,20 @@ public class ContextImpl implements Context {
 
 	@Override
 	public Mono<Message> reply(Consumer<? super MessageCreateSpec> spec) {
-		return event.getMessage().getChannel().flatMap(c -> c.createMessage(spec)).doOnError(e -> {
-			if (!(e instanceof ClientException)) {
-				return;
-			}
-			var ce = (ClientException) e;
-			if (ce.getStatus().code() != 403) {
-				return;
-			}
-			var author = event.getMessage().getAuthor();
-			if (!author.isPresent()) {
-				return;
-			}
-			author.get().getPrivateChannel()
-					.flatMap(pc -> pc.createMessage("I was unable to send a reply to your command in <#"
-							+ event.getMessage().getChannelId().asString()
-							+ ">. Make sure that I have permissions to talk and send embeds there.\nError response: `"
-							+ ce.getErrorResponse() + "`"))
-					.doOnError(__ -> {})
-					.subscribe();
-		});
+		return event.getMessage().getChannel()
+				.flatMap(c -> c.createMessage(spec))
+				.onErrorResume(ClientException.class, e -> {
+					var author = event.getMessage().getAuthor();
+					if (e.getStatus().code() != 403 || author.isEmpty()) {
+						return Mono.empty();
+					}
+					return author.get().getPrivateChannel()
+							.flatMap(pc -> pc.createMessage("I was unable to send a reply to your command in <#"
+									+ event.getMessage().getChannelId().asString()
+									+ ">. Make sure that I have permissions to talk and send embeds there.\nError response: `"
+									+ e.getErrorResponse() + "`"))
+							.doOnError(__ -> {});
+				});
 	}
 
 	@Override
@@ -139,8 +133,8 @@ public class ContextImpl implements Context {
 		}
 		var result = new TreeMap<Plugin, Map<String, String>>(Comparator.comparing(Plugin::getName));
 		var entriesForEachPlugin = new TreeMap<String, String>();
-		// Flux.fromIterable(..).flatMap(...)       // Is used as a reactive way to iterate a collection, flatMap being used as a forEach
-		//         .takeLast(1).doOnNext(__ -> ...) // Allows to execute an action after the iteration is done.
+		// Flux.fromIterable(..).concatMap(...)       // Is used as a reactive way to iterate a collection, flatMap being used as a forEach
+		//         .takeLast(1).doOnNext(__ -> ...)   // Allows to execute an action after the iteration is done.
 		return Flux.fromIterable(bot.getGuildSettingsEntries().entrySet())
 				.concatMap(guildSettingsEntriesByPlugin -> Flux.fromIterable(guildSettingsEntriesByPlugin.getValue().entrySet())
 						.concatMap(entry -> entry.getValue().valueFromDatabaseAsString(bot.getDatabase(), event.getGuildId().get().asLong())

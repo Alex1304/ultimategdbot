@@ -86,21 +86,17 @@ public class BotUtils {
 		return res;
 	}
 	
-	public static List<String> chunkMessage(String superLongMessage) {
+	public static List<String> chunkMessage(String superLongMessage, int maxCharacters) {
 		var chunks = new ArrayList<String>();
-		var charactersRead = 0;
-		final var breakpoint = 1990;
 		var currentChunk = new StringBuilder();
 		var inCodeblock = false;
 		for (var line : superLongMessage.lines().collect(Collectors.toList())) {
 			inCodeblock = occurrences(line, "```") % 2 == 1 ? !inCodeblock : inCodeblock;
-			var old = charactersRead;
-			charactersRead += line.length();
-			if (old / breakpoint != charactersRead / breakpoint) {
+			if (currentChunk.length() + line.length() + 1 >= maxCharacters) {
 				if (inCodeblock) {
 					currentChunk.append("```\n");
 				}
-				chunks.add(currentChunk.substring(0, Math.min(currentChunk.length(), breakpoint)).toString());
+				chunks.add(currentChunk.substring(0, Math.min(currentChunk.length(), maxCharacters)).toString());
 				currentChunk.delete(0, currentChunk.length());
 			} else {
 				if (!chunks.isEmpty() && currentChunk.length() == 0) {
@@ -108,14 +104,16 @@ public class BotUtils {
 						currentChunk.append("```\n");
 					}
 				}
-				currentChunk.append(line);
-				currentChunk.append('\n');
 			}
+			currentChunk.append(line);
+			currentChunk.append('\n');
 		}
-		if (currentChunk.length() != 0) {
-			chunks.add(currentChunk.toString());
-		}
+		chunks.add(currentChunk.toString());
 		return chunks;
+	}
+	
+	public static List<String> chunkMessage(String superLongMessage) {
+		return chunkMessage(superLongMessage, Message.MAX_CONTENT_LENGTH - 10);
 	}
 	
 	public static Flux<Message> sendMultipleMessagesToOneChannel(Mono<Channel> channel, Iterable<Consumer<MessageCreateSpec>> specs) {
