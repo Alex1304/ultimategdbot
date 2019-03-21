@@ -42,7 +42,6 @@ public class DatabaseImpl implements Database {
 			sessionFactory.close();
 		}
 		sessionFactory = config.buildSessionFactory();
-		sessionFactory.getStatistics().setStatisticsEnabled(true);
 	}
 
 	public void addAllMappingResources(Set<String> resourceNames) {
