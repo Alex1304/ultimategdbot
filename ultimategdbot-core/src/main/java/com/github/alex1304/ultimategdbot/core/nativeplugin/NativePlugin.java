@@ -28,7 +28,7 @@ public class NativePlugin implements Plugin {
 	
 	@Override
 	public Set<Command> getProvidedCommands() {
-		return Set.of(new HelpCommand(), new PingCommand(), new SetupCommand());
+		return Set.of(new HelpCommand(), new PingCommand(), new SetupCommand(), new SystemCommand());
 	}
 
 	@Override
