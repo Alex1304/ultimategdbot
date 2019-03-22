@@ -19,6 +19,27 @@ import reactor.core.publisher.Mono;
  */
 public interface Bot {
 	/**
+	 * Gets the release verion of the bot.
+	 * 
+	 * @return the release verion
+	 */
+	String getReleaseVersion();
+	
+	/**
+	 * Gets the discord.gg link to the support server.
+	 * 
+	 * @return the link to the support server
+	 */
+	String getSupportServerInviteLink();
+	
+	/**
+	 * Gets the authorization link to add the bot to a server.
+	 * 
+	 * @return the authorization link
+	 */
+	String getAuthLink();
+	
+	/**
 	 * Get the bot token.
 	 * 
 	 * @return the token

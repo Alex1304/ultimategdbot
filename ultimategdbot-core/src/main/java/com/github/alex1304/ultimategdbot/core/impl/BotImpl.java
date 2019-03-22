@@ -61,6 +61,9 @@ public class BotImpl implements Bot {
 	private final Snowflake debugLogChannelId;
 	private final Snowflake attachmentsChannelId;
 	private final List<Snowflake> emojiGuildIds;
+	private final String releaseVersion;
+	private final String supportServerInviteLink;
+	private final String authLink;
 	private final Properties pluginsProps;
 	private CommandKernel cmdKernel;
 	private final Map<Plugin, Map<String, GuildSettingsEntry<?, ?>>> guildSettingsEntries;
@@ -68,7 +71,7 @@ public class BotImpl implements Bot {
 	private BotImpl(String token, String defaultPrefix, Snowflake supportServerId, Snowflake moderatorRoleId,
 			String releaseChannel, Flux<DiscordClient> discordClients, DatabaseImpl database, int replyMenuTimeout,
 			Snowflake debugLogChannelId, Snowflake attachmentsChannelId, List<Snowflake> emojiGuildIds,
-			Properties pluginsProps) {
+			String releaseVersion, String supportServerInviteLink, String authLink, Properties pluginsProps) {
 		this.token = token;
 		this.defaultPrefix = defaultPrefix;
 		this.supportServerId = supportServerId;
@@ -80,9 +83,27 @@ public class BotImpl implements Bot {
 		this.debugLogChannelId = debugLogChannelId;
 		this.attachmentsChannelId = attachmentsChannelId;
 		this.emojiGuildIds = emojiGuildIds;
+		this.releaseVersion = releaseVersion;
+		this.supportServerInviteLink = supportServerInviteLink;
+		this.authLink = authLink;
 		this.pluginsProps = pluginsProps;
 		this.cmdKernel = null;
 		this.guildSettingsEntries = new HashMap<>();
+	}
+
+	@Override
+	public String getReleaseVersion() {
+		return releaseVersion;
+	}
+
+	@Override
+	public String getSupportServerInviteLink() {
+		return supportServerInviteLink;
+	}
+
+	@Override
+	public String getAuthLink() {
+		return authLink;
 	}
 
 	@Override
@@ -232,8 +253,11 @@ public class BotImpl implements Bot {
 				.map(dcb -> dcb.setInitialPresence(presenceStatus))
 				.map(DiscordClientBuilder::build)
 				.cache();
+		var releaseVersion = propParser.parseAsString("bot_release_version");
+		var supportServerInviteLink = propParser.parseAsString("support_server_invite_link");
+		var authLink = propParser.parseAsString("bot_auth_link");
 		return new BotImpl(token, defaultPrefix, supportServerId, moderatorRoleId, releaseChannel, discordClients,
-				database, replyMenuTimeout, debugLogChannelId, attachmentsChannelId, emojiGuildIds, pluginsProps);
+				database, replyMenuTimeout, debugLogChannelId, attachmentsChannelId, emojiGuildIds, releaseVersion, supportServerInviteLink, authLink, pluginsProps);
 	}
 
 	@Override

@@ -10,3 +10,7 @@ emoji_guild_ids=<ID_1>,<ID_2>,<ID_3>,...
 presence_activity=playing:Geometry Dash | !help
 presence_status=online
 use_immediate_scheduler=true
+
+# For the about command
+bot_auth_link:https://discordapp.com/oauth2/authorize?client_id=XXXXXXXXXXXXX&scope=bot&permissions=268782592
+support_server_invite_link:https://discord.gg/XXXXXXXX

@@ -1,8 +1,13 @@
 package com.github.alex1304.ultimategdbot.core.nativeplugin;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.github.alex1304.ultimategdbot.api.Bot;
 import com.github.alex1304.ultimategdbot.api.Command;
@@ -15,10 +20,16 @@ import com.github.alex1304.ultimategdbot.api.utils.PropertyParser;
 public class NativePlugin implements Plugin {
 	
 	private Bot bot;
+	private String aboutText;
 
 	@Override
 	public void setup(Bot bot, PropertyParser parser) {
 		this.bot = bot;
+		try {
+			this.aboutText = Files.readAllLines(Paths.get(".", "config", "about.txt")).stream().collect(Collectors.joining("\n"));
+		} catch (IOException e) {
+			throw new UncheckedIOException(e);
+		}
 	}
 
 	@Override
@@ -28,7 +39,7 @@ public class NativePlugin implements Plugin {
 	
 	@Override
 	public Set<Command> getProvidedCommands() {
-		return Set.of(new HelpCommand(), new PingCommand(), new SetupCommand(), new SystemCommand());
+		return Set.of(new HelpCommand(), new PingCommand(), new SetupCommand(), new SystemCommand(), new AboutCommand(aboutText));
 	}
 
 	@Override
