@@ -2,6 +2,11 @@ package com.github.alex1304.ultimategdbot.api;
 
 import java.util.function.Function;
 
+import com.github.alex1304.ultimategdbot.api.database.BotAdmins;
+import com.github.alex1304.ultimategdbot.api.database.NativeGuildSettings;
+
+import discord4j.core.DiscordClient;
+import discord4j.core.object.entity.ApplicationInfo;
 import discord4j.core.object.entity.GuildChannel;
 import discord4j.core.object.util.Permission;
 import discord4j.core.object.util.Snowflake;
@@ -14,30 +19,42 @@ import reactor.core.publisher.Mono;
 public interface PermissionLevel {
 	
 	static final PermissionLevel BOT_OWNER = ctx -> ctx.getBot().getDiscordClients()
-			.flatMap(client -> client.getApplicationInfo())
+			.flatMap(DiscordClient::getApplicationInfo)
 			.next()
-			.filter(__ -> ctx.getEvent().getMessage().getAuthor().isPresent())
-			.flatMap(ai -> ai.getOwner())
+			.flatMap(ApplicationInfo::getOwner)
 			.map(ctx.getEvent().getMessage().getAuthor().get()::equals)
 			.defaultIfEmpty(false).onErrorReturn(false);
 	
-	static final PermissionLevel BOT_MODERATOR = ctx -> ctx.getBot().getSupportServer()
-			.filter(__ -> ctx.getEvent().getMessage().getAuthor().isPresent())
-			.flatMap(ss -> ctx.getEvent().getMessage().getAuthor().get().asMember(ss.getId()))
-			.flatMap(m -> ctx.getBot().getModeratorRole().flatMap(mr -> m.getRoles().hasElement(mr)))
-			.defaultIfEmpty(false).onErrorReturn(false);
+	static final PermissionLevel BOT_ADMIN = ctx -> BOT_OWNER.isGranted(ctx)
+			.flatMap(isGranted -> isGranted ? Mono.just(true) : ctx.getBot().getDatabase()
+					.findByID(BotAdmins.class, ctx.getEvent().getMessage().getAuthor().get().getId().asLong())
+					.hasElement()
+					.onErrorReturn(false));
 	
-	static final PermissionLevel SERVER_ADMIN = ctx -> ctx.getEvent().getMessage().getChannel()
-			.filter(__ -> ctx.getEvent().getMessage().getAuthor().isPresent())
-			.ofType(GuildChannel.class)
-			.flatMap(c -> c.getEffectivePermissions(ctx.getEvent().getMessage().getAuthor().get().getId())
-			.map(ps -> ps.contains(Permission.ADMINISTRATOR)))
-			.defaultIfEmpty(false).onErrorReturn(false);
+	static final PermissionLevel SERVER_ADMIN = ctx -> BOT_ADMIN.isGranted(ctx)
+			.flatMap(isGranted -> isGranted ? Mono.just(true) : ctx.getEvent().getMessage().getChannel()
+					.ofType(GuildChannel.class)
+					.flatMap(c -> c.getEffectivePermissions(ctx.getEvent().getMessage().getAuthor().get().getId())
+					.map(ps -> ps.contains(Permission.ADMINISTRATOR)))
+					.defaultIfEmpty(false).onErrorReturn(false));
+	
+	static final PermissionLevel SERVER_MOD = ctx -> SERVER_ADMIN.isGranted(ctx)
+			.flatMap(isGranted -> isGranted ? Mono.just(true) : ctx.getEvent().getGuildId().isEmpty()
+					? Mono.just(false)
+					: ctx.getBot().getDatabase()
+							.findByID(NativeGuildSettings.class, ctx.getEvent().getGuildId().get().asLong())
+							.map(NativeGuildSettings::getServerModRoleId)
+							.map(Snowflake::of)
+							.map(id -> ctx.getEvent().getMember().map(m -> m.getRoleIds().contains(id)).orElse(false))
+							.defaultIfEmpty(false).onErrorReturn(false));
 	
 	static final PermissionLevel PUBLIC = ctx -> Mono.just(true);
 	
-	static PermissionLevel forSpecificRole(Function<Context, Snowflake> roleIdGetter) {
-		return ctx -> ctx.getEvent().getMember().map(m -> Mono.just(m.getRoleIds().contains(roleIdGetter.apply(ctx)))).orElse(Mono.just(false));
+	static PermissionLevel forSpecificRole(Function<Context, Mono<Snowflake>> roleIdGetter) {
+		return ctx -> roleIdGetter.apply(ctx)
+				.flatMap(roleId -> ctx.getEvent().getMember()
+						.map(m -> Mono.just(m.getRoleIds().contains(roleId)))
+						.orElse(Mono.just(false)));
 	}
 	
 	/**

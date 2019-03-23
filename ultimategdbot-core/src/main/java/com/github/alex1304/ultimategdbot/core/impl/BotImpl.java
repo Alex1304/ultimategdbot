@@ -24,7 +24,7 @@ import com.github.alex1304.ultimategdbot.api.CommandKernel;
 import com.github.alex1304.ultimategdbot.api.Context;
 import com.github.alex1304.ultimategdbot.api.Database;
 import com.github.alex1304.ultimategdbot.api.Plugin;
-import com.github.alex1304.ultimategdbot.api.guildsettings.GuildSettingsEntry;
+import com.github.alex1304.ultimategdbot.api.database.GuildSettingsEntry;
 import com.github.alex1304.ultimategdbot.api.utils.BotUtils;
 import com.github.alex1304.ultimategdbot.api.utils.PropertyParser;
 import com.github.alex1304.ultimategdbot.core.main.Main;
@@ -38,7 +38,6 @@ import discord4j.core.object.entity.Guild;
 import discord4j.core.object.entity.GuildEmoji;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.MessageChannel;
-import discord4j.core.object.entity.Role;
 import discord4j.core.object.presence.Activity;
 import discord4j.core.object.presence.Presence;
 import discord4j.core.object.util.Snowflake;
@@ -52,9 +51,6 @@ public class BotImpl implements Bot {
 	
 	private final String token;
 	private final String defaultPrefix;
-	private final Snowflake supportServerId;
-	private final Snowflake moderatorRoleId;
-	private final String releaseChannel;
 	private final Flux<DiscordClient> discordClients;
 	private final DatabaseImpl database;
 	private final int replyMenuTimeout;
@@ -68,15 +64,12 @@ public class BotImpl implements Bot {
 	private CommandKernel cmdKernel;
 	private final Map<Plugin, Map<String, GuildSettingsEntry<?, ?>>> guildSettingsEntries;
 
-	private BotImpl(String token, String defaultPrefix, Snowflake supportServerId, Snowflake moderatorRoleId,
-			String releaseChannel, Flux<DiscordClient> discordClients, DatabaseImpl database, int replyMenuTimeout,
-			Snowflake debugLogChannelId, Snowflake attachmentsChannelId, List<Snowflake> emojiGuildIds,
-			String releaseVersion, String supportServerInviteLink, String authLink, Properties pluginsProps) {
+	private BotImpl(String token, String defaultPrefix, Flux<DiscordClient> discordClients, DatabaseImpl database,
+			int replyMenuTimeout, Snowflake debugLogChannelId, Snowflake attachmentsChannelId,
+			List<Snowflake> emojiGuildIds, String releaseVersion, String supportServerInviteLink, String authLink,
+			Properties pluginsProps) {
 		this.token = token;
 		this.defaultPrefix = defaultPrefix;
-		this.supportServerId = supportServerId;
-		this.moderatorRoleId = moderatorRoleId;
-		this.releaseChannel = releaseChannel;
 		this.discordClients = discordClients;
 		this.database = database;
 		this.replyMenuTimeout = replyMenuTimeout;
@@ -114,21 +107,6 @@ public class BotImpl implements Bot {
 	@Override
 	public String getDefaultPrefix() {
 		return defaultPrefix;
-	}
-
-	@Override
-	public Mono<Guild> getSupportServer() {
-		return discordClients.flatMap(client -> client.getGuildById(supportServerId)).next();
-	}
-
-	@Override
-	public Mono<Role> getModeratorRole() {
-		return discordClients.flatMap(client -> client.getRoleById(supportServerId, moderatorRoleId)).next();
-	}
-
-	@Override
-	public String getReleaseChannel() {
-		return releaseChannel;
 	}
 
 	@Override
@@ -205,9 +183,6 @@ public class BotImpl implements Bot {
 		var propParser = new PropertyParser(Main.PROPS_FILE.toString(), props);
 		var token = propParser.parseAsString("token");
 		var defaultPrefix = propParser.parseAsString("default_prefix");
-		var supportServerId = propParser.parse("support_server_id", Snowflake::of);
-		var moderatorRoleId = propParser.parse("moderator_role_id", Snowflake::of);
-		var releaseChannel = propParser.parseAsString("release_channel");
 		var database = new DatabaseImpl(hibernateProps);
 		var replyMenuTimeout = propParser.parseAsInt("reply_menu_timeout");
 		var debugLogChannelId = propParser.parse("debug_log_channel_id", Snowflake::of);
@@ -256,8 +231,8 @@ public class BotImpl implements Bot {
 		var releaseVersion = propParser.parseAsString("bot_release_version");
 		var supportServerInviteLink = propParser.parseAsString("support_server_invite_link");
 		var authLink = propParser.parseAsString("bot_auth_link");
-		return new BotImpl(token, defaultPrefix, supportServerId, moderatorRoleId, releaseChannel, discordClients,
-				database, replyMenuTimeout, debugLogChannelId, attachmentsChannelId, emojiGuildIds, releaseVersion, supportServerInviteLink, authLink, pluginsProps);
+		return new BotImpl(token, defaultPrefix, discordClients, database, replyMenuTimeout, debugLogChannelId,
+				attachmentsChannelId, emojiGuildIds, releaseVersion, supportServerInviteLink, authLink, pluginsProps);
 	}
 
 	@Override

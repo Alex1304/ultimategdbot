@@ -173,11 +173,11 @@ public class CommandKernelImpl implements CommandKernel {
 							ctx0.reply(":no_entry_sign: " + e.getMessage()).subscribe();
 						}).accept(error, ctx))
 				.doOnError(CommandPermissionDeniedException.class, error -> actions.getOrDefault(CommandPermissionDeniedException.class, (e, ctx0) -> {
-							ctx0.reply(":no_entry_sign: You don't have the required permissions to run this command.").subscribe();
+							ctx0.reply(":no_entry_sign: You are not granted the privileges to run this command.").subscribe();
 						}).accept(error, ctx))
 				.doOnError(InvalidSyntaxException.class, error -> actions.getOrDefault(InvalidSyntaxException.class, (e, ctx0) -> {
-							ctx0.reply(":no_entry_sign: Invalid syntax. Check out `" + ctx0.getPrefixUsed() + "help " + ctx.getArgs().get(0)
-									+ "` if you need assistance.").subscribe();
+							ctx0.reply(":no_entry_sign: Invalid syntax, this is not how the command works. Check out `" + ctx0.getPrefixUsed()
+									+ "help " + ctx.getArgs().get(0) + "` if you need assistance.").subscribe();
 						}).accept(error, ctx))
 				.doOnError(ClientException.class, error -> actions.getOrDefault(ClientException.class, (e, ctx0) -> {
 							var ce = (ClientException) e;

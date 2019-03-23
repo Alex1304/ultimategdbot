@@ -1,4 +1,4 @@
-package com.github.alex1304.ultimategdbot.api.guildsettings;
+package com.github.alex1304.ultimategdbot.api.database;
 
 import java.util.Objects;
 import java.util.function.BiConsumer;

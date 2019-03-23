@@ -1,4 +1,4 @@
-**Thank you for using {{ bot_name }} v{{ project_version }} ({{ bot_release_channel }} build)**
+**Thank you for using {{ bot_name }} v{{ project_version }}**
 
 {{ bot_name }} is a Discord bot owned by **{{ bot_owner }}** and designed for Geometry Dash players. It gives users an easy access to data from Geometry Dash servers (levels, user stats, etc), and can notify them on events happening in-game (new featured levels, new Daily levels/Weekly demons, new Geometry Dash moderators...).
 

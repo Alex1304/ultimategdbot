@@ -13,7 +13,7 @@ import com.github.alex1304.ultimategdbot.api.PermissionLevel;
 import discord4j.core.object.entity.Channel.Type;
 import reactor.core.publisher.Mono;
 
-public class SystemCommand implements Command {
+public class BotAdminsCommand implements Command {
 
 	@Override
 	public Mono<Void> execute(Context ctx) {
@@ -22,17 +22,17 @@ public class SystemCommand implements Command {
 
 	@Override
 	public Set<String> getAliases() {
-		return Set.of("system");
+		return Set.of("botadmins");
 	}
 
 	@Override
 	public Set<Command> getSubcommands() {
-		return Set.of(new SystemMemoryCommand(), new SystemExitCommand());
+		return Set.of(new BotAdminsGrantCommand(), new BotAdminsRevokeCommand(), new BotAdminsListCommand());
 	}
 
 	@Override
 	public String getDescription() {
-		return "Allows to perform operations on the bot on the system level.";
+		return "Manage users who have bot admin privileges.";
 	}
 
 	@Override
@@ -42,7 +42,7 @@ public class SystemCommand implements Command {
 
 	@Override
 	public PermissionLevel getPermissionLevel() {
-		return PermissionLevel.BOT_ADMIN;
+		return PermissionLevel.BOT_OWNER;
 	}
 
 	@Override

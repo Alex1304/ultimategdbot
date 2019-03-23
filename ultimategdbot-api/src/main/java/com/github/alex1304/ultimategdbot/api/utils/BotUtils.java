@@ -9,12 +9,15 @@ import java.util.StringJoiner;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import com.github.alex1304.ultimategdbot.api.Bot;
 import com.github.alex1304.ultimategdbot.api.Command;
+import com.github.alex1304.ultimategdbot.api.CommandFailedException;
 
 import discord4j.core.object.entity.Channel;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.MessageChannel;
 import discord4j.core.object.entity.User;
+import discord4j.core.object.util.Snowflake;
 import discord4j.core.spec.MessageCreateSpec;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -206,5 +209,21 @@ public class BotUtils {
 	 */
 	public static String formatDiscordUsername(User user) {
 		return escapeMarkdown(user.getUsername() + "#" + user.getDiscriminator());
+	}
+	
+	public static Mono<User> convertStringToUser(Bot bot, String str) {
+		String id;
+		if (str.matches("[0-9]{1,19}")) {
+			id = str;
+		} else if (str.matches("<@!?[0-9]{1,19}>")) {
+			id = str.substring(str.startsWith("<@!") ? 3 : 2, str.length() - 1);
+		} else {
+			return Mono.error(new CommandFailedException("Not a valid mention/ID."));
+		}
+		return Mono.just(id)
+				.map(Snowflake::of)
+				.onErrorMap(e -> new CommandFailedException("Not a valid mention/ID."))
+				.flatMap(snowflake -> bot.getDiscordClients().flatMap(client -> client.getUserById(snowflake)).next())
+				.onErrorMap(e -> new CommandFailedException("Could not resolve the mention/ID to a valid user."));
 	}
 }

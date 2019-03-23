@@ -51,7 +51,7 @@ public class SystemMemoryCommand implements Command {
 
 	@Override
 	public PermissionLevel getPermissionLevel() {
-		return PermissionLevel.BOT_MODERATOR;
+		return PermissionLevel.BOT_ADMIN;
 	}
 
 	@Override

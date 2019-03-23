@@ -39,7 +39,6 @@ public class AboutCommand implements Command {
 					
 					vars.put("bot_name", tuple.getT1().getT1().getName());
 					vars.put("project_version", ctx.getBot().getReleaseVersion());
-					vars.put("bot_release_channel", ctx.getBot().getReleaseChannel());
 					vars.put("bot_owner", BotUtils.formatDiscordUsername(tuple.getT1().getT2()));
 					vars.put("server_count", "" + tuple.getT2().getT1());
 					vars.put("user_count", "" + tuple.getT2().getT2());

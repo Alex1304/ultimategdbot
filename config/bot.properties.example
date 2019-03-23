@@ -1,16 +1,42 @@
-token=<your_token_here>
-support_server_id=<an_ID_here>
-moderator_role_id=<another_ID_here>
+# bot.properties - the bot configuration file.
+
+# Put here the token of the bot, that you created through the Discord developer portal.
+token=
+
+# The link that people may use to invite the bot to their servers. You may leave this empty if your bot is private.
+# This link should look like https://discordapp.com/oauth2/authorize?client_id=XXXXXXXXXXXXXX&scope=bot&permissions=<permissions>
+bot_auth_link=
+
+# The version number of the bot as it is displayed publicly. It may be different from the version number of the Maven project.
+bot_release_version=
+
+# All bots usually have a support server where users can ask for help and where new updates are announced.
+# You can put the discord.gg link to that server here so people can make it display with a command.
+support_server_invite_link=
+
+# The default prefix of the bot. Used if no custom prefix is configured for the guild and for commands used in DMs.
 default_prefix=!
-release_channel=stable
+
+# Timeout in seconds for interactive menus that require user interaction (such as pagination etc).
+# Leave this to default (600) if you're unsure.
 reply_menu_timeout=600
-debug_log_channel_id=<ID>
-attachments_channel_id=<ID>
-emoji_guild_ids=<ID_1>,<ID_2>,<ID_3>,...
+
+# The ID of the channel where the bot can send debug messages and crash reports.
+debug_log_channel_id=
+
+# The ID of the channel where the bot can upload files for later use in embeds.
+attachments_channel_id=
+
+# A comma-separated list of guild IDs that the bot will use as resources to find emojis.
+# Example: "361255823357509645,357655103768887297"
+emoji_guild_ids=
+
+# Configure here the default presence status of the bot when it's running.
+# The syntax for presence_activity is the following: "status:text". For example: "playing:Geometry Dash" or "watching:YouTube videos".
+# presence_status can be one of "online", "idle", "dnd" or "invisible".
 presence_activity=playing:Geometry Dash | !help
 presence_status=online
-use_immediate_scheduler=true
 
-# For the about command
-bot_auth_link:https://discordapp.com/oauth2/authorize?client_id=XXXXXXXXXXXXX&scope=bot&permissions=268782592
-support_server_invite_link:https://discord.gg/XXXXXXXX
+# When set to true, can improve performances, but can cause issues if you're using custom plugins that perform blocking calls.
+# If you're only using official plugins, leave this to true, otherwise change to false for better stability.
+use_immediate_scheduler=true

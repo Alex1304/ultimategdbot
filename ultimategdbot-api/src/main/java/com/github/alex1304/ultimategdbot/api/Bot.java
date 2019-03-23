@@ -3,13 +3,11 @@ package com.github.alex1304.ultimategdbot.api;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import com.github.alex1304.ultimategdbot.api.guildsettings.GuildSettingsEntry;
+import com.github.alex1304.ultimategdbot.api.database.GuildSettingsEntry;
 
 import discord4j.core.DiscordClient;
 import discord4j.core.object.entity.Channel;
-import discord4j.core.object.entity.Guild;
 import discord4j.core.object.entity.Message;
-import discord4j.core.object.entity.Role;
 import discord4j.core.spec.MessageCreateSpec;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -52,27 +50,6 @@ public interface Bot {
 	 * @return the default prefix
 	 */
 	String getDefaultPrefix();
-
-	/**
-	 * Gets the support server of the bot.
-	 * 
-	 * @return the support server
-	 */
-	Mono<Guild> getSupportServer();
-
-	/**
-	 * Gets the moderator role of the bot.
-	 * 
-	 * @return the moderator role
-	 */
-	Mono<Role> getModeratorRole();
-
-	/**
-	 * Gets the release channel of the bot.
-	 * 
-	 * @return the release channel
-	 */
-	String getReleaseChannel();
 
 	/**
 	 * Gets the discord client.

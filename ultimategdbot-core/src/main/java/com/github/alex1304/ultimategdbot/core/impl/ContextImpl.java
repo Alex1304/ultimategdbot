@@ -16,7 +16,7 @@ import com.github.alex1304.ultimategdbot.api.Bot;
 import com.github.alex1304.ultimategdbot.api.Command;
 import com.github.alex1304.ultimategdbot.api.Context;
 import com.github.alex1304.ultimategdbot.api.Plugin;
-import com.github.alex1304.ultimategdbot.api.guildsettings.NativeGuildSettings;
+import com.github.alex1304.ultimategdbot.api.database.NativeGuildSettings;
 import com.github.alex1304.ultimategdbot.api.utils.BotUtils;
 
 import discord4j.core.DiscordClient;

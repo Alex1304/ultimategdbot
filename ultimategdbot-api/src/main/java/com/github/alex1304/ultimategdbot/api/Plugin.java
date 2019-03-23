@@ -3,7 +3,7 @@ package com.github.alex1304.ultimategdbot.api;
 import java.util.Map;
 import java.util.Set;
 
-import com.github.alex1304.ultimategdbot.api.guildsettings.GuildSettingsEntry;
+import com.github.alex1304.ultimategdbot.api.database.GuildSettingsEntry;
 import com.github.alex1304.ultimategdbot.api.utils.PropertyParser;
 
 /**
