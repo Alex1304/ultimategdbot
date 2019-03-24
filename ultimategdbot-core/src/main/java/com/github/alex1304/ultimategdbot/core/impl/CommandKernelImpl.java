@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -111,7 +112,7 @@ public class CommandKernelImpl implements CommandKernel {
 					final var args = tuple.getT2();
 					var replyMenu = openedReplyMenus.get(event.getMessage().getChannelId().asString()
 							+ event.getMessage().getAuthor().get().getId().asString());
-					var replyItem = args.get(0);
+					var replyItem = args.get(0).toLowerCase();
 					var action = replyMenu.menuItems.get(replyItem);
 					if (action == null) {
 						return;
@@ -209,7 +210,9 @@ public class CommandKernelImpl implements CommandKernel {
 		if (!msg.getAuthor().isPresent()) {
 			return "";
 		}
-		var rm = new ReplyMenu(ctx, msg, menuItems, deleteOnReply, deleteOnTimeout);
+		var fixedMenuItems = new LinkedHashMap<String, Function<Context, Mono<Void>>>();
+		menuItems.forEach((k, v) -> fixedMenuItems.put(k.toLowerCase(), v));
+		var rm = new ReplyMenu(ctx, msg, fixedMenuItems, deleteOnReply, deleteOnTimeout);
 		var key = rm.toKey();
 		var existing = openedReplyMenus.get(key);
 		if (existing != null) {
