@@ -45,6 +45,11 @@ public class BotAdminsRevokeCommand implements Command {
 	}
 
 	@Override
+	public String getLongDescription() {
+		return "";
+	}
+
+	@Override
 	public String getSyntax() {
 		return "<discord_tag_or_ID>";
 	}

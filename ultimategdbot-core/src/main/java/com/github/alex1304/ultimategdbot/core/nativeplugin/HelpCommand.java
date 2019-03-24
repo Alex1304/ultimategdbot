@@ -73,6 +73,11 @@ public class HelpCommand implements Command {
 	}
 
 	@Override
+	public String getLongDescription() {
+		return "You can also display help page for subcommands, by simply putting the subcommand name after the command name, for example `help setup set`.";
+	}
+
+	@Override
 	public String getSyntax() {
 		return "[<command_name> [<sub_commmand> ...]]";
 	}

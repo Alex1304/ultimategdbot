@@ -28,14 +28,6 @@ public class SetupSetCommand implements Command {
 				.onErrorMap(IllegalArgumentException.class, e -> new CommandFailedException("Cannot assign this value as `" + arg1 + "`: " + e.getMessage()))
 				.then(ctx.reply(":white_check_mark: Settings updated!"))
 				.then();
-//		try {
-//			ctx.setGuildSetting(arg1, arg2);
-//		} catch (NoSuchElementException e) {
-//			return Mono.error(new CommandFailedException("There is no configuration entry with key `" + arg1 + "`."));
-//		} catch (IllegalArgumentException e) {
-//			return Mono.error(new CommandFailedException("Cannot assign this value as `" + arg1 + "`: " + e.getMessage()));
-//		}
-//		return ctx.reply(":white_check_mark: Settings updated!").then();
 	}
 
 	@Override
@@ -51,6 +43,11 @@ public class SetupSetCommand implements Command {
 	@Override
 	public String getDescription() {
 		return "Assigns a new value to one of the guild configuration entries.";
+	}
+
+	@Override
+	public String getLongDescription() {
+		return "You can set `None` as value in order to reset the field.";
 	}
 
 	@Override

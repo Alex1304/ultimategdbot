@@ -54,6 +54,12 @@ public class SetupCommand implements Command {
 	}
 
 	@Override
+	public String getLongDescription() {
+		return "Running this command without arguments displays the current setup. Use the `set` subcommand to eidt a value.\n"
+				+ "By default you can only configure the prefix and the server mod role, but more configuration entries may be added by plugins.";
+	}
+
+	@Override
 	public String getSyntax() {
 		return "";
 	}

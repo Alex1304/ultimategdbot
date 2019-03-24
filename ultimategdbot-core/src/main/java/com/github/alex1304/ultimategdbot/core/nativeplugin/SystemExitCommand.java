@@ -50,6 +50,12 @@ public class SystemExitCommand implements Command {
 	}
 
 	@Override
+	public String getLongDescription() {
+		return "The exit status code must be between 0 and 255. 0 usually means normal termination, a value greater than 0 indicates an error. "
+				+ "If you don't know which code to put, use 0.";
+	}
+
+	@Override
 	public String getSyntax() {
 		return "<code>";
 	}

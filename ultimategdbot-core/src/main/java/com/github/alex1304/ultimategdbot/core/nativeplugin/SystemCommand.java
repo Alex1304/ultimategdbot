@@ -36,6 +36,11 @@ public class SystemCommand implements Command {
 	}
 
 	@Override
+	public String getLongDescription() {
+		return "It allows you to shutdown the bot with a custom exit code and view the current memory usage. See subcommands for more info.";
+	}
+
+	@Override
 	public String getSyntax() {
 		return "";
 	}

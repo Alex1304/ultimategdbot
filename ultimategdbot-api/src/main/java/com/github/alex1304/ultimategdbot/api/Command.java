@@ -39,11 +39,19 @@ public interface Command {
 
 	/**
 	 * Gets the description of the command. The description is shown in the help
-	 * command.
+	 * command list.
 	 * 
 	 * @return the description
 	 */
 	String getDescription();
+
+	/**
+	 * Gets the long description of the command. The description is shown in the detailed help
+	 * page of the command.
+	 * 
+	 * @return the description
+	 */
+	String getLongDescription();
 
 	/**
 	 * Gets the syntax of the command. The syntax is shown in the help command, and
@@ -104,6 +112,11 @@ public interface Command {
 			@Override
 			public String getDescription() {
 				return other.getDescription();
+			}
+
+			@Override
+			public String getLongDescription() {
+				return other.getLongDescription();
 			}
 
 			@Override

@@ -52,6 +52,11 @@ public class BotAdminsListCommand implements Command {
 	}
 
 	@Override
+	public String getLongDescription() {
+		return "";
+	}
+
+	@Override
 	public String getSyntax() {
 		return "";
 	}

@@ -57,6 +57,13 @@ public class DelayCommand implements Command {
 	}
 
 	@Override
+	public String getLongDescription() {
+		return "This can be useful in order to schedule tasks or make fun command chains.\n"
+				+ "The delay must not exceed 1 hour. Note that if the delay is long, it is not guaranteed "
+				+ "that it will be executed (for example if the bot restarts before the delay ends).";
+	}
+
+	@Override
 	public String getSyntax() {
 		return "<nb_seconds> <command>";
 	}

@@ -36,6 +36,12 @@ public class PingCommand implements Command {
 	}
 
 	@Override
+	public String getLongDescription() {
+		return "This command does not give the response time in milliseconds by default. However you can "
+				+ "still achieve a similar behavior by doing `time ping`.";
+	}
+
+	@Override
 	public String getSyntax() {
 		return "";
 	}

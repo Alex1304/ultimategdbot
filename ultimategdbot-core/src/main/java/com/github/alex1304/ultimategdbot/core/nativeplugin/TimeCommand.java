@@ -53,6 +53,11 @@ public class TimeCommand implements Command {
 	}
 
 	@Override
+	public String getLongDescription() {
+		return "Put the desired command with its arguments as argument of the `time` command. Note that it doesn't support measuring time of interactive menus.";
+	}
+
+	@Override
 	public String getSyntax() {
 		return "<command>";
 	}

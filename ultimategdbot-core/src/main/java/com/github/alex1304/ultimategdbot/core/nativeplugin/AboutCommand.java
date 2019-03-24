@@ -66,6 +66,11 @@ public class AboutCommand implements Command {
 	}
 
 	@Override
+	public String getLongDescription() {
+		return "Displays information such as bot version, support server link, credits, etc.";
+	}
+
+	@Override
 	public String getSyntax() {
 		return "";
 	}

@@ -50,8 +50,11 @@ public class BotUtils {
 		sb.append(cmd.getSyntax());
 		sb.append("\n```\n");
 		sb.append(cmd.getDescription());
+		sb.append("\n");
+		sb.append(cmd.getLongDescription());
+		sb.append("\n");
 		if (!cmd.getSubcommands().isEmpty()) {
-			sb.append("\n\n**Subcommands:**\n```\n");
+			sb.append("\n**Subcommands:**\n```\n");
 			cmd.getSubcommands().forEach(scmd -> {
 				sb.append(prefix);
 				sb.append(cmdName);

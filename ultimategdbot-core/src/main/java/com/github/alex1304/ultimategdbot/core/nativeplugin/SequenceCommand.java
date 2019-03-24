@@ -65,6 +65,11 @@ public class SequenceCommand implements Command {
 	}
 
 	@Override
+	public String getLongDescription() {
+		return "Each command is separated by a semicolon. There must be a space before AND after the semicolon for it to be recognized properly.";
+	}
+
+	@Override
 	public String getSyntax() {
 		return "<command_1> ; <command_2> ; <command_3> ; ... ; <command_n>";
 	}

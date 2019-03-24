@@ -36,6 +36,14 @@ public class BotAdminsCommand implements Command {
 	}
 
 	@Override
+	public String getLongDescription() {
+		return "Bot administrators have exclusive privileges on the bot. For example, they can use any command that normally "
+				+ "requires server admin (like `setup`), and access to private commands such as `system memory`.\n"
+				+ "Plugins may implement more commands exclusive to bot administrators.\n"
+				+ "Use one of the available subcommands to grant, revoke, or list bot administrators.";
+	}
+
+	@Override
 	public String getSyntax() {
 		return "";
 	}
