@@ -20,7 +20,7 @@ public interface Context {
 	 * @return the original command
 	 */
 	Command getCommand();
-	
+
 	/**
 	 * Gets the message create event associated to this command.
 	 *
@@ -34,37 +34,38 @@ public interface Context {
 	 * @return the args
 	 */
 	List<String> getArgs();
-	
+
 	/**
 	 * Gets the bot instance
 	 * 
 	 * @return the bot
 	 */
 	Bot getBot();
-	
+
 	/**
 	 * Gets the prefix used in the command that created this context.
 	 * 
 	 * @return the prefix used
 	 */
 	String getPrefixUsed();
-	
+
 	/**
 	 * Sends a message in the same channel the command was sent.
 	 * 
-	 * @param message - the message content of the reply
+	 * @param message the message content of the reply
 	 * @return a Mono emitting the message sent
 	 */
 	Mono<Message> reply(String message);
-	
+
 	/**
-	 * Sends a message in the same channel the command was sent. This method supports advanced message construction.
+	 * Sends a message in the same channel the command was sent. This method
+	 * supports advanced message construction.
 	 * 
-	 * @param message - the message content of the reply
+	 * @param message the message content of the reply
 	 * @return a Mono emitting the message sent
 	 */
 	Mono<Message> reply(Consumer<? super MessageCreateSpec> spec);
-	
+
 	/**
 	 * Adds a variable in this context. If a variable of the same name exists, it is
 	 * overwritten.
@@ -73,7 +74,7 @@ public interface Context {
 	 * @param val  - the value of the variable
 	 */
 	void setVar(String name, Object val);
-	
+
 	/**
 	 * Adds a variable in this context. If a variable of the same name exists,
 	 * nothing happens.
@@ -82,41 +83,56 @@ public interface Context {
 	 * @param val  - the value of the variable
 	 */
 	void setVarIfNotExists(String name, Object val);
-	
+
 	/**
 	 * Gets the value of a variable.
 	 * 
-	 * @param name - the variable name
-	 * @param type - the type of the variable
-	 * @return the value of the variable, or null if not found or exists in the wrong type
+	 * @param name the variable name
+	 * @param type the type of the variable
+	 * @return the value of the variable, or null if not found or exists in the
+	 *         wrong type
 	 */
 	<T> T getVar(String name, Class<T> type);
-	
+
 	/**
-	 * Gets the value of a variable. If not found, the provided default value is returned instead.
+	 * Gets the value of a variable. If not found, the provided default value is
+	 * returned instead.
 	 * 
-	 * @param name - the variable name
-	 * @param defaultVal - the default value to return if not found
-	 * @return the value of the variable, or the default value if not found or exists in the wrong type
+	 * @param name       the variable name
+	 * @param defaultVal the default value to return if not found
+	 * @return the value of the variable, or the default value if not found or
+	 *         exists in the wrong type
 	 */
 	<T> T getVarOrDefault(String name, T defaultVal);
-	
+
 	/**
 	 * Gets the guild settings
 	 * 
-	 * @return an unmodifiable Map containing the guild settings keys and their associated values.
+	 * @return an unmodifiable Map containing the guild settings keys and their
+	 *         associated values.
 	 */
 	Mono<Map<Plugin, Map<String, String>>> getGuildSettings();
-	
+
 	/**
 	 * Edits an entry of the guild settings.
 	 * 
 	 * @param key - the setting key
 	 * @param val - the setting value
-	 * @return 
-	 * @throws NoSuchElementException if no entry is found for the given key
-	 * @throws IllegalArgumentException if the given value is not accepted by the entry 
-	 * @throws UnsupportedOperationException if this method is called in a context that is outside of a Discord guild
+	 * @return a Mono that completes when successfully updated
+	 * @throws NoSuchElementException        if no entry is found for the given key
+	 * @throws IllegalArgumentException      if the given value is not accepted by
+	 *                                       the entry
+	 * @throws UnsupportedOperationException if this method is called in a context
+	 *                                       that is outside of a Discord guild
 	 */
 	Mono<Void> setGuildSetting(String key, String val);
+
+	/**
+	 * Creates a new Context that is the exact copy of this one, but with
+	 * different arguments.
+	 * 
+	 * @param newArgs  the new arguments that the copy will get
+	 * @return a new Context
+	 */
+	Context fork(List<String> newArgs);
 }

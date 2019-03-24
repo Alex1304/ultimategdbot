@@ -1,5 +1,6 @@
 package com.github.alex1304.ultimategdbot.api.utils;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -225,5 +226,14 @@ public class BotUtils {
 				.onErrorMap(e -> new CommandFailedException("Not a valid mention/ID."))
 				.flatMap(snowflake -> bot.getDiscordClients().flatMap(client -> client.getUserById(snowflake)).next())
 				.onErrorMap(e -> new CommandFailedException("Could not resolve the mention/ID to a valid user."));
+	}
+	
+	public static String formatTimeMillis(Duration time) {
+		var result = (time.toDaysPart() > 0 ? time.toDaysPart() + "d " : "")
+				+ (time.toHoursPart() > 0 ? time.toHoursPart() + "h " : "")
+				+ (time.toMinutesPart() > 0 ? time.toMinutesPart() + "min " : "")
+				+ (time.toSecondsPart() > 0 ? time.toSecondsPart() + "s " : "")
+				+ (time.toMillisPart() > 0 ? time.toMillisPart() + "ms " : "");
+		return result.isEmpty() ? "0ms" : result;
 	}
 }

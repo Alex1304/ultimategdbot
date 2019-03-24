@@ -8,9 +8,9 @@ import java.util.function.BiConsumer;
 import com.github.alex1304.ultimategdbot.api.Command;
 import com.github.alex1304.ultimategdbot.api.CommandFailedException;
 import com.github.alex1304.ultimategdbot.api.Context;
-import com.github.alex1304.ultimategdbot.api.InvalidSyntaxException;
 import com.github.alex1304.ultimategdbot.api.PermissionLevel;
 import com.github.alex1304.ultimategdbot.api.database.BotAdmins;
+import com.github.alex1304.ultimategdbot.api.utils.ArgUtils;
 import com.github.alex1304.ultimategdbot.api.utils.BotUtils;
 
 import discord4j.core.object.entity.Channel.Type;
@@ -20,9 +20,7 @@ public class BotAdminsRevokeCommand implements Command {
 
 	@Override
 	public Mono<Void> execute(Context ctx) {
-		if (ctx.getArgs().size() == 1) {
-			return Mono.error(new InvalidSyntaxException(this));
-		}
+		ArgUtils.requireMinimumArgCount(ctx, 2);
 		return BotUtils.convertStringToUser(ctx.getBot(), ctx.getArgs().get(1))
 				.flatMap(user -> ctx.getBot().getDatabase().findByID(BotAdmins.class, user.getId().asLong())
 						.switchIfEmpty(Mono.error(new CommandFailedException("This user is already not an admin.")))

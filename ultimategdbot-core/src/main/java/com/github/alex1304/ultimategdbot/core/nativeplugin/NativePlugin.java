@@ -75,7 +75,7 @@ public class NativePlugin implements Plugin {
 	@Override
 	public Set<Command> getProvidedCommands() {
 		return Set.of(new HelpCommand(), new PingCommand(), new SetupCommand(), new SystemCommand(), new AboutCommand(aboutText),
-				new BotAdminsCommand());
+				new BotAdminsCommand(), new TimeCommand(), new DelayCommand(), new SequenceCommand());
 	}
 
 	@Override

@@ -67,9 +67,7 @@ public class CommandKernelImpl implements CommandKernel {
 			return msg.getChannelId().asString() + ctx.getEvent().getMessage().getAuthor().get().getId().asString();
 		}
 		void complete() {
-			if (deleteOnReply) {
-				msg.delete().doOnError(__ -> {}).subscribe();
-			}
+			msg.delete().onErrorResume(e -> Mono.empty()).subscribe();
 			if (openedReplyMenus.get(toKey()) == this) {
 				openedReplyMenus.remove(toKey());
 				var d = disposableMenus.remove(this);
@@ -80,7 +78,7 @@ public class CommandKernelImpl implements CommandKernel {
 		}
 		void timeout() {
 			if (deleteOnTimeout) {
-				msg.delete().doOnError(__ -> {}).subscribe();
+				msg.delete().onErrorResume(e -> Mono.empty()).subscribe();
 			}
 			if (openedReplyMenus.get(toKey()) == this) {
 				openedReplyMenus.remove(toKey());
@@ -131,14 +129,18 @@ public class CommandKernelImpl implements CommandKernel {
 
 	@Override
 	public Optional<Tuple2<Command, List<String>>> parseCommandLine(String commandLine) {
-		var args = BotUtils.parseArgs(commandLine);
-		var cmd = commands.get(args.get(0));
+		return parseCommandLine(BotUtils.parseArgs(commandLine));
+	}
+
+	@Override
+	public Optional<Tuple2<Command, List<String>>> parseCommandLine(List<String> commandLine) {
+		var cmd = commands.get(commandLine.get(0));
 		if (cmd == null) {
 			return Optional.empty();
 		}
-		return Optional.of(Tuples.of(cmd, args)).map(tuple -> {
+		return Optional.of(Tuples.of(cmd, commandLine)).map(tuple -> {
 			var cmdTmp = tuple.getT1();
-			var argsTmp = new ArrayList<>(args);
+			var argsTmp = new ArrayList<>(commandLine);
 			while (argsTmp.size() > 1) {
 				var subcmd = subCommands.get(cmdTmp).get(argsTmp.get(1));
 				if (subcmd == null) {
@@ -229,8 +231,8 @@ public class CommandKernelImpl implements CommandKernel {
 		if (rm == null) {
 			return;
 		}
-		rm.msg.delete().doOnError(__ -> {}).subscribe();
-		rm.ctx.getEvent().getMessage().delete().doOnError(__ -> {}).subscribe();
+		rm.msg.delete().onErrorResume(e -> Mono.empty()).subscribe();
+		rm.ctx.getEvent().getMessage().delete().onErrorResume(e -> Mono.empty()).subscribe();
 		rm.complete();
 	}
 

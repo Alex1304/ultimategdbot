@@ -1,5 +1,6 @@
 package com.github.alex1304.ultimategdbot.core.nativeplugin;
 
+import java.time.Duration;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
@@ -9,31 +10,36 @@ import com.github.alex1304.ultimategdbot.api.Command;
 import com.github.alex1304.ultimategdbot.api.CommandFailedException;
 import com.github.alex1304.ultimategdbot.api.Context;
 import com.github.alex1304.ultimategdbot.api.PermissionLevel;
-import com.github.alex1304.ultimategdbot.api.database.BotAdmins;
 import com.github.alex1304.ultimategdbot.api.utils.ArgUtils;
 import com.github.alex1304.ultimategdbot.api.utils.BotUtils;
 
 import discord4j.core.object.entity.Channel.Type;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
 
-public class BotAdminsGrantCommand implements Command {
+public class TimeCommand implements Command {
 
 	@Override
 	public Mono<Void> execute(Context ctx) {
 		ArgUtils.requireMinimumArgCount(ctx, 2);
-		return BotUtils.convertStringToUser(ctx.getBot(), ctx.getArgs().get(1))
-				.flatMap(user -> ctx.getBot().getDatabase().findByID(BotAdmins.class, user.getId().asLong())
-						.flatMap(__ -> Mono.error(new CommandFailedException("This user is already an admin.")))
-						.then(Mono.just(new BotAdmins())
-								.doOnNext(newAdmin -> newAdmin.setUserId(user.getId().asLong()))
-								.flatMap(ctx.getBot().getDatabase()::save))
-						.then(ctx.reply("**" + BotUtils.formatDiscordUsername(user) + "** is now a bot administrator!")))
+		var parsedCmd = ctx.getBot().getCommandKernel().parseCommandLine(ctx.getArgs().subList(1, ctx.getArgs().size()));
+		if (parsedCmd.isEmpty()) {
+			return Mono.error(new CommandFailedException("Command not found."));
+		}
+		var cmd = parsedCmd.get().getT1();
+		var args = parsedCmd.get().getT2();
+		return ctx.getBot().getCommandKernel().invokeCommand(cmd, ctx.fork(args))
+				.onErrorResume(e -> Mono.empty())
+				.then(Mono.just(0))
+				.elapsed()
+				.map(Tuple2::getT1)
+				.flatMap(time -> ctx.reply(":timer: Execution time: **" + BotUtils.formatTimeMillis(Duration.ofMillis(time)) + "**."))
 				.then();
 	}
 
 	@Override
 	public Set<String> getAliases() {
-		return Set.of("grant");
+		return Set.of("time");
 	}
 
 	@Override
@@ -43,17 +49,17 @@ public class BotAdminsGrantCommand implements Command {
 
 	@Override
 	public String getDescription() {
-		return "Grants bot admin privileges to a user.";
+		return "Measures the execution time of a command.";
 	}
 
 	@Override
 	public String getSyntax() {
-		return "<discord_tag_or_ID>";
+		return "<command>";
 	}
 
 	@Override
 	public PermissionLevel getPermissionLevel() {
-		return PermissionLevel.BOT_OWNER;
+		return PermissionLevel.PUBLIC;
 	}
 
 	@Override

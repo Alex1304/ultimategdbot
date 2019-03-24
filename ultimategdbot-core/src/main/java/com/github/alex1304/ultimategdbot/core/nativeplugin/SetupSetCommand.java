@@ -10,8 +10,8 @@ import java.util.function.BiConsumer;
 import com.github.alex1304.ultimategdbot.api.Command;
 import com.github.alex1304.ultimategdbot.api.CommandFailedException;
 import com.github.alex1304.ultimategdbot.api.Context;
-import com.github.alex1304.ultimategdbot.api.InvalidSyntaxException;
 import com.github.alex1304.ultimategdbot.api.PermissionLevel;
+import com.github.alex1304.ultimategdbot.api.utils.ArgUtils;
 
 import discord4j.core.object.entity.Channel.Type;
 import reactor.core.publisher.Mono;
@@ -20,9 +20,7 @@ public class SetupSetCommand implements Command {
 
 	@Override
 	public Mono<Void> execute(Context ctx) {
-		if (ctx.getArgs().size() < 3) {
-			return Mono.error(new InvalidSyntaxException(this));
-		}
+		ArgUtils.requireMinimumArgCount(ctx, 3);
 		var arg1 = ctx.getArgs().get(1);
 		var arg2 = String.join(" ", ctx.getArgs().subList(2, ctx.getArgs().size()));
 		return ctx.setGuildSetting(arg1, arg2)

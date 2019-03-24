@@ -181,4 +181,9 @@ public class ContextImpl implements Context {
 							.filter(str -> str.equalsIgnoreCase(tuple.getT3().substring(0, Math.min(str.length(), tuple.getT3().length()))))
 							.next());
 	}
+
+	@Override
+	public Context fork(List<String> newArgs) {
+		return new ContextImpl(originalCommand, event, newArgs, bot, prefixUsed);
+	}
 }

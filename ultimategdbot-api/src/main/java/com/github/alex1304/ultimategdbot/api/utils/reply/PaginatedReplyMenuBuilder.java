@@ -7,6 +7,7 @@ import java.util.function.Consumer;
 import com.github.alex1304.ultimategdbot.api.Command;
 import com.github.alex1304.ultimategdbot.api.CommandFailedException;
 import com.github.alex1304.ultimategdbot.api.Context;
+import com.github.alex1304.ultimategdbot.api.utils.ArgUtils;
 import com.github.alex1304.ultimategdbot.api.utils.BotUtils;
 
 import discord4j.core.object.entity.Message;
@@ -60,21 +61,15 @@ public class PaginatedReplyMenuBuilder extends ReplyMenuBuilder {
 		}
 		if (pageMax > 0) {
 			addItem("page", "To go to a specific page, type `page` followed by the page number, ex `page 3`", ctx0 -> {
-				if (ctx0.getArgs().size() == 1) {
-					return Mono.error(new CommandFailedException("Please specify a page number"));
+				ArgUtils.requireMinimumArgCount(ctx0, 2, "Please specify a page number");
+				var page0 = ArgUtils.getArgAsInt(ctx0, 1) - 1;
+				var pageMax0 = ctx.getVar("pageMax", Integer.class);
+				if (page0 > pageMax0) {
+					return Mono.error(new CommandFailedException("Page number out of range"));
 				}
-				try {
-					var page0 = Integer.parseUnsignedInt(ctx0.getArgs().get(1)) - 1;
-					var pageMax0 = ctx.getVar("pageMax", Integer.class);
-					if (page0 > pageMax0) {
-						return Mono.error(new CommandFailedException("Page number out of range"));
-					}
-					ctx.setVar("page", page0);
-					ctx.getBot().getCommandKernel().invokeCommand(cmd, ctx).subscribe();
-					return Mono.empty();
-				} catch (NumberFormatException e) {
-					return Mono.error(new CommandFailedException("Please specify a valid page number"));
-				}
+				ctx.setVar("page", page0);
+				ctx.getBot().getCommandKernel().invokeCommand(cmd, ctx).subscribe();
+				return Mono.empty();
 			});
 		}
 		return super.build(pages.isEmpty() ? "" : pages.get(page), embed);

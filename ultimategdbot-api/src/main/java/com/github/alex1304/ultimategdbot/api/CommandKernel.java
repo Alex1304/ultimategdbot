@@ -31,6 +31,17 @@ public interface CommandKernel {
 	Optional<Tuple2<Command, List<String>>> parseCommandLine(String commandLine);
 	
 	/**
+	 * Reads the command line and retrieves the corresponding Command instance.
+	 * Arguments passed to the command are also returned as a list.
+	 * 
+	 * @param commandLine the command line as a list of string containing the
+	 *                    command name as first element and arguments then
+	 * 
+	 * @return the command with its arguments, if present
+	 */
+	Optional<Tuple2<Command, List<String>>> parseCommandLine(List<String> commandLine);
+	
+	/**
 	 * Gets an unmodifiable set of all commands available in the kernel.
 	 * 
 	 * @return a Set of Command

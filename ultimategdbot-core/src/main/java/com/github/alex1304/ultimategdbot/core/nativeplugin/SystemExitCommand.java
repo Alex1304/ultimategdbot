@@ -8,8 +8,8 @@ import java.util.function.BiConsumer;
 import com.github.alex1304.ultimategdbot.api.Command;
 import com.github.alex1304.ultimategdbot.api.CommandFailedException;
 import com.github.alex1304.ultimategdbot.api.Context;
-import com.github.alex1304.ultimategdbot.api.InvalidSyntaxException;
 import com.github.alex1304.ultimategdbot.api.PermissionLevel;
+import com.github.alex1304.ultimategdbot.api.utils.ArgUtils;
 
 import discord4j.core.object.entity.Channel.Type;
 import reactor.core.publisher.Mono;
@@ -18,9 +18,7 @@ public class SystemExitCommand implements Command {
 
 	@Override
 	public Mono<Void> execute(Context ctx) {
-		if (ctx.getArgs().size() == 1) {
-			return Mono.error(new InvalidSyntaxException(this));
-		}
+		ArgUtils.requireMinimumArgCount(ctx, 2);
 		try {
 			var code = Integer.parseInt(ctx.getArgs().get(1));
 			if (code < 0 || code > 255) {

@@ -8,6 +8,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import com.github.alex1304.ultimategdbot.api.Context;
+import com.github.alex1304.ultimategdbot.api.utils.BotUtils;
 
 import discord4j.core.object.entity.Message;
 import discord4j.core.spec.EmbedCreateSpec;
@@ -65,8 +66,7 @@ public class ReplyMenuBuilder {
 		var closeView = "To close this menu, type `close`";
 		if (deleteOnTimeout) {
 			var timeout = Duration.ofSeconds(ctx.getBot().getReplyMenuTimeout());
-			var time = (timeout.toMinutesPart() > 0 ? timeout.toMinutesPart() + "min " : "")
-					+ (timeout.toSecondsPart() > 0 ? timeout.toSecondsPart() + "s " : "");
+			var time = BotUtils.formatTimeMillis(timeout);
 			closeView = "This menu will close after " + time + " of inactivity, or type `close`";
 		}
 		addItem("close", closeView);
