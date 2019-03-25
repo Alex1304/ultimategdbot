@@ -54,7 +54,8 @@ public class HelpCommand implements Command {
 			if (cmd.isEmpty()) {
 				return Mono.error(new CommandFailedException("The command \"" + cmdName + "\" does not exist."));
 			}
-			return rb.build(BotUtils.generateDefaultDocumentation(cmd.get().getT1(), ctx.getPrefixUsed(), cmdName)).then();
+			return BotUtils.generateDefaultDocumentation(cmd.get().getT1(), ctx, cmdName)
+					.flatMap(doc -> rb.build(doc)).then();
 	}
 
 	@Override

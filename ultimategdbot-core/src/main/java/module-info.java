@@ -10,8 +10,8 @@ module ultimategdbot.core {
 	requires org.hibernate.orm.ehcache;
 	requires io.netty.codec.http;
 	
-	exports com.github.alex1304.ultimategdbot.core.impl;
-	exports com.github.alex1304.ultimategdbot.core.nativeplugin;
+	exports com.github.alex1304.ultimategdbot.core.impl to ultimategdbot.core;
+	exports com.github.alex1304.ultimategdbot.core.nativeplugin to ultimategdbot.core;
 
 	provides com.github.alex1304.ultimategdbot.api.Plugin with com.github.alex1304.ultimategdbot.core.nativeplugin.NativePlugin;
 	

@@ -24,7 +24,7 @@ public class BotAdminsListCommand implements Command {
 				.flatMap(admin -> ctx.getBot().getDiscordClients().flatMap(client -> client.getUserById(Snowflake.of(admin.getUserId()))).next())
 				.onErrorResume(e -> Mono.empty())
 				.map(BotUtils::formatDiscordUsername)
-				.collectList()
+				.collectSortedList(String.CASE_INSENSITIVE_ORDER)
 				.map(adminList -> {
 					var sb = new StringBuilder("__**Bot administrator list:**__\n\n");
 					adminList.forEach(admin -> sb.append(admin).append("\n"));

@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import com.github.alex1304.ultimategdbot.api.Bot;
 import com.github.alex1304.ultimategdbot.api.Command;
 import com.github.alex1304.ultimategdbot.api.CommandFailedException;
+import com.github.alex1304.ultimategdbot.api.Context;
 
 import discord4j.core.object.entity.Channel;
 import discord4j.core.object.entity.Message;
@@ -32,43 +33,39 @@ public class BotUtils {
 	
 	/**
 	 * Generates a default documentation for the command in a String format.
-	 * The context is used to adapt the doc to the context (prefix, subcommands used, etc).
 	 * 
 	 * @param cmd - the command to generate the doc for
-	 * @param ctx - the context to take into account in the generation of the doc
 	 * @return the documentation
 	 */
-	public static String generateDefaultDocumentation(Command cmd, String prefix, String cmdName) {
+	public static Mono<String> generateDefaultDocumentation(Command cmd, Context ctx, String cmdName) {
 		Objects.requireNonNull(cmd);
-		Objects.requireNonNull(prefix);
+		Objects.requireNonNull(ctx);
 		Objects.requireNonNull(cmdName);
-		var sb = new StringBuilder();
-		sb.append("```diff\n");
-		sb.append(prefix);
-		sb.append(cmdName);
-		sb.append(' ');
-		sb.append(cmd.getSyntax());
-		sb.append("\n```\n");
-		sb.append(cmd.getDescription());
-		sb.append("\n");
-		sb.append(cmd.getLongDescription());
-		sb.append("\n");
-		if (!cmd.getSubcommands().isEmpty()) {
-			sb.append("\n**Subcommands:**\n```\n");
-			cmd.getSubcommands().forEach(scmd -> {
-				sb.append(prefix);
-				sb.append(cmdName);
-				sb.append(' ');
-				sb.append(joinAliases(scmd.getAliases()));
-				sb.append(' ');
-				sb.append(scmd.getSyntax());
-				sb.append("\n\t-> ");
-				sb.append(scmd.getDescription());
-				sb.append("\n");
-			});
-			sb.append("\n```\n");
-		}
-		return sb.toString();
+		return cmd.getPermissionLevel().isGranted(ctx)
+				.filter(Boolean::booleanValue)
+				.switchIfEmpty(Mono.error(new CommandFailedException("You are not granted the privileges to "
+						+ "access the documentation of this command.")))
+				.flatMap(__ -> {
+					var sb = new StringBuilder();
+					sb.append("```diff\n");
+					sb.append(ctx.getPrefixUsed());
+					sb.append(cmdName);
+					sb.append(' ');
+					sb.append(cmd.getSyntax());
+					sb.append("\n```\n");
+					sb.append(cmd.getDescription());
+					sb.append("\n");
+					sb.append(cmd.getLongDescription());
+					sb.append("\n");
+					return Flux.fromIterable(cmd.getSubcommands())
+							.filterWhen(scmd -> scmd.getPermissionLevel().isGranted(ctx))
+							.map(scmd -> ctx.getPrefixUsed() + cmdName + ' ' + joinAliases(scmd.getAliases()) + ' ' 
+									+ scmd.getSyntax() + "\n\t-> " + scmd.getDescription() + "\n")
+							.collect(Collectors.joining())
+							.filter(scmdStr -> !scmdStr.isEmpty())
+							.map(scmdStr -> sb.append("\n**Subcommands:**\n```\n").append(scmdStr).append("\n```\n").toString())
+							.defaultIfEmpty(sb.toString());
+				});
 	}
 	
 	public static String joinAliases(Set<String> aliases) {
