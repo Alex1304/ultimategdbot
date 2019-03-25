@@ -28,6 +28,9 @@ public class TimeCommand implements Command {
 		}
 		var cmd = parsedCmd.get().getT1();
 		var args = parsedCmd.get().getT2();
+		if (cmd instanceof TimeCommand || cmd instanceof DelayCommand) {
+			return Mono.error(new CommandFailedException("The `" + args.get(0) + "` command cannot be timed."));
+		}
 		return ctx.getBot().getCommandKernel().invokeCommand(cmd, ctx.fork(args))
 				.onErrorResume(e -> Mono.empty())
 				.then(Mono.just(0))

@@ -190,7 +190,7 @@ public class BotUtils {
 	 */
 	public static String escapeMarkdown(String text) {
 		List<Character> resultList = new ArrayList<>();
-		Character[] charsToEscape = { '\\', '_', '*', '~', '`', ':', '@', '#' };
+		Character[] charsToEscape = { '\\', '_', '*', '~', '`', ':', '@', '#', '|' };
 		List<Character> charsToEscapeList = Arrays.asList(charsToEscape);
 		
 		for (char c : text.toCharArray()) {
@@ -237,6 +237,6 @@ public class BotUtils {
 				+ (time.toMinutesPart() > 0 ? time.toMinutesPart() + "min " : "")
 				+ (time.toSecondsPart() > 0 ? time.toSecondsPart() + "s " : "")
 				+ (time.toMillisPart() > 0 ? time.toMillisPart() + "ms " : "");
-		return result.isEmpty() ? "0ms" : result;
+		return result.isEmpty() ? "0ms" : result.substring(0, result.length() - 1);
 	}
 }

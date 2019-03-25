@@ -31,6 +31,9 @@ public class DelayCommand implements Command {
 		}
 		var cmd = parsedCmd.get().getT1();
 		var args = parsedCmd.get().getT2();
+		if (cmd instanceof DelayCommand) {
+			return Mono.error(new CommandFailedException("The `" + args.get(0) + "` command cannot be delayed."));
+		}
 		var duration = Duration.ofSeconds(delay);
 		var cmdLine = "`" + ctx.getPrefixUsed() + ArgUtils.concatArgs(ctx, 2) + "`";
 		return ctx.reply(":thumbsup: Will execute " + cmdLine + " in "

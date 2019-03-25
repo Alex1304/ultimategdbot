@@ -27,6 +27,9 @@ public class SequenceCommand implements Command {
 		var cmdLines = new ArrayList<List<String>>();
 		var lastI = 1;
 		for (var i = 2 ; i < ctx.getArgs().size() ; i++) {
+			if (getAliases().contains(ctx.getArgs().get(i))) {
+				return Mono.error(new CommandFailedException("Cannot call `sequence` inside of a sequence."));
+			}
 			if (lastI != i && ctx.getArgs().get(i).equals(";")) {
 				cmdLines.add(ctx.getArgs().subList(lastI, i));
 				lastI = i + 1;
@@ -34,6 +37,9 @@ public class SequenceCommand implements Command {
 		}
 		if (lastI < ctx.getArgs().size()) {
 			cmdLines.add(ctx.getArgs().subList(lastI, ctx.getArgs().size()));
+		}
+		if (cmdLines.size() > 10) {
+			return Mono.error(new CommandFailedException("A sequence can contain at most 10 commands."));
 		}
 		var commands = cmdLines.stream()
 				.map(ctx.getBot().getCommandKernel()::parseCommandLine)
