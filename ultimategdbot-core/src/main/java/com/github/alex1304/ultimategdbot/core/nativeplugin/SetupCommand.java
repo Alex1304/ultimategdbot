@@ -20,7 +20,9 @@ public class SetupCommand implements Command {
 	@Override
 	public Mono<Void> execute(Context ctx) {
 		var rb = new PaginatedReplyMenuBuilder(this, ctx, true, false, Message.MAX_CONTENT_LENGTH - 10);
-		var sb = new StringBuffer();
+		var sb = new StringBuffer("Here you can configure the bot for this server. "
+				+ "You can update a field by doing `" + ctx.getPrefixUsed() + "setup set <field> <value>`. "
+				+ "Use `None` as value to reset a field.\n\n");
 		return ctx.getGuildSettings().doOnNext(map -> map.forEach((plugin, entries) -> {
 			sb.append("**__").append(plugin.getName()).append("__**\n");
 			if (entries.isEmpty()) {

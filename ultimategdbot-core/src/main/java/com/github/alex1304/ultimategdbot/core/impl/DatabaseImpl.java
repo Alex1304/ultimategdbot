@@ -62,7 +62,7 @@ public class DatabaseImpl implements Database {
 		return findByID(entityClass, key).switchIfEmpty(Mono.fromCallable(() -> {
 			T result = entityClass.getConstructor().newInstance();
 			keySetter.accept(result, key);
-			save(result);
+			save(result).block();
 			return result;
 		}).subscribeOn(Schedulers.elastic()).onErrorMap(e -> new RuntimeException("An error occured when creating a database entity", e)));
 	}

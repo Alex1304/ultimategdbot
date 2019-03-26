@@ -2,7 +2,6 @@ package com.github.alex1304.ultimategdbot.core.impl;
 
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -141,7 +140,7 @@ public class ContextImpl implements Context {
 								.doOnNext(strVal -> entriesForEachPlugin.put(entry.getKey(), strVal)))
 						.takeLast(1)
 						.doOnNext(__ -> {
-							result.put(guildSettingsEntriesByPlugin.getKey(), new HashMap<>(entriesForEachPlugin));
+							result.put(guildSettingsEntriesByPlugin.getKey(), new TreeMap<>(entriesForEachPlugin));
 							entriesForEachPlugin.clear(); // We are done with this plugin, clear the map so that it can be used for next plugins
 						}))
 				.then(Mono.just(Collections.unmodifiableMap(result)));
