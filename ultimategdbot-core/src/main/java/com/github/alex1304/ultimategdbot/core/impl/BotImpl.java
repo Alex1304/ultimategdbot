@@ -291,9 +291,9 @@ public class BotImpl implements Bot {
 		}
 		discordClients.count().flatMap(shardCount -> discordClients.flatMap(client -> client.getEventDispatcher().on(ReadyEvent.class))
 				.map(readyEvent -> readyEvent.getGuilds().size())
-				.flatMap(size -> discordClients.flatMap(client -> client.getEventDispatcher().on(GuildCreateEvent.class))
+				.flatMap(size -> discordClients.flatMap(client -> client.getEventDispatcher().on(GuildCreateEvent.class)
 						.take(size)
-						.collectList())
+						.collectList()))
 				.take(shardCount)
 				.collectList()
 				.doOnNext(guildCreateEvents -> {
