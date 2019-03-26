@@ -62,21 +62,23 @@ public class DatabaseImpl implements Database {
 		return findByID(entityClass, key).switchIfEmpty(Mono.fromCallable(() -> {
 			T result = entityClass.getConstructor().newInstance();
 			keySetter.accept(result, key);
-			save(result).block();
+			save(result).subscribe();
 			return result;
-		}).subscribeOn(Schedulers.elastic()).onErrorMap(e -> new RuntimeException("An error occured when creating a database entity", e)));
+		}).subscribeOn(Schedulers.elastic()));
 	}
 
 	@Override
 	public <T> Flux<T> query(Class<T> entityClass, String query, Object... params) {
 		return Mono.fromCallable(() -> {
 			var list = new ArrayList<T>();
-			try (var s = newSession()) {
-				var q = s.createQuery(query, entityClass);
-				for (int i = 0; i < params.length; i++) {
-					q.setParameter(i, params[i]);
+			synchronized (sessionFactory) {
+				try (var s = newSession()) {
+					var q = s.createQuery(query, entityClass);
+					for (int i = 0; i < params.length; i++) {
+						q.setParameter(i, params[i]);
+					}
+					list.addAll(q.getResultList());
 				}
-				list.addAll(q.getResultList());
 			}
 			return list;
 		}).subscribeOn(Schedulers.elastic()).flatMapMany(Flux::fromIterable);
@@ -103,7 +105,7 @@ public class DatabaseImpl implements Database {
 		return sessionFactory.openSession();
 	}
 
-	private Mono<Void> performTransaction(Consumer<Session> txConsumer, boolean flush) {
+	private synchronized Mono<Void> performTransaction(Consumer<Session> txConsumer, boolean flush) {
 		return Mono.<Void>fromCallable(() -> {
 			Transaction tx = null;
 			try (var s = newSession()) {
