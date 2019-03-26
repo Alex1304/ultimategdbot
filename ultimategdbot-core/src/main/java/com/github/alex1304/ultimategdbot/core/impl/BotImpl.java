@@ -46,6 +46,7 @@ import discord4j.core.spec.MessageCreateSpec;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
+import reactor.util.function.Tuples;
 
 public class BotImpl implements Bot {
 	
@@ -289,12 +290,12 @@ public class BotImpl implements Bot {
 			System.err.println("Oops! There is an error in the database mapping configuration!");
 			throw e;
 		}
-		discordClients.count().flatMap(shardCount -> discordClients.flatMap(client -> client.getEventDispatcher().on(ReadyEvent.class))
-				.map(readyEvent -> readyEvent.getGuilds().size())
-				.flatMap(size -> discordClients.flatMap(client -> client.getEventDispatcher().on(GuildCreateEvent.class)
-						.take(size)
-						.collectList()))
-				.take(shardCount)
+		discordClients.flatMap(client -> client.getEventDispatcher().on(ReadyEvent.class)
+						.next()
+						.map(readyEvent -> Tuples.of(client, readyEvent.getGuilds().size())))
+				.flatMap(clientWithGuildCount -> clientWithGuildCount.getT1().getEventDispatcher().on(GuildCreateEvent.class)
+						.take(clientWithGuildCount.getT2())
+						.collectList())
 				.collectList()
 				.doOnNext(guildCreateEvents -> {
 					var sb = new StringBuilder("Bot started!\n");
@@ -304,12 +305,12 @@ public class BotImpl implements Bot {
 							sb.append("> Shard ").append(shardNum).append(": successfully connected to ").append(shardGuildCreateEvents.size()).append(" guilds\n");
 						});
 					}
-					sb.append("Serving " + guildCreateEvents.stream().mapToInt(List::size).sum() + " guilds across " + shardCount + " shards!");
+					sb.append("Serving " + guildCreateEvents.stream().mapToInt(List::size).sum() + " guilds across " + guildCreateEvents.size() + " shards!");
 					System.out.println(sb);
 					BotUtils.sendMultipleSimpleMessagesToOneChannel(getDebugLogChannel(), BotUtils.chunkMessage(sb.toString())).subscribe();
 					successfullyLoadedPlugins.forEach(Plugin::onBotReady);
 					cmdKernel.start();
-				})).subscribe();
+				}).subscribe();
 		discordClients.flatMap(DiscordClient::login).blockLast();
 	}
 
