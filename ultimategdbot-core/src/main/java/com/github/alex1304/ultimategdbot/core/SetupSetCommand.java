@@ -1,4 +1,4 @@
-package com.github.alex1304.ultimategdbot.core.nativeplugin;
+package com.github.alex1304.ultimategdbot.core;
 
 import java.util.Collections;
 import java.util.EnumSet;

@@ -1,4 +1,4 @@
-package com.github.alex1304.ultimategdbot.core.nativeplugin;
+package com.github.alex1304.ultimategdbot.core;
 
 import java.util.Collections;
 import java.util.EnumSet;
@@ -15,7 +15,7 @@ import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.Channel.Type;
 import reactor.core.publisher.Mono;
 
-public class SetupCommand implements Command {
+class SetupCommand implements Command {
 
 	@Override
 	public Mono<Void> execute(Context ctx) {

@@ -31,7 +31,7 @@ public class PropertyParser {
 	 * @param        <P> the type of value the configuration entry is supposed to
 	 *               match
 	 * @return the parsed value
-	 * @throws {@link IllegalArgumentException} if the value could not be parsed or
+	 * @throws IllegalArgumentException if the value could not be parsed or
 	 *         if the configuration entry associated with {@code name} doesn't
 	 *         exist.
 	 */
@@ -77,7 +77,7 @@ public class PropertyParser {
 	 * 
 	 * @param name   the entry name in the properties file
 	 * @return the parsed value
-	 * @throws {@link IllegalArgumentException} if the value could not be parsed or
+	 * @throws IllegalArgumentException if the value could not be parsed or
 	 *         if the configuration entry associated with {@code name} doesn't
 	 *         exist.
 	 * @see #parse(String, Function)
@@ -111,7 +111,7 @@ public class PropertyParser {
 	 * 
 	 * @param name the entry name in the properties file
 	 * @return the parsed value
-	 * @throws {@link IllegalArgumentException} if the value could not be parsed or
+	 * @throws IllegalArgumentException if the value could not be parsed or
 	 *         if the configuration entry associated with {@code name} doesn't
 	 *         exist.
 	 * @see #parse(String, Function)
@@ -145,7 +145,7 @@ public class PropertyParser {
 	 * 
 	 * @param name the entry name in the properties file
 	 * @return the parsed value
-	 * @throws {@link IllegalArgumentException} if the value could not be parsed or
+	 * @throws IllegalArgumentException if the value could not be parsed or
 	 *         if the configuration entry associated with {@code name} doesn't
 	 *         exist.
 	 * @see #parse(String, Function)

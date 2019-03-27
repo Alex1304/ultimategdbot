@@ -1,4 +1,4 @@
-package com.github.alex1304.ultimategdbot.core.nativeplugin;
+package com.github.alex1304.ultimategdbot.core;
 
 import java.util.Collections;
 import java.util.EnumSet;
@@ -18,7 +18,7 @@ import discord4j.core.object.entity.ApplicationInfo;
 import discord4j.core.object.entity.Channel.Type;
 import reactor.core.publisher.Mono;
 
-public class AboutCommand implements Command {
+class AboutCommand implements Command {
 	
 	private final String aboutText;
 	

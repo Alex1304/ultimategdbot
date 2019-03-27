@@ -1,4 +1,4 @@
-package com.github.alex1304.ultimategdbot.core.nativeplugin;
+package com.github.alex1304.ultimategdbot.core;
 
 import java.time.Duration;
 import java.util.EnumSet;
@@ -17,7 +17,7 @@ import discord4j.core.object.entity.Channel.Type;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 
-public class TimeCommand implements Command {
+class TimeCommand implements Command {
 
 	@Override
 	public Mono<Void> execute(Context ctx) {

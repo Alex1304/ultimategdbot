@@ -1,4 +1,4 @@
-package com.github.alex1304.ultimategdbot.core.impl;
+package com.github.alex1304.ultimategdbot.core;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -33,7 +33,7 @@ import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
-public class CommandKernelImpl implements CommandKernel {
+class CommandKernelImpl implements CommandKernel {
 
 	private final Bot bot;
 	private final Map<String, Command> commands;

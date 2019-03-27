@@ -1,4 +1,4 @@
-package com.github.alex1304.ultimategdbot.core.nativeplugin;
+package com.github.alex1304.ultimategdbot.core;
 
 import java.time.Duration;
 import java.util.EnumSet;
@@ -16,7 +16,7 @@ import com.github.alex1304.ultimategdbot.api.utils.BotUtils;
 import discord4j.core.object.entity.Channel.Type;
 import reactor.core.publisher.Mono;
 
-public class DelayCommand implements Command {
+class DelayCommand implements Command {
 
 	@Override
 	public Mono<Void> execute(Context ctx) {

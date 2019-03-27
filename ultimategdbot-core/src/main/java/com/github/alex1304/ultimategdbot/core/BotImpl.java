@@ -1,4 +1,4 @@
-package com.github.alex1304.ultimategdbot.core.impl;
+package com.github.alex1304.ultimategdbot.core;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -30,7 +30,6 @@ import com.github.alex1304.ultimategdbot.api.Plugin;
 import com.github.alex1304.ultimategdbot.api.database.GuildSettingsEntry;
 import com.github.alex1304.ultimategdbot.api.utils.BotUtils;
 import com.github.alex1304.ultimategdbot.api.utils.PropertyParser;
-import com.github.alex1304.ultimategdbot.core.main.Main;
 
 import discord4j.core.DiscordClient;
 import discord4j.core.DiscordClientBuilder;
@@ -52,7 +51,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 import reactor.util.function.Tuples;
 
-public class BotImpl implements Bot {
+class BotImpl implements Bot {
 	
 	private Logger logger;
 	private final String token;
@@ -162,7 +161,7 @@ public class BotImpl implements Bot {
 		var pw = new PrintWriter(sw);
 		pw.println(":no_entry_sign: **Something went wrong while executing a command.**");
 		pw.println("__User input:__ `" + ctx.getEvent().getMessage().getContent().orElseGet(() -> "(No content)") + "`");
-		pw.println("__Full stack trace:__");
+		pw.println("__Stack trace preview (see full trace in internal logs):__");
 		t.printStackTrace(pw);
 		var trace = sw.toString();
 		logger.error(trace);
@@ -249,7 +248,7 @@ public class BotImpl implements Bot {
 		var successfullyLoadedPlugins = new HashSet<Plugin>();
 		for (var plugin : loader) {
 			try {
-				logger.info(String.format("Loading plugin: %s...\n", plugin.getName()));
+				logger.info(String.format("Loading plugin: %s...", plugin.getName()));
 				plugin.setup(this, parser);
 				database.addAllMappingResources(plugin.getDatabaseMappingResources());
 				guildSettingsEntries.put(plugin, plugin.getGuildConfigurationEntries());
@@ -278,7 +277,7 @@ public class BotImpl implements Bot {
 						subCommands.put(element, subCmdMap);
 						subCmdDeque.addAll(elementSubcmds);
 					}
-					logger.info(String.format("Loaded command: %s %s\n", cmd.getClass().getName(), cmd.getAliases()));
+					logger.info(String.format("Loaded command: %s %s", cmd.getClass().getName(), cmd.getAliases()));
 				}
 				successfullyLoadedPlugins.add(plugin);
 			} catch (RuntimeException e) {

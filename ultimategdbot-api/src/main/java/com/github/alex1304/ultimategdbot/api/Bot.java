@@ -121,7 +121,6 @@ public interface Bot {
 	 * reply menu is open.
 	 * 
 	 * @return the value as int (in seconds)
-	 * @see #openReplyMenu(Context, Message, Map, boolean, boolean)
 	 */
 	int getReplyMenuTimeout();
 

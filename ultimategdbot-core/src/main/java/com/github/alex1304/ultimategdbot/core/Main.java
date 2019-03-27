@@ -1,13 +1,11 @@
-package com.github.alex1304.ultimategdbot.core.main;
+package com.github.alex1304.ultimategdbot.core;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Properties;
 
-import com.github.alex1304.ultimategdbot.core.impl.BotImpl;
-
-public class Main {
+class Main {
 	
 	public static final Path PROPS_FILE = Paths.get(".", "config", "bot.properties");
 	public static final Path HIB_PROPS_FILE = Paths.get(".", "config", "hibernate.properties");

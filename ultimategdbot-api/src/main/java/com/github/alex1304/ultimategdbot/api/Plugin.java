@@ -16,32 +16,32 @@ public interface Plugin {
 	 * the loading of this plugin and will display a warning in the standard output.
 	 * Other plugins won't be affected.
 	 * 
-	 * @param bot the bot instance
+	 * @param bot    the bot instance
 	 * @param parser contains everything defined in plugins.properties, ready to be
 	 *               parsed
 	 */
 	void setup(Bot bot, PropertyParser parser);
-	
+
 	/**
 	 * Action to execute when the bot is ready. This method should never throw any
 	 * exception.
 	 */
 	void onBotReady();
-	
+
 	/**
 	 * Gets the set of commands that this plugin provides.
 	 * 
 	 * @return a set of commands
 	 */
 	Set<Command> getProvidedCommands();
-	
+
 	/**
 	 * Gets the name of the plugin.
 	 * 
 	 * @return the name
 	 */
 	String getName();
-	
+
 	/**
 	 * Gets a set of resource names that corresponds to database mapping files.
 	 * Mapping files usually end with *.hbm.xml and should be located at the root of
@@ -50,11 +50,11 @@ public interface Plugin {
 	 * @return a set containing the name of all mapping files used in the plugin.
 	 */
 	Set<String> getDatabaseMappingResources();
-	
+
 	/**
-	 * Gets a map of configuration entries for guilds. Anything added here will be listed when using the setup command.
+	 * Gets a map of configuration entries for guilds. Anything added here will be
+	 * listed when using the setup command.
 	 * 
-	 * @param bot - the bot instance
 	 * @return the guild configuration entries
 	 */
 	Map<String, GuildSettingsEntry<?, ?>> getGuildConfigurationEntries();

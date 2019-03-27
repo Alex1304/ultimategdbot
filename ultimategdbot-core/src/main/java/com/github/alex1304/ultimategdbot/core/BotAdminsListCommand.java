@@ -1,4 +1,4 @@
-package com.github.alex1304.ultimategdbot.core.nativeplugin;
+package com.github.alex1304.ultimategdbot.core;
 
 import java.util.EnumSet;
 import java.util.Map;
@@ -6,32 +6,39 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 
 import com.github.alex1304.ultimategdbot.api.Command;
-import com.github.alex1304.ultimategdbot.api.CommandFailedException;
 import com.github.alex1304.ultimategdbot.api.Context;
 import com.github.alex1304.ultimategdbot.api.PermissionLevel;
 import com.github.alex1304.ultimategdbot.api.database.BotAdmins;
-import com.github.alex1304.ultimategdbot.api.utils.ArgUtils;
 import com.github.alex1304.ultimategdbot.api.utils.BotUtils;
+import com.github.alex1304.ultimategdbot.api.utils.reply.PaginatedReplyMenuBuilder;
 
 import discord4j.core.object.entity.Channel.Type;
+import discord4j.core.object.util.Snowflake;
 import reactor.core.publisher.Mono;
 
-public class BotAdminsRevokeCommand implements Command {
+class BotAdminsListCommand implements Command {
 
 	@Override
 	public Mono<Void> execute(Context ctx) {
-		ArgUtils.requireMinimumArgCount(ctx, 2);
-		return BotUtils.convertStringToUser(ctx.getBot(), ctx.getArgs().get(1))
-				.flatMap(user -> ctx.getBot().getDatabase().findByID(BotAdmins.class, user.getId().asLong())
-						.switchIfEmpty(Mono.error(new CommandFailedException("This user is already not an admin.")))
-						.flatMap(ctx.getBot().getDatabase()::delete)
-						.then(ctx.reply("**" + BotUtils.formatDiscordUsername(user) + "** is no longer a bot administrator!")))
+		return ctx.getBot().getDatabase().query(BotAdmins.class, "from BotAdmins")
+				.flatMap(admin -> ctx.getBot().getDiscordClients().flatMap(client -> client.getUserById(Snowflake.of(admin.getUserId()))).next())
+				.onErrorResume(e -> Mono.empty())
+				.map(BotUtils::formatDiscordUsername)
+				.collectSortedList(String.CASE_INSENSITIVE_ORDER)
+				.map(adminList -> {
+					var sb = new StringBuilder("__**Bot administrator list:**__\n\n");
+					adminList.forEach(admin -> sb.append(admin).append("\n"));
+					if (adminList.isEmpty()) {
+						sb.append("*(No data)*\n");
+					}
+					return sb.toString();
+				}).flatMap(new PaginatedReplyMenuBuilder(this, ctx, true, false, 800)::build)
 				.then();
 	}
 
 	@Override
 	public Set<String> getAliases() {
-		return Set.of("revoke");
+		return Set.of("list");
 	}
 
 	@Override
@@ -41,7 +48,7 @@ public class BotAdminsRevokeCommand implements Command {
 
 	@Override
 	public String getDescription() {
-		return "Revokes bot admin privileges from a user.";
+		return "Lists users who are granted admin provileges on the bot.";
 	}
 
 	@Override
@@ -51,7 +58,7 @@ public class BotAdminsRevokeCommand implements Command {
 
 	@Override
 	public String getSyntax() {
-		return "<discord_tag_or_ID>";
+		return "";
 	}
 
 	@Override
@@ -68,5 +75,4 @@ public class BotAdminsRevokeCommand implements Command {
 	public Map<Class<? extends Throwable>, BiConsumer<Throwable, Context>> getErrorActions() {
 		return Map.of();
 	}
-
 }

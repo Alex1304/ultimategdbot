@@ -12,10 +12,9 @@ module ultimategdbot.core {
 	requires io.netty.codec.http;
 	requires org.slf4j;
 	
-	exports com.github.alex1304.ultimategdbot.core.impl to ultimategdbot.core;
-	exports com.github.alex1304.ultimategdbot.core.nativeplugin to ultimategdbot.core;
+	exports com.github.alex1304.ultimategdbot.core;
 
-	provides com.github.alex1304.ultimategdbot.api.Plugin with com.github.alex1304.ultimategdbot.core.nativeplugin.NativePlugin;
+	provides com.github.alex1304.ultimategdbot.api.Plugin with com.github.alex1304.ultimategdbot.core.NativePlugin;
 	
 	uses com.github.alex1304.ultimategdbot.api.Plugin;
 }

@@ -1,4 +1,4 @@
-package com.github.alex1304.ultimategdbot.core.nativeplugin;
+package com.github.alex1304.ultimategdbot.core;
 
 import java.util.EnumSet;
 import java.util.Map;
@@ -9,31 +9,34 @@ import com.github.alex1304.ultimategdbot.api.Command;
 import com.github.alex1304.ultimategdbot.api.CommandFailedException;
 import com.github.alex1304.ultimategdbot.api.Context;
 import com.github.alex1304.ultimategdbot.api.PermissionLevel;
-import com.github.alex1304.ultimategdbot.api.database.BotAdmins;
 import com.github.alex1304.ultimategdbot.api.utils.ArgUtils;
-import com.github.alex1304.ultimategdbot.api.utils.BotUtils;
 
 import discord4j.core.object.entity.Channel.Type;
 import reactor.core.publisher.Mono;
 
-public class BotAdminsGrantCommand implements Command {
+class SystemExitCommand implements Command {
 
 	@Override
 	public Mono<Void> execute(Context ctx) {
 		ArgUtils.requireMinimumArgCount(ctx, 2);
-		return BotUtils.convertStringToUser(ctx.getBot(), ctx.getArgs().get(1))
-				.flatMap(user -> ctx.getBot().getDatabase().findByID(BotAdmins.class, user.getId().asLong())
-						.flatMap(__ -> Mono.error(new CommandFailedException("This user is already an admin.")))
-						.then(Mono.just(new BotAdmins())
-								.doOnNext(newAdmin -> newAdmin.setUserId(user.getId().asLong()))
-								.flatMap(ctx.getBot().getDatabase()::save))
-						.then(ctx.reply("**" + BotUtils.formatDiscordUsername(user) + "** is now a bot administrator!")))
-				.then();
+		try {
+			var code = Integer.parseInt(ctx.getArgs().get(1));
+			if (code < 0 || code > 255) {
+				return Mono.error(new CommandFailedException("Exit code must be between 0 and 255. If you don't know which code to use, 0 is preferred."));
+			}
+			var message = "Terminating JVM with exit code " + code + "...";
+			return ctx.reply(message)
+					.then(ctx.getBot().log(":warning: " + message))
+					.doAfterTerminate(() -> System.exit(code))
+					.then();
+		} catch (NumberFormatException e) {
+			return Mono.error(new CommandFailedException("Invalid exit code."));
+		}
 	}
 
 	@Override
 	public Set<String> getAliases() {
-		return Set.of("grant");
+		return Set.of("exit");
 	}
 
 	@Override
@@ -43,17 +46,18 @@ public class BotAdminsGrantCommand implements Command {
 
 	@Override
 	public String getDescription() {
-		return "Grants bot admin privileges to a user.";
+		return "Allows to shut down the bot.";
 	}
 
 	@Override
 	public String getLongDescription() {
-		return "";
+		return "The exit status code must be between 0 and 255. 0 usually means normal termination, a value greater than 0 indicates an error. "
+				+ "If you don't know which code to put, use 0.";
 	}
 
 	@Override
 	public String getSyntax() {
-		return "<discord_tag_or_ID>";
+		return "<code>";
 	}
 
 	@Override
@@ -70,5 +74,4 @@ public class BotAdminsGrantCommand implements Command {
 	public Map<Class<? extends Throwable>, BiConsumer<Throwable, Context>> getErrorActions() {
 		return Map.of();
 	}
-
 }

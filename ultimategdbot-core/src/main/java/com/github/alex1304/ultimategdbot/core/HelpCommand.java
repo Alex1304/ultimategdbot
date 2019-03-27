@@ -1,4 +1,4 @@
-package com.github.alex1304.ultimategdbot.core.nativeplugin;
+package com.github.alex1304.ultimategdbot.core;
 
 import java.util.Collections;
 import java.util.EnumSet;
@@ -19,7 +19,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
 
-public class HelpCommand implements Command {
+class HelpCommand implements Command {
 
 	@Override
 	public Mono<Void> execute(Context ctx) {

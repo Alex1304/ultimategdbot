@@ -1,4 +1,4 @@
-package com.github.alex1304.ultimategdbot.core.impl;
+package com.github.alex1304.ultimategdbot.core;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -20,7 +20,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
-public class DatabaseImpl implements Database {
+class DatabaseImpl implements Database {
 	
 	private final Properties props;
 	private SessionFactory sessionFactory = null;

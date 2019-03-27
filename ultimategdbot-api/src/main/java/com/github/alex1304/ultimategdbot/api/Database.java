@@ -44,9 +44,10 @@ public interface Database {
 	/**
 	 * Makes a simple query to the database.
 	 * 
-	 * @param query  the HQL query
-	 * @param params the query params
-	 * @param        <T> the entity type
+	 * @param entityClass the entity type to fetch
+	 * @param query       the HQL query
+	 * @param params      the query params
+	 * @param             <T> the entity type
 	 * @return a Flux emitting the results of the query
 	 */
 	<T> Flux<T> query(Class<T> entityClass, String query, Object... params);

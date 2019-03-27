@@ -1,4 +1,4 @@
-package com.github.alex1304.ultimategdbot.core.impl;
+package com.github.alex1304.ultimategdbot.core;
 
 import java.util.Collections;
 import java.util.Comparator;
@@ -27,7 +27,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
 
-public class ContextImpl implements Context {
+class ContextImpl implements Context {
 	
 	private final Command originalCommand;
 	private final MessageCreateEvent event;

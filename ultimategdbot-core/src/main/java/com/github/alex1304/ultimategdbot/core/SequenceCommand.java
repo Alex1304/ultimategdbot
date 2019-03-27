@@ -1,4 +1,4 @@
-package com.github.alex1304.ultimategdbot.core.nativeplugin;
+package com.github.alex1304.ultimategdbot.core;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -19,7 +19,7 @@ import discord4j.core.object.entity.Channel.Type;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-public class SequenceCommand implements Command {
+class SequenceCommand implements Command {
 
 	@Override
 	public Mono<Void> execute(Context ctx) {

@@ -1,4 +1,4 @@
-package com.github.alex1304.ultimategdbot.core.nativeplugin;
+package com.github.alex1304.ultimategdbot.core;
 
 import java.util.EnumSet;
 import java.util.Map;
@@ -13,7 +13,7 @@ import com.github.alex1304.ultimategdbot.api.PermissionLevel;
 import discord4j.core.object.entity.Channel.Type;
 import reactor.core.publisher.Mono;
 
-public class SystemCommand implements Command {
+class BotAdminsCommand implements Command {
 
 	@Override
 	public Mono<Void> execute(Context ctx) {
@@ -22,22 +22,25 @@ public class SystemCommand implements Command {
 
 	@Override
 	public Set<String> getAliases() {
-		return Set.of("system");
+		return Set.of("botadmins");
 	}
 
 	@Override
 	public Set<Command> getSubcommands() {
-		return Set.of(new SystemMemoryCommand(), new SystemExitCommand());
+		return Set.of(new BotAdminsGrantCommand(), new BotAdminsRevokeCommand(), new BotAdminsListCommand());
 	}
 
 	@Override
 	public String getDescription() {
-		return "Allows to perform operations on the bot on the system level.";
+		return "Manage users who have bot admin privileges.";
 	}
 
 	@Override
 	public String getLongDescription() {
-		return "It allows you to shutdown the bot with a custom exit code and view the current memory usage. See subcommands for more info.";
+		return "Bot administrators have exclusive privileges on the bot. For example, they can use any command that normally "
+				+ "requires server admin (like `setup`), and access to private commands such as `system memory`.\n"
+				+ "Plugins may implement more commands exclusive to bot administrators.\n"
+				+ "Use one of the available subcommands to grant, revoke, or list bot administrators.";
 	}
 
 	@Override
@@ -47,7 +50,7 @@ public class SystemCommand implements Command {
 
 	@Override
 	public PermissionLevel getPermissionLevel() {
-		return PermissionLevel.BOT_ADMIN;
+		return PermissionLevel.BOT_OWNER;
 	}
 
 	@Override

@@ -89,6 +89,7 @@ public interface Context {
 	 * 
 	 * @param name the variable name
 	 * @param type the type of the variable
+	 * @param      <T> the variable type
 	 * @return the value of the variable, or null if not found or exists in the
 	 *         wrong type
 	 */
@@ -100,6 +101,7 @@ public interface Context {
 	 * 
 	 * @param name       the variable name
 	 * @param defaultVal the default value to return if not found
+	 * @param      <T> the variable type
 	 * @return the value of the variable, or the default value if not found or
 	 *         exists in the wrong type
 	 */
