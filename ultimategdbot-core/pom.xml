@@ -3,7 +3,7 @@
 	<parent>
 		<groupId>com.github.alex1304</groupId>
 		<artifactId>ultimategdbot</artifactId>
-		<version>4.0.0-alpha2-SNAPSHOT</version>
+		<version>4.0.0-alpha1</version>
 	</parent>
 	<artifactId>ultimategdbot-core</artifactId>
 
@@ -65,7 +65,7 @@
 			<!-- <target> -->
 			<!-- <property name="final.name" -->
 			<!-- value="${project.basedir}/../distribution/${project.build.finalName}" 
-				  /> -->
+				   /> -->
 			<!-- <property name="archive.includes" -->
 			<!-- value="${project.build.finalName}.jar lib/*" /> -->
 			<!-- <property name="tar.destfile" value="${final.name}.tar" /> -->
