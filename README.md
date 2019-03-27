@@ -1,18 +1,13 @@
 # UltimateGDBot
 
-An awesome Discord bot for Geometry Dash players!
+UltimateGDBot is originally a Discord bot designed for Geometry Dash players. This project has then been made sufficiently generic to be used for any purpose, thanks to its Plugin API.
+Please refer to [this repo](https://github.com/Alex1304/ultimategdbot-gd-plugin) for the plugin that provides Geometry Dash commands.
 
-# User Manual
-
-The bot is documented here: [http://ultimategdbot.readthedocs.io/en/latest/](http://ultimategdbot.readthedocs.io/en/latest/)
+If you are planning to self-host the bot, a tutorial will be available soon in the wiki pages of this repo.
 
 # License
 
 MIT
-
-# Contributions
-
-Pull requests and issues are more than welcome. If you need help to configure your development environment to work on the bot, you should take a look at the self-hosting guide in the user manual linked above.
 
 # Contact
 
