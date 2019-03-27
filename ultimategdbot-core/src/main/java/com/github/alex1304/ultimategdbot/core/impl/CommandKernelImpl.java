@@ -3,6 +3,7 @@ package com.github.alex1304.ultimategdbot.core.impl;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -12,6 +13,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import com.github.alex1304.ultimategdbot.api.Bot;
@@ -87,7 +89,6 @@ public class CommandKernelImpl implements CommandKernel {
 		}
 	}
 
-	@Override
 	public void start() {
 		// Command handler
 		bot.getDiscordClients().flatMap(client -> client.getEventDispatcher().on(MessageCreateEvent.class))
@@ -121,7 +122,7 @@ public class CommandKernelImpl implements CommandKernel {
 					invokeCommand(newCommand, newCtx).doOnSuccess(__ -> {
 						replyMenu.complete();
 						if (replyMenu.deleteOnReply) {
-							event.getMessage().delete().doOnError(___ -> {}).subscribe();
+							event.getMessage().delete().onErrorResume(e -> Mono.empty()).subscribe();
 						}
 					}).subscribe();
 				});
@@ -167,39 +168,36 @@ public class CommandKernelImpl implements CommandKernel {
 
 	@Override
 	public Mono<Void> invokeCommand(Command cmd, Context ctx) {
-		var actions = cmd.getErrorActions();
+		var actions = new HashMap<Class<? extends Throwable>, BiConsumer<Throwable, Context>>();
+		actions.put(CommandFailedException.class, (e, ctx0) -> {
+			ctx0.reply(":no_entry_sign: " + e.getMessage()).subscribe();
+		});
+		actions.put(CommandPermissionDeniedException.class, (e, ctx0) -> {
+			ctx0.reply(":no_entry_sign: You are not granted the privileges to run this command.").subscribe();
+		});
+		actions.put(InvalidSyntaxException.class, (e, ctx0) -> {
+			ctx0.reply(":no_entry_sign: Invalid syntax, this is not how the command works. Check out `" + ctx0.getPrefixUsed()
+			+ "help " + ctx.getArgs().get(0) + "` if you need assistance.").subscribe();
+		});
+		actions.put(ClientException.class, (e, ctx0) -> {
+			var ce = (ClientException) e;
+			var h = ce.getErrorResponse();
+			var sj = new StringJoiner("", "```\n", "```\n");
+			h.getFields().forEach((k, v) -> sj.add(k).add(": ").add(String.valueOf(v)).add("\n"));
+			ctx0.reply(":no_entry_sign: Discord returned an error when executing this command: "
+					+ "`" + ce.getStatus().code() + " " + ce.getStatus().reasonPhrase() + "`\n"
+					+ sj.toString()
+					+ "Make sure that I have sufficient permissions in this server and try again.")
+			.subscribe();
+		});
+		actions.putAll(cmd.getErrorActions());
 		return ctx.getEvent().getMessage().getChannel()
 				.filter(c -> cmd.getChannelTypesAllowed().contains(c.getType()))
 				.flatMap(c -> cmd.getPermissionLevel().isGranted(ctx))
 				.flatMap(isGranted -> isGranted ? cmd.execute(ctx) : Mono.error(new CommandPermissionDeniedException()))
-				.doOnError(CommandFailedException.class, error -> actions.getOrDefault(CommandFailedException.class, (e, ctx0) -> {
-							ctx0.reply(":no_entry_sign: " + e.getMessage()).subscribe();
-						}).accept(error, ctx))
-				.doOnError(CommandPermissionDeniedException.class, error -> actions.getOrDefault(CommandPermissionDeniedException.class, (e, ctx0) -> {
-							ctx0.reply(":no_entry_sign: You are not granted the privileges to run this command.").subscribe();
-						}).accept(error, ctx))
-				.doOnError(InvalidSyntaxException.class, error -> actions.getOrDefault(InvalidSyntaxException.class, (e, ctx0) -> {
-							ctx0.reply(":no_entry_sign: Invalid syntax, this is not how the command works. Check out `" + ctx0.getPrefixUsed()
-									+ "help " + ctx.getArgs().get(0) + "` if you need assistance.").subscribe();
-						}).accept(error, ctx))
-				.doOnError(ClientException.class, error -> actions.getOrDefault(ClientException.class, (e, ctx0) -> {
-							var ce = (ClientException) e;
-							var h = ce.getErrorResponse();
-							var sj = new StringJoiner("", "```\n", "```\n");
-							h.getFields().forEach((k, v) -> sj.add(k).add(": ").add(String.valueOf(v)).add("\n"));
-							ctx0.reply(":no_entry_sign: Discord returned an error when executing this command: "
-									+ "`" + ce.getStatus().code() + " " + ce.getStatus().reasonPhrase() + "`\n"
-									+ sj.toString()
-									+ "Make sure that I have sufficient permissions in this server and try again.")
-							.subscribe();
-						}).accept(error, ctx))
 				.doOnError(error -> {
-					if (error instanceof CommandFailedException || error instanceof CommandPermissionDeniedException
-							|| error instanceof InvalidSyntaxException || error instanceof ClientException) {
-						return;
-					}
 					actions.getOrDefault(error.getClass(), (e, ctx0) -> {
-						ctx0.reply(":no_entry_sign: An internal error occured. A crash report has been sent to the developer. Sorry for the inconvenience.")
+						ctx0.reply(":no_entry_sign: Something went wrong. A crash report has been sent to the developer. Sorry for the inconvenience.")
 								.subscribe();
 						ctx0.getBot().logStackTrace(ctx0, e).subscribe();
 					}).accept(error, ctx);

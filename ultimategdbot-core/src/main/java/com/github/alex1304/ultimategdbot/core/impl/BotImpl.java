@@ -2,6 +2,7 @@ package com.github.alex1304.ultimategdbot.core.impl;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.time.Duration;
 import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.Comparator;
@@ -17,6 +18,8 @@ import java.util.TreeSet;
 import java.util.function.Consumer;
 
 import org.hibernate.MappingException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.github.alex1304.ultimategdbot.api.Bot;
 import com.github.alex1304.ultimategdbot.api.Command;
@@ -43,6 +46,7 @@ import discord4j.core.object.presence.Presence;
 import discord4j.core.object.util.Snowflake;
 import discord4j.core.shard.ShardingClientBuilder;
 import discord4j.core.spec.MessageCreateSpec;
+import discord4j.gateway.retry.RetryOptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -50,6 +54,7 @@ import reactor.util.function.Tuples;
 
 public class BotImpl implements Bot {
 	
+	private Logger logger;
 	private final String token;
 	private final String defaultPrefix;
 	private final Flux<DiscordClient> discordClients;
@@ -62,13 +67,14 @@ public class BotImpl implements Bot {
 	private final String supportServerInviteLink;
 	private final String authLink;
 	private final Properties pluginsProps;
-	private CommandKernel cmdKernel;
+	private CommandKernelImpl cmdKernel;
 	private final Map<Plugin, Map<String, GuildSettingsEntry<?, ?>>> guildSettingsEntries;
 
-	private BotImpl(String token, String defaultPrefix, Flux<DiscordClient> discordClients, DatabaseImpl database,
+	private BotImpl(Logger logger, String token, String defaultPrefix, Flux<DiscordClient> discordClients, DatabaseImpl database,
 			int replyMenuTimeout, Snowflake debugLogChannelId, Snowflake attachmentsChannelId,
 			List<Snowflake> emojiGuildIds, String releaseVersion, String supportServerInviteLink, String authLink,
 			Properties pluginsProps) {
+		this.logger = logger;
 		this.token = token;
 		this.defaultPrefix = defaultPrefix;
 		this.discordClients = discordClients;
@@ -137,6 +143,7 @@ public class BotImpl implements Bot {
 
 	@Override
 	public Mono<Message> log(String message) {
+		logger.info(message);
 		return log(mcs -> mcs.setContent(message));
 	}
 
@@ -145,27 +152,23 @@ public class BotImpl implements Bot {
 		return discordClients.flatMap(client -> client.getChannelById(debugLogChannelId))
 				.next()
 				.ofType(MessageChannel.class)
-				.flatMap(c -> c.createMessage(spec));
+				.flatMap(c -> c.createMessage(spec))
+				.doOnNext(message -> message.getContent().ifPresent(logger::info));
 	}
 
 	@Override
-	public Flux<Message> logStackTrace(Context ctx, Throwable t) {
+	public Mono<Message> logStackTrace(Context ctx, Throwable t) {
 		var sw = new StringWriter();
 		var pw = new PrintWriter(sw);
-		pw.println(":no_entry_sign: **An internal error occured while executing a command.**");
+		pw.println(":no_entry_sign: **Something went wrong while executing a command.**");
 		pw.println("__User input:__ `" + ctx.getEvent().getMessage().getContent().orElseGet(() -> "(No content)") + "`");
 		pw.println("__Full stack trace:__");
 		t.printStackTrace(pw);
-		var chunks = BotUtils.chunkMessage(sw.toString());
-		var i = 0;
-		for (var chunk : List.copyOf(chunks)) {
-			if (i != 0) {
-				chunks.set(i, "_   _ " + chunk.substring(1));
-			}
-			i++;
-		}
-		System.out.println(chunks);
-		return BotUtils.sendMultipleSimpleMessagesToOneChannel(getDebugLogChannel(), chunks);
+		var trace = sw.toString();
+		logger.error(trace);
+		return getDebugLogChannel()
+				.ofType(MessageChannel.class)
+				.flatMap(c -> c.createMessage(trace.substring(0, Math.min(trace.length(), 800))));
 	}
 
 	@Override
@@ -180,8 +183,9 @@ public class BotImpl implements Bot {
 				.defaultIfEmpty(defaultVal).onErrorReturn(defaultVal);
 	}
 
-	public static Bot buildFromProperties(Properties props, Properties hibernateProps, Properties pluginsProps) {
+	public static BotImpl buildFromProperties(Properties props, Properties hibernateProps, Properties pluginsProps) {
 		var propParser = new PropertyParser(Main.PROPS_FILE.toString(), props);
+		var logger = LoggerFactory.getLogger("ultimategdbot");
 		var token = propParser.parseAsString("token");
 		var defaultPrefix = propParser.parseAsString("default_prefix");
 		var database = new DatabaseImpl(hibernateProps);
@@ -202,7 +206,7 @@ public class BotImpl implements Bot {
 				var split = value.split(":");
 				return Activity.streaming(split[1], split[2]);
 			}
-			System.err.println("presence_activity: Expected one of: ''|'none'|'null', 'playing:<text>', 'watching:<text>', 'listening:<text>'"
+			logger.error("presence_activity: Expected one of: ''|'none'|'null', 'playing:<text>', 'watching:<text>', 'listening:<text>'"
 					+ " or 'streaming:<url>' in lower case. Defaulting to no activity");
 			return null;
 		}, null);
@@ -213,30 +217,29 @@ public class BotImpl implements Bot {
 				case "dnd": return Presence.doNotDisturb(activity);
 				case "invisible": return Presence.invisible();
 				default:
-					System.err.println("presence_status: Expected one of 'online', 'idle', 'dnd', 'invisible'. Defaulting to 'online'.");
+					logger.error("presence_status: Expected one of 'online', 'idle', 'dnd', 'invisible'. Defaulting to 'online'.");
 					return Presence.online(activity);
 			}
 		}, Presence.online(activity));
 		var useImmediateScheduler = propParser.parseOrDefault("use_immediate_scheduler", Boolean::parseBoolean, false);
 		if (useImmediateScheduler) {
-			System.out.println("Note: Immediate scheduler has been selected for Discord client requests. If some of the plugins have commands "
+			logger.info("Immediate scheduler has been selected for Discord client requests. If some of the plugins have commands "
 					+ "performing blocking operations, they are likely to throw exceptions and not work properly. If you have such issues, change "
 					+ "'use_immediate_scheduler' to 'false' in bot.properties.");
 		}
 		var discordClients = new ShardingClientBuilder(token).build()
 				.map(dcb -> dcb.setEventScheduler(useImmediateScheduler ? Schedulers.immediate() : Schedulers.elastic()))
 				.map(dcb -> dcb.setInitialPresence(presenceStatus))
-				.map(dcb -> dcb.setInitialPresence(presenceStatus))
+				.map(dcb -> dcb.setRetryOptions(new RetryOptions(Duration.ofSeconds(2), Duration.ofMinutes(1), 5, Schedulers.elastic())))
 				.map(DiscordClientBuilder::build)
 				.cache();
 		var releaseVersion = propParser.parseAsString("bot_release_version");
 		var supportServerInviteLink = propParser.parseAsString("support_server_invite_link");
 		var authLink = propParser.parseAsString("bot_auth_link");
-		return new BotImpl(token, defaultPrefix, discordClients, database, replyMenuTimeout, debugLogChannelId,
+		return new BotImpl(logger, token, defaultPrefix, discordClients, database, replyMenuTimeout, debugLogChannelId,
 				attachmentsChannelId, emojiGuildIds, releaseVersion, supportServerInviteLink, authLink, pluginsProps);
 	}
 
-	@Override
 	public void start() {
 		var loader = ServiceLoader.load(Plugin.class);
 		var parser = new PropertyParser(Main.PLUGINS_PROPS_FILE.toString(), pluginsProps);
@@ -246,7 +249,7 @@ public class BotImpl implements Bot {
 		var successfullyLoadedPlugins = new HashSet<Plugin>();
 		for (var plugin : loader) {
 			try {
-				System.out.printf("Loading plugin: %s...\n", plugin.getName());
+				logger.info(String.format("Loading plugin: %s...\n", plugin.getName()));
 				plugin.setup(this, parser);
 				database.addAllMappingResources(plugin.getDatabaseMappingResources());
 				guildSettingsEntries.put(plugin, plugin.getGuildConfigurationEntries());
@@ -275,11 +278,11 @@ public class BotImpl implements Bot {
 						subCommands.put(element, subCmdMap);
 						subCmdDeque.addAll(elementSubcmds);
 					}
-					System.out.printf("\tLoaded command: %s %s\n", cmd.getClass().getName(), cmd.getAliases());
+					logger.info(String.format("Loaded command: %s %s\n", cmd.getClass().getName(), cmd.getAliases()));
 				}
 				successfullyLoadedPlugins.add(plugin);
 			} catch (RuntimeException e) {
-				System.out.println("WARNING: Failed to load plugin " + plugin.getName());
+				logger.warn("Failed to load plugin " + plugin.getName());
 				e.printStackTrace();
 			}
 		}
@@ -287,13 +290,13 @@ public class BotImpl implements Bot {
 		try {
 			database.configure();
 		} catch (MappingException e) {
-			System.err.println("Oops! There is an error in the database mapping configuration!");
+			logger.error("Oops! There is an error in the database mapping configuration!");
 			throw e;
 		}
-		discordClients.flatMap(client -> client.getEventDispatcher().on(ReadyEvent.class)
+		discordClients.concatMap(client -> client.getEventDispatcher().on(ReadyEvent.class)
 						.next()
 						.map(readyEvent -> Tuples.of(client, readyEvent.getGuilds().size())))
-				.flatMap(clientWithGuildCount -> clientWithGuildCount.getT1().getEventDispatcher().on(GuildCreateEvent.class)
+				.concatMap(clientWithGuildCount -> clientWithGuildCount.getT1().getEventDispatcher().on(GuildCreateEvent.class)
 						.take(clientWithGuildCount.getT2())
 						.collectList())
 				.collectList()
@@ -306,7 +309,7 @@ public class BotImpl implements Bot {
 						});
 					}
 					sb.append("Serving " + guildCreateEvents.stream().mapToInt(List::size).sum() + " guilds across " + guildCreateEvents.size() + " shards!");
-					System.out.println(sb);
+					logger.info(sb.toString());
 					BotUtils.sendMultipleSimpleMessagesToOneChannel(getDebugLogChannel(), BotUtils.chunkMessage(sb.toString())).subscribe();
 					successfullyLoadedPlugins.forEach(Plugin::onBotReady);
 					cmdKernel.start();

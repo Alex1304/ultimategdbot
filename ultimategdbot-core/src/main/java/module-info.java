@@ -7,8 +7,10 @@ module ultimategdbot.core {
 	requires java.naming;
 	requires java.sql;
 	requires discord4j.rest;
+	requires discord4j.gateway;
 	requires org.hibernate.orm.ehcache;
 	requires io.netty.codec.http;
+	requires org.slf4j;
 	
 	exports com.github.alex1304.ultimategdbot.core.impl to ultimategdbot.core;
 	exports com.github.alex1304.ultimategdbot.core.nativeplugin to ultimategdbot.core;

@@ -34,7 +34,9 @@ public class BotUtils {
 	/**
 	 * Generates a default documentation for the command in a String format.
 	 * 
-	 * @param cmd - the command to generate the doc for
+	 * @param cmd the command to generate the doc for
+	 * @param ctx the context to generate a more specific documentation according to the user permissions etc
+	 * @param cmdName the alias that should be used for the command name 
 	 * @return the documentation
 	 */
 	public static Mono<String> generateDefaultDocumentation(Command cmd, Context ctx, String cmdName) {
@@ -90,6 +92,13 @@ public class BotUtils {
 		return res;
 	}
 	
+	/**
+	 * Splits a message into several chunks which size is specified.
+	 * 
+	 * @param superLongMessage the message to split
+	 * @param maxCharacters    the max characters that a single chunk may have
+	 * @return a List which elements are the chunks in the correct order
+	 */
 	public static List<String> chunkMessage(String superLongMessage, int maxCharacters) {
 		var chunks = new ArrayList<String>();
 		var currentChunk = new StringBuilder();
@@ -116,6 +125,13 @@ public class BotUtils {
 		return chunks;
 	}
 	
+	/**
+	 * Splits a message into several chunks. Each chunk can have a max size of
+	 * {@link Message#MAX_CONTENT_LENGTH} - 10.
+	 * 
+	 * @param superLongMessage the message to split
+	 * @return a List which elements are the chunks in the correct order
+	 */
 	public static List<String> chunkMessage(String superLongMessage) {
 		return chunkMessage(superLongMessage, Message.MAX_CONTENT_LENGTH - 10);
 	}
@@ -205,7 +221,7 @@ public class BotUtils {
 	
 	/**
 	 * Formats the username of the user specified as argument with the format username#discriminator
-	 * @param user - The user whom username will be formatted
+	 * @param user The user whom username will be formatted
 	 * @return The formatted username as String.
 	 */
 	public static String formatDiscordUsername(User user) {

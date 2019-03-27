@@ -5,7 +5,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Properties;
 
-import com.github.alex1304.ultimategdbot.api.Bot;
 import com.github.alex1304.ultimategdbot.core.impl.BotImpl;
 
 public class Main {
@@ -27,7 +26,7 @@ public class Main {
 		try (var input = Files.newInputStream(PLUGINS_PROPS_FILE)) {
 			pluginsProps.load(input);
 		}
-		Bot bot;
+		BotImpl bot;
 		try {
 			bot = BotImpl.buildFromProperties(props, hibProps, pluginsProps);
 		} catch (IllegalArgumentException e) {

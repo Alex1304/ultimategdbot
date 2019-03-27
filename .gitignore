@@ -23,6 +23,7 @@
 */target/
 /target/
 /lib/
+/logs/
 /distribution/
 ultimategdbot.jar
 /config/*.properties

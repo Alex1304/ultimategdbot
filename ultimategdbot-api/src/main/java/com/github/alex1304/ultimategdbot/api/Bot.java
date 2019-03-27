@@ -17,26 +17,26 @@ import reactor.core.publisher.Mono;
  */
 public interface Bot {
 	/**
-	 * Gets the release verion of the bot.
+	 * Gets the release version of the bot.
 	 * 
 	 * @return the release verion
 	 */
 	String getReleaseVersion();
-	
+
 	/**
 	 * Gets the discord.gg link to the support server.
 	 * 
 	 * @return the link to the support server
 	 */
 	String getSupportServerInviteLink();
-	
+
 	/**
 	 * Gets the authorization link to add the bot to a server.
 	 * 
 	 * @return the authorization link
 	 */
 	String getAuthLink();
-	
+
 	/**
 	 * Get the bot token.
 	 * 
@@ -100,11 +100,11 @@ public interface Bot {
 	 * splitted in case it doesn't fit in 2000 characters.
 	 * 
 	 * @param ctx the context in which the error occured
-	 * @param t the throwable to print the strack trace of
+	 * @param t   the throwable to print the strack trace of
 	 * @return a Flux emitting all messages sent to logs (if splitted due to
 	 *         character limit), or only one message otherwise.
 	 */
-	Flux<Message> logStackTrace(Context ctx, Throwable t);
+	Mono<Message> logStackTrace(Context ctx, Throwable t);
 
 	/**
 	 * Gets the String representation of an emoji installed on one of the emoji
@@ -121,14 +121,9 @@ public interface Bot {
 	 * reply menu is open.
 	 * 
 	 * @return the value as int (in seconds)
-	 * @see Bot#openReplyMenu(Context, Message, Map, boolean, boolean)
+	 * @see #openReplyMenu(Context, Message, Map, boolean, boolean)
 	 */
 	int getReplyMenuTimeout();
-
-	/**
-	 * Starts the bot.
-	 */
-	void start();
 
 	/**
 	 * Gets the guild settings entries loaded from plugins. Unlike
@@ -139,7 +134,7 @@ public interface Bot {
 	 *         associated values.
 	 */
 	Map<Plugin, Map<String, GuildSettingsEntry<?, ?>>> getGuildSettingsEntries();
-	
+
 	/**
 	 * Gets the command kernel of this bot.
 	 * 

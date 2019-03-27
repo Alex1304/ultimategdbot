@@ -29,14 +29,14 @@ public interface Context {
 	MessageCreateEvent getEvent();
 
 	/**
-	 * Gets the arguments of the command
+	 * Gets the arguments of the command.
 	 *
 	 * @return the args
 	 */
 	List<String> getArgs();
 
 	/**
-	 * Gets the bot instance
+	 * Gets the bot instance.
 	 * 
 	 * @return the bot
 	 */
@@ -61,7 +61,7 @@ public interface Context {
 	 * Sends a message in the same channel the command was sent. This method
 	 * supports advanced message construction.
 	 * 
-	 * @param message the message content of the reply
+	 * @param spec the message content of the reply
 	 * @return a Mono emitting the message sent
 	 */
 	Mono<Message> reply(Consumer<? super MessageCreateSpec> spec);
@@ -70,8 +70,8 @@ public interface Context {
 	 * Adds a variable in this context. If a variable of the same name exists, it is
 	 * overwritten.
 	 * 
-	 * @param name - the name of the variable
-	 * @param val  - the value of the variable
+	 * @param name the name of the variable
+	 * @param val  the value of the variable
 	 */
 	void setVar(String name, Object val);
 
@@ -79,8 +79,8 @@ public interface Context {
 	 * Adds a variable in this context. If a variable of the same name exists,
 	 * nothing happens.
 	 * 
-	 * @param name - the name of the variable
-	 * @param val  - the value of the variable
+	 * @param name the name of the variable
+	 * @param val  the value of the variable
 	 */
 	void setVarIfNotExists(String name, Object val);
 
@@ -116,8 +116,8 @@ public interface Context {
 	/**
 	 * Edits an entry of the guild settings.
 	 * 
-	 * @param key - the setting key
-	 * @param val - the setting value
+	 * @param key the setting key
+	 * @param val the setting value
 	 * @return a Mono that completes when successfully updated
 	 * @throws NoSuchElementException        if no entry is found for the given key
 	 * @throws IllegalArgumentException      if the given value is not accepted by
@@ -128,10 +128,10 @@ public interface Context {
 	Mono<Void> setGuildSetting(String key, String val);
 
 	/**
-	 * Creates a new Context that is the exact copy of this one, but with
-	 * different arguments.
+	 * Creates a new Context that is an exact copy of this one, but with different
+	 * arguments.
 	 * 
-	 * @param newArgs  the new arguments that the copy will get
+	 * @param newArgs the new arguments that the copy will get
 	 * @return a new Context
 	 */
 	Context fork(List<String> newArgs);

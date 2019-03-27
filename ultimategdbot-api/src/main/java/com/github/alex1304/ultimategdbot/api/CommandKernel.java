@@ -11,15 +11,10 @@ import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 
 /**
- * The central point for all bot commands. Command instances are stored, managed
+ * The kernel for all bot commands. Command instances are stored, managed
  * and executed here.
  */
 public interface CommandKernel {
-	/**
-	 * Starts the kernel.
-	 */
-	void start();
-	
 	/**
 	 * Reads the command line and retrieves the corresponding Command instance.
 	 * Arguments passed to the command are also returned as a list.

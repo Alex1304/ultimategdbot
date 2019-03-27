@@ -17,7 +17,7 @@ public interface Command {
 	/**
 	 * Executes the command
 	 * 
-	 * @param ctx - the context
+	 * @param ctx the context
 	 * @return a Mono that completes empty when the command is successful, and emits
 	 *         an error when something goes wrong.
 	 */
@@ -46,8 +46,8 @@ public interface Command {
 	String getDescription();
 
 	/**
-	 * Gets the long description of the command. The description is shown in the detailed help
-	 * page of the command.
+	 * Gets the long description of the command. The description is shown in the
+	 * detailed help page of the command.
 	 * 
 	 * @return the description
 	 */
