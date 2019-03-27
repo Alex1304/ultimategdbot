@@ -18,20 +18,31 @@
 *.tar.gz
 *.rar
 
+
+# Maven
+*/target/
+/target/
+/lib/
+/logs/
+/distribution/
+ultimategdbot.jar
+/config/*.properties
+
+# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+hs_err_pid*
+
+/bin/*
+
 # temp files
 *~
 
 # hidden files
 .*
 !.gitignore
+!.gitkeep
 !/.circleci/
-
-# Maven
-/target/
-
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
-hs_err_pid*
-/bin/
 
 *Backup
 /release.properties
+
+/mappings/*.hbm.xml

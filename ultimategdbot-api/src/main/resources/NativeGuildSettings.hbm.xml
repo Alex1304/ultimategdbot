@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<hibernate-mapping default-lazy="false">
+	<class name="com.github.alex1304.ultimategdbot.api.database.NativeGuildSettings" table="native_guild_settings">
+		<cache usage="read-write" />
+		<id name="guildId" type="long" column="guild_id">
+			<generator class="assigned" />
+		</id>
+		<property name="prefix" type="string" column="prefix" />
+		<property name="serverModRoleId" type="long" column="server_mod_role_id" />
+	</class>
+</hibernate-mapping>

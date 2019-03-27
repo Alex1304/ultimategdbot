@@ -1,0 +1,125 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>com.github.alex1304</groupId>
+		<artifactId>ultimategdbot</artifactId>
+		<version>4.0.0-alpha2-SNAPSHOT</version>
+	</parent>
+	<artifactId>ultimategdbot-core</artifactId>
+
+	<build>
+		<finalName>${project.parent.artifactId}</finalName>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<version>3.1.1</version>
+				<executions>
+					<execution>
+						<id>copy-dependencies</id>
+						<phase>prepare-package</phase>
+						<goals>
+							<goal>copy-dependencies</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${project.basedir}/../lib</outputDirectory>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<version>3.1.1</version>
+				<configuration>
+					<outputDirectory>${project.basedir}/..</outputDirectory>
+				</configuration>
+			</plugin>
+			<plugin>
+				<artifactId>maven-clean-plugin</artifactId>
+				<version>3.1.0</version>
+				<configuration>
+					<filesets>
+						<fileset>
+							<directory>${project.basedir}/../lib</directory>
+							<includes>
+								<include>**/*.jar</include>
+							</includes>
+							<followSymlinks>false</followSymlinks>
+						</fileset>
+					</filesets>
+				</configuration>
+			</plugin>
+			<!-- <plugin> -->
+			<!-- <groupId>org.apache.maven.plugins</groupId> -->
+			<!-- <artifactId>maven-antrun-plugin</artifactId> -->
+			<!-- <version>1.8</version> -->
+			<!-- <executions> -->
+			<!-- <execution> -->
+			<!-- <id>antrun-archive</id> -->
+			<!-- <phase>package</phase> -->
+			<!-- <goals> -->
+			<!-- <goal>run</goal> -->
+			<!-- </goals> -->
+			<!-- <configuration> -->
+			<!-- <target> -->
+			<!-- <property name="final.name" -->
+			<!-- value="${project.basedir}/../distribution/${project.build.finalName}" 
+				  /> -->
+			<!-- <property name="archive.includes" -->
+			<!-- value="${project.build.finalName}.jar lib/*" /> -->
+			<!-- <property name="tar.destfile" value="${final.name}.tar" /> -->
+			<!-- <zip basedir="${project.build.directory}/../.." -->
+			<!-- destfile="${final.name}.zip" includes="${archive.includes}" /> -->
+			<!-- <tar basedir="${project.build.directory}/../.." -->
+			<!-- destfile="${tar.destfile}" includes="${archive.includes}" /> -->
+			<!-- <gzip src="${tar.destfile}" destfile="${tar.destfile}.gz" /> -->
+			<!-- <bzip2 src="${tar.destfile}" -->
+			<!-- destfile="${tar.destfile}.bz2" /> -->
+			<!-- </target> -->
+			<!-- </configuration> -->
+			<!-- </execution> -->
+			<!-- </executions> -->
+			<!-- </plugin> -->
+		</plugins>
+	</build>
+
+	<dependencies>
+		<dependency>
+			<groupId>com.github.alex1304</groupId>
+			<artifactId>ultimategdbot-api</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-classic</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.discord4j</groupId>
+			<artifactId>discord4j-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>mysql</groupId>
+			<artifactId>mysql-connector-java</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.zaxxer</groupId>
+			<artifactId>HikariCP</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.hibernate</groupId>
+			<artifactId>hibernate-hikaricp</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.hibernate</groupId>
+			<artifactId>hibernate-ehcache</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.jboss.spec.javax.transaction</groupId>
+			<artifactId>jboss-transaction-api_1.2_spec</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.glassfish.jaxb</groupId>
+			<artifactId>jaxb-runtime</artifactId>
+		</dependency>
+	</dependencies>
+</project>
