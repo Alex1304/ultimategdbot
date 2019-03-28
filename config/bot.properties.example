@@ -36,7 +36,3 @@ emoji_guild_ids=
 # presence_status can be one of "online", "idle", "dnd" or "invisible".
 presence_activity=playing:Geometry Dash | !help
 presence_status=online
-
-# When set to true, can improve performances, but can cause issues if you're using custom plugins that perform blocking calls.
-# If you're only using official plugins, leave this to true, otherwise change to false for better stability.
-use_immediate_scheduler=true

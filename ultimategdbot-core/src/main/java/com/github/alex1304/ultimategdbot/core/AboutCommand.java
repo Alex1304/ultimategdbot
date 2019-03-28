@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
-import java.util.stream.Collectors;
 
 import com.github.alex1304.ultimategdbot.api.Command;
 import com.github.alex1304.ultimategdbot.api.Context;
@@ -32,8 +31,8 @@ class AboutCommand implements Command {
 				.flatMap(client -> client.getApplicationInfo())
 				.next()
 				.zipWhen(ApplicationInfo::getOwner)
-				.zipWith(Mono.zip(ctx.getBot().getDiscordClients().flatMap(client -> client.getGuilds().count()).collect(Collectors.summingLong(x -> x)),
-						ctx.getBot().getDiscordClients().flatMap(client -> client.getUsers().count()).collect(Collectors.summingLong(x -> x))))
+				.zipWith(Mono.zip(ctx.getBot().getDiscordClients().next().flatMap(client -> client.getGuilds().count()),
+						ctx.getBot().getDiscordClients().next().flatMap(client -> client.getUsers().count())))
 				.flatMap(tuple -> {
 					var vars = new HashMap<String, String>();
 					

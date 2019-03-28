@@ -4,7 +4,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Objects;
-import java.util.Properties;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -22,19 +21,16 @@ import reactor.core.scheduler.Schedulers;
 
 class DatabaseImpl implements Database {
 	
-	private final Properties props;
 	private SessionFactory sessionFactory = null;
 	private final Set<String> resourceNames;
 	
-	public DatabaseImpl(Properties props) {
-		this.props = Objects.requireNonNull(props);
+	public DatabaseImpl() {
 		this.resourceNames = new HashSet<>();
 	}
 
 	@Override
 	public void configure() {
 		var config = new Configuration();
-		config.addProperties(props);
 		for (var resource : resourceNames) {
 			config.addResource(resource);
 		}
@@ -105,21 +101,23 @@ class DatabaseImpl implements Database {
 		return sessionFactory.openSession();
 	}
 
-	private synchronized Mono<Void> performTransaction(Consumer<Session> txConsumer, boolean flush) {
+	private Mono<Void> performTransaction(Consumer<Session> txConsumer, boolean flush) {
 		return Mono.<Void>fromCallable(() -> {
-			Transaction tx = null;
-			try (var s = newSession()) {
-				tx = s.beginTransaction();
-				txConsumer.accept(s);
-				if (flush)
-					s.flush();
-				tx.commit();
-			} catch (RuntimeException e) {
-				if (tx != null)
-					tx.rollback();
-				throw e;
+			synchronized (sessionFactory) {
+				Transaction tx = null;
+				try (var s = newSession()) {
+					tx = s.beginTransaction();
+					txConsumer.accept(s);
+					if (flush)
+						s.flush();
+					tx.commit();
+				} catch (RuntimeException e) {
+					if (tx != null)
+						tx.rollback();
+					throw e;
+				}
+				return null;
 			}
-			return null;
 		}).subscribeOn(Schedulers.elastic()).onErrorMap(e -> new RuntimeException("Error while performing database transaction", e));
 	}
 }

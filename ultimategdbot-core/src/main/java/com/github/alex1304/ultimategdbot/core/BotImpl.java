@@ -2,7 +2,6 @@ package com.github.alex1304.ultimategdbot.core;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.time.Duration;
 import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.Comparator;
@@ -45,10 +44,8 @@ import discord4j.core.object.presence.Presence;
 import discord4j.core.object.util.Snowflake;
 import discord4j.core.shard.ShardingClientBuilder;
 import discord4j.core.spec.MessageCreateSpec;
-import discord4j.gateway.retry.RetryOptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 import reactor.util.function.Tuples;
 
 class BotImpl implements Bot {
@@ -182,12 +179,12 @@ class BotImpl implements Bot {
 				.defaultIfEmpty(defaultVal).onErrorReturn(defaultVal);
 	}
 
-	public static BotImpl buildFromProperties(Properties props, Properties hibernateProps, Properties pluginsProps) {
+	public static BotImpl buildFromProperties(Properties props, Properties pluginsProps) {
 		var propParser = new PropertyParser(Main.PROPS_FILE.toString(), props);
 		var logger = LoggerFactory.getLogger("ultimategdbot");
 		var token = propParser.parseAsString("token");
 		var defaultPrefix = propParser.parseAsString("default_prefix");
-		var database = new DatabaseImpl(hibernateProps);
+		var database = new DatabaseImpl();
 		var replyMenuTimeout = propParser.parseAsInt("reply_menu_timeout");
 		var debugLogChannelId = propParser.parse("debug_log_channel_id", Snowflake::of);
 		var attachmentsChannelId = propParser.parse("attachments_channel_id", Snowflake::of);
@@ -227,9 +224,9 @@ class BotImpl implements Bot {
 					+ "'use_immediate_scheduler' to 'false' in bot.properties.");
 		}
 		var discordClients = new ShardingClientBuilder(token).build()
-				.map(dcb -> dcb.setEventScheduler(useImmediateScheduler ? Schedulers.immediate() : Schedulers.elastic()))
+//				.map(dcb -> dcb.setEventScheduler(useImmediateScheduler ? Schedulers.immediate() : Schedulers.elastic()))
 				.map(dcb -> dcb.setInitialPresence(presenceStatus))
-				.map(dcb -> dcb.setRetryOptions(new RetryOptions(Duration.ofSeconds(2), Duration.ofMinutes(1), 5, Schedulers.elastic())))
+//				.map(dcb -> dcb.setRetryOptions(new RetryOptions(Duration.ofSeconds(2), Duration.ofMinutes(1), 5, Schedulers.elastic())))
 				.map(DiscordClientBuilder::build)
 				.cache();
 		var releaseVersion = propParser.parseAsString("bot_release_version");
