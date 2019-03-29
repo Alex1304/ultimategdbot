@@ -92,12 +92,15 @@ class CommandKernelImpl implements CommandKernel {
 	public void start() {
 		// Command handler
 		bot.getDiscordClients().flatMap(client -> client.getEventDispatcher().on(MessageCreateEvent.class))
-				.filter(event -> event.getMessage().getContent().isPresent() && event.getMessage().getAuthor().isPresent())
+				.filter(event -> event.getMessage().getContent().isPresent()
+						&& event.getMessage().getAuthor().isPresent()
+						&& !event.getMessage().getAuthor().get().isBot())
 				.flatMap(event -> ContextImpl.findPrefixUsed(bot, event)
 						.map(prefixUsed -> Tuples.of(event, prefixUsed,
 								parseCommandLine(event.getMessage().getContent().get().substring(prefixUsed.length())))))
 				.filter(tuple -> tuple.getT3().isPresent())
 				.map(tuple -> new ContextImpl(tuple.getT3().get().getT1(), tuple.getT1(), tuple.getT3().get().getT2(), bot, tuple.getT2()))
+				.onErrorResume(e -> Mono.empty())
 				.subscribe(ctx -> invokeCommand(ctx.getCommand(), ctx).subscribe());
 		// Reply menu handler
 		bot.getDiscordClients().flatMap(client -> client.getEventDispatcher().on(MessageCreateEvent.class))
@@ -106,6 +109,7 @@ class CommandKernelImpl implements CommandKernel {
 						&& openedReplyMenus.containsKey(event.getMessage().getChannelId().asString()
 								+ event.getMessage().getAuthor().get().getId().asString()))
 				.map(event -> Tuples.of(event, BotUtils.parseArgs(event.getMessage().getContent().get())))
+				.onErrorResume(e -> Mono.empty())
 				.subscribe(tuple -> {
 					final var event = tuple.getT1();
 					final var args = tuple.getT2();
@@ -135,6 +139,9 @@ class CommandKernelImpl implements CommandKernel {
 
 	@Override
 	public Optional<Tuple2<Command, List<String>>> parseCommandLine(List<String> commandLine) {
+		if (commandLine.isEmpty()) {
+			return Optional.empty();
+		}
 		var cmd = commands.get(commandLine.get(0));
 		if (cmd == null) {
 			return Optional.empty();
