@@ -40,7 +40,8 @@ class DelayCommand implements Command {
 				+ BotUtils.formatTimeMillis(duration) + ".")
 				.then(Mono.delay(duration))
 				.then(ctx.reply(ctx.getEvent().getMessage().getAuthor().get().getMention() + ", now executing " + cmdLine + "..."))
-				.then(ctx.getBot().getCommandKernel().invokeCommand(cmd, ctx.fork(args)))
+				.then(ctx.getBot().getCommandKernel().invokeCommand(cmd, ctx.fork(args))
+						.onErrorResume(e -> Mono.empty()))
 				.then();
 	}
 
