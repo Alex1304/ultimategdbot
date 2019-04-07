@@ -123,6 +123,11 @@ class BotImpl implements Bot {
 	}
 
 	@Override
+	public Logger getLogger() {
+		return logger;
+	}
+
+	@Override
 	public int getReplyMenuTimeout() {
 		return replyMenuTimeout;
 	}

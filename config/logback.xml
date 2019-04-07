@@ -3,16 +3,12 @@
 	<!-- You can configure per-logger level at this point -->
 	<!-- This set of preconfigured loggers is good if you want to have a DEBUG 
 		level as baseline -->
-	<logger name="io.netty" level="INFO" />
-	<logger name="reactor" level="INFO" />
-	<logger name="discord4j.gateway" level="INFO"/>
 
 	<!-- Display the logs in your console with the following format -->
 	<!-- You can learn more about this here: https://logback.qos.ch/manual/layouts.html#ClassicPatternLayout -->
 	<appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
 		<encoder>
-			<pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n
-			</pattern>
+			<pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
 		</encoder>
 	</appender>
 
@@ -25,8 +21,7 @@
 		</rollingPolicy>
 		<encoder>
 			<charset>UTF-8</charset>
-			<Pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level
-				%-40.40logger{39} : %msg%n</Pattern>
+			<Pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</Pattern>
 		</encoder>
 		<prudent>true</prudent>
 	</appender>

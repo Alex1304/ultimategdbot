@@ -39,7 +39,7 @@
 						<configuration>
 							<target>
 								<property name="final.name" value="${project.basedir}/../distribution/ultimategdbot" />
-								<property name="archive.includes" value="ultimategdbot.jar config/*.example config/*.xml plugins/.gitkeep LICENSE" />
+								<property name="archive.includes" value="ultimategdbot.jar config/*.example config/*.xml config/about.txt plugins/.gitkeep LICENSE" />
 								<zip basedir="${project.build.directory}/../.." destfile="${final.name}.zip" includes="${archive.includes}" />
 							</target>
 						</configuration>

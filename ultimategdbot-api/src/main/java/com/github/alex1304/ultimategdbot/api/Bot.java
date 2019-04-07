@@ -3,6 +3,8 @@ package com.github.alex1304.ultimategdbot.api;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import org.slf4j.Logger;
+
 import com.github.alex1304.ultimategdbot.api.database.GuildSettingsEntry;
 
 import discord4j.core.DiscordClient;
@@ -64,6 +66,13 @@ public interface Bot {
 	 * @return the database
 	 */
 	Database getDatabase();
+	
+	/**
+	 * Gets the logger.
+	 * 
+	 * @return the logger
+	 */
+	Logger getLogger();
 
 	/**
 	 * Gets the channel where the bot sends messages for debugging purposes.
