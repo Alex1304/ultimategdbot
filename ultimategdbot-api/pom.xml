@@ -3,7 +3,7 @@
 	<parent>
 		<groupId>com.github.alex1304</groupId>
 		<artifactId>ultimategdbot</artifactId>
-		<version>4.0.0-alpha6-SNAPSHOT</version>
+		<version>4.0.0-alpha6</version>
 	</parent>
 	<artifactId>ultimategdbot-api</artifactId>
 	
