@@ -10,6 +10,7 @@ import com.github.alex1304.ultimategdbot.api.Command;
 import com.github.alex1304.ultimategdbot.api.CommandFailedException;
 import com.github.alex1304.ultimategdbot.api.Context;
 import com.github.alex1304.ultimategdbot.api.PermissionLevel;
+import com.github.alex1304.ultimategdbot.api.utils.ArgUtils;
 import com.github.alex1304.ultimategdbot.api.utils.BotUtils;
 import com.github.alex1304.ultimategdbot.api.utils.reply.PaginatedReplyMenuBuilder;
 
@@ -50,9 +51,9 @@ class HelpCommand implements Command {
 							.next())
 					.flatMap(__ -> rb.build(sb.toString().stripTrailing())).then();
 		}
-		var cmdName = String.join(" ", ctx.getArgs().subList(1, ctx.getArgs().size()));
+		var cmdName = ArgUtils.concatArgs(ctx, 1);
 		var cmd = ctx.getBot().getCommandKernel().parseCommandLine(cmdName);
-		if (cmd.isEmpty()) {
+		if (cmd.isEmpty() || cmd.get().getT2().size() > 1) {
 			return Mono.error(new CommandFailedException("The command \"" + cmdName + "\" does not exist."));
 		}
 		return BotUtils.generateDefaultDocumentation(cmd.get().getT1(), ctx, cmdName)

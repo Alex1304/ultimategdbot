@@ -7,6 +7,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -82,34 +83,22 @@ class DatabaseImpl implements Database {
 
 	@Override
 	public Mono<Void> save(Object obj) {
-		return performTransaction(session -> session.saveOrUpdate(obj), false);
+		return performEmptyTransaction(session -> session.saveOrUpdate(obj));
 	}
 
 	@Override
 	public Mono<Void> delete(Object obj) {
-		return performTransaction(session -> session.delete(obj), true);
-	}
-	
-	public SessionFactory getSessionFactory() {
-		return sessionFactory;
+		return performEmptyTransaction(session -> session.delete(obj));
 	}
 
-	private Session newSession() {
-		if (sessionFactory == null || sessionFactory.isClosed())
-			throw new IllegalStateException("Database not configured");
-
-		return sessionFactory.openSession();
-	}
-
-	private Mono<Void> performTransaction(Consumer<Session> txConsumer, boolean flush) {
+	@Override
+	public Mono<Void> performEmptyTransaction(Consumer<Session> txConsumer) {
 		return Mono.<Void>fromCallable(() -> {
 			synchronized (sessionFactory) {
 				Transaction tx = null;
 				try (var s = newSession()) {
 					tx = s.beginTransaction();
 					txConsumer.accept(s);
-					if (flush)
-						s.flush();
 					tx.commit();
 				} catch (RuntimeException e) {
 					if (tx != null)
@@ -119,5 +108,32 @@ class DatabaseImpl implements Database {
 				return null;
 			}
 		}).subscribeOn(Schedulers.elastic()).onErrorMap(e -> new RuntimeException("Error while performing database transaction", e));
+	}
+	
+	@Override
+	public <V> Mono<V> performTransaction(Function<Session, V> txFunction) {
+		return Mono.fromCallable(() -> {
+			synchronized (sessionFactory) {
+				V returnVal;
+				Transaction tx = null;
+				try (var s = newSession()) {
+					tx = s.beginTransaction();
+					returnVal = txFunction.apply(s);
+					tx.commit();
+				} catch (RuntimeException e) {
+					if (tx != null)
+						tx.rollback();
+					throw e;
+				}
+				return returnVal;
+			}
+		}).subscribeOn(Schedulers.elastic()).onErrorMap(e -> new RuntimeException("Error while performing database transaction", e));
+	}
+
+	private Session newSession() {
+		if (sessionFactory == null || sessionFactory.isClosed())
+			throw new IllegalStateException("Database not configured");
+
+		return sessionFactory.openSession();
 	}
 }

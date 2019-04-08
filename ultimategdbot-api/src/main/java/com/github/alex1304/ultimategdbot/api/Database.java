@@ -2,6 +2,10 @@ package com.github.alex1304.ultimategdbot.api;
 
 import java.io.Serializable;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.Function;
+
+import org.hibernate.Session;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -67,4 +71,29 @@ public interface Database {
 	 * @return a Mono that completes when it has deleted
 	 */
 	Mono<Void> delete(Object obj);
+	
+	/**
+	 * Allows to perform more complex actions with the database, by having full
+	 * control on the current transaction. This method does not return a value. If
+	 * you need to perform a transaction that returns a value upon completion, the
+	 * variant {@link #performTransaction(Function)} is preferred.
+	 * 
+	 * @param txConsumer the transaction consuming a Session object
+	 * @return a Mono completing when the transaction terminates successfully
+	 */
+	Mono<Void> performEmptyTransaction(Consumer<Session> txConsumer);
+	
+	/**
+	 * Allows to perform more complex actions with the database, by having full
+	 * control on the current transaction. This method can return a value upon
+	 * completion. If you don't need a return value for the transaction, the variant
+	 * {@link #performEmptyTransaction(Consumer)} is preferred.
+	 * 
+	 * @param            <V> the type of the returned value
+	 * @param txFunction the transaction accepting a Session object and returning a
+	 *                   value
+	 * @return a Mono completing when the transaction terminates successfully and
+	 *         emitting a value.
+	 */
+	<V> Mono<V> performTransaction(Function<Session, V> txFunction);
 }

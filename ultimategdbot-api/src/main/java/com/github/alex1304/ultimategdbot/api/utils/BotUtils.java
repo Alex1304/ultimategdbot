@@ -61,11 +61,10 @@ public class BotUtils {
 					sb.append("\n");
 					return Flux.fromIterable(cmd.getSubcommands())
 							.filterWhen(scmd -> scmd.getPermissionLevel().isGranted(ctx))
-							.map(scmd -> ctx.getPrefixUsed() + cmdName + ' ' + joinAliases(scmd.getAliases()) + ' ' 
-									+ scmd.getSyntax() + "\n\t-> " + scmd.getDescription() + "\n")
-							.collect(Collectors.joining())
+							.map(scmd -> "`" + ctx.getPrefixUsed() + cmdName + " " + joinAliases(scmd.getAliases()) + "`: " + scmd.getDescription())
+							.collect(Collectors.joining("\n"))
 							.filter(scmdStr -> !scmdStr.isEmpty())
-							.map(scmdStr -> sb.append("\n**Subcommands:**\n```\n").append(scmdStr).append("\n```\n").toString())
+							.map(scmdStr -> sb.append("\n**Subcommands:**\n").append(scmdStr).toString())
 							.defaultIfEmpty(sb.toString());
 				});
 	}

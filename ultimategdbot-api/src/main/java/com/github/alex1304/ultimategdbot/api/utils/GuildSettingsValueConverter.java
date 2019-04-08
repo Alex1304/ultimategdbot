@@ -57,21 +57,21 @@ public class GuildSettingsValueConverter {
 				.map(Snowflake::of)
 				.onErrorResume(e -> Mono.just(str.substring(3, str.length() - 1))
 						.map(Snowflake::of))
-				.onErrorResume(e -> bot.getDiscordClients()
+				.onErrorResume(e -> bot.getDiscordClients().next()
 						.flatMap(client -> client.getGuildById(Snowflake.of(guildId)))
 								.flatMap(g -> g.getRoles()
 										.filter(r -> r.getName().equalsIgnoreCase(str))
-										.map(Role::getId))
-						.next())
+										.map(Role::getId).next()))
+				.onErrorResume(e -> Mono.empty())
 				.switchIfEmpty(Mono.error(new IllegalArgumentException("Could not convert '" + str + "' to a valid role")))
 				.map(Snowflake::asLong);
 	}
 	
 	public Mono<String> fromRoleId(long roleId, long guildId) {
-		return roleId == 0 ? Mono.just(NONE_VALUE) : bot.getDiscordClients()
+		return roleId == 0 ? Mono.just(NONE_VALUE) : bot.getDiscordClients().next()
 				.flatMap(client -> client.getRoleById(Snowflake.of(guildId), Snowflake.of(roleId)))
-				.next()
 				.map(role -> '@' + role.getName() + " (" + role.getId().asLong() + ")")
+				.onErrorResume(e -> Mono.empty())
 				.defaultIfEmpty("_(unknown role of ID " + roleId + ")_");
 	}
 	
@@ -80,13 +80,14 @@ public class GuildSettingsValueConverter {
 				.map(Snowflake::of)
 				.onErrorResume(e -> Mono.just(str.substring(2, str.length() - 1))
 						.map(Snowflake::of))
-				.onErrorResume(e -> bot.getDiscordClients()
+				.onErrorResume(e -> bot.getDiscordClients().next()
 						.flatMap(client -> client.getGuildById(Snowflake.of(guildId)))
 								.flatMap(g -> g.getChannels()
 										.filter(c -> c.getType() == channelType)
 										.filter(c -> c.getName().equalsIgnoreCase(str))
-										.map(Channel::getId))
-						.next())
+										.map(Channel::getId)
+										.next()))
+				.onErrorResume(e -> Mono.empty())
 				.switchIfEmpty(Mono.error(new IllegalArgumentException("Could not convert '" + str + "' to a valid channel")))
 				.map(Snowflake::asLong);
 	}
@@ -104,11 +105,11 @@ public class GuildSettingsValueConverter {
 	}
 	
 	public Mono<String> fromChannelId(long channelId, long guildId) {
-		return channelId == 0 ? Mono.just(NONE_VALUE) : bot.getDiscordClients()
+		return channelId == 0 ? Mono.just(NONE_VALUE) : bot.getDiscordClients().next()
 				.flatMap(client -> client.getChannelById(Snowflake.of(channelId)))
-				.next()
 				.ofType(GuildChannel.class)
 				.map(channel -> channel.getType() == Type.GUILD_TEXT ? channel.getMention() : channel.getName() + " (" + channel.getId().asLong() + ")")
+				.onErrorResume(e -> Mono.empty())
 				.defaultIfEmpty("_(unknown channel of ID " + channelId + ")_");
 	}
 	

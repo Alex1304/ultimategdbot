@@ -134,24 +134,22 @@ class BotImpl implements Bot {
 
 	@Override
 	public Mono<Channel> getDebugLogChannel() {
-		return discordClients.flatMap(client -> client.getChannelById(debugLogChannelId)).next();
+		return discordClients.next().flatMap(client -> client.getChannelById(debugLogChannelId));
 	}
 
 	@Override
 	public Mono<Channel> getAttachmentsChannel() {
-		return discordClients.flatMap(client -> client.getChannelById(attachmentsChannelId)).next();
+		return discordClients.next().flatMap(client -> client.getChannelById(attachmentsChannelId));
 	}
 
 	@Override
 	public Mono<Message> log(String message) {
-		logger.info(message);
 		return log(mcs -> mcs.setContent(message));
 	}
 
 	@Override
 	public Mono<Message> log(Consumer<MessageCreateSpec> spec) {
-		return discordClients.flatMap(client -> client.getChannelById(debugLogChannelId))
-				.next()
+		return discordClients.next().flatMap(client -> client.getChannelById(debugLogChannelId))
 				.ofType(MessageChannel.class)
 				.flatMap(c -> c.createMessage(spec))
 				.doOnNext(message -> message.getContent().ifPresent(logger::info));
@@ -175,7 +173,7 @@ class BotImpl implements Bot {
 	@Override
 	public Mono<String> getEmoji(String emojiName) {
 		var defaultVal = ":" + emojiName + ":";
-		return discordClients.flatMap(DiscordClient::getGuilds)
+		return discordClients.next().flatMapMany(DiscordClient::getGuilds)
 				.filter(g -> emojiGuildIds.stream().anyMatch(g.getId()::equals))
 				.flatMap(Guild::getEmojis)
 				.filter(emoji -> emoji.getName().equalsIgnoreCase(emojiName))
@@ -222,16 +220,8 @@ class BotImpl implements Bot {
 					return Presence.online(activity);
 			}
 		}, Presence.online(activity));
-		var useImmediateScheduler = propParser.parseOrDefault("use_immediate_scheduler", Boolean::parseBoolean, false);
-		if (useImmediateScheduler) {
-			logger.info("Immediate scheduler has been selected for Discord client requests. If some of the plugins have commands "
-					+ "performing blocking operations, they are likely to throw exceptions and not work properly. If you have such issues, change "
-					+ "'use_immediate_scheduler' to 'false' in bot.properties.");
-		}
 		var discordClients = new ShardingClientBuilder(token).build()
-//				.map(dcb -> dcb.setEventScheduler(useImmediateScheduler ? Schedulers.immediate() : Schedulers.elastic()))
 				.map(dcb -> dcb.setInitialPresence(presenceStatus))
-//				.map(dcb -> dcb.setRetryOptions(new RetryOptions(Duration.ofSeconds(2), Duration.ofMinutes(1), 5, Schedulers.elastic())))
 				.map(DiscordClientBuilder::build)
 				.cache();
 		var releaseVersion = propParser.parseAsString("bot_release_version");
