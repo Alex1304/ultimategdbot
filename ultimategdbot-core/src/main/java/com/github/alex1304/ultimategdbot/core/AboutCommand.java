@@ -31,8 +31,8 @@ class AboutCommand implements Command {
 				.flatMap(client -> client.getApplicationInfo())
 				.next()
 				.zipWhen(ApplicationInfo::getOwner)
-				.zipWith(Mono.zip(ctx.getBot().getDiscordClients().next().flatMap(client -> client.getGuilds().count()),
-						ctx.getBot().getDiscordClients().next().flatMap(client -> client.getUsers().count())))
+				.zipWith(Mono.zip(ctx.getBot().getMainDiscordClient().getGuilds().count(),
+						ctx.getBot().getMainDiscordClient().getUsers().count()))
 				.flatMap(tuple -> {
 					var vars = new HashMap<String, String>();
 					

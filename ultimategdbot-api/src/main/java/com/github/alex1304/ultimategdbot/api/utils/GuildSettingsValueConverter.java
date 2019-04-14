@@ -57,8 +57,7 @@ public class GuildSettingsValueConverter {
 				.map(Snowflake::of)
 				.onErrorResume(e -> Mono.just(str.substring(3, str.length() - 1))
 						.map(Snowflake::of))
-				.onErrorResume(e -> bot.getDiscordClients().next()
-						.flatMap(client -> client.getGuildById(Snowflake.of(guildId)))
+				.onErrorResume(e -> bot.getMainDiscordClient().getGuildById(Snowflake.of(guildId))
 								.flatMap(g -> g.getRoles()
 										.filter(r -> r.getName().equalsIgnoreCase(str))
 										.map(Role::getId).next()))
@@ -68,8 +67,7 @@ public class GuildSettingsValueConverter {
 	}
 	
 	public Mono<String> fromRoleId(long roleId, long guildId) {
-		return roleId == 0 ? Mono.just(NONE_VALUE) : bot.getDiscordClients().next()
-				.flatMap(client -> client.getRoleById(Snowflake.of(guildId), Snowflake.of(roleId)))
+		return roleId == 0 ? Mono.just(NONE_VALUE) : bot.getMainDiscordClient().getRoleById(Snowflake.of(guildId), Snowflake.of(roleId))
 				.map(role -> '@' + role.getName() + " (" + role.getId().asLong() + ")")
 				.onErrorResume(e -> Mono.empty())
 				.defaultIfEmpty("_(unknown role of ID " + roleId + ")_");
@@ -80,8 +78,7 @@ public class GuildSettingsValueConverter {
 				.map(Snowflake::of)
 				.onErrorResume(e -> Mono.just(str.substring(2, str.length() - 1))
 						.map(Snowflake::of))
-				.onErrorResume(e -> bot.getDiscordClients().next()
-						.flatMap(client -> client.getGuildById(Snowflake.of(guildId)))
+				.onErrorResume(e -> bot.getMainDiscordClient().getGuildById(Snowflake.of(guildId))
 								.flatMap(g -> g.getChannels()
 										.filter(c -> c.getType() == channelType)
 										.filter(c -> c.getName().equalsIgnoreCase(str))
@@ -105,8 +102,7 @@ public class GuildSettingsValueConverter {
 	}
 	
 	public Mono<String> fromChannelId(long channelId, long guildId) {
-		return channelId == 0 ? Mono.just(NONE_VALUE) : bot.getDiscordClients().next()
-				.flatMap(client -> client.getChannelById(Snowflake.of(channelId)))
+		return channelId == 0 ? Mono.just(NONE_VALUE) : bot.getMainDiscordClient().getChannelById(Snowflake.of(channelId))
 				.ofType(GuildChannel.class)
 				.map(channel -> channel.getType() == Type.GUILD_TEXT ? channel.getMention() : channel.getName() + " (" + channel.getId().asLong() + ")")
 				.onErrorResume(e -> Mono.empty())

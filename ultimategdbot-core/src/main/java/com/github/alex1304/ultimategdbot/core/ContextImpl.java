@@ -18,7 +18,6 @@ import com.github.alex1304.ultimategdbot.api.Plugin;
 import com.github.alex1304.ultimategdbot.api.database.NativeGuildSettings;
 import com.github.alex1304.ultimategdbot.api.utils.BotUtils;
 
-import discord4j.core.DiscordClient;
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.entity.Message;
 import discord4j.core.spec.MessageCreateSpec;
@@ -166,8 +165,7 @@ class ContextImpl implements Context {
 			gs.setGuildId(gid);
 			gs.setPrefix(bot.getDefaultPrefix());
 		}) : Mono.<NativeGuildSettings>empty();
-		return bot.getDiscordClients().next()
-				.map(DiscordClient::getSelfId)
+		return Mono.just(bot.getMainDiscordClient().getSelfId())
 				.filter(Optional::isPresent)
 				.map(Optional::get)
 				.map(botId -> Tuples.of("<@" + botId.asString() + "> ", "<@!" + botId.asString() + "> ",
