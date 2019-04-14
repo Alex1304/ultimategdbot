@@ -46,6 +46,7 @@ import discord4j.core.shard.ShardingClientBuilder;
 import discord4j.core.spec.MessageCreateSpec;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.function.TupleUtils;
 import reactor.util.function.Tuples;
 
 class BotImpl implements Bot {
@@ -110,6 +111,11 @@ class BotImpl implements Bot {
 	@Override
 	public String getDefaultPrefix() {
 		return defaultPrefix;
+	}
+	
+	@Override
+	public DiscordClient getMainDiscordClient() {
+		return discordClients.blockFirst();
 	}
 
 	@Override
@@ -240,7 +246,7 @@ class BotImpl implements Bot {
 		var successfullyLoadedPlugins = new HashSet<Plugin>();
 		for (var plugin : loader) {
 			try {
-				logger.info(String.format("Loading plugin: %s...", plugin.getName()));
+				logger.info("Loading plugin: {}...", plugin.getName());
 				plugin.setup(this, parser);
 				database.addAllMappingResources(plugin.getDatabaseMappingResources());
 				guildSettingsEntries.put(plugin, plugin.getGuildConfigurationEntries());
@@ -269,11 +275,11 @@ class BotImpl implements Bot {
 						subCommands.put(element, subCmdMap);
 						subCmdDeque.addAll(elementSubcmds);
 					}
-					logger.info(String.format("Loaded command: %s %s", cmd.getClass().getName(), cmd.getAliases()));
+					logger.info("Loaded command: {} {}", cmd.getClass().getName(), cmd.getAliases());
 				}
 				successfullyLoadedPlugins.add(plugin);
 			} catch (RuntimeException e) {
-				logger.warn("Failed to load plugin " + plugin.getName());
+				logger.warn("Failed to load plugin {}", plugin.getName());
 				e.printStackTrace();
 			}
 		}
@@ -287,9 +293,9 @@ class BotImpl implements Bot {
 		discordClients.concatMap(client -> client.getEventDispatcher().on(ReadyEvent.class)
 						.next()
 						.map(readyEvent -> Tuples.of(client, readyEvent.getGuilds().size())))
-				.concatMap(clientWithGuildCount -> clientWithGuildCount.getT1().getEventDispatcher().on(GuildCreateEvent.class)
-						.take(clientWithGuildCount.getT2())
-						.collectList())
+				.concatMap(TupleUtils.function((client, guildCount) -> client.getEventDispatcher().on(GuildCreateEvent.class)
+						.take(guildCount)
+						.collectList()))
 				.collectList()
 				.doOnNext(guildCreateEvents -> {
 					var sb = new StringBuilder("Bot started!\n");

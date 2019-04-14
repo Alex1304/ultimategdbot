@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 import com.github.alex1304.ultimategdbot.api.Bot;
@@ -22,13 +23,16 @@ import com.github.alex1304.ultimategdbot.api.utils.PropertyParser;
 
 import discord4j.core.event.domain.guild.GuildCreateEvent;
 import discord4j.core.event.domain.guild.GuildDeleteEvent;
+import discord4j.core.event.domain.lifecycle.ReadyEvent;
 import discord4j.core.object.util.Snowflake;
+import reactor.core.publisher.Mono;
 
 public class NativePlugin implements Plugin {
 	
 	private Bot bot;
 	private String aboutText;
 	private final Set<Snowflake> unavailableGuildIds = Collections.synchronizedSet(new HashSet<>());
+	private final AtomicLong guildCreateToSkip = new AtomicLong();
 
 	@Override
 	public void setup(Bot bot, PropertyParser parser) {
@@ -45,16 +49,15 @@ public class NativePlugin implements Plugin {
 		// Guild join
 		bot.getDiscordClients().flatMap(client -> client.getEventDispatcher().on(GuildCreateEvent.class))
 				.filter(event -> {
-					var id = event.getGuild().getId();
-					if (unavailableGuildIds.contains(id)) {
-						unavailableGuildIds.remove(id);
+					if (guildCreateToSkip.get() > 0) {
+						guildCreateToSkip.decrementAndGet();
 						return false;
 					}
-					return true;
+					return !unavailableGuildIds.remove(event.getGuild().getId());
 				})
 				.map(GuildCreateEvent::getGuild)
 				.flatMap(guild -> bot.log(":inbox_tray: New guild joined: " + BotUtils.escapeMarkdown(guild.getName())
-						+ " (" + guild.getId().asString() + ")"))
+						+ " (" + guild.getId().asString() + ")").onErrorResume(e -> Mono.empty()))
 				.subscribe();
 		// Guild leave
 		bot.getDiscordClients().flatMap(client -> client.getEventDispatcher().on(GuildDeleteEvent.class))
@@ -68,8 +71,19 @@ public class NativePlugin implements Plugin {
 				})
 				.map(event -> event.getGuild().map(guild -> BotUtils.escapeMarkdown(guild.getName())
 						+ " (" + guild.getId().asString() + ")").orElse(event.getGuildId().asString() + " (no data)"))
-				.flatMap(str -> bot.log(":outbox_tray: Guild left: " + str))
+				.flatMap(str -> bot.log(":outbox_tray: Guild left: " + str).onErrorResume(e -> Mono.empty()))
 		.subscribe();
+		
+		bot.getDiscordClients().flatMap(client -> client.getEventDispatcher().on(ReadyEvent.class)
+				.map(readyEvent -> readyEvent.getGuilds().size())
+				.doOnNext(guildCreateToSkip::addAndGet)
+				.flatMap(guildCount -> client.getEventDispatcher().on(GuildCreateEvent.class)
+						.take(guildCount)
+						.collectList())
+				.flatMap(guildCreateEvents -> bot.log("Shard " + client.getConfig().getShardIndex()
+						+ " reconnected (" + guildCreateEvents.size() + " guilds)").map(__ -> 0).onErrorReturn(0)))
+				.onErrorResume(e -> Mono.empty())
+				.subscribe();
 	}
 	
 	@Override

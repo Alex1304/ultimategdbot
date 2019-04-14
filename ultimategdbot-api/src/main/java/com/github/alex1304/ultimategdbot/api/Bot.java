@@ -54,9 +54,16 @@ public interface Bot {
 	String getDefaultPrefix();
 
 	/**
-	 * Gets the discord client.
+	 * Gets the discord client representing shard 0.
 	 * 
 	 * @return the discord client
+	 */
+	DiscordClient getMainDiscordClient();
+
+	/**
+	 * Gets the Flux containing the discord client for each shard.
+	 * 
+	 * @return a Flux of discord client
 	 */
 	Flux<DiscordClient> getDiscordClients();
 

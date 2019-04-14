@@ -138,6 +138,13 @@
 		</profile>
 	</profiles>
 
+	<repositories>
+		<repository>
+			<id>jitpack.io</id>
+			<url>https://jitpack.io</url>
+		</repository>
+	</repositories>
+
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
@@ -161,9 +168,9 @@
 				</exclusions>
 			</dependency>
 			<dependency>
-				<groupId>com.discord4j</groupId>
+				<groupId>com.discord4j.discord4j</groupId>
 				<artifactId>discord4j-core</artifactId>
-				<version>3.0.1</version>
+				<version>a718f8c</version>
 			</dependency>
 			<dependency>
 				<groupId>org.jboss.spec.javax.transaction</groupId>
