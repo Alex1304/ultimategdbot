@@ -21,8 +21,7 @@ class BotAdminsListCommand implements Command {
 	@Override
 	public Mono<Void> execute(Context ctx) {
 		return ctx.getBot().getDatabase().query(BotAdmins.class, "from BotAdmins")
-				.flatMap(admin -> ctx.getBot().getDiscordClients().flatMap(client -> client.getUserById(Snowflake.of(admin.getUserId()))).next())
-				.onErrorResume(e -> Mono.empty())
+				.flatMap(admin -> ctx.getBot().getDiscordClients().next().flatMap(client -> client.getUserById(Snowflake.of(admin.getUserId()))))
 				.map(BotUtils::formatDiscordUsername)
 				.collectSortedList(String.CASE_INSENSITIVE_ORDER)
 				.map(adminList -> {

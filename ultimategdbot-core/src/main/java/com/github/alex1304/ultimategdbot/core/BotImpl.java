@@ -2,6 +2,7 @@ package com.github.alex1304.ultimategdbot.core;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.time.Duration;
 import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.Comparator;
@@ -44,9 +45,15 @@ import discord4j.core.object.presence.Presence;
 import discord4j.core.object.util.Snowflake;
 import discord4j.core.shard.ShardingClientBuilder;
 import discord4j.core.spec.MessageCreateSpec;
+import discord4j.rest.http.client.ClientException;
+import discord4j.rest.request.RouteMatcher;
+import discord4j.rest.request.RouterOptions;
+import discord4j.rest.response.ResponseFunction;
+import discord4j.rest.route.Routes;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.function.TupleUtils;
+import reactor.retry.Retry;
 import reactor.util.function.Tuples;
 
 class BotImpl implements Bot {
@@ -228,6 +235,14 @@ class BotImpl implements Bot {
 		}, Presence.online(activity));
 		var discordClients = new ShardingClientBuilder(token).build()
 				.map(dcb -> dcb.setInitialPresence(presenceStatus))
+				.map(dcb -> dcb.setRouterOptions(RouterOptions.builder()
+						.onClientResponse(ResponseFunction.emptyIfNotFound())
+						.onClientResponse(ResponseFunction.retryOnceOnErrorStatus(500))
+						.onClientResponse(ResponseFunction.emptyOnErrorStatus(RouteMatcher.route(Routes.REACTION_CREATE), 400))
+						.onClientResponse(ResponseFunction.retryWhen(RouteMatcher.route(Routes.MESSAGE_CREATE),
+                                Retry.onlyIf(ClientException.isRetryContextStatusCode(500))
+										.exponentialBackoffWithJitter(Duration.ofSeconds(2), Duration.ofSeconds(10))))
+						.build()))
 				.map(DiscordClientBuilder::build)
 				.cache();
 		var releaseVersion = propParser.parseAsString("bot_release_version");

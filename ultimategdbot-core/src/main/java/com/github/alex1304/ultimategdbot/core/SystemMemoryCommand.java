@@ -17,6 +17,7 @@ class SystemMemoryCommand implements Command {
 
 	@Override
 	public Mono<Void> execute(Context ctx) {
+		System.gc();
 		var total = Runtime.getRuntime().totalMemory();
 		var free = Runtime.getRuntime().freeMemory();
 		var max = Runtime.getRuntime().maxMemory();

@@ -177,14 +177,23 @@ class CommandKernelImpl implements CommandKernel {
 	public Mono<Void> invokeCommand(Command cmd, Context ctx) {
 		var actions = new HashMap<Class<? extends Throwable>, BiConsumer<Throwable, Context>>();
 		actions.put(CommandFailedException.class, (e, ctx0) -> {
-			ctx0.reply(":no_entry_sign: " + e.getMessage()).subscribe();
+			ctx0.reply(":no_entry_sign: " + e.getMessage())
+					.delayElement(Duration.ofSeconds(5))
+					.flatMap(Message::delete)
+					.subscribe();
 		});
 		actions.put(CommandPermissionDeniedException.class, (e, ctx0) -> {
-			ctx0.reply(":no_entry_sign: You are not granted the privileges to run this command.").subscribe();
+			ctx0.reply(":no_entry_sign: You are not granted the privileges to run this command.")
+					.delayElement(Duration.ofSeconds(5))
+					.flatMap(Message::delete)
+					.subscribe();
 		});
 		actions.put(InvalidSyntaxException.class, (e, ctx0) -> {
 			ctx0.reply(":no_entry_sign: Invalid syntax, this is not how the command works. Check out `" + ctx0.getPrefixUsed()
-			+ "help " + ctx.getArgs().get(0) + "` if you need assistance.").subscribe();
+			+ "help " + ctx.getArgs().get(0) + "` if you need assistance.")
+					.delayElement(Duration.ofSeconds(5))
+					.flatMap(Message::delete)
+					.subscribe();
 		});
 		actions.put(ClientException.class, (e, ctx0) -> {
 			var ce = (ClientException) e;
@@ -195,7 +204,9 @@ class CommandKernelImpl implements CommandKernel {
 					+ "`" + ce.getStatus().code() + " " + ce.getStatus().reasonPhrase() + "`\n"
 					+ sj.toString()
 					+ "Make sure that I have sufficient permissions in this server and try again.")
-			.subscribe();
+					.delayElement(Duration.ofSeconds(5))
+					.flatMap(Message::delete)
+					.subscribe();
 		});
 		actions.putAll(cmd.getErrorActions());
 		return ctx.getEvent().getMessage().getChannel()
@@ -205,6 +216,8 @@ class CommandKernelImpl implements CommandKernel {
 				.doOnError(error -> {
 					actions.getOrDefault(error.getClass(), (e, ctx0) -> {
 						ctx0.reply(":no_entry_sign: Something went wrong. A crash report has been sent to the developer. Sorry for the inconvenience.")
+								.delayElement(Duration.ofSeconds(5))
+								.flatMap(Message::delete)
 								.subscribe();
 						ctx0.getBot().logStackTrace(ctx0, e).subscribe();
 					}).accept(error, ctx);
@@ -236,8 +249,8 @@ class CommandKernelImpl implements CommandKernel {
 		if (rm == null) {
 			return;
 		}
-		rm.msg.delete().onErrorResume(e -> Mono.empty()).subscribe();
-		rm.ctx.getEvent().getMessage().delete().onErrorResume(e -> Mono.empty()).subscribe();
+		rm.msg.delete().subscribe();
+		rm.ctx.getEvent().getMessage().delete().subscribe();
 		rm.complete();
 	}
 
