@@ -62,6 +62,7 @@ class BotImpl implements Bot {
 	private final String token;
 	private final String defaultPrefix;
 	private final Flux<DiscordClient> discordClients;
+	private final DiscordClient mainDiscordClient;
 	private final DatabaseImpl database;
 	private final int replyMenuTimeout;
 	private final Snowflake debugLogChannelId;
@@ -82,6 +83,7 @@ class BotImpl implements Bot {
 		this.token = token;
 		this.defaultPrefix = defaultPrefix;
 		this.discordClients = discordClients;
+		this.mainDiscordClient = discordClients.blockFirst();
 		this.database = database;
 		this.replyMenuTimeout = replyMenuTimeout;
 		this.debugLogChannelId = debugLogChannelId;
@@ -122,7 +124,7 @@ class BotImpl implements Bot {
 	
 	@Override
 	public DiscordClient getMainDiscordClient() {
-		return discordClients.blockFirst();
+		return mainDiscordClient;
 	}
 
 	@Override
@@ -147,12 +149,12 @@ class BotImpl implements Bot {
 
 	@Override
 	public Mono<Channel> getDebugLogChannel() {
-		return discordClients.next().flatMap(client -> client.getChannelById(debugLogChannelId));
+		return mainDiscordClient.getChannelById(debugLogChannelId);
 	}
 
 	@Override
 	public Mono<Channel> getAttachmentsChannel() {
-		return discordClients.next().flatMap(client -> client.getChannelById(attachmentsChannelId));
+		return mainDiscordClient.getChannelById(attachmentsChannelId);
 	}
 
 	@Override
@@ -162,7 +164,7 @@ class BotImpl implements Bot {
 
 	@Override
 	public Mono<Message> log(Consumer<MessageCreateSpec> spec) {
-		return discordClients.next().flatMap(client -> client.getChannelById(debugLogChannelId))
+		return mainDiscordClient.getChannelById(debugLogChannelId)
 				.ofType(MessageChannel.class)
 				.flatMap(c -> c.createMessage(spec))
 				.doOnNext(message -> message.getContent().ifPresent(logger::info));
@@ -186,7 +188,7 @@ class BotImpl implements Bot {
 	@Override
 	public Mono<String> getEmoji(String emojiName) {
 		var defaultVal = ":" + emojiName + ":";
-		return discordClients.next().flatMapMany(DiscordClient::getGuilds)
+		return mainDiscordClient.getGuilds()
 				.filter(g -> emojiGuildIds.stream().anyMatch(g.getId()::equals))
 				.flatMap(Guild::getEmojis)
 				.filter(emoji -> emoji.getName().equalsIgnoreCase(emojiName))
