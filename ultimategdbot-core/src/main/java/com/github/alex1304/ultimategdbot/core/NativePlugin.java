@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 
 import com.github.alex1304.ultimategdbot.api.Bot;
 import com.github.alex1304.ultimategdbot.api.Command;
+import com.github.alex1304.ultimategdbot.api.CommandErrorHandler;
 import com.github.alex1304.ultimategdbot.api.Plugin;
 import com.github.alex1304.ultimategdbot.api.database.GuildSettingsEntry;
 import com.github.alex1304.ultimategdbot.api.database.NativeGuildSettings;
@@ -33,6 +34,11 @@ public class NativePlugin implements Plugin {
 	private String aboutText;
 	private final Set<Snowflake> unavailableGuildIds = Collections.synchronizedSet(new HashSet<>());
 	private final AtomicLong guildCreateToSkip = new AtomicLong();
+	private final Map<String, GuildSettingsEntry<?, ?>> configEntries = new HashMap<String, GuildSettingsEntry<?, ?>>();
+	private final CommandErrorHandler cmdErrorHandler = new CommandErrorHandler();
+	private final Set<Command> providedCommands = Set.of(new HelpCommand(this), new PingCommand(this), new SetupCommand(this),
+			new SystemCommand(this), new AboutCommand(this), new BotAdminsCommand(this), new TimeCommand(this),
+			new DelayCommand(this), new SequenceCommand(this));
 
 	@Override
 	public void setup(Bot bot, PropertyParser parser) {
@@ -73,7 +79,7 @@ public class NativePlugin implements Plugin {
 						+ " (" + guild.getId().asString() + ")").orElse(event.getGuildId().asString() + " (no data)"))
 				.flatMap(str -> bot.log(":outbox_tray: Guild left: " + str).onErrorResume(e -> Mono.empty()))
 		.subscribe();
-		
+		// Handle Ready
 		bot.getDiscordClients().flatMap(client -> client.getEventDispatcher().on(ReadyEvent.class)
 				.map(readyEvent -> readyEvent.getGuilds().size())
 				.doOnNext(guildCreateToSkip::addAndGet)
@@ -84,12 +90,27 @@ public class NativePlugin implements Plugin {
 						+ " reconnected (" + guildCreateEvents.size() + " guilds)").map(__ -> 0).onErrorReturn(0)))
 				.onErrorResume(e -> Mono.empty())
 				.subscribe();
+		// Guild settings
+		var valueConverter = new GuildSettingsValueConverter(bot);
+		configEntries.put("prefix", new GuildSettingsEntry<>(
+				NativeGuildSettings.class,
+				NativeGuildSettings::getPrefix,
+				NativeGuildSettings::setPrefix,
+				(value, guildId) -> valueConverter.justCheck(value, guildId, x -> !x.isBlank(), "Cannot be blank"),
+				valueConverter::noConversion
+		));
+		configEntries.put("server_mod_role", new GuildSettingsEntry<>(
+				NativeGuildSettings.class,
+				NativeGuildSettings::getServerModRoleId,
+				NativeGuildSettings::setServerModRoleId,
+				valueConverter::toRoleId,
+				valueConverter::fromRoleId
+		));
 	}
 	
 	@Override
 	public Set<Command> getProvidedCommands() {
-		return Set.of(new HelpCommand(), new PingCommand(), new SetupCommand(), new SystemCommand(), new AboutCommand(aboutText),
-				new BotAdminsCommand(), new TimeCommand(), new DelayCommand(), new SequenceCommand());
+		return providedCommands;
 	}
 
 	@Override
@@ -104,22 +125,27 @@ public class NativePlugin implements Plugin {
 
 	@Override
 	public Map<String, GuildSettingsEntry<?, ?>> getGuildConfigurationEntries() {
-		var map = new HashMap<String, GuildSettingsEntry<?, ?>>();
-		var valueConverter = new GuildSettingsValueConverter(bot);
-		map.put("prefix", new GuildSettingsEntry<>(
-				NativeGuildSettings.class,
-				NativeGuildSettings::getPrefix,
-				NativeGuildSettings::setPrefix,
-				(value, guildId) -> valueConverter.justCheck(value, guildId, x -> !x.isBlank(), "Cannot be blank"),
-				valueConverter::noConversion
-		));
-		map.put("server_mod_role", new GuildSettingsEntry<>(
-				NativeGuildSettings.class,
-				NativeGuildSettings::getServerModRoleId,
-				NativeGuildSettings::setServerModRoleId,
-				valueConverter::toRoleId,
-				valueConverter::fromRoleId
-		));
-		return map;
+		return configEntries;
+	}
+
+	@Override
+	public CommandErrorHandler getCommandErrorHandler() {
+		return cmdErrorHandler;
+	}
+
+	public String getAboutText() {
+		return aboutText;
+	}
+
+	public void setAboutText(String aboutText) {
+		this.aboutText = aboutText;
+	}
+
+	public Set<Snowflake> getUnavailableGuildIds() {
+		return unavailableGuildIds;
+	}
+
+	public long getGuildCreateToSkip() {
+		return guildCreateToSkip.get();
 	}
 }

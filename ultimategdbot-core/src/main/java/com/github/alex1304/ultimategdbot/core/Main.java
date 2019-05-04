@@ -5,28 +5,30 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Properties;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 class Main {
 	
+	private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
 	public static final Path PROPS_FILE = Paths.get(".", "config", "bot.properties");
 	public static final Path PLUGINS_PROPS_FILE = Paths.get(".", "config", "plugins.properties");
 
-	public static void main(String[] args) throws Exception {
-		var props = new Properties();
-		var pluginsProps = new Properties();
-		try (var input = Files.newInputStream(PROPS_FILE)) {
-			props.load(input);
-		}
-		try (var input = Files.newInputStream(PLUGINS_PROPS_FILE)) {
-			pluginsProps.load(input);
-		}
-		BotImpl bot;
+	public static void main(String[] args) {
 		try {
-			bot = BotImpl.buildFromProperties(props, pluginsProps);
-		} catch (IllegalArgumentException e) {
-			System.err.println("Error when parsing " + PROPS_FILE + " file: " + e.getMessage());
-			return;
+			var props = new Properties();
+			var pluginsProps = new Properties();
+			try (var input = Files.newInputStream(PROPS_FILE)) {
+				props.load(input);
+			}
+			try (var input = Files.newInputStream(PLUGINS_PROPS_FILE)) {
+				pluginsProps.load(input);
+			}
+			var bot = BotImpl.buildFromProperties(props, pluginsProps);
+			bot.start();	
+		} catch (Exception e) {
+			LOGGER.error("The bot could not be started. Make sure that all configuration files are present and have a valid content", e);
+			System.exit(1);
 		}
-		bot.start();	
 	}
-
 }

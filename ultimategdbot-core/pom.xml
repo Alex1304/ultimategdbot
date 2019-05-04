@@ -26,6 +26,26 @@
 				</executions>
 			</plugin>
 			<plugin>
+		        <groupId>pl.project13.maven</groupId>
+		        <artifactId>git-commit-id-plugin</artifactId>
+		        <version>2.2.5</version>
+		        <executions>
+		            <execution>
+		            	<phase>compile</phase>
+		                <goals>
+		                    <goal>revision</goal>
+		                </goals>
+		            </execution>
+		        </executions>
+		        <configuration>
+		            <prefix>git</prefix>
+		            <dotGitDirectory>${project.basedir}/../.git</dotGitDirectory>
+		            <injectAllReactorProjects>true</injectAllReactorProjects>
+		            <generateGitPropertiesFile>true</generateGitPropertiesFile>
+		            <generateGitPropertiesFilename>${project.build.outputDirectory}/gitprops/core.git.properties</generateGitPropertiesFilename>
+		        </configuration>
+		    </plugin>
+			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-antrun-plugin</artifactId>
 				<version>1.8</version>
@@ -39,7 +59,7 @@
 						<configuration>
 							<target>
 								<property name="final.name" value="${project.basedir}/../distribution/ultimategdbot" />
-								<property name="archive.includes" value="ultimategdbot.jar config/*.example config/*.xml config/about.txt plugins/.gitkeep LICENSE" />
+								<property name="archive.includes" value="ultimategdbot.jar config-example/* config/.gitkeep plugins/.gitkeep LICENSE" />
 								<zip basedir="${project.build.directory}/../.." destfile="${final.name}.zip" includes="${archive.includes}" />
 							</target>
 						</configuration>

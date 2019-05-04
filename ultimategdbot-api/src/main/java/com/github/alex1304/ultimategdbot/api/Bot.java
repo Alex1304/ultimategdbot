@@ -1,11 +1,9 @@
 package com.github.alex1304.ultimategdbot.api;
 
-import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 
 import org.slf4j.Logger;
-
-import com.github.alex1304.ultimategdbot.api.database.GuildSettingsEntry;
 
 import discord4j.core.DiscordClient;
 import discord4j.core.object.entity.Channel;
@@ -18,27 +16,6 @@ import reactor.core.publisher.Mono;
  * Represents the bot itself.
  */
 public interface Bot {
-	/**
-	 * Gets the release version of the bot.
-	 * 
-	 * @return the release verion
-	 */
-	String getReleaseVersion();
-
-	/**
-	 * Gets the discord.gg link to the support server.
-	 * 
-	 * @return the link to the support server
-	 */
-	String getSupportServerInviteLink();
-
-	/**
-	 * Gets the authorization link to add the bot to a server.
-	 * 
-	 * @return the authorization link
-	 */
-	String getAuthLink();
-
 	/**
 	 * Get the bot token.
 	 * 
@@ -141,19 +118,16 @@ public interface Bot {
 	int getReplyMenuTimeout();
 
 	/**
-	 * Gets the guild settings entries loaded from plugins. Unlike
-	 * {@link Context#getGuildSettings()}, this does not get the values for a
-	 * specific guild, it gives functions to retrieve the values from any guild.
-	 * 
-	 * @return an unmodifiable Map containing the guild settings keys and their
-	 *         associated values.
-	 */
-	Map<Plugin, Map<String, GuildSettingsEntry<?, ?>>> getGuildSettingsEntries();
-
-	/**
 	 * Gets the command kernel of this bot.
 	 * 
 	 * @return the command kernel
 	 */
 	CommandKernel getCommandKernel();
+
+	/**
+	 * Gets a Set containing all successfully loaded plugins.
+	 * 
+	 * @return a Set of Plugin
+	 */
+	Set<Plugin> getPlugins();
 }

@@ -2,7 +2,6 @@ package com.github.alex1304.ultimategdbot.core;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.time.Duration;
 import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.Comparator;
@@ -13,7 +12,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.ServiceLoader;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.Consumer;
 
@@ -27,7 +25,6 @@ import com.github.alex1304.ultimategdbot.api.CommandKernel;
 import com.github.alex1304.ultimategdbot.api.Context;
 import com.github.alex1304.ultimategdbot.api.Database;
 import com.github.alex1304.ultimategdbot.api.Plugin;
-import com.github.alex1304.ultimategdbot.api.database.GuildSettingsEntry;
 import com.github.alex1304.ultimategdbot.api.utils.BotUtils;
 import com.github.alex1304.ultimategdbot.api.utils.PropertyParser;
 
@@ -45,7 +42,6 @@ import discord4j.core.object.presence.Presence;
 import discord4j.core.object.util.Snowflake;
 import discord4j.core.shard.ShardingClientBuilder;
 import discord4j.core.spec.MessageCreateSpec;
-import discord4j.rest.http.client.ClientException;
 import discord4j.rest.request.RouteMatcher;
 import discord4j.rest.request.RouterOptions;
 import discord4j.rest.response.ResponseFunction;
@@ -53,7 +49,6 @@ import discord4j.rest.route.Routes;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.function.TupleUtils;
-import reactor.retry.Retry;
 import reactor.util.function.Tuples;
 
 class BotImpl implements Bot {
@@ -68,17 +63,13 @@ class BotImpl implements Bot {
 	private final Snowflake debugLogChannelId;
 	private final Snowflake attachmentsChannelId;
 	private final List<Snowflake> emojiGuildIds;
-	private final String releaseVersion;
-	private final String supportServerInviteLink;
-	private final String authLink;
 	private final Properties pluginsProps;
 	private CommandKernelImpl cmdKernel;
-	private final Map<Plugin, Map<String, GuildSettingsEntry<?, ?>>> guildSettingsEntries;
+	private final Set<Plugin> plugins = new HashSet<>();
 
 	private BotImpl(Logger logger, String token, String defaultPrefix, Flux<DiscordClient> discordClients, DatabaseImpl database,
 			int replyMenuTimeout, Snowflake debugLogChannelId, Snowflake attachmentsChannelId,
-			List<Snowflake> emojiGuildIds, String releaseVersion, String supportServerInviteLink, String authLink,
-			Properties pluginsProps) {
+			List<Snowflake> emojiGuildIds, Properties pluginsProps) {
 		this.logger = logger;
 		this.token = token;
 		this.defaultPrefix = defaultPrefix;
@@ -89,27 +80,8 @@ class BotImpl implements Bot {
 		this.debugLogChannelId = debugLogChannelId;
 		this.attachmentsChannelId = attachmentsChannelId;
 		this.emojiGuildIds = emojiGuildIds;
-		this.releaseVersion = releaseVersion;
-		this.supportServerInviteLink = supportServerInviteLink;
-		this.authLink = authLink;
 		this.pluginsProps = pluginsProps;
 		this.cmdKernel = null;
-		this.guildSettingsEntries = new HashMap<>();
-	}
-
-	@Override
-	public String getReleaseVersion() {
-		return releaseVersion;
-	}
-
-	@Override
-	public String getSupportServerInviteLink() {
-		return supportServerInviteLink;
-	}
-
-	@Override
-	public String getAuthLink() {
-		return authLink;
 	}
 
 	@Override
@@ -231,7 +203,7 @@ class BotImpl implements Bot {
 				case "dnd": return Presence.doNotDisturb(activity);
 				case "invisible": return Presence.invisible();
 				default:
-					logger.error("presence_status: Expected one of 'online', 'idle', 'dnd', 'invisible'. Defaulting to 'online'.");
+					logger.warn("presence_status: Expected one of 'online', 'idle', 'dnd', 'invisible'. Defaulting to 'online'.");
 					return Presence.online(activity);
 			}
 		}, Presence.online(activity));
@@ -239,37 +211,26 @@ class BotImpl implements Bot {
 				.map(dcb -> dcb.setInitialPresence(presenceStatus))
 				.map(dcb -> dcb.setRouterOptions(RouterOptions.builder()
 						.onClientResponse(ResponseFunction.emptyIfNotFound())
-						.onClientResponse(ResponseFunction.retryOnceOnErrorStatus(500))
 						.onClientResponse(ResponseFunction.emptyOnErrorStatus(RouteMatcher.route(Routes.REACTION_CREATE), 400))
-						.onClientResponse(ResponseFunction.retryWhen(RouteMatcher.route(Routes.MESSAGE_CREATE),
-                                Retry.onlyIf(ClientException.isRetryContextStatusCode(500))
-										.exponentialBackoffWithJitter(Duration.ofSeconds(2), Duration.ofSeconds(10))))
 						.build()))
 				.map(DiscordClientBuilder::build)
 				.cache();
-		var releaseVersion = propParser.parseAsString("bot_release_version");
-		var supportServerInviteLink = propParser.parseAsString("support_server_invite_link");
-		var authLink = propParser.parseAsString("bot_auth_link");
 		return new BotImpl(logger, token, defaultPrefix, discordClients, database, replyMenuTimeout, debugLogChannelId,
-				attachmentsChannelId, emojiGuildIds, releaseVersion, supportServerInviteLink, authLink, pluginsProps);
+				attachmentsChannelId, emojiGuildIds,  pluginsProps);
 	}
 
 	public void start() {
 		var loader = ServiceLoader.load(Plugin.class);
 		var parser = new PropertyParser(Main.PLUGINS_PROPS_FILE.toString(), pluginsProps);
-		var commandsByPlugins = new TreeMap<String, Set<Command>>();
 		var commandsByAliases = new HashMap<String, Command>();
 		var subCommands = new HashMap<Command, Map<String, Command>>();
-		var successfullyLoadedPlugins = new HashSet<Plugin>();
 		for (var plugin : loader) {
 			try {
 				logger.info("Loading plugin: {}...", plugin.getName());
 				plugin.setup(this, parser);
 				database.addAllMappingResources(plugin.getDatabaseMappingResources());
-				guildSettingsEntries.put(plugin, plugin.getGuildConfigurationEntries());
 				var cmdSet = new TreeSet<Command>(Comparator.comparing(cmd -> BotUtils.joinAliases(cmd.getAliases())));
 				cmdSet.addAll(plugin.getProvidedCommands());
-				commandsByPlugins.put(plugin.getName(), Collections.unmodifiableSet(cmdSet));
 				for (var cmd : cmdSet) {
 					for (var alias : cmd.getAliases()) {
 						commandsByAliases.put(alias, cmd);
@@ -294,19 +255,19 @@ class BotImpl implements Bot {
 					}
 					logger.info("Loaded command: {} {}", cmd.getClass().getName(), cmd.getAliases());
 				}
-				successfullyLoadedPlugins.add(plugin);
+				plugins.add(plugin);
 			} catch (RuntimeException e) {
-				logger.warn("Failed to load plugin {}", plugin.getName());
-				e.printStackTrace();
+				logger.error("Failed to load plugin " + plugin.getName(), e);
 			}
 		}
-		this.cmdKernel = new CommandKernelImpl(this, commandsByAliases, subCommands, commandsByPlugins);
+		this.cmdKernel = new CommandKernelImpl(this, commandsByAliases, subCommands);
 		try {
 			database.configure();
 		} catch (MappingException e) {
 			logger.error("Oops! There is an error in the database mapping configuration!");
 			throw e;
 		}
+		cmdKernel.start();
 		discordClients.concatMap(client -> client.getEventDispatcher().on(ReadyEvent.class)
 						.next()
 						.map(readyEvent -> Tuples.of(client, readyEvent.getGuilds().size())))
@@ -325,19 +286,18 @@ class BotImpl implements Bot {
 					sb.append("Serving " + guildCreateEvents.stream().mapToInt(List::size).sum() + " guilds across " + guildCreateEvents.size() + " shards!");
 					logger.info(sb.toString());
 					BotUtils.sendMultipleSimpleMessagesToOneChannel(getDebugLogChannel(), BotUtils.chunkMessage(sb.toString())).subscribe();
-					successfullyLoadedPlugins.forEach(Plugin::onBotReady);
-					cmdKernel.start();
+					plugins.forEach(Plugin::onBotReady);
 				}).subscribe();
 		discordClients.flatMap(DiscordClient::login).blockLast();
 	}
-
-	@Override
-	public Map<Plugin, Map<String, GuildSettingsEntry<?, ?>>> getGuildSettingsEntries() {
-		return Collections.unmodifiableMap(guildSettingsEntries);
-	}
-
+	
 	@Override
 	public CommandKernel getCommandKernel() {
 		return cmdKernel;
+	}
+
+	@Override
+	public Set<Plugin> getPlugins() {
+		return Collections.unmodifiableSet(plugins);
 	}
 }

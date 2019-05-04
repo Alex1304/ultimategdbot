@@ -58,4 +58,11 @@ public interface Plugin {
 	 * @return the guild configuration entries
 	 */
 	Map<String, GuildSettingsEntry<?, ?>> getGuildConfigurationEntries();
+	
+	/**
+	 * Gets the command error handler to apply to all commands provided by this plugin.
+	 * 
+	 * @return the command error handler
+	 */
+	CommandErrorHandler getCommandErrorHandler();
 }

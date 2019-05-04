@@ -1,12 +1,10 @@
 package com.github.alex1304.ultimategdbot.api;
 
+import java.util.Collections;
 import java.util.EnumSet;
-import java.util.Map;
 import java.util.Set;
-import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-import discord4j.core.object.entity.Channel;
 import discord4j.core.object.entity.Channel.Type;
 import reactor.core.publisher.Mono;
 
@@ -35,7 +33,9 @@ public interface Command {
 	 * 
 	 * @return the set of subcommands
 	 */
-	Set<Command> getSubcommands();
+	default Set<Command> getSubcommands() {
+		return Collections.emptySet();
+	}
 
 	/**
 	 * Gets the description of the command. The description is shown in the help
@@ -66,22 +66,25 @@ public interface Command {
 	 * 
 	 * @return the permission level
 	 */
-	PermissionLevel getPermissionLevel();
+	default PermissionLevel getPermissionLevel() {
+		return PermissionLevel.PUBLIC;
+	}
 
 	/**
 	 * Gets the type of channels this command is allowed for use in.
 	 * 
 	 * @return the set of allowed type of channels
 	 */
-	EnumSet<Channel.Type> getChannelTypesAllowed();
-
+	default EnumSet<Type> getChannelTypesAllowed() {
+		return EnumSet.of(Type.GUILD_TEXT, Type.DM);
+	}
+	
 	/**
-	 * Allows to define an action to execute according to the type of error emitted
-	 * when executing this command.
+	 * Gets the plugin this command belongs to.
 	 * 
-	 * @return a Map that associates a Throwable type to an executable action.
+	 * @return the plugin
 	 */
-	Map<Class<? extends Throwable>, BiConsumer<Throwable, Context>> getErrorActions();
+	Plugin getPlugin();
 
 	/**
 	 * Creates a new Command instance which action is the provided function, and
@@ -135,8 +138,8 @@ public interface Command {
 			}
 
 			@Override
-			public Map<Class<? extends Throwable>, BiConsumer<Throwable, Context>> getErrorActions() {
-				return other.getErrorActions();
+			public Plugin getPlugin() {
+				return other.getPlugin();
 			}
 		};
 	}

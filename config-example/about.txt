@@ -1,11 +1,7 @@
-**Thank you for using {{ bot_name }} v{{ project_version }}**
+**Bot name:** {{ bot_name }}
+**Bot owner:** {{ bot_owner }}
+**Server count:** {{ server_count }}
+**User count:** {{ user_count }}
+{{ version_info }}
 
-{{ bot_name }} is a Discord bot owned by **{{ bot_owner }}** and designed for Geometry Dash players. It gives users an easy access to data from Geometry Dash servers (levels, user stats, etc), and can notify them on events happening in-game (new featured levels, new Daily levels/Weekly demons, new Geometry Dash moderators...).
-
-{{ bot_name }} is currently operating in **{{ server_count }}** servers which represents **{{ user_count }}** users across Discord. You can invite {{ bot_name }} to your own server using the following authorization link: <{{ bot_auth_link }}>
-
-{{ bot_name }} is an open-source project. You can check out the GitHub repository at https://github.com/Alex1304/ultimategdbot and join the official support server at {{ support_server_invite_link }}
-
-───────────────────
-
-{{ bot_name }} is hosted and powered by __FastVM__, a company that sells powerful virtual private servers for a low price. Check their plans on their website https://www.fastvm.io/ and use promo code `GDBOT` to get 10% discount.
+Edit the file `config/about.txt` to edit the contents of this command!

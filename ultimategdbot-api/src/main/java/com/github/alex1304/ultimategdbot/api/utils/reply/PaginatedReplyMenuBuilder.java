@@ -44,6 +44,12 @@ public class PaginatedReplyMenuBuilder extends ReplyMenuBuilder {
 		}
 		var page = ctx.getVar("page", Integer.class);
 		var pageMax = ctx.getVar("pageMax", Integer.class);
+		if (pageMax == 0 && menuEntries.isEmpty()) {
+			return ctx.reply(mcs -> {
+				mcs.setContent(content);
+				mcs.setEmbed(embed);
+			});
+		}
 		super.setHeader(String.format("Page %d/%d", page + 1, pageMax + 1));
 		if (page < pageMax) {
 			addItem("next", "To go to next page, type `next`", ctx0 -> {

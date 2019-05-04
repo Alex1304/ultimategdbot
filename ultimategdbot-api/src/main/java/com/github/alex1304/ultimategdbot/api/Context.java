@@ -1,53 +1,80 @@
 package com.github.alex1304.ultimategdbot.api;
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Objects;
+import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.entity.Message;
 import discord4j.core.spec.MessageCreateSpec;
+import discord4j.rest.http.client.ClientException;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-/**
- * Context of a bot command.
- */
-public interface Context {
+public class Context {
+	
+	private final Command originalCommand;
+	private final MessageCreateEvent event;
+	private final List<String> args;
+	private final Bot bot;
+	private final Map<String, Object> variables;
+	private final String prefixUsed;
+
+	public Context(Command originalCommand, MessageCreateEvent event, List<String> args, Bot bot, String prefixUsed) {
+		this.originalCommand = Objects.requireNonNull(originalCommand);
+		this.event = Objects.requireNonNull(event);
+		this.args = Objects.requireNonNull(args);
+		this.bot = Objects.requireNonNull(bot);
+		this.variables = new ConcurrentHashMap<>();
+		this.prefixUsed = Objects.requireNonNull(prefixUsed);
+	}
+	
+	public Context(Context parent, List<String> newArgs) {
+		this(parent.originalCommand, parent.event, Objects.requireNonNull(newArgs), parent.bot, parent.prefixUsed);
+	}
+	
 	/**
 	 * Gets the command that created this context.
 	 * 
 	 * @return the original command
 	 */
-	Command getCommand();
+	public Command getCommand() {
+		return originalCommand;
+	}
 
 	/**
 	 * Gets the message create event associated to this command.
 	 *
 	 * @return the event
 	 */
-	MessageCreateEvent getEvent();
+	public MessageCreateEvent getEvent() {
+		return event;
+	}
 
 	/**
 	 * Gets the arguments of the command.
 	 *
 	 * @return the args
 	 */
-	List<String> getArgs();
+	public List<String> getArgs() {
+		return args;
+	}
 
 	/**
 	 * Gets the bot instance.
 	 * 
 	 * @return the bot
 	 */
-	Bot getBot();
-
-	/**
-	 * Gets the prefix used in the command that created this context.
-	 * 
-	 * @return the prefix used
-	 */
-	String getPrefixUsed();
+	public Bot getBot() {
+		return bot;
+	}
 
 	/**
 	 * Sends a message in the same channel the command was sent.
@@ -55,8 +82,10 @@ public interface Context {
 	 * @param message the message content of the reply
 	 * @return a Mono emitting the message sent
 	 */
-	Mono<Message> reply(String message);
-
+	public Mono<Message> reply(String message) {
+		return reply(spec -> spec.setContent(message));
+	}
+	
 	/**
 	 * Sends a message in the same channel the command was sent. This method
 	 * supports advanced message construction.
@@ -64,7 +93,31 @@ public interface Context {
 	 * @param spec the message content of the reply
 	 * @return a Mono emitting the message sent
 	 */
-	Mono<Message> reply(Consumer<? super MessageCreateSpec> spec);
+	public Mono<Message> reply(Consumer<? super MessageCreateSpec> spec) {
+		return event.getMessage().getChannel()
+				.flatMap(c -> c.createMessage(spec))
+				.onErrorResume(ClientException.class, e -> {
+					var author = event.getMessage().getAuthor();
+					if (e.getStatus().code() != 403 || author.isEmpty()) {
+						return Mono.empty();
+					}
+					return author.get().getPrivateChannel()
+							.flatMap(pc -> pc.createMessage("I was unable to send a reply to your command in <#"
+									+ event.getMessage().getChannelId().asString()
+									+ ">. Make sure that I have permissions to talk and send embeds there.\nError response: `"
+									+ e.getErrorResponse() + "`"))
+							.onErrorResume(__ -> Mono.empty());
+				});
+	}
+
+	/**
+	 * Gets the prefix used in the command that created this context.
+	 * 
+	 * @return the prefix used
+	 */
+	public String getPrefixUsed() {
+		return prefixUsed;
+	}
 
 	/**
 	 * Adds a variable in this context. If a variable of the same name exists, it is
@@ -73,7 +126,9 @@ public interface Context {
 	 * @param name the name of the variable
 	 * @param val  the value of the variable
 	 */
-	void setVar(String name, Object val);
+	public void setVar(String name, Object val) {
+		variables.put(name, val);
+	}
 
 	/**
 	 * Adds a variable in this context. If a variable of the same name exists,
@@ -82,7 +137,12 @@ public interface Context {
 	 * @param name the name of the variable
 	 * @param val  the value of the variable
 	 */
-	void setVarIfNotExists(String name, Object val);
+	public void setVarIfNotExists(String name, Object val) {
+		if (variables.containsKey(name)) {
+			return;
+		}
+		setVar(name, val);
+	}
 
 	/**
 	 * Gets the value of a variable.
@@ -93,7 +153,13 @@ public interface Context {
 	 * @return the value of the variable, or null if not found or exists in the
 	 *         wrong type
 	 */
-	<T> T getVar(String name, Class<T> type);
+	public <T> T getVar(String name, Class<T> type) {
+		var val = variables.get(name);
+		if (val == null || !type.isInstance(val)) {
+			return null;
+		}
+		return type.cast(val);
+	}
 
 	/**
 	 * Gets the value of a variable. If not found, the provided default value is
@@ -105,15 +171,40 @@ public interface Context {
 	 * @return the value of the variable, or the default value if not found or
 	 *         exists in the wrong type
 	 */
-	<T> T getVarOrDefault(String name, T defaultVal);
+	@SuppressWarnings("unchecked")
+	public <T> T getVarOrDefault(String name, T defaultVal) {
+		var val = variables.getOrDefault(name, defaultVal);
+		if (!defaultVal.getClass().isInstance(val)) {
+			return defaultVal;
+		}
+		return (T) val;
+	}
 
 	/**
 	 * Gets the guild settings
 	 * 
 	 * @return an unmodifiable Map containing the guild settings keys and their
-	 *         associated values.
+	 *         associated values, grouped by plugins
 	 */
-	Mono<Map<Plugin, Map<String, String>>> getGuildSettings();
+	public Mono<Map<Plugin, Map<String, String>>> getGuildSettings() {
+		if (!event.getGuildId().isPresent()) {
+			return Mono.error(new UnsupportedOperationException("Cannot perform this operation outside of a guild"));
+		}
+		var result = new TreeMap<Plugin, Map<String, String>>(Comparator.comparing(Plugin::getName));
+		var entriesForEachPlugin = new TreeMap<String, String>();
+		// Flux.fromIterable(..).concatMap(...)       // Is used as a reactive way to iterate a collection, concatMap being used as a forEach
+		//         .takeLast(1).doOnNext(__ -> ...)   // Allows to execute an action after the iteration is done.
+		return Flux.fromIterable(bot.getPlugins())
+				.concatMap(plugin -> Flux.fromIterable(plugin.getGuildConfigurationEntries().entrySet())
+						.concatMap(entry -> entry.getValue().valueFromDatabaseAsString(bot.getDatabase(), event.getGuildId().get().asLong())
+								.doOnNext(strVal -> entriesForEachPlugin.put(entry.getKey(), strVal)))
+						.takeLast(1)
+						.doOnNext(__ -> {
+							result.put(plugin, new TreeMap<>(entriesForEachPlugin));
+							entriesForEachPlugin.clear(); // We are done with this plugin, clear the map so that it can be used for next plugins
+						}))
+				.then(Mono.just(Collections.unmodifiableMap(result)));
+	}
 
 	/**
 	 * Edits an entry of the guild settings.
@@ -127,14 +218,16 @@ public interface Context {
 	 * @throws UnsupportedOperationException if this method is called in a context
 	 *                                       that is outside of a Discord guild
 	 */
-	Mono<Void> setGuildSetting(String key, String val);
-
-	/**
-	 * Creates a new Context that is an exact copy of this one, but with different
-	 * arguments.
-	 * 
-	 * @param newArgs the new arguments that the copy will get
-	 * @return a new Context
-	 */
-	Context fork(List<String> newArgs);
+	public Mono<Void> setGuildSetting(String key, String val) {
+		if (!event.getGuildId().isPresent()) {
+			throw new UnsupportedOperationException("Cannot perform this operation outside of a guild");
+		}
+		for (var map : bot.getPlugins().stream().map(Plugin::getGuildConfigurationEntries).collect(Collectors.toSet())) {
+			var entry = map.get(key);
+			if (entry != null) {
+				return entry.valueAsStringToDatabase(bot.getDatabase(), val, event.getGuildId().get().asLong());
+			}
+		}
+		return Mono.error(new NoSuchElementException());
+	}
 }

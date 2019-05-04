@@ -1,21 +1,26 @@
 package com.github.alex1304.ultimategdbot.core;
 
-import java.util.Collections;
 import java.util.EnumSet;
-import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
-import java.util.function.BiConsumer;
 
 import com.github.alex1304.ultimategdbot.api.Command;
 import com.github.alex1304.ultimategdbot.api.Context;
 import com.github.alex1304.ultimategdbot.api.PermissionLevel;
+import com.github.alex1304.ultimategdbot.api.Plugin;
 import com.github.alex1304.ultimategdbot.api.utils.reply.PaginatedReplyMenuBuilder;
 
-import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.Channel.Type;
+import discord4j.core.object.entity.Message;
 import reactor.core.publisher.Mono;
 
 class SetupCommand implements Command {
+
+	private final NativePlugin plugin;
+	
+	public SetupCommand(NativePlugin plugin) {
+		this.plugin = Objects.requireNonNull(plugin);
+	}
 
 	@Override
 	public Mono<Void> execute(Context ctx) {
@@ -47,7 +52,7 @@ class SetupCommand implements Command {
 
 	@Override
 	public Set<Command> getSubcommands() {
-		return Set.of(new SetupSetCommand());
+		return Set.of(new SetupSetCommand(plugin));
 	}
 
 	@Override
@@ -77,7 +82,7 @@ class SetupCommand implements Command {
 	}
 
 	@Override
-	public Map<Class<? extends Throwable>, BiConsumer<Throwable, Context>> getErrorActions() {
-		return Collections.emptyMap();
+	public Plugin getPlugin() {
+		return plugin;
 	}
 }

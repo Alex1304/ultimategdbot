@@ -1,19 +1,23 @@
 package com.github.alex1304.ultimategdbot.core;
 
-import java.util.EnumSet;
-import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
-import java.util.function.BiConsumer;
 
 import com.github.alex1304.ultimategdbot.api.Command;
 import com.github.alex1304.ultimategdbot.api.Context;
 import com.github.alex1304.ultimategdbot.api.InvalidSyntaxException;
 import com.github.alex1304.ultimategdbot.api.PermissionLevel;
+import com.github.alex1304.ultimategdbot.api.Plugin;
 
-import discord4j.core.object.entity.Channel.Type;
 import reactor.core.publisher.Mono;
 
 class SystemCommand implements Command {
+
+	private final NativePlugin plugin;
+	
+	public SystemCommand(NativePlugin plugin) {
+		this.plugin = Objects.requireNonNull(plugin);
+	}
 
 	@Override
 	public Mono<Void> execute(Context ctx) {
@@ -27,7 +31,7 @@ class SystemCommand implements Command {
 
 	@Override
 	public Set<Command> getSubcommands() {
-		return Set.of(new SystemMemoryCommand(), new SystemExitCommand());
+		return Set.of(new SystemMemoryCommand(plugin), new SystemExitCommand(plugin));
 	}
 
 	@Override
@@ -51,13 +55,7 @@ class SystemCommand implements Command {
 	}
 
 	@Override
-	public EnumSet<Type> getChannelTypesAllowed() {
-		return EnumSet.of(Type.GUILD_TEXT, Type.DM);
+	public Plugin getPlugin() {
+		return plugin;
 	}
-
-	@Override
-	public Map<Class<? extends Throwable>, BiConsumer<Throwable, Context>> getErrorActions() {
-		return Map.of();
-	}
-
 }

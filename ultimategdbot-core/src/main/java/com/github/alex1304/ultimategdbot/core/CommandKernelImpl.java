@@ -1,34 +1,29 @@
 package com.github.alex1304.ultimategdbot.core;
 
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.StringJoiner;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.BiConsumer;
-import java.util.function.Function;
 
 import com.github.alex1304.ultimategdbot.api.Bot;
 import com.github.alex1304.ultimategdbot.api.Command;
+import com.github.alex1304.ultimategdbot.api.CommandErrorHandler;
 import com.github.alex1304.ultimategdbot.api.CommandFailedException;
 import com.github.alex1304.ultimategdbot.api.CommandKernel;
 import com.github.alex1304.ultimategdbot.api.CommandPermissionDeniedException;
 import com.github.alex1304.ultimategdbot.api.Context;
 import com.github.alex1304.ultimategdbot.api.InvalidSyntaxException;
+import com.github.alex1304.ultimategdbot.api.database.NativeGuildSettings;
 import com.github.alex1304.ultimategdbot.api.utils.BotUtils;
 
 import discord4j.core.event.domain.message.MessageCreateEvent;
-import discord4j.core.object.entity.Message;
 import discord4j.rest.http.client.ClientException;
-import reactor.core.Disposable;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
@@ -38,98 +33,44 @@ class CommandKernelImpl implements CommandKernel {
 	private final Bot bot;
 	private final Map<String, Command> commands;
 	private final Map<Command, Map<String, Command>> subCommands;
-	private final Map<String, Set<Command>> commandsByPlugins;
-	private final Map<String, ReplyMenu> openedReplyMenus;
-	private final Map<ReplyMenu, Disposable> disposableMenus;
+	private final CommandErrorHandler globalErrorHandler;
 	
-	public CommandKernelImpl(Bot bot, Map<String, Command> commands, Map<Command, Map<String, Command>> subCommands,
-			Map<String, Set<Command>> commandsByPlugins) {
+	public CommandKernelImpl(Bot bot, Map<String, Command> commands, Map<Command, Map<String, Command>> subCommands) {
 		this.bot = Objects.requireNonNull(bot);
 		this.commands = Collections.unmodifiableMap(Objects.requireNonNull(commands));
 		this.subCommands = Collections.unmodifiableMap(Objects.requireNonNull(subCommands));
-		this.commandsByPlugins = Collections.unmodifiableMap(Objects.requireNonNull(commandsByPlugins));
-		this.openedReplyMenus = new ConcurrentHashMap<>();
-		this.disposableMenus = new ConcurrentHashMap<>();
-	}
-
-	private final class ReplyMenu {
-		final Context ctx;
-		final Message msg;
-		final Map<String, Function<Context, Mono<Void>>> menuItems;
-		final boolean deleteOnReply;
-		final boolean deleteOnTimeout;
-		ReplyMenu(Context ctx, Message msg, Map<String, Function<Context, Mono<Void>>> menuItems, boolean deleteOnReply, boolean deleteOnTimeout) {
-			this.ctx = ctx;
-			this.msg = msg;
-			this.menuItems = menuItems;
-			this.deleteOnReply = deleteOnReply;
-			this.deleteOnTimeout = deleteOnTimeout;
-		}
-		String toKey() {
-			return msg.getChannelId().asString() + ctx.getEvent().getMessage().getAuthor().get().getId().asString();
-		}
-		void complete() {
-			msg.delete().onErrorResume(e -> Mono.empty()).subscribe();
-			if (openedReplyMenus.get(toKey()) == this) {
-				openedReplyMenus.remove(toKey());
-				var d = disposableMenus.remove(this);
-				if (d != null) {
-					d.dispose();
-				}
-			}
-		}
-		void timeout() {
-			if (deleteOnTimeout) {
-				msg.delete().onErrorResume(e -> Mono.empty()).subscribe();
-			}
-			if (openedReplyMenus.get(toKey()) == this) {
-				openedReplyMenus.remove(toKey());
-				disposableMenus.remove(this);
-			}
-		}
+		this.globalErrorHandler = new CommandErrorHandler();
 	}
 
 	public void start() {
-		// Command handler
+		// Global error handler
+		globalErrorHandler.addHandler(CommandFailedException.class, (e, ctx) -> ctx.reply(":no_entry_sign: " + e.getMessage()).then());
+		globalErrorHandler.addHandler(InvalidSyntaxException.class, (e, ctx) -> ctx.reply(":no_entry_sign: Invalid syntax!"
+				+ "\n```\n" + ctx.getPrefixUsed() + ctx.getArgs().get(0) + " " + ctx.getCommand().getSyntax()
+				+ "\n```\n" + "See `" + ctx.getPrefixUsed() + "help " + ctx.getArgs().get(0) + "` for more information.").then());
+		globalErrorHandler.addHandler(CommandPermissionDeniedException.class, (e, ctx) ->
+				ctx.reply(":no_entry_sign: You are not granted the privileges to run this command.").then());
+		globalErrorHandler.addHandler(ClientException.class, (e, ctx) -> {
+			var h = e.getErrorResponse();
+			var sj = new StringJoiner("", "```\n", "```\n");
+			h.getFields().forEach((k, v) -> sj.add(k).add(": ").add(String.valueOf(v)).add("\n"));
+			return ctx.reply(":no_entry_sign: Discord returned an error when executing this command: "
+							+ "`" + e.getStatus().code() + " " + e.getStatus().reasonPhrase() + "`\n"
+							+ sj.toString()
+							+ (e.getStatus().code() == 403 ? "Make sure that I have sufficient permissions in this server and try again." : ""))
+					.then();
+		});
+		// Parse and execute commands from message create events
 		bot.getDiscordClients().flatMap(client -> client.getEventDispatcher().on(MessageCreateEvent.class))
 				.filter(event -> event.getMessage().getContent().isPresent()
 						&& event.getMessage().getAuthor().isPresent()
 						&& !event.getMessage().getAuthor().get().isBot())
-				.flatMap(event -> ContextImpl.findPrefixUsed(bot, event)
-						.map(prefixUsed -> Tuples.of(event, prefixUsed,
-								parseCommandLine(event.getMessage().getContent().get().substring(prefixUsed.length())))))
+				.flatMap(event -> findPrefixUsed(bot, event).map(prefixUsed -> Tuples.of(event, prefixUsed,
+						parseCommandLine(event.getMessage().getContent().get().substring(prefixUsed.length())))))
 				.filter(tuple -> tuple.getT3().isPresent())
-				.map(tuple -> new ContextImpl(tuple.getT3().get().getT1(), tuple.getT1(), tuple.getT3().get().getT2(), bot, tuple.getT2()))
+				.map(tuple -> new Context(tuple.getT3().get().getT1(), tuple.getT1(), tuple.getT3().get().getT2(), bot, tuple.getT2()))
 				.onErrorResume(e -> Mono.empty())
 				.subscribe(ctx -> invokeCommand(ctx.getCommand(), ctx).subscribe());
-		// Reply menu handler
-		bot.getDiscordClients().flatMap(client -> client.getEventDispatcher().on(MessageCreateEvent.class))
-				.filter(event -> event.getMessage().getContent().isPresent()
-						&& event.getMessage().getAuthor().isPresent()
-						&& openedReplyMenus.containsKey(event.getMessage().getChannelId().asString()
-								+ event.getMessage().getAuthor().get().getId().asString()))
-				.map(event -> Tuples.of(event, BotUtils.parseArgs(event.getMessage().getContent().get())))
-				.onErrorResume(e -> Mono.empty())
-				.subscribe(tuple -> {
-					final var event = tuple.getT1();
-					final var args = tuple.getT2();
-					var replyMenu = openedReplyMenus.get(event.getMessage().getChannelId().asString()
-							+ event.getMessage().getAuthor().get().getId().asString());
-					var replyItem = args.get(0).toLowerCase();
-					var action = replyMenu.menuItems.get(replyItem);
-					if (action == null) {
-						return;
-					}
-					var originalCommand = replyMenu.ctx.getCommand();
-					var newCommand = Command.forkedFrom(originalCommand, action);
-					var newCtx = new ContextImpl(newCommand, event, args, bot, "");
-					invokeCommand(newCommand, newCtx).doOnSuccess(__ -> {
-						replyMenu.complete();
-						if (replyMenu.deleteOnReply) {
-							event.getMessage().delete().onErrorResume(e -> Mono.empty()).subscribe();
-						}
-					}).subscribe();
-				});
 	}
 
 	@Override
@@ -169,89 +110,35 @@ class CommandKernelImpl implements CommandKernel {
 	}
 
 	@Override
-	public Map<String, Set<Command>> getCommandsGroupedByPlugins() {
-		return commandsByPlugins;
-	}
-
-	@Override
 	public Mono<Void> invokeCommand(Command cmd, Context ctx) {
-		var actions = new HashMap<Class<? extends Throwable>, BiConsumer<Throwable, Context>>();
-		actions.put(CommandFailedException.class, (e, ctx0) -> {
-			ctx0.reply(":no_entry_sign: " + e.getMessage())
-					.delayElement(Duration.ofSeconds(5))
-					.flatMap(Message::delete)
-					.subscribe();
-		});
-		actions.put(CommandPermissionDeniedException.class, (e, ctx0) -> {
-			ctx0.reply(":no_entry_sign: You are not granted the privileges to run this command.")
-					.delayElement(Duration.ofSeconds(5))
-					.flatMap(Message::delete)
-					.subscribe();
-		});
-		actions.put(InvalidSyntaxException.class, (e, ctx0) -> {
-			ctx0.reply(":no_entry_sign: Invalid syntax, this is not how the command works. Check out `" + ctx0.getPrefixUsed()
-			+ "help " + ctx.getArgs().get(0) + "` if you need assistance.")
-					.delayElement(Duration.ofSeconds(5))
-					.flatMap(Message::delete)
-					.subscribe();
-		});
-		actions.put(ClientException.class, (e, ctx0) -> {
-			var ce = (ClientException) e;
-			var h = ce.getErrorResponse();
-			var sj = new StringJoiner("", "```\n", "```\n");
-			h.getFields().forEach((k, v) -> sj.add(k).add(": ").add(String.valueOf(v)).add("\n"));
-			ctx0.reply(":no_entry_sign: Discord returned an error when executing this command: "
-					+ "`" + ce.getStatus().code() + " " + ce.getStatus().reasonPhrase() + "`\n"
-					+ sj.toString()
-					+ "Make sure that I have sufficient permissions in this server and try again.")
-					.delayElement(Duration.ofSeconds(5))
-					.flatMap(Message::delete)
-					.subscribe();
-		});
-		actions.putAll(cmd.getErrorActions());
-		return ctx.getEvent().getMessage().getChannel()
+		var pluginSpecificErrorHandler = cmd.getPlugin().getCommandErrorHandler();
+		return globalErrorHandler.apply(pluginSpecificErrorHandler.apply(ctx.getEvent().getMessage().getChannel()
 				.filter(c -> cmd.getChannelTypesAllowed().contains(c.getType()))
 				.flatMap(c -> cmd.getPermissionLevel().isGranted(ctx))
-				.flatMap(isGranted -> isGranted ? cmd.execute(ctx) : Mono.error(new CommandPermissionDeniedException()))
-				.doOnError(error -> {
-					actions.getOrDefault(error.getClass(), (e, ctx0) -> {
-						ctx0.reply(":no_entry_sign: Something went wrong. A crash report has been sent to the developer. Sorry for the inconvenience.")
-								.delayElement(Duration.ofSeconds(5))
-								.flatMap(Message::delete)
-								.subscribe();
-						ctx0.getBot().logStackTrace(ctx0, e).subscribe();
-					}).accept(error, ctx);
-				});
+				.flatMap(isGranted -> isGranted ? cmd.execute(ctx) : Mono.error(new CommandPermissionDeniedException())), ctx), ctx)
+				.onErrorResume(error -> ctx.reply(":no_entry_sign: Something went wrong. A crash report has been sent to the developer. Sorry for the inconvenience.")
+						.onErrorResume(e -> Mono.empty())
+						.then(ctx.getBot().logStackTrace(ctx, error))
+						.then());
 	}
-
-	@Override
-	public String openReplyMenu(Context ctx, Message msg, Map<String, Function<Context, Mono<Void>>> menuItems,
-			boolean deleteOnReply, boolean deleteOnTimeout) {
-		if (!msg.getAuthor().isPresent()) {
-			return "";
-		}
-		var fixedMenuItems = new LinkedHashMap<String, Function<Context, Mono<Void>>>();
-		menuItems.forEach((k, v) -> fixedMenuItems.put(k.toLowerCase(), v));
-		var rm = new ReplyMenu(ctx, msg, fixedMenuItems, deleteOnReply, deleteOnTimeout);
-		var key = rm.toKey();
-		var existing = openedReplyMenus.get(key);
-		if (existing != null) {
-			existing.timeout();
-		}
-		openedReplyMenus.put(key, rm);
-		disposableMenus.put(rm, Mono.delay(Duration.ofSeconds(bot.getReplyMenuTimeout())).subscribe(__ -> rm.timeout()));
-		return key;
+	
+	private static Mono<String> findPrefixUsed(Bot bot, MessageCreateEvent event) {
+		var guildIdOpt = event.getGuildId();
+		var guildSettings = guildIdOpt.isPresent() ? bot.getDatabase().findByIDOrCreate(NativeGuildSettings.class, guildIdOpt.get().asLong(), (gs, gid) -> {
+			gs.setGuildId(gid);
+			gs.setPrefix(bot.getDefaultPrefix());
+		}) : Mono.<NativeGuildSettings>empty();
+		return Mono.just(bot.getMainDiscordClient().getSelfId())
+				.filter(Optional::isPresent)
+				.map(Optional::get)
+				.map(botId -> Tuples.of("<@" + botId.asString() + "> ", "<@!" + botId.asString() + "> ",
+						BotUtils.removeQuotesUnlessEscaped(event.getMessage().getContent().orElse(""))))
+				.filter(tuple -> !tuple.getT3().isEmpty())
+				.flatMap(tuple -> guildSettings
+						.map(gs -> Tuples.of(tuple.getT1(), tuple.getT2(), tuple.getT3(), gs.getPrefix() == null ? bot.getDefaultPrefix() : gs.getPrefix()))
+						.defaultIfEmpty(Tuples.of(tuple.getT1(), tuple.getT2(), tuple.getT3(), bot.getDefaultPrefix())))
+				.flatMap(tuple -> Flux.just(tuple.getT1(), tuple.getT2(), tuple.getT4())
+							.filter(str -> str.equalsIgnoreCase(tuple.getT3().substring(0, Math.min(str.length(), tuple.getT3().length()))))
+							.next());
 	}
-
-	@Override
-	public void closeReplyMenu(String identifier) {
-		var rm = openedReplyMenus.get(identifier);
-		if (rm == null) {
-			return;
-		}
-		rm.msg.delete().subscribe();
-		rm.ctx.getEvent().getMessage().delete().subscribe();
-		rm.complete();
-	}
-
 }

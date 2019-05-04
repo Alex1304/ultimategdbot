@@ -1,28 +1,24 @@
 package com.github.alex1304.ultimategdbot.core;
 
-import java.util.Collections;
-import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.BiConsumer;
 
 import com.github.alex1304.ultimategdbot.api.Command;
 import com.github.alex1304.ultimategdbot.api.Context;
-import com.github.alex1304.ultimategdbot.api.PermissionLevel;
+import com.github.alex1304.ultimategdbot.api.Plugin;
 import com.github.alex1304.ultimategdbot.api.utils.BotUtils;
 
 import discord4j.core.object.entity.ApplicationInfo;
-import discord4j.core.object.entity.Channel.Type;
 import reactor.core.publisher.Mono;
+import reactor.function.TupleUtils;
 
 class AboutCommand implements Command {
 	
-	private final String aboutText;
+	private final NativePlugin plugin;
 	
-	public AboutCommand(String aboutText) {
-		this.aboutText = Objects.requireNonNull(aboutText);
+	public AboutCommand(NativePlugin plugin) {
+		this.plugin = Objects.requireNonNull(plugin);
 	}
 
 	@Override
@@ -33,30 +29,34 @@ class AboutCommand implements Command {
 				.zipWhen(ApplicationInfo::getOwner)
 				.zipWith(Mono.zip(ctx.getBot().getMainDiscordClient().getGuilds().count(),
 						ctx.getBot().getMainDiscordClient().getUsers().count()))
-				.flatMap(tuple -> {
+				.flatMap(TupleUtils.function((appInfoWithOwner, guildAndUserCount) -> {
+					var versionInfoBuilder = new StringBuilder("**UltimateGDBot version:** ");
+					var nativeGitProps = BotUtils.getGitPropertiesForPlugin(plugin);
+					versionInfoBuilder.append(nativeGitProps.getProperty("git.build.version", "*unknown*")).append("\n");
+					for (var plugin : ctx.getBot().getPlugins()) {
+						if (plugin == this.plugin) continue;
+						var gitProps = BotUtils.getGitPropertiesForPlugin(plugin);
+						versionInfoBuilder.append(plugin.getName())
+								.append(" plugin version: ")
+								.append(gitProps.getProperty("git.build.version", "*unknown*"))
+								.append("\n");
+						
+					}
 					var vars = new HashMap<String, String>();
-					
-					vars.put("bot_name", tuple.getT1().getT1().getName());
-					vars.put("project_version", ctx.getBot().getReleaseVersion());
-					vars.put("bot_owner", BotUtils.formatDiscordUsername(tuple.getT1().getT2()));
-					vars.put("server_count", "" + tuple.getT2().getT1());
-					vars.put("user_count", "" + tuple.getT2().getT2());
-					vars.put("bot_auth_link", ctx.getBot().getAuthLink());
-					vars.put("support_server_invite_link", ctx.getBot().getSupportServerInviteLink());
-					String[] result = new String[] { aboutText };
+					vars.put("bot_name", appInfoWithOwner.getT1().getName());
+					vars.put("bot_owner", BotUtils.formatDiscordUsername(appInfoWithOwner.getT2()));
+					vars.put("server_count", "" + guildAndUserCount.getT1());
+					vars.put("user_count", "" + guildAndUserCount.getT2());
+					vars.put("version_info", versionInfoBuilder.toString());
+					var result = new String[] { plugin.getAboutText() };
 					vars.forEach((k, v) -> result[0] = result[0].replaceAll("\\{\\{ *" + k + " *\\}\\}", String.valueOf(v)));
 					return ctx.reply(result[0]);
-				}).then();
+				})).then();
 	}
 
 	@Override
 	public Set<String> getAliases() {
 		return Set.of("about");
-	}
-
-	@Override
-	public Set<Command> getSubcommands() {
-		return Collections.emptySet();
 	}
 
 	@Override
@@ -75,17 +75,7 @@ class AboutCommand implements Command {
 	}
 
 	@Override
-	public PermissionLevel getPermissionLevel() {
-		return PermissionLevel.PUBLIC;
-	}
-
-	@Override
-	public EnumSet<Type> getChannelTypesAllowed() {
-		return EnumSet.of(Type.GUILD_TEXT, Type.DM);
-	}
-
-	@Override
-	public Map<Class<? extends Throwable>, BiConsumer<Throwable, Context>> getErrorActions() {
-		return Collections.emptyMap();
+	public Plugin getPlugin() {
+		return plugin;
 	}
 }

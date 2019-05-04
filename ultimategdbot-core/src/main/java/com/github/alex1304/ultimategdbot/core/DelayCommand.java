@@ -1,22 +1,25 @@
 package com.github.alex1304.ultimategdbot.core;
 
 import java.time.Duration;
-import java.util.EnumSet;
-import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
-import java.util.function.BiConsumer;
 
 import com.github.alex1304.ultimategdbot.api.Command;
 import com.github.alex1304.ultimategdbot.api.CommandFailedException;
 import com.github.alex1304.ultimategdbot.api.Context;
-import com.github.alex1304.ultimategdbot.api.PermissionLevel;
+import com.github.alex1304.ultimategdbot.api.Plugin;
 import com.github.alex1304.ultimategdbot.api.utils.ArgUtils;
 import com.github.alex1304.ultimategdbot.api.utils.BotUtils;
 
-import discord4j.core.object.entity.Channel.Type;
 import reactor.core.publisher.Mono;
 
 class DelayCommand implements Command {
+
+	private final NativePlugin plugin;
+	
+	public DelayCommand(NativePlugin plugin) {
+		this.plugin = Objects.requireNonNull(plugin);
+	}
 
 	@Override
 	public Mono<Void> execute(Context ctx) {
@@ -40,7 +43,7 @@ class DelayCommand implements Command {
 				+ BotUtils.formatTimeMillis(duration) + ".")
 				.then(Mono.delay(duration))
 				.then(ctx.reply(ctx.getEvent().getMessage().getAuthor().get().getMention() + ", now executing " + cmdLine + "..."))
-				.then(ctx.getBot().getCommandKernel().invokeCommand(cmd, ctx.fork(args))
+				.then(ctx.getBot().getCommandKernel().invokeCommand(cmd, new Context(ctx, args))
 						.onErrorResume(e -> Mono.empty()))
 				.then();
 	}
@@ -48,11 +51,6 @@ class DelayCommand implements Command {
 	@Override
 	public Set<String> getAliases() {
 		return Set.of("delay");
-	}
-
-	@Override
-	public Set<Command> getSubcommands() {
-		return Set.of();
 	}
 
 	@Override
@@ -73,18 +71,7 @@ class DelayCommand implements Command {
 	}
 
 	@Override
-	public PermissionLevel getPermissionLevel() {
-		return PermissionLevel.PUBLIC;
+	public Plugin getPlugin() {
+		return plugin;
 	}
-
-	@Override
-	public EnumSet<Type> getChannelTypesAllowed() {
-		return EnumSet.of(Type.GUILD_TEXT, Type.DM);
-	}
-
-	@Override
-	public Map<Class<? extends Throwable>, BiConsumer<Throwable, Context>> getErrorActions() {
-		return Map.of();
-	}
-
 }

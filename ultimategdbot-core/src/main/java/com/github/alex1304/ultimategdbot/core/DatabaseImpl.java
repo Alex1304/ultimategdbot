@@ -47,6 +47,8 @@ class DatabaseImpl implements Database {
 
 	@Override
 	public <T, K extends Serializable> Mono<T> findByID(Class<T> entityClass, K key) {
+		Objects.requireNonNull(entityClass);
+		Objects.requireNonNull(key);
 		return Mono.fromCallable(() -> {
 			try (var s = newSession()) {
 				return s.get(entityClass, key);
@@ -56,6 +58,9 @@ class DatabaseImpl implements Database {
 
 	@Override
 	public <T, K extends Serializable> Mono<T> findByIDOrCreate(Class<T> entityClass, K key, BiConsumer<? super T, K> keySetter) {
+		Objects.requireNonNull(entityClass);
+		Objects.requireNonNull(key);
+		Objects.requireNonNull(keySetter);
 		return findByID(entityClass, key).switchIfEmpty(Mono.fromCallable(() -> {
 			T result = entityClass.getConstructor().newInstance();
 			keySetter.accept(result, key);
@@ -66,16 +71,17 @@ class DatabaseImpl implements Database {
 
 	@Override
 	public <T> Flux<T> query(Class<T> entityClass, String query, Object... params) {
+		Objects.requireNonNull(entityClass);
+		Objects.requireNonNull(query);
+		Objects.requireNonNull(params);
 		return Mono.fromCallable(() -> {
 			var list = new ArrayList<T>();
-			synchronized (sessionFactory) {
-				try (var s = newSession()) {
-					var q = s.createQuery(query, entityClass);
-					for (int i = 0; i < params.length; i++) {
-						q.setParameter(i, params[i]);
-					}
-					list.addAll(q.getResultList());
+			try (var s = newSession()) {
+				var q = s.createQuery(query, entityClass);
+				for (int i = 0; i < params.length; i++) {
+					q.setParameter(i, params[i]);
 				}
+				list.addAll(q.getResultList());
 			}
 			return list;
 		}).subscribeOn(Schedulers.elastic()).flatMapMany(Flux::fromIterable);
@@ -94,39 +100,35 @@ class DatabaseImpl implements Database {
 	@Override
 	public Mono<Void> performEmptyTransaction(Consumer<Session> txConsumer) {
 		return Mono.<Void>fromCallable(() -> {
-			synchronized (sessionFactory) {
-				Transaction tx = null;
-				try (var s = newSession()) {
-					tx = s.beginTransaction();
-					txConsumer.accept(s);
-					tx.commit();
-				} catch (RuntimeException e) {
-					if (tx != null)
-						tx.rollback();
-					throw e;
-				}
-				return null;
+			Transaction tx = null;
+			try (var s = newSession()) {
+				tx = s.beginTransaction();
+				txConsumer.accept(s);
+				tx.commit();
+			} catch (RuntimeException e) {
+				if (tx != null)
+					tx.rollback();
+				throw e;
 			}
+			return null;
 		}).subscribeOn(Schedulers.elastic()).onErrorMap(e -> new RuntimeException("Error while performing database transaction", e));
 	}
 	
 	@Override
 	public <V> Mono<V> performTransaction(Function<Session, V> txFunction) {
 		return Mono.fromCallable(() -> {
-			synchronized (sessionFactory) {
-				V returnVal;
-				Transaction tx = null;
-				try (var s = newSession()) {
-					tx = s.beginTransaction();
-					returnVal = txFunction.apply(s);
-					tx.commit();
-				} catch (RuntimeException e) {
-					if (tx != null)
-						tx.rollback();
-					throw e;
-				}
-				return returnVal;
+			V returnVal;
+			Transaction tx = null;
+			try (var s = newSession()) {
+				tx = s.beginTransaction();
+				returnVal = txFunction.apply(s);
+				tx.commit();
+			} catch (RuntimeException e) {
+				if (tx != null)
+					tx.rollback();
+				throw e;
 			}
+			return returnVal;
 		}).subscribeOn(Schedulers.elastic()).onErrorMap(e -> new RuntimeException("Error while performing database transaction", e));
 	}
 

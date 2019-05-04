@@ -1,25 +1,29 @@
 package com.github.alex1304.ultimategdbot.core;
 
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 import com.github.alex1304.ultimategdbot.api.Command;
 import com.github.alex1304.ultimategdbot.api.CommandFailedException;
 import com.github.alex1304.ultimategdbot.api.Context;
-import com.github.alex1304.ultimategdbot.api.PermissionLevel;
+import com.github.alex1304.ultimategdbot.api.Plugin;
 import com.github.alex1304.ultimategdbot.api.utils.ArgUtils;
 
-import discord4j.core.object.entity.Channel.Type;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.function.TupleUtils;
 
 class SequenceCommand implements Command {
+
+	private final NativePlugin plugin;
+	
+	public SequenceCommand(NativePlugin plugin) {
+		this.plugin = Objects.requireNonNull(plugin);
+	}
 
 	@Override
 	public Mono<Void> execute(Context ctx) {
@@ -50,19 +54,15 @@ class SequenceCommand implements Command {
 			return Mono.error(new CommandFailedException("One of the specified commands does not exist."));
 		}
 		return Flux.fromIterable(commands)
-				.concatMap(cmdTuple -> ctx.getBot().getCommandKernel().invokeCommand(cmdTuple.getT1(), ctx.fork(cmdTuple.getT2()))
-						.onErrorResume(e -> Mono.empty()))
+				.concatMap(TupleUtils.function((command, args) -> ctx.getBot().getCommandKernel()
+						.invokeCommand(command, new Context(ctx, args))
+						.onErrorResume(e -> Mono.empty())))
 				.then();
 	}
 
 	@Override
 	public Set<String> getAliases() {
 		return Set.of("sequence");
-	}
-
-	@Override
-	public Set<Command> getSubcommands() {
-		return Set.of();
 	}
 
 	@Override
@@ -81,18 +81,7 @@ class SequenceCommand implements Command {
 	}
 
 	@Override
-	public PermissionLevel getPermissionLevel() {
-		return PermissionLevel.PUBLIC;
+	public Plugin getPlugin() {
+		return plugin;
 	}
-
-	@Override
-	public EnumSet<Type> getChannelTypesAllowed() {
-		return EnumSet.of(Type.GUILD_TEXT, Type.DM);
-	}
-
-	@Override
-	public Map<Class<? extends Throwable>, BiConsumer<Throwable, Context>> getErrorActions() {
-		return Map.of();
-	}
-
 }

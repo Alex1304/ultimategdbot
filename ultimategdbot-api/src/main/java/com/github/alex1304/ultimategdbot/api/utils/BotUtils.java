@@ -1,10 +1,12 @@
 package com.github.alex1304.ultimategdbot.api.utils;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.Properties;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.function.Consumer;
@@ -14,6 +16,7 @@ import com.github.alex1304.ultimategdbot.api.Bot;
 import com.github.alex1304.ultimategdbot.api.Command;
 import com.github.alex1304.ultimategdbot.api.CommandFailedException;
 import com.github.alex1304.ultimategdbot.api.Context;
+import com.github.alex1304.ultimategdbot.api.Plugin;
 
 import discord4j.core.object.entity.Channel;
 import discord4j.core.object.entity.Message;
@@ -250,5 +253,16 @@ public class BotUtils {
 				+ (time.toSecondsPart() > 0 ? time.toSecondsPart() + "s " : "")
 				+ (time.toMillisPart() > 0 ? time.toMillisPart() + "ms " : "");
 		return result.isEmpty() ? "0ms" : result.substring(0, result.length() - 1);
+	}
+	
+	public static Properties getGitPropertiesForPlugin(Plugin plugin) {
+		var props = new Properties();
+		try (var stream = BotUtils.class.getResourceAsStream("/gitprops/" + plugin.getName().toLowerCase().replace(' ', '_') + ".git.properties")) {
+			if (stream != null) {
+				props.load(stream);
+			}
+		} catch (IOException e) {
+		}
+		return props;
 	}
 }
