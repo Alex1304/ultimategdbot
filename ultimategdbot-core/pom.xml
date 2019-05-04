@@ -31,7 +31,6 @@
 		        <version>2.2.5</version>
 		        <executions>
 		            <execution>
-		            	<phase>compile</phase>
 		                <goals>
 		                    <goal>revision</goal>
 		                </goals>
