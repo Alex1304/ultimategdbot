@@ -18,16 +18,14 @@ import com.github.alex1304.ultimategdbot.api.Database;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
+import reactor.core.scheduler.Scheduler;
+import reactor.scheduler.forkjoin.ForkJoinPoolScheduler;
 
 class DatabaseImpl implements Database {
 	
 	private SessionFactory sessionFactory = null;
-	private final Set<String> resourceNames;
-	
-	public DatabaseImpl() {
-		this.resourceNames = new HashSet<>();
-	}
+	private final Set<String> resourceNames = new HashSet<>();
+	private final Scheduler databaseScheduler = ForkJoinPoolScheduler.create("database-forkjoin");
 
 	@Override
 	public void configure() {
@@ -53,7 +51,7 @@ class DatabaseImpl implements Database {
 			try (var s = newSession()) {
 				return s.get(entityClass, key);
 			}
-		}).subscribeOn(Schedulers.elastic());
+		}).subscribeOn(databaseScheduler);
 	}
 
 	@Override
@@ -66,7 +64,7 @@ class DatabaseImpl implements Database {
 			keySetter.accept(result, key);
 			save(result).subscribe();
 			return result;
-		}).subscribeOn(Schedulers.elastic()));
+		}).subscribeOn(databaseScheduler));
 	}
 
 	@Override
@@ -84,7 +82,7 @@ class DatabaseImpl implements Database {
 				list.addAll(q.getResultList());
 			}
 			return list;
-		}).subscribeOn(Schedulers.elastic()).flatMapMany(Flux::fromIterable);
+		}).subscribeOn(databaseScheduler).flatMapMany(Flux::fromIterable);
 	}
 
 	@Override
@@ -111,7 +109,7 @@ class DatabaseImpl implements Database {
 				throw e;
 			}
 			return null;
-		}).subscribeOn(Schedulers.elastic()).onErrorMap(e -> new RuntimeException("Error while performing database transaction", e));
+		}).subscribeOn(databaseScheduler).onErrorMap(e -> new RuntimeException("Error while performing database transaction", e));
 	}
 	
 	@Override
@@ -129,7 +127,7 @@ class DatabaseImpl implements Database {
 				throw e;
 			}
 			return returnVal;
-		}).subscribeOn(Schedulers.elastic()).onErrorMap(e -> new RuntimeException("Error while performing database transaction", e));
+		}).subscribeOn(databaseScheduler).onErrorMap(e -> new RuntimeException("Error while performing database transaction", e));
 	}
 
 	private Session newSession() {

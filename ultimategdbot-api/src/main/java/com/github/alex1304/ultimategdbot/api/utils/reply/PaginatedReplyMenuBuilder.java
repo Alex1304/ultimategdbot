@@ -47,7 +47,9 @@ public class PaginatedReplyMenuBuilder extends ReplyMenuBuilder {
 		if (pageMax == 0 && menuEntries.isEmpty()) {
 			return ctx.reply(mcs -> {
 				mcs.setContent(content);
-				mcs.setEmbed(embed);
+				if (embed != null) {
+					mcs.setEmbed(embed);
+				}
 			});
 		}
 		super.setHeader(String.format("Page %d/%d", page + 1, pageMax + 1));

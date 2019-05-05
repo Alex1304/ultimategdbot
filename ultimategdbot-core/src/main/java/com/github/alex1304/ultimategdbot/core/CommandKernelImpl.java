@@ -17,6 +17,7 @@ import com.github.alex1304.ultimategdbot.api.CommandFailedException;
 import com.github.alex1304.ultimategdbot.api.CommandKernel;
 import com.github.alex1304.ultimategdbot.api.CommandPermissionDeniedException;
 import com.github.alex1304.ultimategdbot.api.Context;
+import com.github.alex1304.ultimategdbot.api.HandledCommandException;
 import com.github.alex1304.ultimategdbot.api.InvalidSyntaxException;
 import com.github.alex1304.ultimategdbot.api.database.NativeGuildSettings;
 import com.github.alex1304.ultimategdbot.api.utils.BotUtils;
@@ -70,7 +71,7 @@ class CommandKernelImpl implements CommandKernel {
 				.filter(tuple -> tuple.getT3().isPresent())
 				.map(tuple -> new Context(tuple.getT3().get().getT1(), tuple.getT1(), tuple.getT3().get().getT2(), bot, tuple.getT2()))
 				.onErrorResume(e -> Mono.empty())
-				.subscribe(ctx -> invokeCommand(ctx.getCommand(), ctx).subscribe());
+				.subscribe(ctx -> invokeCommand(ctx.getCommand(), ctx).onErrorResume(e -> Mono.empty()).subscribe());
 	}
 
 	@Override
@@ -83,7 +84,7 @@ class CommandKernelImpl implements CommandKernel {
 		if (commandLine.isEmpty()) {
 			return Optional.empty();
 		}
-		var cmd = commands.get(commandLine.get(0));
+		var cmd = commands.get(commandLine.get(0).toLowerCase());
 		if (cmd == null) {
 			return Optional.empty();
 		}
@@ -91,7 +92,7 @@ class CommandKernelImpl implements CommandKernel {
 			var cmdTmp = tuple.getT1();
 			var argsTmp = new ArrayList<>(commandLine);
 			while (argsTmp.size() > 1) {
-				var subcmd = subCommands.get(cmdTmp).get(argsTmp.get(1));
+				var subcmd = subCommands.get(cmdTmp).get(argsTmp.get(1).toLowerCase());
 				if (subcmd == null) {
 					break;
 				}
@@ -116,10 +117,11 @@ class CommandKernelImpl implements CommandKernel {
 				.filter(c -> cmd.getChannelTypesAllowed().contains(c.getType()))
 				.flatMap(c -> cmd.getPermissionLevel().isGranted(ctx))
 				.flatMap(isGranted -> isGranted ? cmd.execute(ctx) : Mono.error(new CommandPermissionDeniedException())), ctx), ctx)
-				.onErrorResume(error -> ctx.reply(":no_entry_sign: Something went wrong. A crash report has been sent to the developer. Sorry for the inconvenience.")
+				.onErrorResume(error -> !(error instanceof HandledCommandException), error -> ctx
+						.reply(":no_entry_sign: Something went wrong. A crash report has been sent to the developer. Sorry for the inconvenience.")
 						.onErrorResume(e -> Mono.empty())
 						.then(ctx.getBot().logStackTrace(ctx, error))
-						.then());
+						.then(Mono.error(error)));
 	}
 	
 	private static Mono<String> findPrefixUsed(Bot bot, MessageCreateEvent event) {

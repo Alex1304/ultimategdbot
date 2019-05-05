@@ -233,7 +233,7 @@ class BotImpl implements Bot {
 				cmdSet.addAll(plugin.getProvidedCommands());
 				for (var cmd : cmdSet) {
 					for (var alias : cmd.getAliases()) {
-						commandsByAliases.put(alias, cmd);
+						commandsByAliases.put(alias.toLowerCase(), cmd);
 					}
 					// Add all subcommands
 					var subCmdDeque = new ArrayDeque<Command>();
@@ -247,7 +247,7 @@ class BotImpl implements Bot {
 						var subCmdMap = new HashMap<String, Command>();
 						for (var subcmd : elementSubcmds) {
 							for (var alias : subcmd.getAliases()) {
-								subCmdMap.put(alias, subcmd);
+								subCmdMap.put(alias.toLowerCase(), subcmd);
 							}
 						}
 						subCommands.put(element, subCmdMap);
