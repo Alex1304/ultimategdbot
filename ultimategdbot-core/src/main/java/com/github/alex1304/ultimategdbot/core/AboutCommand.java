@@ -30,14 +30,17 @@ class AboutCommand implements Command {
 				.zipWith(Mono.zip(ctx.getBot().getMainDiscordClient().getGuilds().count(),
 						ctx.getBot().getMainDiscordClient().getUsers().count()))
 				.flatMap(TupleUtils.function((appInfoWithOwner, guildAndUserCount) -> {
-					var versionInfoBuilder = new StringBuilder("**UltimateGDBot version:** ");
+					var versionInfoBuilder = new StringBuilder("**")
+							.append(appInfoWithOwner.getT1().getName())
+							.append(" version:** ");
 					var nativeGitProps = BotUtils.getGitPropertiesForPlugin(plugin);
 					versionInfoBuilder.append(nativeGitProps.getProperty("git.build.version", "*unknown*")).append("\n");
 					for (var plugin : ctx.getBot().getPlugins()) {
 						if (plugin == this.plugin) continue;
 						var gitProps = BotUtils.getGitPropertiesForPlugin(plugin);
-						versionInfoBuilder.append(plugin.getName())
-								.append(" plugin version: ")
+						versionInfoBuilder.append("**")
+								.append(plugin.getName())
+								.append(" plugin version:** ")
 								.append(gitProps.getProperty("git.build.version", "*unknown*"))
 								.append("\n");
 						

@@ -4,7 +4,6 @@ import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -84,7 +83,14 @@ public class ReplyMenuBuilder {
 			if (content != null && !content.isBlank()) {
 				mcs.setContent(content);
 			}
-			mcs.setEmbed(embed.andThen(ecs -> ecs.addField(header, sb.toString(), false)));
+			if (sb.length() == 0) {
+				return;
+			}
+			if (embed == null) {
+				mcs.setEmbed(ecs -> ecs.addField(header, sb.toString(), false));
+			} else {
+				mcs.setEmbed(embed.andThen(ecs -> ecs.addField(header, sb.toString(), false)));
+			}
 		})
 		.doOnNext(message -> menuItems.put("close", ctx0 -> message.delete().onErrorResume(e -> Mono.empty())))
 		.doOnNext(message -> ctx.getBot().getDiscordClients().flatMap(client -> client.getEventDispatcher().on(MessageCreateEvent.class))
@@ -92,22 +98,24 @@ public class ReplyMenuBuilder {
 				.filter(event -> event.getMessage().getAuthor().equals(ctx.getEvent().getMessage().getAuthor()))
 				.filter(event -> event.getMessage().getChannelId().equals(ctx.getEvent().getMessage().getChannelId()))
 				.map(event -> Tuples.of(event, BotUtils.parseArgs(event.getMessage().getContent().orElse(""))))
-				.filter(TupleUtils.predicate((event, args) -> menuItems.containsKey(args.get(0))))
-				.map(TupleUtils.function((event, args) -> Tuples.of(event, args, menuItems.get(args.get(0)))))
+				.filter(TupleUtils.predicate((event, args) -> menuItems.containsKey(args.get(0).toLowerCase())))
+				.map(TupleUtils.function((event, args) -> Tuples.of(event, args, menuItems.get(args.get(0).toLowerCase()))))
 				.flatMap(TupleUtils.function((event, args, action) -> {
 					var originalCommand = ctx.getCommand();
 					var newCommand = Command.forkedFrom(originalCommand, action);
 					var newCtx = new Context(newCommand, event, args, ctx.getBot(), "");
-					return ctx.getBot().getCommandKernel().invokeCommand(newCommand, newCtx);
+					return ctx.getBot().getCommandKernel().invokeCommand(newCommand, newCtx)
+							.materialize()
+							.flatMap(signal -> signal.hasError() ? Mono.error(signal.getThrowable()) : Mono.just(signal));
 				}))
-				.timeout(timeout)
-				.then(deleteOnReply ? message.delete().onErrorResume(e -> Mono.empty()) : Mono.empty())
-				.onErrorResume(TimeoutException.class, __ -> deleteOnTimeout ? message.delete().onErrorResume(e -> Mono.empty()) : Mono.empty())
 				.retry()
+				.next()
+				.then(deleteOnReply ? message.delete().onErrorResume(e -> Mono.empty()) : Mono.empty())
+				.timeout(timeout, deleteOnTimeout ? message.delete().onErrorResume(e -> Mono.empty()) : Mono.empty())
 				.subscribe());
 	}
 	
 	public final Mono<Message> build(String content) {
-		return build(content, ecs -> {});
+		return build(content, null);
 	}
 }

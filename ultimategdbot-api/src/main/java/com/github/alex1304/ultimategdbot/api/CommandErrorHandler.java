@@ -1,6 +1,6 @@
 package com.github.alex1304.ultimategdbot.api;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.BiFunction;
 
@@ -11,7 +11,7 @@ import reactor.core.publisher.Mono;
  */
 public class CommandErrorHandler {
 	
-	private final Map<Class<? extends Throwable>, BiFunction<Throwable, Context, Mono<Void>>> handlers = new HashMap<>();
+	private final Map<Class<? extends Throwable>, BiFunction<Throwable, Context, Mono<Void>>> handlers = new LinkedHashMap<>();
 	
 	/**
 	 * Adds an error handler.
@@ -33,7 +33,8 @@ public class CommandErrorHandler {
 	 */
 	public Mono<Void> apply(Mono<Void> commandMono, Context ctx) {
 		for (var handler : handlers.entrySet()) {
-			commandMono = commandMono.onErrorResume(handler.getKey(), e -> handler.getValue().apply(e, ctx).onErrorResume(__ -> Mono.empty()));
+			commandMono = commandMono.onErrorResume(handler.getKey(), e -> handler.getValue().apply(e, ctx)
+					.then(Mono.error(new HandledCommandException(e))));
 		}
 		return commandMono;
 	}
