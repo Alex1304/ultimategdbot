@@ -30,8 +30,6 @@ import com.github.alex1304.ultimategdbot.api.utils.PropertyParser;
 
 import discord4j.core.DiscordClient;
 import discord4j.core.DiscordClientBuilder;
-import discord4j.core.event.domain.guild.GuildCreateEvent;
-import discord4j.core.event.domain.lifecycle.ReadyEvent;
 import discord4j.core.object.entity.Channel;
 import discord4j.core.object.entity.Guild;
 import discord4j.core.object.entity.GuildEmoji;
@@ -48,8 +46,6 @@ import discord4j.rest.response.ResponseFunction;
 import discord4j.rest.route.Routes;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.function.TupleUtils;
-import reactor.util.function.Tuples;
 
 class BotImpl implements Bot {
 	
@@ -138,8 +134,7 @@ class BotImpl implements Bot {
 	public Mono<Message> log(Consumer<MessageCreateSpec> spec) {
 		return mainDiscordClient.getChannelById(debugLogChannelId)
 				.ofType(MessageChannel.class)
-				.flatMap(c -> c.createMessage(spec))
-				.doOnNext(message -> message.getContent().ifPresent(logger::info));
+				.flatMap(c -> c.createMessage(spec));
 	}
 
 	@Override
@@ -151,7 +146,6 @@ class BotImpl implements Bot {
 		pw.println("__Stack trace preview (see full trace in internal logs):__");
 		t.printStackTrace(pw);
 		var trace = sw.toString();
-		logger.error(trace);
 		return getDebugLogChannel()
 				.ofType(MessageChannel.class)
 				.flatMap(c -> c.createMessage(trace.substring(0, Math.min(trace.length(), 800))));
@@ -268,26 +262,6 @@ class BotImpl implements Bot {
 			throw e;
 		}
 		cmdKernel.start();
-		discordClients.concatMap(client -> client.getEventDispatcher().on(ReadyEvent.class)
-						.next()
-						.map(readyEvent -> Tuples.of(client, readyEvent.getGuilds().size())))
-				.concatMap(TupleUtils.function((client, guildCount) -> client.getEventDispatcher().on(GuildCreateEvent.class)
-						.take(guildCount)
-						.collectList()))
-				.collectList()
-				.doOnNext(guildCreateEvents -> {
-					var sb = new StringBuilder("Bot started!\n");
-					for (var shardGuildCreateEvents : guildCreateEvents) {
-						shardGuildCreateEvents.stream().findAny().ifPresent(gce -> {
-							var shardNum = gce.getClient().getConfig().getShardIndex();
-							sb.append("> Shard ").append(shardNum).append(": successfully connected to ").append(shardGuildCreateEvents.size()).append(" guilds\n");
-						});
-					}
-					sb.append("Serving " + guildCreateEvents.stream().mapToInt(List::size).sum() + " guilds across " + guildCreateEvents.size() + " shards!");
-					logger.info(sb.toString());
-					BotUtils.sendMultipleSimpleMessagesToOneChannel(getDebugLogChannel(), BotUtils.chunkMessage(sb.toString())).subscribe();
-					plugins.forEach(Plugin::onBotReady);
-				}).subscribe();
 		discordClients.flatMap(DiscordClient::login).blockLast();
 	}
 	

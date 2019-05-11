@@ -9,8 +9,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.github.alex1304.ultimategdbot.api.Bot;
 import com.github.alex1304.ultimategdbot.api.Command;
@@ -25,15 +28,16 @@ import com.github.alex1304.ultimategdbot.api.utils.PropertyParser;
 import discord4j.core.event.domain.guild.GuildCreateEvent;
 import discord4j.core.event.domain.guild.GuildDeleteEvent;
 import discord4j.core.event.domain.lifecycle.ReadyEvent;
+import discord4j.core.event.domain.lifecycle.ResumeEvent;
 import discord4j.core.object.util.Snowflake;
-import reactor.core.publisher.Mono;
 
 public class NativePlugin implements Plugin {
 	
-	private Bot bot;
+	private static final Logger LOGGER = LoggerFactory.getLogger(NativePlugin.class);
+	
 	private String aboutText;
 	private final Set<Snowflake> unavailableGuildIds = Collections.synchronizedSet(new HashSet<>());
-	private final AtomicLong guildCreateToSkip = new AtomicLong();
+	private final AtomicInteger shardsNotReady = new AtomicInteger();
 	private final Map<String, GuildSettingsEntry<?, ?>> configEntries = new HashMap<String, GuildSettingsEntry<?, ?>>();
 	private final CommandErrorHandler cmdErrorHandler = new CommandErrorHandler();
 	private final Set<Command> providedCommands = Set.of(new HelpCommand(this), new PingCommand(this), new SetupCommand(this),
@@ -42,54 +46,12 @@ public class NativePlugin implements Plugin {
 
 	@Override
 	public void setup(Bot bot, PropertyParser parser) {
-		this.bot = bot;
 		try {
 			this.aboutText = Files.readAllLines(Paths.get(".", "config", "about.txt")).stream().collect(Collectors.joining("\n"));
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
 		}
-	}
-
-	@Override
-	public void onBotReady() {
-		// Guild join
-		bot.getDiscordClients().flatMap(client -> client.getEventDispatcher().on(GuildCreateEvent.class))
-				.filter(event -> {
-					if (guildCreateToSkip.get() > 0) {
-						guildCreateToSkip.decrementAndGet();
-						return false;
-					}
-					return !unavailableGuildIds.remove(event.getGuild().getId());
-				})
-				.map(GuildCreateEvent::getGuild)
-				.flatMap(guild -> bot.log(":inbox_tray: New guild joined: " + BotUtils.escapeMarkdown(guild.getName())
-						+ " (" + guild.getId().asString() + ")").onErrorResume(e -> Mono.empty()))
-				.subscribe();
-		// Guild leave
-		bot.getDiscordClients().flatMap(client -> client.getEventDispatcher().on(GuildDeleteEvent.class))
-				.filter(event -> {
-					if (event.isUnavailable()) {
-						unavailableGuildIds.add(event.getGuildId());
-						return false;
-					}
-					unavailableGuildIds.remove(event.getGuildId());
-					return true;
-				})
-				.map(event -> event.getGuild().map(guild -> BotUtils.escapeMarkdown(guild.getName())
-						+ " (" + guild.getId().asString() + ")").orElse(event.getGuildId().asString() + " (no data)"))
-				.flatMap(str -> bot.log(":outbox_tray: Guild left: " + str).onErrorResume(e -> Mono.empty()))
-		.subscribe();
-		// Handle Ready
-		bot.getDiscordClients().flatMap(client -> client.getEventDispatcher().on(ReadyEvent.class)
-				.map(readyEvent -> readyEvent.getGuilds().size())
-				.doOnNext(guildCreateToSkip::addAndGet)
-				.flatMap(guildCount -> client.getEventDispatcher().on(GuildCreateEvent.class)
-						.take(guildCount)
-						.collectList())
-				.flatMap(guildCreateEvents -> bot.log("Shard " + client.getConfig().getShardIndex()
-						+ " reconnected (" + guildCreateEvents.size() + " guilds)").map(__ -> 0).onErrorReturn(0)))
-				.onErrorResume(e -> Mono.empty())
-				.subscribe();
+		initEventListeners(bot);
 		// Guild settings
 		var valueConverter = new GuildSettingsValueConverter(bot);
 		configEntries.put("prefix", new GuildSettingsEntry<>(
@@ -108,6 +70,59 @@ public class NativePlugin implements Plugin {
 		));
 	}
 	
+	private void initEventListeners(Bot bot) {
+		// Initial Ready
+		bot.getDiscordClients().flatMap(client -> client.getEventDispatcher().on(ReadyEvent.class).next()
+					.map(readyEvent -> readyEvent.getGuilds().size())
+					.flatMap(guildCount -> client.getEventDispatcher().on(GuildCreateEvent.class)
+							.take(guildCount)
+							.then(bot.log("Shard " + client.getConfig().getShardIndex() + " connected! Serving " + guildCount + " guilds."))))
+			.then(bot.log("Bot ready!"))
+			.subscribe(__ -> {
+				// Guild join
+				bot.getDiscordClients().flatMap(client -> client.getEventDispatcher().on(GuildCreateEvent.class))
+						.filter(event -> shardsNotReady.get() == 0)
+						.filter(event -> !unavailableGuildIds.remove(event.getGuild().getId()))
+						.map(GuildCreateEvent::getGuild)
+						.flatMap(guild -> bot.log(":inbox_tray: New guild joined: " + BotUtils.escapeMarkdown(guild.getName())
+								+ " (" + guild.getId().asString() + ")"))
+						.onErrorContinue((error, obj) -> LOGGER.error("Error while procesing GuildCreateEvent", error))
+						.subscribe();
+				// Guild leave
+				bot.getDiscordClients().flatMap(client -> client.getEventDispatcher().on(GuildDeleteEvent.class))
+						.filter(event -> shardsNotReady.get() == 0)
+						.filter(event -> {
+							if (event.isUnavailable()) {
+								unavailableGuildIds.add(event.getGuildId());
+								return false;
+							}
+							unavailableGuildIds.remove(event.getGuildId());
+							return true;
+						})
+						.map(event -> event.getGuild().map(guild -> BotUtils.escapeMarkdown(guild.getName())
+								+ " (" + guild.getId().asString() + ")").orElse(event.getGuildId().asString() + " (no data)"))
+						.flatMap(str -> bot.log(":outbox_tray: Guild left: " + str))
+						.onErrorContinue((error, obj) -> LOGGER.error("Error while procesing GuildDeleteEvent", error))
+						.subscribe();
+				// Resume on partial reconnections
+				bot.getDiscordClients().flatMap(client -> client.getEventDispatcher().on(ResumeEvent.class)
+						.flatMap(resumeEvent -> bot.log("Shard " + client.getConfig().getShardIndex()
+								+ " successfully resumed session after websocket closure.")))
+						.onErrorContinue((error, obj) -> LOGGER.error("Error while procesing ResumeEvent", error))
+						.subscribe();
+				// Ready on full reconnections
+				bot.getDiscordClients().flatMap(client -> client.getEventDispatcher().on(ReadyEvent.class)
+						.doOnNext(readyEvent -> shardsNotReady.incrementAndGet())
+						.map(readyEvent -> readyEvent.getGuilds().size())
+						.flatMap(guildCount -> client.getEventDispatcher().on(GuildCreateEvent.class)
+								.take(guildCount)
+								.doAfterTerminate(() -> shardsNotReady.decrementAndGet())
+								.then(bot.log("Shard " + client.getConfig().getShardIndex() + " reconnected (" + guildCount + " guilds)"))))
+						.onErrorContinue((error, obj) -> LOGGER.error("Error while procesing ReadyEvent", error))
+						.subscribe();
+			});
+	}
+
 	@Override
 	public Set<Command> getProvidedCommands() {
 		return providedCommands;
@@ -135,17 +150,5 @@ public class NativePlugin implements Plugin {
 
 	public String getAboutText() {
 		return aboutText;
-	}
-
-	public void setAboutText(String aboutText) {
-		this.aboutText = aboutText;
-	}
-
-	public Set<Snowflake> getUnavailableGuildIds() {
-		return unavailableGuildIds;
-	}
-
-	public long getGuildCreateToSkip() {
-		return guildCreateToSkip.get();
 	}
 }

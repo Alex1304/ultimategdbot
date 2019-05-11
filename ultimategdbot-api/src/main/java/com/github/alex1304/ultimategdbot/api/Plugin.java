@@ -23,12 +23,6 @@ public interface Plugin {
 	void setup(Bot bot, PropertyParser parser);
 
 	/**
-	 * Action to execute when the bot is ready. This method should never throw any
-	 * exception.
-	 */
-	void onBotReady();
-
-	/**
 	 * Gets the set of commands that this plugin provides.
 	 * 
 	 * @return a set of commands

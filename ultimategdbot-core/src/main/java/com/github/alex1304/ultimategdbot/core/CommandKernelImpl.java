@@ -10,6 +10,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.StringJoiner;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.github.alex1304.ultimategdbot.api.Bot;
 import com.github.alex1304.ultimategdbot.api.Command;
 import com.github.alex1304.ultimategdbot.api.CommandErrorHandler;
@@ -30,6 +33,8 @@ import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
 class CommandKernelImpl implements CommandKernel {
+	
+	private static final Logger LOGGER = LoggerFactory.getLogger(CommandKernelImpl.class);
 
 	private final Bot bot;
 	private final Map<String, Command> commands;
@@ -52,6 +57,8 @@ class CommandKernelImpl implements CommandKernel {
 		globalErrorHandler.addHandler(CommandPermissionDeniedException.class, (e, ctx) ->
 				ctx.reply(":no_entry_sign: You are not granted the privileges to run this command.").then());
 		globalErrorHandler.addHandler(ClientException.class, (e, ctx) -> {
+			LOGGER.debug("Discord ClientException thrown when using a command. User input: {}, Error: {}",
+					ctx.getEvent().getMessage().getContent().orElse(""), e);
 			var h = e.getErrorResponse();
 			var sj = new StringJoiner("", "```\n", "```\n");
 			h.getFields().forEach((k, v) -> sj.add(k).add(": ").add(String.valueOf(v)).add("\n"));
@@ -70,8 +77,10 @@ class CommandKernelImpl implements CommandKernel {
 						parseCommandLine(event.getMessage().getContent().get().substring(prefixUsed.length())))))
 				.filter(tuple -> tuple.getT3().isPresent())
 				.map(tuple -> new Context(tuple.getT3().get().getT1(), tuple.getT1(), tuple.getT3().get().getT2(), bot, tuple.getT2()))
-				.onErrorResume(e -> Mono.empty())
-				.subscribe(ctx -> invokeCommand(ctx.getCommand(), ctx).onErrorResume(e -> Mono.empty()).subscribe());
+				.flatMap(ctx -> invokeCommand(ctx.getCommand(), ctx))
+				.onErrorContinue(HandledCommandException.class, (error, obj) -> LOGGER.debug("Successfully handled command exception", error))
+				.onErrorContinue((error, obj) -> LOGGER.error("An error occured when processing a MessageCreateEvent", error))
+				.subscribe();
 	}
 
 	@Override
