@@ -16,6 +16,7 @@ public class CommandErrorHandler {
 	/**
 	 * Adds an error handler.
 	 * 
+	 * @param <T> the type of error to handle
 	 * @param errorClass the type of error to handler
 	 * @param handleAction the action to execute according to the error instance and the context
 	 */
