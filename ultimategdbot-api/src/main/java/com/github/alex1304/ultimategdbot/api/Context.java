@@ -20,15 +20,15 @@ import reactor.core.publisher.Mono;
 
 public class Context {
 	
-	private final Command originalCommand;
+	private final Command command;
 	private final MessageCreateEvent event;
 	private final List<String> args;
 	private final Bot bot;
 	private final Map<String, Object> variables;
 	private final String prefixUsed;
 
-	public Context(Command originalCommand, MessageCreateEvent event, List<String> args, Bot bot, String prefixUsed) {
-		this.originalCommand = Objects.requireNonNull(originalCommand);
+	public Context(Command command, MessageCreateEvent event, List<String> args, Bot bot, String prefixUsed) {
+		this.command = Objects.requireNonNull(command);
 		this.event = Objects.requireNonNull(event);
 		this.args = Objects.requireNonNull(args);
 		this.bot = Objects.requireNonNull(bot);
@@ -37,7 +37,7 @@ public class Context {
 	}
 	
 	public Context(Context parent, List<String> newArgs) {
-		this(parent.originalCommand, parent.event, Objects.requireNonNull(newArgs), parent.bot, parent.prefixUsed);
+		this(parent.command, parent.event, Objects.requireNonNull(newArgs), parent.bot, parent.prefixUsed);
 	}
 	
 	/**
@@ -46,7 +46,7 @@ public class Context {
 	 * @return the original command
 	 */
 	public Command getCommand() {
-		return originalCommand;
+		return command;
 	}
 
 	/**
@@ -229,5 +229,16 @@ public class Context {
 			}
 		}
 		return Mono.error(new NoSuchElementException());
+	}
+
+	@Override
+	public String toString() {
+		return "Context{"
+				+ "command=" + command.getClass().getCanonicalName()
+				+ ", event=" + event
+				+ ", args=" + args
+				+ ", variables=" + variables
+				+ ", prefixUsed=" + prefixUsed
+				+ "}";
 	}
 }

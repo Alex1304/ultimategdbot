@@ -49,7 +49,8 @@ import reactor.core.publisher.Mono;
 
 class BotImpl implements Bot {
 	
-	private Logger logger;
+	private static final Logger LOGGER = LoggerFactory.getLogger(BotImpl.class);
+	
 	private final String token;
 	private final String defaultPrefix;
 	private final Flux<DiscordClient> discordClients;
@@ -63,10 +64,9 @@ class BotImpl implements Bot {
 	private CommandKernelImpl cmdKernel;
 	private final Set<Plugin> plugins = new HashSet<>();
 
-	private BotImpl(Logger logger, String token, String defaultPrefix, Flux<DiscordClient> discordClients, DatabaseImpl database,
+	private BotImpl(String token, String defaultPrefix, Flux<DiscordClient> discordClients, DatabaseImpl database,
 			int replyMenuTimeout, Snowflake debugLogChannelId, Snowflake attachmentsChannelId,
 			List<Snowflake> emojiGuildIds, Properties pluginsProps) {
-		this.logger = logger;
 		this.token = token;
 		this.defaultPrefix = defaultPrefix;
 		this.discordClients = discordClients;
@@ -106,11 +106,6 @@ class BotImpl implements Bot {
 	}
 
 	@Override
-	public Logger getLogger() {
-		return logger;
-	}
-
-	@Override
 	public int getReplyMenuTimeout() {
 		return replyMenuTimeout;
 	}
@@ -139,16 +134,21 @@ class BotImpl implements Bot {
 
 	@Override
 	public Mono<Message> logStackTrace(Context ctx, Throwable t) {
+		final var maxLength = 1600;
 		var sw = new StringWriter();
 		var pw = new PrintWriter(sw);
 		pw.println(":no_entry_sign: **Something went wrong while executing a command.**");
-		pw.println("__User input:__ `" + ctx.getEvent().getMessage().getContent().orElseGet(() -> "(No content)") + "`");
+		pw.println("__Context dump:__ `" + ctx + "`");
 		pw.println("__Stack trace preview (see full trace in internal logs):__");
 		t.printStackTrace(pw);
 		var trace = sw.toString();
+		if (trace.length() > maxLength) {
+			trace = trace.substring(0, maxLength - 3) + "...";
+		}
+		final var ftrace = trace;
 		return getDebugLogChannel()
 				.ofType(MessageChannel.class)
-				.flatMap(c -> c.createMessage(trace.substring(0, Math.min(trace.length(), 800))));
+				.flatMap(c -> c.createMessage(ftrace.substring(0, Math.min(ftrace.length(), maxLength))));
 	}
 
 	@Override
@@ -165,7 +165,6 @@ class BotImpl implements Bot {
 
 	public static BotImpl buildFromProperties(Properties props, Properties pluginsProps) {
 		var propParser = new PropertyParser(Main.PROPS_FILE.toString(), props);
-		var logger = LoggerFactory.getLogger("ultimategdbot");
 		var token = propParser.parseAsString("token");
 		var defaultPrefix = propParser.parseAsString("default_prefix");
 		var database = new DatabaseImpl();
@@ -186,7 +185,7 @@ class BotImpl implements Bot {
 				var split = value.split(":");
 				return Activity.streaming(split[1], split[2]);
 			}
-			logger.error("presence_activity: Expected one of: ''|'none'|'null', 'playing:<text>', 'watching:<text>', 'listening:<text>'"
+			LOGGER.error("presence_activity: Expected one of: ''|'none'|'null', 'playing:<text>', 'watching:<text>', 'listening:<text>'"
 					+ " or 'streaming:<url>' in lower case. Defaulting to no activity");
 			return null;
 		}, null);
@@ -197,7 +196,7 @@ class BotImpl implements Bot {
 				case "dnd": return Presence.doNotDisturb(activity);
 				case "invisible": return Presence.invisible();
 				default:
-					logger.warn("presence_status: Expected one of 'online', 'idle', 'dnd', 'invisible'. Defaulting to 'online'.");
+					LOGGER.warn("presence_status: Expected one of 'online', 'idle', 'dnd', 'invisible'. Defaulting to 'online'.");
 					return Presence.online(activity);
 			}
 		}, Presence.online(activity));
@@ -209,7 +208,7 @@ class BotImpl implements Bot {
 						.build()))
 				.map(DiscordClientBuilder::build)
 				.cache();
-		return new BotImpl(logger, token, defaultPrefix, discordClients, database, replyMenuTimeout, debugLogChannelId,
+		return new BotImpl(token, defaultPrefix, discordClients, database, replyMenuTimeout, debugLogChannelId,
 				attachmentsChannelId, emojiGuildIds,  pluginsProps);
 	}
 
@@ -220,7 +219,7 @@ class BotImpl implements Bot {
 		var subCommands = new HashMap<Command, Map<String, Command>>();
 		for (var plugin : loader) {
 			try {
-				logger.info("Loading plugin: {}...", plugin.getName());
+				LOGGER.info("Loading plugin: {}...", plugin.getName());
 				plugin.setup(this, parser);
 				database.addAllMappingResources(plugin.getDatabaseMappingResources());
 				var cmdSet = new TreeSet<Command>(Comparator.comparing(cmd -> BotUtils.joinAliases(cmd.getAliases())));
@@ -247,18 +246,18 @@ class BotImpl implements Bot {
 						subCommands.put(element, subCmdMap);
 						subCmdDeque.addAll(elementSubcmds);
 					}
-					logger.info("Loaded command: {} {}", cmd.getClass().getName(), cmd.getAliases());
+					LOGGER.info("Loaded command: {} {}", cmd.getClass().getName(), cmd.getAliases());
 				}
 				plugins.add(plugin);
 			} catch (RuntimeException e) {
-				logger.error("Failed to load plugin " + plugin.getName(), e);
+				LOGGER.error("Failed to load plugin " + plugin.getName(), e);
 			}
 		}
 		this.cmdKernel = new CommandKernelImpl(this, commandsByAliases, subCommands);
 		try {
 			database.configure();
 		} catch (MappingException e) {
-			logger.error("Oops! There is an error in the database mapping configuration!");
+			LOGGER.error("Oops! There is an error in the database mapping configuration!");
 			throw e;
 		}
 		cmdKernel.start();

@@ -15,17 +15,18 @@ import org.hibernate.Transaction;
 import org.hibernate.cfg.Configuration;
 
 import com.github.alex1304.ultimategdbot.api.Database;
+import com.github.alex1304.ultimategdbot.api.DatabaseException;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
-import reactor.scheduler.forkjoin.ForkJoinPoolScheduler;
+import reactor.core.scheduler.Schedulers;
 
 class DatabaseImpl implements Database {
 	
 	private SessionFactory sessionFactory = null;
 	private final Set<String> resourceNames = new HashSet<>();
-	private final Scheduler databaseScheduler = ForkJoinPoolScheduler.create("database-forkjoin");
+	private final Scheduler databaseScheduler = Schedulers.newElastic("database-elastic");
 
 	@Override
 	public void configure() {
@@ -51,7 +52,8 @@ class DatabaseImpl implements Database {
 			try (var s = newSession()) {
 				return s.get(entityClass, key);
 			}
-		}).subscribeOn(databaseScheduler);
+		}).subscribeOn(databaseScheduler)
+				.onErrorMap(DatabaseException::new);
 	}
 
 	@Override
@@ -64,7 +66,8 @@ class DatabaseImpl implements Database {
 			keySetter.accept(result, key);
 			save(result).subscribe();
 			return result;
-		}).subscribeOn(databaseScheduler));
+		}).subscribeOn(databaseScheduler)
+				.onErrorMap(DatabaseException::new));
 	}
 
 	@Override
@@ -82,7 +85,9 @@ class DatabaseImpl implements Database {
 				list.addAll(q.getResultList());
 			}
 			return list;
-		}).subscribeOn(databaseScheduler).flatMapMany(Flux::fromIterable);
+		}).subscribeOn(databaseScheduler)
+				.flatMapMany(Flux::fromIterable)
+				.onErrorMap(DatabaseException::new);
 	}
 
 	@Override
@@ -109,7 +114,8 @@ class DatabaseImpl implements Database {
 				throw e;
 			}
 			return null;
-		}).subscribeOn(databaseScheduler).onErrorMap(e -> new RuntimeException("Error while performing database transaction", e));
+		}).subscribeOn(databaseScheduler)
+				.onErrorMap(DatabaseException::new);
 	}
 	
 	@Override
@@ -127,7 +133,8 @@ class DatabaseImpl implements Database {
 				throw e;
 			}
 			return returnVal;
-		}).subscribeOn(databaseScheduler).onErrorMap(e -> new RuntimeException("Error while performing database transaction", e));
+		}).subscribeOn(databaseScheduler)
+				.onErrorMap(DatabaseException::new);
 	}
 
 	private Session newSession() {

@@ -86,7 +86,7 @@ public class NativePlugin implements Plugin {
 						.map(GuildCreateEvent::getGuild)
 						.flatMap(guild -> bot.log(":inbox_tray: New guild joined: " + BotUtils.escapeMarkdown(guild.getName())
 								+ " (" + guild.getId().asString() + ")"))
-						.onErrorContinue((error, obj) -> LOGGER.error("Error while procesing GuildCreateEvent", error))
+						.onErrorContinue((error, obj) -> LOGGER.error("Error while procesing GuildCreateEvent on " + obj, error))
 						.subscribe();
 				// Guild leave
 				bot.getDiscordClients().flatMap(client -> client.getEventDispatcher().on(GuildDeleteEvent.class))
@@ -102,13 +102,13 @@ public class NativePlugin implements Plugin {
 						.map(event -> event.getGuild().map(guild -> BotUtils.escapeMarkdown(guild.getName())
 								+ " (" + guild.getId().asString() + ")").orElse(event.getGuildId().asString() + " (no data)"))
 						.flatMap(str -> bot.log(":outbox_tray: Guild left: " + str))
-						.onErrorContinue((error, obj) -> LOGGER.error("Error while procesing GuildDeleteEvent", error))
+						.onErrorContinue((error, obj) -> LOGGER.error("Error while procesing GuildDeleteEvent on " + obj, error))
 						.subscribe();
 				// Resume on partial reconnections
 				bot.getDiscordClients().flatMap(client -> client.getEventDispatcher().on(ResumeEvent.class)
 						.flatMap(resumeEvent -> bot.log("Shard " + client.getConfig().getShardIndex()
 								+ " successfully resumed session after websocket closure.")))
-						.onErrorContinue((error, obj) -> LOGGER.error("Error while procesing ResumeEvent", error))
+						.onErrorContinue((error, obj) -> LOGGER.error("Error while procesing ResumeEvent on " + obj, error))
 						.subscribe();
 				// Ready on full reconnections
 				bot.getDiscordClients().flatMap(client -> client.getEventDispatcher().on(ReadyEvent.class)
@@ -118,7 +118,7 @@ public class NativePlugin implements Plugin {
 								.take(guildCount)
 								.doAfterTerminate(() -> shardsNotReady.decrementAndGet())
 								.then(bot.log("Shard " + client.getConfig().getShardIndex() + " reconnected (" + guildCount + " guilds)"))))
-						.onErrorContinue((error, obj) -> LOGGER.error("Error while procesing ReadyEvent", error))
+						.onErrorContinue((error, obj) -> LOGGER.error("Error while procesing ReadyEvent on " + obj, error))
 						.subscribe();
 			});
 	}

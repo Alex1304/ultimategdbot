@@ -20,6 +20,7 @@ import com.github.alex1304.ultimategdbot.api.CommandFailedException;
 import com.github.alex1304.ultimategdbot.api.CommandKernel;
 import com.github.alex1304.ultimategdbot.api.CommandPermissionDeniedException;
 import com.github.alex1304.ultimategdbot.api.Context;
+import com.github.alex1304.ultimategdbot.api.DatabaseException;
 import com.github.alex1304.ultimategdbot.api.HandledCommandException;
 import com.github.alex1304.ultimategdbot.api.InvalidSyntaxException;
 import com.github.alex1304.ultimategdbot.api.database.NativeGuildSettings;
@@ -68,6 +69,9 @@ class CommandKernelImpl implements CommandKernel {
 							+ (e.getStatus().code() == 403 ? "Make sure that I have sufficient permissions in this server and try again." : ""))
 					.then();
 		});
+		globalErrorHandler.addHandler(DatabaseException.class, (e, ctx) -> ctx.reply(":no_entry_sign: An error occured when accessing the "
+				+ "database. Try again.")
+				.then());
 		// Parse and execute commands from message create events
 		bot.getDiscordClients().flatMap(client -> client.getEventDispatcher().on(MessageCreateEvent.class))
 				.filter(event -> event.getMessage().getContent().isPresent()
@@ -79,7 +83,7 @@ class CommandKernelImpl implements CommandKernel {
 				.map(tuple -> new Context(tuple.getT3().get().getT1(), tuple.getT1(), tuple.getT3().get().getT2(), bot, tuple.getT2()))
 				.flatMap(ctx -> invokeCommand(ctx.getCommand(), ctx))
 				.onErrorContinue(HandledCommandException.class, (error, obj) -> LOGGER.debug("Successfully handled command exception", error))
-				.onErrorContinue((error, obj) -> LOGGER.error("An error occured when processing a MessageCreateEvent", error))
+				.onErrorContinue((error, obj) -> LOGGER.error("An error occured when processing a MessageCreateEvent on " + obj, error))
 				.subscribe();
 	}
 
