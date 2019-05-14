@@ -14,6 +14,7 @@ import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import org.hibernate.MappingException;
 import org.slf4j.Logger;
@@ -134,21 +135,19 @@ class BotImpl implements Bot {
 
 	@Override
 	public Mono<Message> logStackTrace(Context ctx, Throwable t) {
-		final var maxLength = 1600;
 		var sw = new StringWriter();
 		var pw = new PrintWriter(sw);
 		pw.println(":no_entry_sign: **Something went wrong while executing a command.**");
 		pw.println("__Context dump:__ `" + ctx + "`");
 		pw.println("__Stack trace preview (see full trace in internal logs):__");
 		t.printStackTrace(pw);
-		var trace = sw.toString();
-		if (trace.length() > maxLength) {
-			trace = trace.substring(0, maxLength - 3) + "...";
-		}
-		final var ftrace = trace;
+		var trace = sw.toString()
+				.lines()
+				.limit(10)
+				.collect(Collectors.joining());
 		return getDebugLogChannel()
 				.ofType(MessageChannel.class)
-				.flatMap(c -> c.createMessage(ftrace.substring(0, Math.min(ftrace.length(), maxLength))));
+				.flatMap(c -> c.createMessage(trace));
 	}
 
 	@Override
@@ -200,11 +199,13 @@ class BotImpl implements Bot {
 					return Presence.online(activity);
 			}
 		}, Presence.online(activity));
+		var requestParallelism = propParser.parseAsIntOrDefault("request_parallelism", RouterOptions.DEFAULT_REQUEST_PARALLELISM);
 		var discordClients = new ShardingClientBuilder(token).build()
 				.map(dcb -> dcb.setInitialPresence(presenceStatus))
 				.map(dcb -> dcb.setRouterOptions(RouterOptions.builder()
 						.onClientResponse(ResponseFunction.emptyIfNotFound())
 						.onClientResponse(ResponseFunction.emptyOnErrorStatus(RouteMatcher.route(Routes.REACTION_CREATE), 400))
+						.requestParallelism(requestParallelism)
 						.build()))
 				.map(DiscordClientBuilder::build)
 				.cache();

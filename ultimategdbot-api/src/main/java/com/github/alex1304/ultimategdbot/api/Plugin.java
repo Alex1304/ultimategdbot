@@ -6,6 +6,8 @@ import java.util.Set;
 import com.github.alex1304.ultimategdbot.api.database.GuildSettingsEntry;
 import com.github.alex1304.ultimategdbot.api.utils.PropertyParser;
 
+import reactor.core.publisher.Mono;
+
 /**
  * Represents a plugin. A plugin has a name and provides a list of commands.
  */
@@ -21,6 +23,18 @@ public interface Plugin {
 	 *               parsed
 	 */
 	void setup(Bot bot, PropertyParser parser);
+	
+	/**
+	 * Action to execute when the bot is ready. Errors emitted from here will be
+	 * logged on the WARN level then suppressed.
+	 * 
+	 * @param bot the bot instance
+	 * 
+	 * @return a Mono that completes when the action is finished
+	 */
+	default Mono<Void> onBotReady(Bot bot) {
+		return Mono.empty();
+	}
 
 	/**
 	 * Gets the set of commands that this plugin provides.

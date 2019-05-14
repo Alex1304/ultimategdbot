@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -28,8 +29,11 @@ import com.github.alex1304.ultimategdbot.api.utils.PropertyParser;
 import discord4j.core.event.domain.guild.GuildCreateEvent;
 import discord4j.core.event.domain.guild.GuildDeleteEvent;
 import discord4j.core.event.domain.lifecycle.ReadyEvent;
+import discord4j.core.event.domain.lifecycle.ReadyEvent.Guild;
 import discord4j.core.event.domain.lifecycle.ResumeEvent;
 import discord4j.core.object.util.Snowflake;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 public class NativePlugin implements Plugin {
 	
@@ -73,10 +77,22 @@ public class NativePlugin implements Plugin {
 	private void initEventListeners(Bot bot) {
 		// Initial Ready
 		bot.getDiscordClients().flatMap(client -> client.getEventDispatcher().on(ReadyEvent.class).next()
-					.map(readyEvent -> readyEvent.getGuilds().size())
-					.flatMap(guildCount -> client.getEventDispatcher().on(GuildCreateEvent.class)
-							.take(guildCount)
-							.then(bot.log("Shard " + client.getConfig().getShardIndex() + " connected! Serving " + guildCount + " guilds."))))
+					.doOnNext(readyEvent -> readyEvent.getGuilds().stream()
+							.map(Guild::getId)
+							.forEach(unavailableGuildIds::add))
+					.map(ReadyEvent::getGuilds)
+					.flatMap(guilds -> client.getEventDispatcher().on(GuildCreateEvent.class)
+							.doOnNext(guildCreateEvent -> unavailableGuildIds.remove(guildCreateEvent.getGuild().getId()))
+							.take(guilds.size())
+							.timeout(Duration.ofMinutes(2), Mono.empty())
+							.then(Mono.defer(() -> bot.log("Shard " + client.getConfig().getShardIndex() + " connected! Serving " + guilds.stream()
+									.map(Guild::getId)
+									.filter(id -> !unavailableGuildIds.contains(id))
+									.count() + " guilds.")))))
+			.then(Flux.fromIterable(bot.getPlugins())
+					.flatMap(plugin -> plugin.onBotReady(bot))
+					.onErrorContinue((error, obj) -> LOGGER.warn("onBotReady action failed for plugin " + ((Plugin) obj).getName(), error))
+					.then())
 			.then(bot.log("Bot ready!"))
 			.subscribe(__ -> {
 				// Guild join
@@ -107,7 +123,7 @@ public class NativePlugin implements Plugin {
 				// Resume on partial reconnections
 				bot.getDiscordClients().flatMap(client -> client.getEventDispatcher().on(ResumeEvent.class)
 						.flatMap(resumeEvent -> bot.log("Shard " + client.getConfig().getShardIndex()
-								+ " successfully resumed session after websocket closure.")))
+								+ ": session resumed after websocket disconnection.")))
 						.onErrorContinue((error, obj) -> LOGGER.error("Error while procesing ResumeEvent on " + obj, error))
 						.subscribe();
 				// Ready on full reconnections

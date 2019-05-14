@@ -69,9 +69,11 @@ class CommandKernelImpl implements CommandKernel {
 							+ (e.getStatus().code() == 403 ? "Make sure that I have sufficient permissions in this server and try again." : ""))
 					.then();
 		});
-		globalErrorHandler.addHandler(DatabaseException.class, (e, ctx) -> ctx.reply(":no_entry_sign: An error occured when accessing the "
-				+ "database. Try again.")
-				.then());
+		globalErrorHandler.addHandler(DatabaseException.class, (e, ctx) -> Flux.merge(
+				ctx.reply(":no_entry_sign: An error occured when accessing the database. Try again."),
+				bot.log(":no_entry_sign: A database error occured.\nContext dump: `" + ctx + "`\nException:`"
+						+ e.getCause().getClass().getCanonicalName() + ": "
+						+ Optional.ofNullable(e.getCause().getMessage()).orElse("*no message*"))).then());
 		// Parse and execute commands from message create events
 		bot.getDiscordClients().flatMap(client -> client.getEventDispatcher().on(MessageCreateEvent.class))
 				.filter(event -> event.getMessage().getContent().isPresent()
