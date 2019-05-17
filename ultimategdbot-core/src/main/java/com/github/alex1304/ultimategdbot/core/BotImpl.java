@@ -144,7 +144,7 @@ class BotImpl implements Bot {
 		var trace = sw.toString()
 				.lines()
 				.limit(10)
-				.collect(Collectors.joining());
+				.collect(Collectors.joining("\n"));
 		return getDebugLogChannel()
 				.ofType(MessageChannel.class)
 				.flatMap(c -> c.createMessage(trace));

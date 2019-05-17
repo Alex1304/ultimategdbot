@@ -78,8 +78,12 @@
 			<artifactId>logback-classic</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>com.discord4j.discord4j</groupId>
+			<groupId>com.discord4j</groupId>
 			<artifactId>discord4j-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>io.projectreactor.netty</groupId>
+			<artifactId>reactor-netty</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>mysql</groupId>
