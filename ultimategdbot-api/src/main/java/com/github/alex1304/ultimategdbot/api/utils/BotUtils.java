@@ -83,7 +83,7 @@ public class BotUtils {
 		}
 	}
 	
-	public static int occurrences(String str, String substr) {
+	private static int occurrences(String str, String substr) {
 		int res = 0;
 		for (var i = 0 ; i < str.length() - substr.length() + 1 ; i++) {
 			var substr0 = str.substring(i, i + substr.length());
@@ -162,30 +162,42 @@ public class BotUtils {
 		var args = new ArrayList<String>();
 		var buffer = new StringBuilder();
 		var inQuotes = false;
-		for (var arg : input.split("[ \n\t]")) {
-			if (arg.isEmpty()) {
-				continue;
+		var escaping = false;
+		for (var c : input.toCharArray()) {
+			if (!escaping) {
+				if (c == '\\') {
+					escaping = true;
+					continue;
+				} else if (c == '"') {
+					inQuotes = !inQuotes;
+					continue;
+				}
 			}
-			buffer.append((buffer.length() > 0 ? " " : "") + arg);
-			if ((occurrences(arg, "\"") - occurrences(arg, "\\\"")) % 2 == 1) {
-				inQuotes = !inQuotes;
+			if (!inQuotes) {
+				if (Character.isWhitespace(c)) {
+					args.add(buffer.toString());
+					buffer.delete(0, buffer.length());
+				} else {
+					buffer.append(c);
+				}
+			} else {
+				buffer.append(c);
 			}
-			var isSpaceEscaped = false;
-			if (!inQuotes && arg.endsWith("\\")) {
-				buffer.deleteCharAt(buffer.length() - 1);
-				isSpaceEscaped = true;
-			}
-			if (!inQuotes && !isSpaceEscaped) {
-				args.add(removeQuotesUnlessEscaped(buffer.toString()));
-				buffer.delete(0, buffer.length());
-			}
+			escaping = false;
 		}
 		if (buffer.length() != 0) {
-			args.add(removeQuotesUnlessEscaped(buffer.toString()));
+			args.add(buffer.toString());
 		}
 		return args;
 	}
 	
+	/**
+	 * Returns the same test but without quotes, unless they are escaped with a
+	 * backslash.
+	 * 
+	 * @param text the text
+	 * @return the same text but without unescaped quotes
+	 */
 	public static String removeQuotesUnlessEscaped(String text) {
 		var sb = new StringBuilder();
 		char prev = 0;

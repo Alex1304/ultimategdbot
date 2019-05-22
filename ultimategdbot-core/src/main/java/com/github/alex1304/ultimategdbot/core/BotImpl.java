@@ -199,13 +199,12 @@ class BotImpl implements Bot {
 					return Presence.online(activity);
 			}
 		}, Presence.online(activity));
-		var requestParallelism = propParser.parseAsIntOrDefault("request_parallelism", RouterOptions.DEFAULT_REQUEST_PARALLELISM);
 		var discordClients = new ShardingClientBuilder(token).build()
 				.map(dcb -> dcb.setInitialPresence(presenceStatus))
 				.map(dcb -> dcb.setRouterOptions(RouterOptions.builder()
 						.onClientResponse(ResponseFunction.emptyIfNotFound())
 						.onClientResponse(ResponseFunction.emptyOnErrorStatus(RouteMatcher.route(Routes.REACTION_CREATE), 400))
-						.requestParallelism(requestParallelism)
+						.globalRateLimiter(new UnboundedGlobalRateLimiter())
 						.build()))
 				.map(DiscordClientBuilder::build)
 				.cache();

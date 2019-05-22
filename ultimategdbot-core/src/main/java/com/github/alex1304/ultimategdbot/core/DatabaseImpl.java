@@ -109,7 +109,7 @@ class DatabaseImpl implements Database {
 				txConsumer.accept(s);
 				tx.commit();
 			} catch (RuntimeException e) {
-				if (tx != null)
+				if (tx != null && tx.isActive())
 					tx.rollback();
 				throw e;
 			}
@@ -128,7 +128,7 @@ class DatabaseImpl implements Database {
 				returnVal = txFunction.apply(s);
 				tx.commit();
 			} catch (RuntimeException e) {
-				if (tx != null)
+				if (tx != null && tx.isActive())
 					tx.rollback();
 				throw e;
 			}
