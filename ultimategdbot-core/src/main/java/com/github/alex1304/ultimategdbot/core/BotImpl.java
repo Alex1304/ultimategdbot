@@ -199,13 +199,15 @@ class BotImpl implements Bot {
 					return Presence.online(activity);
 			}
 		}, Presence.online(activity));
-		var discordClients = new ShardingClientBuilder(token).build()
-				.map(dcb -> dcb.setInitialPresence(presenceStatus))
-				.map(dcb -> dcb.setRouterOptions(RouterOptions.builder()
+		var requestThroughput = propParser.parseAsIntOrDefault("request_throughput", 55);
+		var discordClients = new ShardingClientBuilder(token)
+				.setRouterOptions(RouterOptions.builder()
 						.onClientResponse(ResponseFunction.emptyIfNotFound())
 						.onClientResponse(ResponseFunction.emptyOnErrorStatus(RouteMatcher.route(Routes.REACTION_CREATE), 400))
-						.globalRateLimiter(new UnboundedGlobalRateLimiter())
-						.build()))
+						.globalRateLimiter(new FixedThroughputGlobalRateLimiter(requestThroughput))
+						.build())
+				.build()
+				.map(dcb -> dcb.setInitialPresence(presenceStatus))
 				.map(DiscordClientBuilder::build)
 				.cache();
 		return new BotImpl(token, defaultPrefix, discordClients, database, replyMenuTimeout, debugLogChannelId,
