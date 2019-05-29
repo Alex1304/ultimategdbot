@@ -1,5 +1,6 @@
 package com.github.alex1304.ultimategdbot.core;
 
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.Objects;
 import java.util.Set;
@@ -11,8 +12,13 @@ import com.github.alex1304.ultimategdbot.api.Plugin;
 import com.github.alex1304.ultimategdbot.api.utils.reply.PaginatedReplyMenuBuilder;
 
 import discord4j.core.object.entity.Channel.Type;
+import discord4j.core.object.util.Snowflake;
 import discord4j.core.object.entity.Message;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.function.TupleUtils;
+import reactor.util.function.Tuple2;
+import reactor.util.function.Tuples;
 
 class SetupCommand implements Command {
 
@@ -28,21 +34,47 @@ class SetupCommand implements Command {
 		var sb = new StringBuffer("Here you can configure the bot for this server. "
 				+ "You can update a field by doing `" + ctx.getPrefixUsed() + "setup set <field> <value>`. "
 				+ "Use `None` as value to reset a field.\n\n");
-		return ctx.getGuildSettings().doOnNext(map -> map.forEach((plugin, entries) -> {
-			sb.append("**__").append(plugin.getName()).append("__**\n");
-			if (entries.isEmpty()) {
-				sb.append("_(Nothing to configure here)_\n");
-				return;
-			}
-			entries.forEach((k, v) -> {
-				sb.append('`');
-				sb.append(k);
-				sb.append("`: ");
-				sb.append(v);
-				sb.append('\n');
-			});
-			sb.append('\n');
-		})).flatMap(__ -> rb.build(sb.toString().stripTrailing())).then();
+		var guildId = ctx.getEvent().getGuildId().map(Snowflake::asLong).orElse(0L);
+		return ctx.getBot().getDatabase()
+				.performTransactionWhen(session -> Flux.fromIterable(ctx.getBot().getPlugins())
+						.sort(Comparator.comparing(Plugin::getName))
+						.concatMap(plugin -> Flux.fromIterable(plugin.getGuildConfigurationEntries().entrySet())
+								.flatMap(entry -> entry.getValue().getAsString(session, guildId)
+										.map(str -> Tuples.of(entry.getKey(), str)))
+								.collectSortedList(Comparator.comparing(Tuple2::getT1))
+								.doOnNext(list -> {
+									sb.append("**__").append(plugin.getName()).append("__**\n");
+									if (list.isEmpty()) {
+										sb.append("_(Nothing to configure here)_\n");
+										return;
+									}
+									list.forEach(TupleUtils.consumer((key, value) -> {
+										sb.append('`');
+										sb.append(key);
+										sb.append("`: ");
+										sb.append(value);
+										sb.append('\n');
+									}));
+									sb.append('\n');
+								}))
+						.then())
+				.then(Mono.defer(() -> rb.build(sb.toString().stripTrailing())))
+				.then();
+//		return ctx.getGuildSettings().doOnNext(map -> map.forEach((plugin, entries) -> {
+//			sb.append("**__").append(plugin.getName()).append("__**\n");
+//			if (entries.isEmpty()) {
+//				sb.append("_(Nothing to configure here)_\n");
+//				return;
+//			}
+//			entries.forEach((k, v) -> {
+//				sb.append('`');
+//				sb.append(k);
+//				sb.append("`: ");
+//				sb.append(v);
+//				sb.append('\n');
+//			});
+//			sb.append('\n');
+//		})).flatMap(__ -> rb.build(sb.toString().stripTrailing())).then();
 	}
 
 	@Override

@@ -9,6 +9,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.StringJoiner;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,9 +28,13 @@ import com.github.alex1304.ultimategdbot.api.database.NativeGuildSettings;
 import com.github.alex1304.ultimategdbot.api.utils.BotUtils;
 
 import discord4j.core.event.domain.message.MessageCreateEvent;
+import discord4j.core.object.entity.User;
+import discord4j.core.object.util.Snowflake;
 import discord4j.rest.http.client.ClientException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.function.TupleUtils;
+import reactor.retry.Retry;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
@@ -86,16 +91,19 @@ class CommandKernelImpl implements CommandKernel {
 				})).then());
 		// Parse and execute commands from message create events
 		bot.getDiscordClients().flatMap(client -> client.getEventDispatcher().on(MessageCreateEvent.class))
-				.filter(event -> event.getMessage().getContent().isPresent()
-						&& event.getMessage().getAuthor().isPresent()
-						&& !event.getMessage().getAuthor().get().isBot())
-				.flatMap(event -> findPrefixUsed(bot, event).map(prefixUsed -> Tuples.of(event, prefixUsed,
-						parseCommandLine(event.getMessage().getContent().get().substring(prefixUsed.length())))))
-				.filter(tuple -> tuple.getT3().isPresent())
-				.map(tuple -> new Context(tuple.getT3().get().getT1(), tuple.getT1(), tuple.getT3().get().getT2(), bot, tuple.getT2()))
+				.filter(event -> event.getMessage().getAuthor().map(User::isBot).map(b -> !b).orElse(false))
+				.flatMap(event -> {
+					var content = event.getMessage().getContent().orElse("");
+					return findPrefixUsed(bot, event)
+							.filter(prefix -> content.length() >= prefix.length())
+							.map(prefix -> parseCommandLine(content.substring(prefix.length()).strip())
+									.map(TupleUtils.function((cmd, args) -> new Context(cmd, event, args, bot, prefix))))
+							.flatMap(Mono::justOrEmpty);
+				})
 				.flatMap(ctx -> invokeCommand(ctx.getCommand(), ctx))
-				.onErrorContinue(HandledCommandException.class, (error, obj) -> LOGGER.debug("Successfully handled command exception", error))
+				.onErrorContinue(HandledCommandException.class, (error, obj) -> LOGGER.trace("Successfully handled command exception", error))
 				.onErrorContinue((error, obj) -> LOGGER.error("An error occured when processing a MessageCreateEvent on " + obj, error))
+				.retryWhen(Retry.any().doOnRetry(retryCtx -> LOGGER.error("Retrying handler after failing to recover from:", retryCtx.exception())))
 				.subscribe();
 	}
 
@@ -150,22 +158,42 @@ class CommandKernelImpl implements CommandKernel {
 	}
 	
 	private static Mono<String> findPrefixUsed(Bot bot, MessageCreateEvent event) {
-		var guildIdOpt = event.getGuildId();
-		var guildSettings = guildIdOpt.isPresent() ? bot.getDatabase().findByIDOrCreate(NativeGuildSettings.class, guildIdOpt.get().asLong(), (gs, gid) -> {
-			gs.setGuildId(gid);
-			gs.setPrefix(bot.getDefaultPrefix());
-		}) : Mono.<NativeGuildSettings>empty();
-		return Mono.just(bot.getMainDiscordClient().getSelfId())
-				.filter(Optional::isPresent)
-				.map(Optional::get)
-				.map(botId -> Tuples.of("<@" + botId.asString() + "> ", "<@!" + botId.asString() + "> ",
-						BotUtils.removeQuotesUnlessEscaped(event.getMessage().getContent().orElse(""))))
-				.filter(tuple -> !tuple.getT3().isEmpty())
-				.flatMap(tuple -> guildSettings
-						.map(gs -> Tuples.of(tuple.getT1(), tuple.getT2(), tuple.getT3(), gs.getPrefix() == null ? bot.getDefaultPrefix() : gs.getPrefix()))
-						.defaultIfEmpty(Tuples.of(tuple.getT1(), tuple.getT2(), tuple.getT3(), bot.getDefaultPrefix())))
-				.flatMap(tuple -> Flux.just(tuple.getT1(), tuple.getT2(), tuple.getT4())
-							.filter(str -> str.equalsIgnoreCase(tuple.getT3().substring(0, Math.min(str.length(), tuple.getT3().length()))))
-							.next());
+		var msgContent = event.getMessage().getContent().orElse("");
+		return Mono.justOrEmpty(event.getGuildId())
+				.map(Snowflake::asLong)
+				.flatMap(guildId -> bot.getDatabase().findByIDOrCreate(NativeGuildSettings.class, guildId, (gs, gid) -> {
+							gs.setGuildId(gid);
+							bot.getDatabase().save(gs).subscribe(null,
+									e -> LOGGER.error("Unable to save guild settings for " + gid, e),
+									() -> LOGGER.debug("Created guild settings: {}", gs));
+						})
+						.flatMap(gs -> Mono.justOrEmpty(gs.getPrefix())))
+				.defaultIfEmpty(bot.getDefaultPrefix())
+				.map(String::strip)
+				.map(specificPrefix -> bot.getMainDiscordClient().getSelfId()
+						.map(Snowflake::asString)
+						.stream()
+						.flatMap(botId -> Stream.of("<@" + botId + ">", "<@!" + botId + ">", specificPrefix)
+								.filter(prefix -> prefix.equalsIgnoreCase(msgContent.substring(0, Math.min(prefix.length(), msgContent.length())))))
+						.findFirst())
+				.flatMap(Mono::justOrEmpty);
+				
+//		var guildIdOpt = event.getGuildId();
+//		var guildSettings = guildIdOpt.isPresent() ? bot.getDatabase().findByIDOrCreate(NativeGuildSettings.class, guildIdOpt.get().asLong(), (gs, gid) -> {
+//			gs.setGuildId(gid);
+//			gs.setPrefix(bot.getDefaultPrefix());
+//		}) : Mono.<NativeGuildSettings>empty();
+//		return Mono.just(bot.getMainDiscordClient().getSelfId())
+//				.filter(Optional::isPresent)
+//				.map(Optional::get)
+//				.map(botId -> Tuples.of("<@" + botId.asString() + "> ", "<@!" + botId.asString() + "> ",
+//						BotUtils.removeQuotesUnlessEscaped(event.getMessage().getContent().orElse(""))))
+//				.filter(tuple -> !tuple.getT3().isEmpty())
+//				.flatMap(tuple -> guildSettings
+//						.map(gs -> Tuples.of(tuple.getT1(), tuple.getT2(), tuple.getT3(), gs.getPrefix() == null ? bot.getDefaultPrefix() : gs.getPrefix()))
+//						.defaultIfEmpty(Tuples.of(tuple.getT1(), tuple.getT2(), tuple.getT3(), bot.getDefaultPrefix())))
+//				.flatMap(tuple -> Flux.just(tuple.getT1(), tuple.getT2(), tuple.getT4())
+//							.filter(str -> str.equalsIgnoreCase(tuple.getT3().substring(0, Math.min(str.length(), tuple.getT3().length()))))
+//							.next());
 	}
 }

@@ -56,15 +56,13 @@ public class PaginatedReplyMenuBuilder extends ReplyMenuBuilder {
 		if (page < pageMax) {
 			addItem("next", "To go to next page, type `next`", ctx0 -> {
 				ctx.setVar("page", ctx.getVarOrDefault("page", 0) + 1);
-				ctx.getBot().getCommandKernel().invokeCommand(cmd, ctx).subscribe();
-				return Mono.empty();
+				return ctx.getBot().getCommandKernel().invokeCommand(cmd, ctx);
 			});
 		}
 		if (page > 0) {
 			addItem("prev", "To go to previous page, type `prev`", ctx0 -> {
 				ctx.setVar("page", ctx.getVarOrDefault("page", 0) - 1);
-				ctx.getBot().getCommandKernel().invokeCommand(cmd, ctx).subscribe();
-				return Mono.empty();
+				return ctx.getBot().getCommandKernel().invokeCommand(cmd, ctx);
 			});
 		}
 		if (pageMax > 0) {
@@ -72,12 +70,11 @@ public class PaginatedReplyMenuBuilder extends ReplyMenuBuilder {
 				ArgUtils.requireMinimumArgCount(ctx0, 2, "Please specify a page number");
 				var page0 = ArgUtils.getArgAsInt(ctx0, 1) - 1;
 				var pageMax0 = ctx.getVar("pageMax", Integer.class);
-				if (page0 > pageMax0) {
+				if (page0 < 0 || page0 > pageMax0) {
 					return Mono.error(new CommandFailedException("Page number out of range"));
 				}
 				ctx.setVar("page", page0);
-				ctx.getBot().getCommandKernel().invokeCommand(cmd, ctx).subscribe();
-				return Mono.empty();
+				return ctx.getBot().getCommandKernel().invokeCommand(cmd, ctx);
 			});
 		}
 		return super.build(pages.isEmpty() ? "" : pages.get(page), embed);

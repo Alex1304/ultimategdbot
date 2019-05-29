@@ -5,7 +5,10 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import org.hibernate.Session;
+
 import com.github.alex1304.ultimategdbot.api.Database;
+import com.github.alex1304.ultimategdbot.api.utils.GuildSettingsValueConverter;
 
 import reactor.core.publisher.Mono;
 
@@ -36,20 +39,48 @@ public class GuildSettingsEntry<E extends GuildSettings, D> {
 		return entityClass;
 	}
 	
+	public D getRaw(Session s, long guildId) {
+		return valueGetter.apply(s.get(entityClass, guildId));
+	}
+	
+	public void setRaw(Session s, D value, long guildId) {
+		var entity = s.get(entityClass, guildId);
+		valueSetter.accept(entity, value);
+		s.saveOrUpdate(entity);
+	}
+	
+	public Mono<String> getAsString(Session s, long guildId) {
+		return Mono.fromCallable(() -> getRaw(s, guildId))
+				.flatMap(raw -> valueToString.apply(raw, guildId))
+				.defaultIfEmpty(GuildSettingsValueConverter.NONE_VALUE);
+	}
+	
+	public Mono<Void> setFromString(Session s, String strValue, long guildId) {
+		if (strValue == null) {
+			strValue = GuildSettingsValueConverter.NONE_VALUE;
+		}
+		return stringToValue.apply(strValue, guildId)
+				.flatMap(raw -> Mono.fromRunnable(() -> setRaw(s, raw, guildId)));
+	}
+	
+	@Deprecated
 	public Mono<D> valueFromDatabase(Database db, long guildId) {
 		return db.findByIDOrCreate(entityClass, guildId, GuildSettings::setGuildId).map(valueGetter::apply);
 	}
-	
+
+	@Deprecated
 	public Mono<String> valueFromDatabaseAsString(Database db, long guildId) {
 		return valueFromDatabase(db, guildId).flatMap(val -> valueToString.apply(val, guildId));
 	}
-	
+
+	@Deprecated
 	public Mono<Void> valueToDatabase(Database db, D value, long guildId) {
 		return db.findByIDOrCreate(entityClass, guildId, GuildSettings::setGuildId)
 				.doOnNext(entity -> valueSetter.accept(entity, value))
 				.flatMap(db::save);
 	}
-	
+
+	@Deprecated
 	public Mono<Void> valueAsStringToDatabase(Database db, String strVal, long guildId) {
 		return stringToValue.apply(strVal, guildId).flatMap(value -> valueToDatabase(db, value, guildId));
 	}

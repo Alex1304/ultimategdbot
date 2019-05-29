@@ -185,7 +185,10 @@ public class Context {
 	 * 
 	 * @return an unmodifiable Map containing the guild settings keys and their
 	 *         associated values, grouped by plugins
+	 *         
+	 * @deprecated
 	 */
+	@Deprecated
 	public Mono<Map<Plugin, Map<String, String>>> getGuildSettings() {
 		if (!event.getGuildId().isPresent()) {
 			return Mono.error(new UnsupportedOperationException("Cannot perform this operation outside of a guild"));
@@ -217,7 +220,9 @@ public class Context {
 	 *                                       the entry
 	 * @throws UnsupportedOperationException if this method is called in a context
 	 *                                       that is outside of a Discord guild
+	 * @deprecated
 	 */
+	@Deprecated
 	public Mono<Void> setGuildSetting(String key, String val) {
 		if (!event.getGuildId().isPresent()) {
 			throw new UnsupportedOperationException("Cannot perform this operation outside of a guild");

@@ -96,4 +96,18 @@ public interface Database {
 	 *         emitting a value.
 	 */
 	<V> Mono<V> performTransaction(Function<Session, V> txFunction);
+	
+	/**
+	 * Allows to manipulate a Session in an asynchronous context. The session
+	 * provides a Mono which completion indicates that the transaction can be
+	 * committed and the session closed.
+	 * 
+	 * @param                 <T> the value that the transaction may produce
+	 * @param txAsyncFunction a function that manipulates a Session and returns a
+	 *                        Mono completing when the transaction is ready to be
+	 *                        committed
+	 * @return a Mono completing when the transaction terminates successfully and
+	 *         emitting a value.
+	 */
+	<V> Mono<V> performTransactionWhen(Function<Session, Mono<V>> txAsyncFunction);
 }

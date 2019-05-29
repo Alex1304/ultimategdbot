@@ -64,7 +64,6 @@ class DatabaseImpl implements Database {
 		return findByID(entityClass, key).switchIfEmpty(Mono.fromCallable(() -> {
 			T result = entityClass.getConstructor().newInstance();
 			keySetter.accept(result, key);
-			save(result).subscribe();
 			return result;
 		}).subscribeOn(databaseScheduler)
 				.onErrorMap(DatabaseException::new));
@@ -135,6 +134,43 @@ class DatabaseImpl implements Database {
 			return returnVal;
 		}).subscribeOn(databaseScheduler)
 				.onErrorMap(DatabaseException::new);
+	}
+	
+	@Override
+	public <V> Mono<V> performTransactionWhen(Function<Session, Mono<V>> txAsyncFunction) {
+		return Mono.usingWhen(
+						Mono.fromCallable(this::newSession).doOnNext(Session::beginTransaction),
+						txAsyncFunction,
+						this::commitAndClose,
+						this::rollbackAndClose,
+						this::rollbackAndClose)
+				.subscribeOn(databaseScheduler);
+	}
+	
+	private Mono<Void> commitAndClose(Session session) {
+		return Mono.<Void>fromRunnable(() -> {
+			var tx = session.getTransaction();
+			if (tx != null && tx.isActive()) {
+				try {
+					tx.commit();
+				} finally {
+					session.close();
+				}
+			}
+		}).onErrorMap(DatabaseException::new);
+	}
+	
+	private Mono<Void> rollbackAndClose(Session session) {
+		return Mono.<Void>fromRunnable(() -> {
+			var tx = session.getTransaction();
+			if (tx != null && tx.isActive()) {
+				try {
+					tx.rollback();
+				} finally {
+					session.close();
+				}
+			}
+		}).onErrorMap(DatabaseException::new);
 	}
 
 	private Session newSession() {
