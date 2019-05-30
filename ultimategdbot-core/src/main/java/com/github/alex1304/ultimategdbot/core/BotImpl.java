@@ -134,6 +134,7 @@ class BotImpl implements Bot {
 	}
 
 	@Override
+	@Deprecated
 	public Mono<Message> logStackTrace(Context ctx, Throwable t) {
 		var sw = new StringWriter();
 		var pw = new PrintWriter(sw);

@@ -87,7 +87,10 @@ public interface Bot {
 	 * @param t   the throwable to print the strack trace of
 	 * @return a Flux emitting all messages sent to logs (if splitted due to
 	 *         character limit), or only one message otherwise.
+	 *         
+	 * @deprecated See BotUtils#debugError for a more standardized and reusable format.
 	 */
+	@Deprecated
 	Mono<Message> logStackTrace(Context ctx, Throwable t);
 
 	/**

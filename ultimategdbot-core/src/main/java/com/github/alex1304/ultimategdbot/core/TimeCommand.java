@@ -7,7 +7,6 @@ import java.util.Set;
 import com.github.alex1304.ultimategdbot.api.Command;
 import com.github.alex1304.ultimategdbot.api.CommandFailedException;
 import com.github.alex1304.ultimategdbot.api.Context;
-import com.github.alex1304.ultimategdbot.api.PermissionLevel;
 import com.github.alex1304.ultimategdbot.api.Plugin;
 import com.github.alex1304.ultimategdbot.api.utils.ArgUtils;
 import com.github.alex1304.ultimategdbot.api.utils.BotUtils;
@@ -62,11 +61,6 @@ class TimeCommand implements Command {
 	@Override
 	public String getSyntax() {
 		return "<command>";
-	}
-
-	@Override
-	public PermissionLevel getPermissionLevel() {
-		return PermissionLevel.PUBLIC;
 	}
 
 	@Override

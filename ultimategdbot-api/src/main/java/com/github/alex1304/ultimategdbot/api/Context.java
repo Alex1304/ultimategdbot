@@ -185,9 +185,14 @@ public class Context {
 	 * 
 	 * @return an unmodifiable Map containing the guild settings keys and their
 	 *         associated values, grouped by plugins
-	 *         
-	 * @deprecated
+	 * 
+	 * @deprecated This method returns the values as strings, for view only. It
+	 *             doesnt allow retrieving the raw values, so it isn't relevant to
+	 *             have this method in the Context object. Also, it makes one
+	 *             different database transaction for each guild setting, so there
+	 *             are performance issues as well.
 	 */
+	@SuppressWarnings("deprecation")
 	@Deprecated
 	public Mono<Map<Plugin, Map<String, String>>> getGuildSettings() {
 		if (!event.getGuildId().isPresent()) {
@@ -220,7 +225,13 @@ public class Context {
 	 *                                       the entry
 	 * @throws UnsupportedOperationException if this method is called in a context
 	 *                                       that is outside of a Discord guild
-	 * @deprecated
+	 * @deprecated This method only supports setting new values from their string
+	 *             conversion. It doesn't allow a lot of flexibility, and it isn't
+	 *             relevant to have a such method in the Context object to begin
+	 *             with. The recommended way to change a guild setting is by
+	 *             iterating through all plugins (Bot#getPlugins), checking for each
+	 *             plugin if key exists, and using the appropriate value setter on
+	 *             the found entry.
 	 */
 	@Deprecated
 	public Mono<Void> setGuildSetting(String key, String val) {
@@ -242,7 +253,7 @@ public class Context {
 				+ "command=" + command.getClass().getCanonicalName()
 				+ ", event=" + event
 				+ ", args=" + args
-				+ ", variables=" + variables
+				+ ", variables=" + variables.keySet()
 				+ ", prefixUsed=" + prefixUsed
 				+ "}";
 	}

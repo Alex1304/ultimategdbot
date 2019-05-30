@@ -63,8 +63,8 @@ class CommandKernelImpl implements CommandKernel {
 		globalErrorHandler.addHandler(CommandPermissionDeniedException.class, (e, ctx) ->
 				ctx.reply(":no_entry_sign: You are not granted the privileges to run this command.").then());
 		globalErrorHandler.addHandler(ClientException.class, (e, ctx) -> {
-			LOGGER.debug("Discord ClientException thrown when using a command. User input: {}, Error: {}",
-					ctx.getEvent().getMessage().getContent().orElse(""), e);
+			LOGGER.debug("Discord ClientException thrown when using a command. User input: "
+					+ ctx.getEvent().getMessage().getContent().orElse("") + ", Error:", e);
 			var h = e.getErrorResponse();
 			var sj = new StringJoiner("", "```\n", "```\n");
 			h.getFields().forEach((k, v) -> sj.add(k).add(": ").add(String.valueOf(v)).add("\n"));
@@ -76,19 +76,7 @@ class CommandKernelImpl implements CommandKernel {
 		});
 		globalErrorHandler.addHandler(DatabaseException.class, (e, ctx) -> Flux.merge(
 				ctx.reply(":no_entry_sign: An error occured when accessing the database. Try again."),
-				Mono.defer(() -> {
-					var sb = new StringBuilder(":no_entry_sign: A database error occured.\nContext dump: `" + ctx + "`\nException thrown: `");
-					var separator = "";
-					for (var current = e.getCause() ; current != null ; current = current.getCause()) {
-						sb.append(separator)
-								.append(current.getClass().getCanonicalName())
-								.append(": ")
-								.append(current.getMessage())
-								.append("`\n");
-						separator = "Caused by: `";
-					}
-					return bot.log(sb.toString());
-				})).then());
+				BotUtils.debugError(":no_entry_sign: **A database error occured.**", ctx, e)).then());
 		// Parse and execute commands from message create events
 		bot.getDiscordClients().flatMap(client -> client.getEventDispatcher().on(MessageCreateEvent.class))
 				.filter(event -> event.getMessage().getAuthor().map(User::isBot).map(b -> !b).orElse(false))
@@ -153,7 +141,7 @@ class CommandKernelImpl implements CommandKernel {
 				.onErrorResume(error -> !(error instanceof HandledCommandException), error -> ctx
 						.reply(":no_entry_sign: Something went wrong. A crash report has been sent to the developer. Sorry for the inconvenience.")
 						.onErrorResume(e -> Mono.empty())
-						.then(ctx.getBot().logStackTrace(ctx, error))
+						.thenMany(BotUtils.debugError(":no_entry_sign: **Something went wrong while executing a command.**", ctx, error))
 						.then(Mono.error(error)));
 	}
 	
@@ -177,23 +165,5 @@ class CommandKernelImpl implements CommandKernel {
 								.filter(prefix -> prefix.equalsIgnoreCase(msgContent.substring(0, Math.min(prefix.length(), msgContent.length())))))
 						.findFirst())
 				.flatMap(Mono::justOrEmpty);
-				
-//		var guildIdOpt = event.getGuildId();
-//		var guildSettings = guildIdOpt.isPresent() ? bot.getDatabase().findByIDOrCreate(NativeGuildSettings.class, guildIdOpt.get().asLong(), (gs, gid) -> {
-//			gs.setGuildId(gid);
-//			gs.setPrefix(bot.getDefaultPrefix());
-//		}) : Mono.<NativeGuildSettings>empty();
-//		return Mono.just(bot.getMainDiscordClient().getSelfId())
-//				.filter(Optional::isPresent)
-//				.map(Optional::get)
-//				.map(botId -> Tuples.of("<@" + botId.asString() + "> ", "<@!" + botId.asString() + "> ",
-//						BotUtils.removeQuotesUnlessEscaped(event.getMessage().getContent().orElse(""))))
-//				.filter(tuple -> !tuple.getT3().isEmpty())
-//				.flatMap(tuple -> guildSettings
-//						.map(gs -> Tuples.of(tuple.getT1(), tuple.getT2(), tuple.getT3(), gs.getPrefix() == null ? bot.getDefaultPrefix() : gs.getPrefix()))
-//						.defaultIfEmpty(Tuples.of(tuple.getT1(), tuple.getT2(), tuple.getT3(), bot.getDefaultPrefix())))
-//				.flatMap(tuple -> Flux.just(tuple.getT1(), tuple.getT2(), tuple.getT4())
-//							.filter(str -> str.equalsIgnoreCase(tuple.getT3().substring(0, Math.min(str.length(), tuple.getT3().length()))))
-//							.next());
 	}
 }

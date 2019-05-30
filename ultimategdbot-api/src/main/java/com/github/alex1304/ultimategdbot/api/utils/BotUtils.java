@@ -277,4 +277,21 @@ public class BotUtils {
 		}
 		return props;
 	}
+	
+	public static Flux<Message> debugError(String header, Context ctx, Throwable error) {
+		var sb = new StringBuilder(header)
+				.append("\nContext dump: `")
+				.append(ctx)
+				.append("`\nException thrown: `");
+		var separator = "";
+		for (var current = error.getCause() ; current != null ; current = current.getCause()) {
+			sb.append(separator)
+					.append(current.getClass().getCanonicalName())
+					.append(": ")
+					.append(current.getMessage())
+					.append("`\n");
+			separator = "Caused by: `";
+		}
+		return sendMultipleSimpleMessagesToOneChannel(ctx.getBot().getDebugLogChannel(), chunkMessage(sb.toString()));
+	}
 }
