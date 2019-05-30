@@ -1,5 +1,6 @@
 package com.github.alex1304.ultimategdbot.api.database;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -40,11 +41,11 @@ public class GuildSettingsEntry<E extends GuildSettings, D> {
 	}
 	
 	public D getRaw(Session s, long guildId) {
-		return valueGetter.apply(s.get(entityClass, guildId));
+		return valueGetter.apply(findOrCreate(s, guildId));
 	}
 	
 	public void setRaw(Session s, D value, long guildId) {
-		var entity = s.get(entityClass, guildId);
+		var entity = findOrCreate(s, guildId);
 		valueSetter.accept(entity, value);
 		s.saveOrUpdate(entity);
 	}
@@ -83,5 +84,18 @@ public class GuildSettingsEntry<E extends GuildSettings, D> {
 	@Deprecated
 	public Mono<Void> valueAsStringToDatabase(Database db, String strVal, long guildId) {
 		return stringToValue.apply(strVal, guildId).flatMap(value -> valueToDatabase(db, value, guildId));
+	}
+	
+	private E findOrCreate(Session s, long guildId) {
+		var entity = s.get(entityClass, guildId);
+		if (entity == null) {
+			try {
+				entity = entityClass.getConstructor().newInstance();
+			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+					| InvocationTargetException | NoSuchMethodException | SecurityException e) {
+				throw new RuntimeException("Unable to create entity using reflection", e);
+			}
+		}
+		return entity;
 	}
 }
