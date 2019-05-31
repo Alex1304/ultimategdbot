@@ -173,6 +173,11 @@
 				<version>b01f7a6</version>
 			</dependency>
 			<dependency>
+				<groupId>com.discord4j</groupId>
+				<artifactId>stores-caffeine</artifactId>
+				<version>3.0.5</version>
+			</dependency>
+			<dependency>
 				<groupId>org.jboss.spec.javax.transaction</groupId>
 				<artifactId>jboss-transaction-api_1.2_spec</artifactId>
 				<version>2.0.0.Alpha1</version>

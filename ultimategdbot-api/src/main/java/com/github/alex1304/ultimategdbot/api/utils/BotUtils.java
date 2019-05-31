@@ -279,12 +279,15 @@ public class BotUtils {
 	}
 	
 	public static Flux<Message> debugError(String header, Context ctx, Throwable error) {
+		Objects.requireNonNull(header, "header was null");
+		Objects.requireNonNull(ctx, "ctx was null");
+		Objects.requireNonNull(error, "error was null");
 		var sb = new StringBuilder(header)
 				.append("\nContext dump: `")
 				.append(ctx)
 				.append("`\nException thrown: `");
 		var separator = "";
-		for (var current = error.getCause() ; current != null ; current = current.getCause()) {
+		for (var current = error ; current != null ; current = current.getCause()) {
 			sb.append(separator)
 					.append(current.getClass().getCanonicalName())
 					.append(": ")

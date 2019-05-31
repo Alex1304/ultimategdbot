@@ -2,6 +2,7 @@ package com.github.alex1304.ultimategdbot.core;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.time.Duration;
 import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.Comparator;
@@ -31,6 +32,7 @@ import com.github.alex1304.ultimategdbot.api.utils.PropertyParser;
 
 import discord4j.core.DiscordClient;
 import discord4j.core.DiscordClientBuilder;
+import discord4j.core.object.data.stored.MessageBean;
 import discord4j.core.object.entity.Channel;
 import discord4j.core.object.entity.Guild;
 import discord4j.core.object.entity.GuildEmoji;
@@ -40,11 +42,14 @@ import discord4j.core.object.presence.Activity;
 import discord4j.core.object.presence.Presence;
 import discord4j.core.object.util.Snowflake;
 import discord4j.core.shard.ShardingClientBuilder;
+import discord4j.core.shard.ShardingJdkStoreRegistry;
+import discord4j.core.shard.ShardingJdkStoreService;
 import discord4j.core.spec.MessageCreateSpec;
 import discord4j.rest.request.RouteMatcher;
 import discord4j.rest.request.RouterOptions;
 import discord4j.rest.response.ResponseFunction;
 import discord4j.rest.route.Routes;
+import discord4j.store.api.mapping.MappingStoreService;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -201,6 +206,10 @@ class BotImpl implements Bot {
 			}
 		}, Presence.online(activity));
 		var requestThroughput = propParser.parseAsIntOrDefault("request_throughput", 55);
+		var messageCacheMaxSize = propParser.parseAsIntOrDefault("message_cache_max_size", 50_000);
+		var messageCacheTtl = Duration.ofMinutes(propParser.parseAsLongOrDefault("message_cache_ttl", 60));
+		
+		var storeRegistry = new ShardingJdkStoreRegistry();
 		var discordClients = new ShardingClientBuilder(token)
 				.setRouterOptions(RouterOptions.builder()
 						.onClientResponse(ResponseFunction.emptyIfNotFound())
@@ -209,8 +218,14 @@ class BotImpl implements Bot {
 						.build())
 				.build()
 				.map(dcb -> dcb.setInitialPresence(presenceStatus))
+				.map(dcb -> dcb.setStoreService(MappingStoreService.create()
+						.setMapping(new ShardingCaffeineStoreService(storeRegistry, builder -> builder
+								.maximumSize(messageCacheMaxSize)
+								.expireAfterWrite(messageCacheTtl)), MessageBean.class)
+						.setFallback(new ShardingJdkStoreService(storeRegistry))))
 				.map(DiscordClientBuilder::build)
 				.cache();
+
 		return new BotImpl(token, defaultPrefix, discordClients, database, replyMenuTimeout, debugLogChannelId,
 				attachmentsChannelId, emojiGuildIds,  pluginsProps);
 	}

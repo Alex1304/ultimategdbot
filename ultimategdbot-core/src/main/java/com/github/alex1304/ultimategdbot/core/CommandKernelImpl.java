@@ -1,5 +1,6 @@
 package com.github.alex1304.ultimategdbot.core;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -40,7 +41,7 @@ import reactor.util.function.Tuples;
 
 class CommandKernelImpl implements CommandKernel {
 	
-	private static final Logger LOGGER = LoggerFactory.getLogger(CommandKernelImpl.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger("ultimategdbot.commandkernel");
 
 	private final Bot bot;
 	private final Map<String, Command> commands;
@@ -78,21 +79,41 @@ class CommandKernelImpl implements CommandKernel {
 				ctx.reply(":no_entry_sign: An error occured when accessing the database. Try again."),
 				BotUtils.debugError(":no_entry_sign: **A database error occured.**", ctx, e)).then());
 		// Parse and execute commands from message create events
-		bot.getDiscordClients().flatMap(client -> client.getEventDispatcher().on(MessageCreateEvent.class))
-				.filter(event -> event.getMessage().getAuthor().map(User::isBot).map(b -> !b).orElse(false))
-				.flatMap(event -> {
-					var content = event.getMessage().getContent().orElse("");
-					return findPrefixUsed(bot, event)
-							.filter(prefix -> content.length() >= prefix.length())
-							.map(prefix -> parseCommandLine(content.substring(prefix.length()).strip())
-									.map(TupleUtils.function((cmd, args) -> new Context(cmd, event, args, bot, prefix))))
-							.flatMap(Mono::justOrEmpty);
-				})
-				.flatMap(ctx -> invokeCommand(ctx.getCommand(), ctx))
-				.onErrorContinue(HandledCommandException.class, (error, obj) -> LOGGER.trace("Successfully handled command exception", error))
-				.onErrorContinue((error, obj) -> LOGGER.error("An error occured when processing a MessageCreateEvent on " + obj, error))
-				.retryWhen(Retry.any().doOnRetry(retryCtx -> LOGGER.error("Retrying handler after failing to recover from:", retryCtx.exception())))
-				.subscribe();
+		bot.getDiscordClients()
+				.doOnNext(client -> {
+					var shardLogger = LoggerFactory.getLogger("ultimategdbot.commandkernel." + client.getConfig().getShardIndex());
+					client.getEventDispatcher().on(MessageCreateEvent.class)
+							.filter(event -> event.getMessage().getAuthor().map(User::isBot).map(b -> !b).orElse(false))
+							.flatMap(event -> {
+								var content = event.getMessage().getContent().orElse("");
+								return findPrefixUsed(bot, event)
+										.filter(prefix -> content.length() >= prefix.length())
+										.map(prefix -> parseCommandLine(content.substring(prefix.length()).strip())
+												.map(TupleUtils.function((cmd, args) -> new Context(cmd, event, args, bot, prefix))))
+										.flatMap(Mono::justOrEmpty);
+							})
+							.doOnNext(ctx -> shardLogger.debug("ShardCommand invoked by user: {}", ctx))
+							.flatMap(ctx -> invokeCommand(ctx.getCommand(), ctx)
+									.materialize()
+									.elapsed()
+									.doOnNext(TupleUtils.consumer((time, signal) -> {
+										var duration = BotUtils.formatTimeMillis(Duration.ofMillis(time));
+										if (signal.isOnComplete()) {
+											shardLogger.debug("Command completed with success in {}: {}", duration, ctx);
+										} else if (signal.getThrowable() instanceof HandledCommandException) {
+											shardLogger.debug("Command completed with {} in {}: {}", signal.getThrowable().getCause()
+													.getClass().getCanonicalName(), duration, ctx);
+										}
+									}))
+									.map(Tuple2::getT2)
+									.dematerialize()
+									.onErrorResume(HandledCommandException.class, e -> Mono.empty())
+									.onErrorResume(e -> Mono.fromRunnable(() -> shardLogger
+											.error("A command threw an unhandled exception: " + ctx, e))))
+							.retryWhen(Retry.any().doOnRetry(retryCtx -> shardLogger
+									.error("A critical error occured in the command handler. Recovering.", retryCtx.exception())))
+							.subscribe();
+				}).subscribe();
 	}
 
 	@Override
