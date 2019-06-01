@@ -36,7 +36,7 @@ public class SetupSetCommand implements Command {
 				.switchIfEmpty(Mono.error(new CommandFailedException("There is no configuration entry with key `" + arg1 + "`.")))
 				.next()
 				.map(map -> map.get(arg1))
-				.flatMap(entry -> ctx.getBot().getDatabase().performTransactionWhen(session -> entry.setFromString(session, arg2, guildId)))
+				.flatMapMany(entry -> ctx.getBot().getDatabase().performTransactionWhen(session -> entry.setFromString(session, arg2, guildId)))
 				.onErrorMap(IllegalArgumentException.class, e -> new CommandFailedException("Cannot assign this value as `" + arg1 + "`: " + e.getMessage()))
 				.then(ctx.reply(":white_check_mark: Settings updated!"))
 				.then();

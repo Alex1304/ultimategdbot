@@ -6,6 +6,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.hibernate.Session;
+import org.reactivestreams.Publisher;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -99,15 +100,15 @@ public interface Database {
 	
 	/**
 	 * Allows to manipulate a Session in an asynchronous context. The session
-	 * provides a Mono which completion indicates that the transaction can be
+	 * provides a Publisher which completion indicates that the transaction can be
 	 * committed and the session closed.
 	 * 
-	 * @param                 <T> the value that the transaction may produce
+	 * @param                 <T> the type of value that the transaction may produce
 	 * @param txAsyncFunction a function that manipulates a Session and returns a
-	 *                        Mono completing when the transaction is ready to be
-	 *                        committed
-	 * @return a Mono completing when the transaction terminates successfully and
-	 *         emitting a value.
+	 *                        Publisher completing when the transaction is ready to
+	 *                        be committed
+	 * @return a Flux completing when the transaction terminates successfully and
+	 *         may emit values that constitute the result of the transaction
 	 */
-	<V> Mono<V> performTransactionWhen(Function<Session, Mono<V>> txAsyncFunction);
+	<V> Flux<V> performTransactionWhen(Function<Session, Publisher<V>> txAsyncFunction);
 }

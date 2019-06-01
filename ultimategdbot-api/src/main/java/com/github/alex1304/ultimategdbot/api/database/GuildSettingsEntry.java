@@ -91,6 +91,7 @@ public class GuildSettingsEntry<E extends GuildSettings, D> {
 		if (entity == null) {
 			try {
 				entity = entityClass.getConstructor().newInstance();
+				entity.setGuildId(guildId);
 			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
 					| InvocationTargetException | NoSuchMethodException | SecurityException e) {
 				throw new RuntimeException("Unable to create entity using reflection", e);

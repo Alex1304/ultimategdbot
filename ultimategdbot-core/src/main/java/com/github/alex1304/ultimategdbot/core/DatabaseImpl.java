@@ -13,6 +13,7 @@ import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.hibernate.cfg.Configuration;
+import org.reactivestreams.Publisher;
 
 import com.github.alex1304.ultimategdbot.api.Database;
 import com.github.alex1304.ultimategdbot.api.DatabaseException;
@@ -137,8 +138,8 @@ class DatabaseImpl implements Database {
 	}
 	
 	@Override
-	public <V> Mono<V> performTransactionWhen(Function<Session, Mono<V>> txAsyncFunction) {
-		return Mono.usingWhen(
+	public <V> Flux<V> performTransactionWhen(Function<Session, Publisher<V>> txAsyncFunction) {
+		return Flux.usingWhen(
 						Mono.fromCallable(this::newSession).doOnNext(Session::beginTransaction),
 						txAsyncFunction,
 						this::commitAndClose,
