@@ -31,7 +31,9 @@ class BotAdminsGrantCommand implements Command {
 						.then(Mono.just(new BotAdmins())
 								.doOnNext(newAdmin -> newAdmin.setUserId(user.getId().asLong()))
 								.flatMap(ctx.getBot().getDatabase()::save))
-						.then(ctx.reply("**" + BotUtils.formatDiscordUsername(user) + "** is now a bot administrator!")))
+						.then(ctx.reply("**" + BotUtils.formatDiscordUsername(user) + "** is now a bot administrator!"))
+						.then(ctx.getBot().log("Bot administrator added: **" 
+								+ BotUtils.formatDiscordUsername(user) + "** (" + user.getId().asString() + ")")))
 				.then();
 	}
 

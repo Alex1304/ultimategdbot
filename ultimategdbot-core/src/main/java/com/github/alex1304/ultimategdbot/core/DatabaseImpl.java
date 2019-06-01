@@ -58,6 +58,7 @@ class DatabaseImpl implements Database {
 	}
 
 	@Override
+	@Deprecated
 	public <T, K extends Serializable> Mono<T> findByIDOrCreate(Class<T> entityClass, K key, BiConsumer<? super T, K> keySetter) {
 		Objects.requireNonNull(entityClass);
 		Objects.requireNonNull(key);

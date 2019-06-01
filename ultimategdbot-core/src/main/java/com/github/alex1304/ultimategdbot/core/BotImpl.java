@@ -56,7 +56,7 @@ import reactor.core.publisher.Mono;
 
 class BotImpl implements Bot {
 	
-	private static final Logger LOGGER = LoggerFactory.getLogger(BotImpl.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger("ultimategdbot");
 	
 	private final String token;
 	private final String defaultPrefix;

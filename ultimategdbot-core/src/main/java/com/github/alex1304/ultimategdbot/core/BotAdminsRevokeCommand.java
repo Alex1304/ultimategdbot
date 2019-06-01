@@ -29,7 +29,9 @@ class BotAdminsRevokeCommand implements Command {
 				.flatMap(user -> ctx.getBot().getDatabase().findByID(BotAdmins.class, user.getId().asLong())
 						.switchIfEmpty(Mono.error(new CommandFailedException("This user is already not an admin.")))
 						.flatMap(ctx.getBot().getDatabase()::delete)
-						.then(ctx.reply("**" + BotUtils.formatDiscordUsername(user) + "** is no longer a bot administrator!")))
+						.then(ctx.reply("**" + BotUtils.formatDiscordUsername(user) + "** is no longer a bot administrator!"))
+						.then(ctx.getBot().log("Bot administrator removed: **" 
+								+ BotUtils.formatDiscordUsername(user) + "** (" + user.getId().asString() + ")")))
 				.then();
 	}
 

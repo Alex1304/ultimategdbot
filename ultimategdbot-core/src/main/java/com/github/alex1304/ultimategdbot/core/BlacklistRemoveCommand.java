@@ -30,6 +30,7 @@ class BlacklistRemoveCommand implements Command {
 				.flatMap(ctx.getBot().getDatabase()::delete)
 				.then(Mono.fromRunnable(() -> ctx.getBot().getCommandKernel().unblacklist(id)))
 				.then(ctx.reply("**" + id + "** is no longer blacklisted!"))
+				.then(ctx.getBot().log("ID removed from blacklist: " + id))
 				.then();
 	}
 

@@ -34,6 +34,7 @@ class BlacklistAddCommand implements Command {
 						}).flatMap(ctx.getBot().getDatabase()::save))
 				.then(Mono.fromRunnable(() -> ctx.getBot().getCommandKernel().blacklist(id)))
 				.then(ctx.reply("**" + id + "** is now blacklisted!"))
+				.then(ctx.getBot().log("ID added to blacklist: " + id))
 				.then();
 	}
 

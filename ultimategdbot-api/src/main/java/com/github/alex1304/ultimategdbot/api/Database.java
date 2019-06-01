@@ -33,7 +33,7 @@ public interface Database {
 
 	/**
 	 * Allows to find a database entity by its ID. If not found, a new entity is
-	 * created
+	 * created.
 	 * 
 	 * @param entityClass class of the entity
 	 * @param key         the ID
@@ -42,7 +42,13 @@ public interface Database {
 	 * @param             <T> The entity type
 	 * @param             <K> the ID type
 	 * @return a Mono emitting the entity, if found
+	 * 
+	 * @deprecated The use of this method is not as convenient as expected when it
+	 *             was first designed. It is better to call findByID and then
+	 *             process the case where it's not found via a switchIfEmpty
+	 *             operator.
 	 */
+	@Deprecated
 	<T, K extends Serializable> Mono<T> findByIDOrCreate(Class<T> entityClass, K key,
 			BiConsumer<? super T, K> keySetter);
 

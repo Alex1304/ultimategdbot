@@ -166,11 +166,14 @@ class CommandKernelImpl implements CommandKernel {
 					return globalErrorHandler.apply(pluginSpecificErrorHandler.apply(ctx.getEvent().getMessage().getChannel()
 							.filter(c -> cmd.getChannelTypesAllowed().contains(c.getType()))
 							.flatMap(c -> cmd.getPermissionLevel().isGranted(ctx))
-							.flatMap(isGranted -> isGranted ? cmd.execute(ctx) : Mono.error(new CommandPermissionDeniedException())), ctx), ctx)
+							.flatMap(isGranted -> isGranted ? cmd.execute(ctx) 
+									: Mono.error(new CommandPermissionDeniedException())), ctx), ctx)
 							.onErrorResume(error -> !(error instanceof HandledCommandException), error -> ctx
-									.reply(":no_entry_sign: Something went wrong. A crash report has been sent to the developer. Sorry for the inconvenience.")
+									.reply(":no_entry_sign: Something went wrong. A crash report has been sent "
+											+ "to the developer. Sorry for the inconvenience.")
 									.onErrorResume(e -> Mono.empty())
-									.thenMany(BotUtils.debugError(":no_entry_sign: **Something went wrong while executing a command.**", ctx, error))
+									.thenMany(BotUtils.debugError(":no_entry_sign: **Something went wrong while "
+											+ "executing a command.**", ctx, error))
 									.then(Mono.error(error)));
 				}))
 				.flatMap(Function.identity());
@@ -195,12 +198,17 @@ class CommandKernelImpl implements CommandKernel {
 		var msgContent = event.getMessage().getContent().orElse("");
 		return Mono.justOrEmpty(event.getGuildId())
 				.map(Snowflake::asLong)
-				.flatMap(guildId -> bot.getDatabase().findByIDOrCreate(NativeGuildSettings.class, guildId, (gs, gid) -> {
-							gs.setGuildId(gid);
-							bot.getDatabase().save(gs).subscribe(null,
-									e -> LOGGER.error("Unable to save guild settings for " + gid, e),
-									() -> LOGGER.debug("Created guild settings: {}", gs));
-						})
+				.flatMap(guildId -> bot.getDatabase().findByID(NativeGuildSettings.class, guildId)
+						.switchIfEmpty(Mono.fromCallable(() -> {
+									var gs = new NativeGuildSettings();
+									gs.setGuildId(guildId);
+									return gs;
+								})
+								.flatMap(gs -> bot.getDatabase().save(gs)
+										.then(Mono.fromRunnable(() -> LOGGER.debug("Created guild settings: {}", gs)))
+										.onErrorResume(e -> Mono.fromRunnable(() -> LOGGER
+												.error("Unable to save guild settings for " + guildId, e)))
+										.thenReturn(gs)))
 						.flatMap(gs -> Mono.justOrEmpty(gs.getPrefix())))
 				.defaultIfEmpty(bot.getDefaultPrefix())
 				.map(String::strip)
@@ -208,7 +216,8 @@ class CommandKernelImpl implements CommandKernel {
 						.map(Snowflake::asString)
 						.stream()
 						.flatMap(botId -> Stream.of("<@" + botId + ">", "<@!" + botId + ">", specificPrefix)
-								.filter(prefix -> prefix.equalsIgnoreCase(msgContent.substring(0, Math.min(prefix.length(), msgContent.length())))))
+								.filter(prefix -> prefix.equalsIgnoreCase(msgContent
+										.substring(0, Math.min(prefix.length(), msgContent.length())))))
 						.findFirst())
 				.flatMap(Mono::justOrEmpty);
 	}

@@ -25,7 +25,7 @@ import reactor.core.publisher.Mono;
  */
 public class FixedThroughputGlobalRateLimiter implements GlobalRateLimiter {
 	
-	private static final Logger LOGGER = LoggerFactory.getLogger(FixedThroughputGlobalRateLimiter.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger("ultimategdbot.globalratelimiter");
 	
 	private final long delayStepNanos;
 	private volatile long globallyRateLimitedUntil = 0;
@@ -69,10 +69,11 @@ public class FixedThroughputGlobalRateLimiter implements GlobalRateLimiter {
 	@Override
 	public Duration getRemaining() {
 		var remaining = globallyRateLimitedUntil - System.nanoTime();
+		var duration = Duration.ofNanos(remaining);
 		if (remaining > 0) {
-			LOGGER.debug("On hold!");
+			LOGGER.debug("On hold for {}", duration);
 		}
-		return Duration.ofNanos(remaining);
+		return duration;
 	}
 	
 	/**
