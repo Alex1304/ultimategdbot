@@ -23,9 +23,7 @@ class AboutCommand implements Command {
 
 	@Override
 	public Mono<Void> execute(Context ctx) {
-		return ctx.getBot().getDiscordClients()
-				.flatMap(client -> client.getApplicationInfo())
-				.next()
+		return ctx.getBot().getApplicationInfo()
 				.zipWhen(ApplicationInfo::getOwner)
 				.zipWith(Mono.zip(ctx.getBot().getMainDiscordClient().getGuilds().count(),
 						ctx.getBot().getMainDiscordClient().getUsers().count()))

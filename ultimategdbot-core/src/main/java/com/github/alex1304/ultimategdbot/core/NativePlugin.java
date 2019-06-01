@@ -20,6 +20,7 @@ import com.github.alex1304.ultimategdbot.api.Bot;
 import com.github.alex1304.ultimategdbot.api.Command;
 import com.github.alex1304.ultimategdbot.api.CommandErrorHandler;
 import com.github.alex1304.ultimategdbot.api.Plugin;
+import com.github.alex1304.ultimategdbot.api.database.BlacklistedIds;
 import com.github.alex1304.ultimategdbot.api.database.GuildSettingsEntry;
 import com.github.alex1304.ultimategdbot.api.database.NativeGuildSettings;
 import com.github.alex1304.ultimategdbot.api.utils.BotUtils;
@@ -46,7 +47,7 @@ public class NativePlugin implements Plugin {
 	private final CommandErrorHandler cmdErrorHandler = new CommandErrorHandler();
 	private final Set<Command> providedCommands = Set.of(new HelpCommand(this), new PingCommand(this), new SetupCommand(this),
 			new SystemCommand(this), new AboutCommand(this), new BotAdminsCommand(this), new TimeCommand(this),
-			new DelayCommand(this), new SequenceCommand(this));
+			new DelayCommand(this), new SequenceCommand(this), new BlacklistCommand(this));
 
 	@Override
 	public void setup(Bot bot, PropertyParser parser) {
@@ -72,6 +73,11 @@ public class NativePlugin implements Plugin {
 				valueConverter::toRoleId,
 				valueConverter::fromRoleId
 		));
+	}
+	
+	@Override
+	public Mono<Void> onBotReady(Bot bot) {
+		return Mono.fromRunnable(() -> initBlacklist(bot));
 	}
 	
 	private void initEventListeners(Bot bot) {
@@ -138,6 +144,13 @@ public class NativePlugin implements Plugin {
 						.subscribe();
 			});
 	}
+	
+	private void initBlacklist(Bot bot) {
+		bot.getDatabase().query(BlacklistedIds.class, "from BlacklistedIds")
+			.map(BlacklistedIds::getId)
+			.doOnNext(bot.getCommandKernel()::blacklist)
+			.subscribe();
+	}
 
 	@Override
 	public Set<Command> getProvidedCommands() {
@@ -151,7 +164,7 @@ public class NativePlugin implements Plugin {
 
 	@Override
 	public Set<String> getDatabaseMappingResources() {
-		return Set.of("/NativeGuildSettings.hbm.xml", "/BotAdmins.hbm.xml");
+		return Set.of("/NativeGuildSettings.hbm.xml", "/BotAdmins.hbm.xml", "/BlacklistedIds.hbm.xml");
 	}
 
 	@Override

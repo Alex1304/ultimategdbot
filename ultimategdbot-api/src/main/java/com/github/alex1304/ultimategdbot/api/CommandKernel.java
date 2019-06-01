@@ -50,4 +50,28 @@ public interface CommandKernel {
 	 *         Mono.
 	 */
 	Mono<Void> invokeCommand(Command cmd, Context ctx);
+	
+	/**
+	 * Gets an unmodifiable set of IDs that are not allowed to perform operations on
+	 * the command kernel.
+	 * 
+	 * @return an unmodifiable set of IDs
+	 */
+	Set<Long> getBlacklist();
+	
+	/**
+	 * Blacklists a new ID.
+	 * 
+	 * @param id the ID of a user, a channel or a guild that won't be allowed to run
+	 *           commands from this kernel.
+	 */
+	void blacklist(long id);
+
+	/**
+	 * Removes an ID from the blacklist.
+	 * 
+	 * @param id the ID of a user, a channel or a guild that will be allowed to run
+	 *           commands from this kernel again.
+	 */
+	void unblacklist(long id);
 }

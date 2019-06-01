@@ -33,6 +33,7 @@ import com.github.alex1304.ultimategdbot.api.utils.PropertyParser;
 import discord4j.core.DiscordClient;
 import discord4j.core.DiscordClientBuilder;
 import discord4j.core.object.data.stored.MessageBean;
+import discord4j.core.object.entity.ApplicationInfo;
 import discord4j.core.object.entity.Channel;
 import discord4j.core.object.entity.Guild;
 import discord4j.core.object.entity.GuildEmoji;
@@ -67,8 +68,9 @@ class BotImpl implements Bot {
 	private final Snowflake attachmentsChannelId;
 	private final List<Snowflake> emojiGuildIds;
 	private final Properties pluginsProps;
-	private CommandKernelImpl cmdKernel;
+	private final CommandKernelImpl cmdKernel;
 	private final Set<Plugin> plugins = new HashSet<>();
+	private final Mono<ApplicationInfo> appInfo;
 
 	private BotImpl(String token, String defaultPrefix, Flux<DiscordClient> discordClients, DatabaseImpl database,
 			int replyMenuTimeout, Snowflake debugLogChannelId, Snowflake attachmentsChannelId,
@@ -83,7 +85,9 @@ class BotImpl implements Bot {
 		this.attachmentsChannelId = attachmentsChannelId;
 		this.emojiGuildIds = emojiGuildIds;
 		this.pluginsProps = pluginsProps;
-		this.cmdKernel = null;
+		this.cmdKernel = new CommandKernelImpl(this);
+		this.appInfo = mainDiscordClient.getApplicationInfo()
+				.cache(Duration.ofMinutes(30));
 	}
 
 	@Override
@@ -271,13 +275,14 @@ class BotImpl implements Bot {
 				LOGGER.error("Failed to load plugin " + plugin.getName(), e);
 			}
 		}
-		this.cmdKernel = new CommandKernelImpl(this, commandsByAliases, subCommands);
 		try {
 			database.configure();
 		} catch (MappingException e) {
 			LOGGER.error("Oops! There is an error in the database mapping configuration!");
 			throw e;
 		}
+		cmdKernel.addCommands(commandsByAliases);
+		cmdKernel.addSubcommands(subCommands);
 		cmdKernel.start();
 		discordClients.flatMap(DiscordClient::login).blockLast();
 	}
@@ -290,5 +295,10 @@ class BotImpl implements Bot {
 	@Override
 	public Set<Plugin> getPlugins() {
 		return Collections.unmodifiableSet(plugins);
+	}
+
+	@Override
+	public Mono<ApplicationInfo> getApplicationInfo() {
+		return appInfo;
 	}
 }

@@ -10,6 +10,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.StringJoiner;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.slf4j.Logger;
@@ -47,12 +49,14 @@ class CommandKernelImpl implements CommandKernel {
 	private final Map<String, Command> commands;
 	private final Map<Command, Map<String, Command>> subCommands;
 	private final CommandErrorHandler globalErrorHandler;
+	private final Set<Long> blacklist;
 	
-	public CommandKernelImpl(Bot bot, Map<String, Command> commands, Map<Command, Map<String, Command>> subCommands) {
+	public CommandKernelImpl(Bot bot) {
 		this.bot = Objects.requireNonNull(bot);
-		this.commands = Collections.unmodifiableMap(Objects.requireNonNull(commands));
-		this.subCommands = Collections.unmodifiableMap(Objects.requireNonNull(subCommands));
+		this.commands = new ConcurrentHashMap<>();
+		this.subCommands = new ConcurrentHashMap<>();
 		this.globalErrorHandler = new CommandErrorHandler();
+		this.blacklist = new HashSet<>();
 	}
 
 	public void start() {
@@ -92,7 +96,7 @@ class CommandKernelImpl implements CommandKernel {
 												.map(TupleUtils.function((cmd, args) -> new Context(cmd, event, args, bot, prefix))))
 										.flatMap(Mono::justOrEmpty);
 							})
-							.doOnNext(ctx -> shardLogger.debug("ShardCommand invoked by user: {}", ctx))
+							.doOnNext(ctx -> shardLogger.debug("Command invoked by user: {}", ctx))
 							.flatMap(ctx -> invokeCommand(ctx.getCommand(), ctx)
 									.materialize()
 									.elapsed()
@@ -154,16 +158,37 @@ class CommandKernelImpl implements CommandKernel {
 
 	@Override
 	public Mono<Void> invokeCommand(Command cmd, Context ctx) {
-		var pluginSpecificErrorHandler = cmd.getPlugin().getCommandErrorHandler();
-		return globalErrorHandler.apply(pluginSpecificErrorHandler.apply(ctx.getEvent().getMessage().getChannel()
-				.filter(c -> cmd.getChannelTypesAllowed().contains(c.getType()))
-				.flatMap(c -> cmd.getPermissionLevel().isGranted(ctx))
-				.flatMap(isGranted -> isGranted ? cmd.execute(ctx) : Mono.error(new CommandPermissionDeniedException())), ctx), ctx)
-				.onErrorResume(error -> !(error instanceof HandledCommandException), error -> ctx
-						.reply(":no_entry_sign: Something went wrong. A crash report has been sent to the developer. Sorry for the inconvenience.")
-						.onErrorResume(e -> Mono.empty())
-						.thenMany(BotUtils.debugError(":no_entry_sign: **Something went wrong while executing a command.**", ctx, error))
-						.then(Mono.error(error)));
+		return getBlacklistState(ctx)
+				.map(blacklist -> Mono.<Void>fromRunnable(() -> LOGGER
+						.debug("Blacklisted {} attempted to use command {}", blacklist, cmd.getClass().getCanonicalName())))
+				.defaultIfEmpty(Mono.defer(() -> {
+					var pluginSpecificErrorHandler = cmd.getPlugin().getCommandErrorHandler();
+					return globalErrorHandler.apply(pluginSpecificErrorHandler.apply(ctx.getEvent().getMessage().getChannel()
+							.filter(c -> cmd.getChannelTypesAllowed().contains(c.getType()))
+							.flatMap(c -> cmd.getPermissionLevel().isGranted(ctx))
+							.flatMap(isGranted -> isGranted ? cmd.execute(ctx) : Mono.error(new CommandPermissionDeniedException())), ctx), ctx)
+							.onErrorResume(error -> !(error instanceof HandledCommandException), error -> ctx
+									.reply(":no_entry_sign: Something went wrong. A crash report has been sent to the developer. Sorry for the inconvenience.")
+									.onErrorResume(e -> Mono.empty())
+									.thenMany(BotUtils.debugError(":no_entry_sign: **Something went wrong while executing a command.**", ctx, error))
+									.then(Mono.error(error)));
+				}))
+				.flatMap(Function.identity());
+	}
+
+	@Override
+	public Set<Long> getBlacklist() {
+		return Collections.unmodifiableSet(blacklist);
+	}
+
+	@Override
+	public void blacklist(long id) {
+		blacklist.add(id);
+	}
+
+	@Override
+	public void unblacklist(long id) {
+		blacklist.remove(id);
 	}
 	
 	private static Mono<String> findPrefixUsed(Bot bot, MessageCreateEvent event) {
@@ -186,5 +211,38 @@ class CommandKernelImpl implements CommandKernel {
 								.filter(prefix -> prefix.equalsIgnoreCase(msgContent.substring(0, Math.min(prefix.length(), msgContent.length())))))
 						.findFirst())
 				.flatMap(Mono::justOrEmpty);
+	}
+	
+	private Mono<BlacklistType> getBlacklistState(Context ctx) {
+		return ctx.getBot().getApplicationInfo()
+				.flatMap(appInfo -> Mono.justOrEmpty(ctx.getEvent().getMessage().getAuthor()
+						.map(User::getId)
+						.map(Snowflake::asLong)
+						.filter(a -> appInfo.getOwnerId().asLong() != a)
+						.flatMap(a -> ctx.getEvent().getGuildId()
+								.map(Snowflake::asLong)
+								.map(g -> {
+									if (blacklist.contains(ctx.getEvent().getMessage().getChannelId().asLong())) {
+										return BlacklistType.CHANNEL;
+									} else if (blacklist.contains(g)) {
+										return BlacklistType.GUILD;
+									} else if (blacklist.contains(a)) {
+										return BlacklistType.USER;
+									} else {
+										return null;
+									}
+								}))));
+	}
+	
+	void addCommands(Map<String, Command> commands) {
+		this.commands.putAll(commands);
+	}
+	
+	void addSubcommands(Map<Command, Map<String, Command>> subCommands) {
+		this.subCommands.putAll(subCommands);
+	}
+	
+	private enum BlacklistType {
+		USER, CHANNEL, GUILD;
 	}
 }

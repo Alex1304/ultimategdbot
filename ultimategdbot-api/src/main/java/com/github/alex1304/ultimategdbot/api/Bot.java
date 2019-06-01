@@ -4,6 +4,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 import discord4j.core.DiscordClient;
+import discord4j.core.object.entity.ApplicationInfo;
 import discord4j.core.object.entity.Channel;
 import discord4j.core.object.entity.Message;
 import discord4j.core.spec.MessageCreateSpec;
@@ -124,4 +125,11 @@ public interface Bot {
 	 * @return a Set of Plugin
 	 */
 	Set<Plugin> getPlugins();
+	
+	/**
+	 * Get the application info of the bot
+	 * 
+	 * @return a Mono emitting the application info
+	 */
+	Mono<ApplicationInfo> getApplicationInfo();
 }

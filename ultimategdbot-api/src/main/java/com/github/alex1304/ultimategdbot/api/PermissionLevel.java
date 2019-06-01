@@ -5,7 +5,6 @@ import java.util.function.Function;
 import com.github.alex1304.ultimategdbot.api.database.BotAdmins;
 import com.github.alex1304.ultimategdbot.api.database.NativeGuildSettings;
 
-import discord4j.core.DiscordClient;
 import discord4j.core.object.entity.ApplicationInfo;
 import discord4j.core.object.entity.GuildChannel;
 import discord4j.core.object.util.Permission;
@@ -18,9 +17,7 @@ import reactor.core.publisher.Mono;
 @FunctionalInterface
 public interface PermissionLevel {
 	
-	static final PermissionLevel BOT_OWNER = ctx -> ctx.getBot().getDiscordClients()
-			.flatMap(DiscordClient::getApplicationInfo)
-			.next()
+	static final PermissionLevel BOT_OWNER = ctx -> ctx.getBot().getApplicationInfo()
 			.flatMap(ApplicationInfo::getOwner)
 			.map(ctx.getEvent().getMessage().getAuthor().get()::equals)
 			.defaultIfEmpty(false).onErrorReturn(false);
