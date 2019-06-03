@@ -44,13 +44,14 @@ import discord4j.core.object.presence.Presence;
 import discord4j.core.object.util.Snowflake;
 import discord4j.core.shard.ShardingClientBuilder;
 import discord4j.core.shard.ShardingJdkStoreRegistry;
-import discord4j.core.shard.ShardingJdkStoreService;
 import discord4j.core.spec.MessageCreateSpec;
 import discord4j.rest.request.RouteMatcher;
 import discord4j.rest.request.RouterOptions;
 import discord4j.rest.response.ResponseFunction;
 import discord4j.rest.route.Routes;
 import discord4j.store.api.mapping.MappingStoreService;
+import discord4j.store.caffeine.CaffeineStoreService;
+import discord4j.store.jdk.JdkStoreService;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -222,11 +223,11 @@ class BotImpl implements Bot {
 						.build())
 				.build()
 				.map(dcb -> dcb.setInitialPresence(presenceStatus))
-				.map(dcb -> dcb.setStoreService(MappingStoreService.create()
-						.setMapping(new ShardingCaffeineStoreService(storeRegistry, builder -> builder
+				.map(dcb -> dcb.setStoreService(new ShardAwareStoreService(storeRegistry, MappingStoreService.create()
+						.setMapping(new CaffeineStoreService(builder -> builder
 								.maximumSize(messageCacheMaxSize)
 								.expireAfterWrite(messageCacheTtl)), MessageBean.class)
-						.setFallback(new ShardingJdkStoreService(storeRegistry))))
+						.setFallback(new JdkStoreService()))))
 				.map(DiscordClientBuilder::build)
 				.cache();
 

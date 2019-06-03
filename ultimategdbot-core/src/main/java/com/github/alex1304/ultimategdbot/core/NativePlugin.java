@@ -47,7 +47,7 @@ public class NativePlugin implements Plugin {
 	private final CommandErrorHandler cmdErrorHandler = new CommandErrorHandler();
 	private final Set<Command> providedCommands = Set.of(new HelpCommand(this), new PingCommand(this), new SetupCommand(this),
 			new SystemCommand(this), new AboutCommand(this), new BotAdminsCommand(this), new TimeCommand(this),
-			new DelayCommand(this), new SequenceCommand(this), new BlacklistCommand(this));
+			new DelayCommand(this), new SequenceCommand(this), new BlacklistCommand(this), new CacheInfoCommand(this));
 
 	@Override
 	public void setup(Bot bot, PropertyParser parser) {
@@ -138,6 +138,7 @@ public class NativePlugin implements Plugin {
 						.map(readyEvent -> readyEvent.getGuilds().size())
 						.flatMap(guildCount -> client.getEventDispatcher().on(GuildCreateEvent.class)
 								.take(guildCount)
+								.timeout(Duration.ofMinutes(2), Mono.empty())
 								.doAfterTerminate(() -> shardsNotReady.decrementAndGet())
 								.then(bot.log("Shard " + client.getConfig().getShardIndex() + " reconnected (" + guildCount + " guilds)"))))
 						.onErrorContinue((error, obj) -> LOGGER.error("Error while procesing ReadyEvent on " + obj, error))

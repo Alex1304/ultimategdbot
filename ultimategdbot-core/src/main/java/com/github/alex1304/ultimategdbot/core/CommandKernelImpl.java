@@ -97,7 +97,8 @@ class CommandKernelImpl implements CommandKernel {
 										.flatMap(Mono::justOrEmpty);
 							})
 							.doOnNext(ctx -> shardLogger.debug("Command invoked by user: {}", ctx))
-							.flatMap(ctx -> invokeCommand(ctx.getCommand(), ctx)
+							.flatMap(ctx -> ctx.getEvent().getMessage().getChannel()
+									.flatMap(channel -> channel.typeUntil(invokeCommand(ctx.getCommand(), ctx)).then())
 									.materialize()
 									.elapsed()
 									.doOnNext(TupleUtils.consumer((time, signal) -> {
