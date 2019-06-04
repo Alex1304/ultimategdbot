@@ -61,6 +61,7 @@ public class GuildSettingsEntry<E extends GuildSettings, D> {
 			strValue = GuildSettingsValueConverter.NONE_VALUE;
 		}
 		return stringToValue.apply(strValue, guildId)
+				.switchIfEmpty(Mono.fromRunnable(() -> setRaw(s, null, guildId)))
 				.flatMap(raw -> Mono.fromRunnable(() -> setRaw(s, raw, guildId)));
 	}
 	

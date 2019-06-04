@@ -22,13 +22,13 @@ public class GuildSettingsValueConverter {
 	}
 	
 	public Mono<String> justCheck(String str, long guildId, Predicate<String> check, String errorMessage) {
-		return Mono.just(str)
-				.filter(check)
-				.switchIfEmpty(Mono.error(new IllegalArgumentException(errorMessage)));
+		return noConversion(str, guildId)
+				.flatMap(str0 -> check.test(str0) ?
+						Mono.just(str0) : Mono.error(new IllegalArgumentException(errorMessage)));
 	}
 	
 	public Mono<String> noConversion(String str, long guildId) {
-		return Mono.just(str);
+		return Mono.justOrEmpty(str.equalsIgnoreCase(NONE_VALUE) ? null : str);
 	}
 	
 	public <N extends Number> Mono<N> toNumber(String str, long guildId, Function<String, N> converter) {

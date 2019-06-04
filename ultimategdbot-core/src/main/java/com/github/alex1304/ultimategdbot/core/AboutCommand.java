@@ -11,6 +11,7 @@ import com.github.alex1304.ultimategdbot.api.utils.BotUtils;
 
 import discord4j.core.object.entity.ApplicationInfo;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 import reactor.function.TupleUtils;
 
 class AboutCommand implements Command {
@@ -52,7 +53,9 @@ class AboutCommand implements Command {
 					var result = new String[] { plugin.getAboutText() };
 					vars.forEach((k, v) -> result[0] = result[0].replaceAll("\\{\\{ *" + k + " *\\}\\}", String.valueOf(v)));
 					return ctx.reply(result[0]);
-				})).then();
+				}))
+				.subscribeOn(Schedulers.elastic())
+				.then();
 	}
 
 	@Override

@@ -143,6 +143,10 @@
 			<id>jitpack.io</id>
 			<url>https://jitpack.io</url>
 		</repository>
+		<repository>
+			<id>spring.io</id>
+			<url>https://repo.spring.io/milestone</url>
+		</repository>
 	</repositories>
 
 	<dependencyManagement>
@@ -170,7 +174,7 @@
 			<dependency>
 				<groupId>com.discord4j.discord4j</groupId>
 				<artifactId>discord4j-core</artifactId>
-				<version>7c572ae</version>
+				<version>e7dd6c2</version>
 			</dependency>
 			<dependency>
 				<groupId>com.discord4j</groupId>
@@ -212,6 +216,11 @@
 				<groupId>org.glassfish.jaxb</groupId>
 				<artifactId>jaxb-runtime</artifactId>
 				<version>2.4.0-b180830.0438</version>
+			</dependency>
+			<dependency>
+				<groupId>io.projectreactor.tools</groupId>
+				<artifactId>blockhound</artifactId>
+				<version>1.0.0.M3</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>

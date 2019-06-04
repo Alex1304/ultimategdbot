@@ -48,24 +48,18 @@ public class FixedThroughputGlobalRateLimiter implements GlobalRateLimiter {
 	 * 
 	 * @return a Mono that completes when this limiter is ready to allow for more requests
 	 */
-	private Mono<Void> notifier() {
+	private synchronized Mono<Void> notifier() {
 		var now = System.nanoTime();
 		throughputLimitedUntil = Math.max(throughputLimitedUntil + delayStepNanos, now);
 		return Mono.delay(Duration.ofNanos(Math.max(globallyRateLimitedUntil, throughputLimitedUntil) - now))
 				.then(Mono.fromRunnable(() -> LOGGER.debug("Permit!")));
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public void rateLimitFor(Duration duration) {
 		globallyRateLimitedUntil = System.nanoTime() + duration.toNanos();
 	}
 	
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public Duration getRemaining() {
 		var remaining = globallyRateLimitedUntil - System.nanoTime();
@@ -76,9 +70,6 @@ public class FixedThroughputGlobalRateLimiter implements GlobalRateLimiter {
 		return duration;
 	}
 	
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	public <T> Flux<T> withLimiter(Publisher<T> stage) {
 		return Flux.defer(() -> notifier().thenMany(stage));

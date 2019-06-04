@@ -33,6 +33,7 @@ import com.github.alex1304.ultimategdbot.api.utils.PropertyParser;
 import discord4j.core.DiscordClient;
 import discord4j.core.DiscordClientBuilder;
 import discord4j.core.object.data.stored.MessageBean;
+import discord4j.core.object.data.stored.VoiceStateBean;
 import discord4j.core.object.entity.ApplicationInfo;
 import discord4j.core.object.entity.Channel;
 import discord4j.core.object.entity.Guild;
@@ -43,17 +44,19 @@ import discord4j.core.object.presence.Activity;
 import discord4j.core.object.presence.Presence;
 import discord4j.core.object.util.Snowflake;
 import discord4j.core.shard.ShardingClientBuilder;
-import discord4j.core.shard.ShardingJdkStoreRegistry;
 import discord4j.core.spec.MessageCreateSpec;
 import discord4j.rest.request.RouteMatcher;
 import discord4j.rest.request.RouterOptions;
 import discord4j.rest.response.ResponseFunction;
 import discord4j.rest.route.Routes;
 import discord4j.store.api.mapping.MappingStoreService;
+import discord4j.store.api.noop.NoOpStoreService;
 import discord4j.store.caffeine.CaffeineStoreService;
 import discord4j.store.jdk.JdkStoreService;
+import reactor.blockhound.BlockHound;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 class BotImpl implements Bot {
 	
@@ -72,10 +75,11 @@ class BotImpl implements Bot {
 	private final CommandKernelImpl cmdKernel;
 	private final Set<Plugin> plugins = new HashSet<>();
 	private final Mono<ApplicationInfo> appInfo;
+	private final boolean blockhoundMode;
 
 	private BotImpl(String token, String defaultPrefix, Flux<DiscordClient> discordClients, DatabaseImpl database,
 			int replyMenuTimeout, Snowflake debugLogChannelId, Snowflake attachmentsChannelId,
-			List<Snowflake> emojiGuildIds, Properties pluginsProps) {
+			List<Snowflake> emojiGuildIds, boolean blockhoundMode, Properties pluginsProps) {
 		this.token = token;
 		this.defaultPrefix = defaultPrefix;
 		this.discordClients = discordClients;
@@ -89,6 +93,7 @@ class BotImpl implements Bot {
 		this.cmdKernel = new CommandKernelImpl(this);
 		this.appInfo = mainDiscordClient.getApplicationInfo()
 				.cache(Duration.ofMinutes(30));
+		this.blockhoundMode = blockhoundMode;
 	}
 
 	@Override
@@ -210,32 +215,46 @@ class BotImpl implements Bot {
 					return Presence.online(activity);
 			}
 		}, Presence.online(activity));
-		var requestThroughput = propParser.parseAsIntOrDefault("request_throughput", 55);
+		var requestThroughput = propParser.parseAsIntOrDefault("request_throughput", 48);
 		var messageCacheMaxSize = propParser.parseAsIntOrDefault("message_cache_max_size", 50_000);
-		var messageCacheTtl = Duration.ofMinutes(propParser.parseAsLongOrDefault("message_cache_ttl", 60));
+		var messageCacheTtl = Duration.ofMinutes(propParser.parseAsLongOrDefault("message_cache_ttl", 120));
+		var disableVoiceStateCache = propParser.parseOrDefault("disable_voice_state_cache", Boolean::parseBoolean, false);
+		var blockhoundMode = propParser.parseOrDefault("blockhound_mode", Boolean::parseBoolean, false);
+		var useImmediateScheduler = propParser.parseOrDefault("use_immediate_scheduler", Boolean::parseBoolean, false);
 		
-		var storeRegistry = new ShardingJdkStoreRegistry();
+		if (useImmediateScheduler) {
+			LOGGER.info("Using immediate scheduler for Discord events. While it may improve performances, {} {}",
+					"it may also cause errors if you use plugins that perform blocking calls. In that case,",
+					"it is recommended to switch `use_immediate_scheduler` to false in bot.properties");
+		}
+		
 		var discordClients = new ShardingClientBuilder(token)
+				.setStoreService(MappingStoreService.create()
+						.setMapping(new CaffeineStoreService(builder -> builder
+								.maximumSize(messageCacheMaxSize)
+								.expireAfterAccess(messageCacheTtl)), MessageBean.class)
+						.setMapping(disableVoiceStateCache ? new NoOpStoreService() : new JdkStoreService(), VoiceStateBean.class)
+						.setFallback(new JdkStoreService()))
 				.setRouterOptions(RouterOptions.builder()
 						.onClientResponse(ResponseFunction.emptyIfNotFound())
 						.onClientResponse(ResponseFunction.emptyOnErrorStatus(RouteMatcher.route(Routes.REACTION_CREATE), 400))
 						.globalRateLimiter(new FixedThroughputGlobalRateLimiter(requestThroughput))
 						.build())
 				.build()
-				.map(dcb -> dcb.setInitialPresence(presenceStatus))
-				.map(dcb -> dcb.setStoreService(new ShardAwareStoreService(storeRegistry, MappingStoreService.create()
-						.setMapping(new CaffeineStoreService(builder -> builder
-								.maximumSize(messageCacheMaxSize)
-								.expireAfterWrite(messageCacheTtl)), MessageBean.class)
-						.setFallback(new JdkStoreService()))))
+				.map(dcb -> dcb.setInitialPresence(presenceStatus)
+						.setEventScheduler(useImmediateScheduler ? Schedulers.immediate() : null))
 				.map(DiscordClientBuilder::build)
 				.cache();
 
 		return new BotImpl(token, defaultPrefix, discordClients, database, replyMenuTimeout, debugLogChannelId,
-				attachmentsChannelId, emojiGuildIds,  pluginsProps);
+				attachmentsChannelId, emojiGuildIds, blockhoundMode, pluginsProps);
 	}
 
 	public void start() {
+		if (blockhoundMode) {
+			BlockHound.install();
+			LOGGER.info("Initialized BlockHound");
+		}
 		var loader = ServiceLoader.load(Plugin.class);
 		var parser = new PropertyParser(Main.PLUGINS_PROPS_FILE.toString(), pluginsProps);
 		var commandsByAliases = new HashMap<String, Command>();
