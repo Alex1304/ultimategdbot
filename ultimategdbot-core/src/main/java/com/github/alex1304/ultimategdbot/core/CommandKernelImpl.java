@@ -228,9 +228,11 @@ class CommandKernelImpl implements CommandKernel {
 				.flatMap(appInfo -> Mono.justOrEmpty(ctx.getEvent().getMessage().getAuthor()
 						.map(User::getId)
 						.map(Snowflake::asLong)
+						.or(() -> Optional.of(0L))
 						.filter(a -> appInfo.getOwnerId().asLong() != a)
 						.flatMap(a -> ctx.getEvent().getGuildId()
 								.map(Snowflake::asLong)
+								.or(() -> Optional.of(0L))
 								.map(g -> {
 									if (blacklist.contains(ctx.getEvent().getMessage().getChannelId().asLong())) {
 										return BlacklistType.CHANNEL;
