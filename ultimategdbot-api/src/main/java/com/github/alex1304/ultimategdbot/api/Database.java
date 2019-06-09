@@ -109,7 +109,7 @@ public interface Database {
 	 * provides a Publisher which completion indicates that the transaction can be
 	 * committed and the session closed.
 	 * 
-	 * @param                 <T> the type of value that the transaction may produce
+	 * @param                 <V> the type of value that the transaction may produce
 	 * @param txAsyncFunction a function that manipulates a Session and returns a
 	 *                        Publisher completing when the transaction is ready to
 	 *                        be committed
