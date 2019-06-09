@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import com.github.alex1304.ultimategdbot.api.Command;
 import com.github.alex1304.ultimategdbot.api.Context;
+import com.github.alex1304.ultimategdbot.api.PermissionLevel;
 import com.github.alex1304.ultimategdbot.api.Plugin;
 
 import reactor.core.publisher.Mono;
@@ -77,6 +78,11 @@ class CacheInfoCommand implements Command {
 	@Override
 	public String getSyntax() {
 		return "";
+	}
+	
+	@Override
+	public PermissionLevel getPermissionLevel() {
+		return PermissionLevel.BOT_ADMIN;
 	}
 
 	@Override
