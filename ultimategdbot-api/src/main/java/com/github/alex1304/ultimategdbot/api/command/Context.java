@@ -1,21 +1,17 @@
-package com.github.alex1304.ultimategdbot.api;
+package com.github.alex1304.ultimategdbot.api.command;
 
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Objects;
-import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
+
+import com.github.alex1304.ultimategdbot.api.Bot;
 
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.entity.Message;
 import discord4j.core.spec.MessageCreateSpec;
 import discord4j.rest.http.client.ClientException;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 public class Context {
@@ -26,18 +22,16 @@ public class Context {
 	private final Bot bot;
 	private final Map<String, Object> variables;
 	private final String prefixUsed;
+	private final Flags flags;
 
-	public Context(Command command, MessageCreateEvent event, List<String> args, Bot bot, String prefixUsed) {
+	public Context(Command command, MessageCreateEvent event, List<String> args, Flags flags, Bot bot, String prefixUsed) {
 		this.command = Objects.requireNonNull(command);
 		this.event = Objects.requireNonNull(event);
 		this.args = Objects.requireNonNull(args);
 		this.bot = Objects.requireNonNull(bot);
 		this.variables = new ConcurrentHashMap<>();
 		this.prefixUsed = Objects.requireNonNull(prefixUsed);
-	}
-	
-	public Context(Context parent, List<String> newArgs) {
-		this(parent.command, parent.event, Objects.requireNonNull(newArgs), parent.bot, parent.prefixUsed);
+		this.flags = Objects.requireNonNull(flags);
 	}
 	
 	/**
@@ -65,6 +59,10 @@ public class Context {
 	 */
 	public List<String> getArgs() {
 		return args;
+	}
+	
+	public Flags getFlags() {
+		return flags;
 	}
 
 	/**
@@ -178,73 +176,6 @@ public class Context {
 			return defaultVal;
 		}
 		return (T) val;
-	}
-
-	/**
-	 * Gets the guild settings
-	 * 
-	 * @return an unmodifiable Map containing the guild settings keys and their
-	 *         associated values, grouped by plugins
-	 * 
-	 * @deprecated This method returns the values as strings, for view only. It
-	 *             doesnt allow retrieving the raw values, so it isn't relevant to
-	 *             have this method in the Context object. Also, it makes one
-	 *             different database transaction for each guild setting, so there
-	 *             are performance issues as well.
-	 */
-	@SuppressWarnings("deprecation")
-	@Deprecated
-	public Mono<Map<Plugin, Map<String, String>>> getGuildSettings() {
-		if (!event.getGuildId().isPresent()) {
-			return Mono.error(new UnsupportedOperationException("Cannot perform this operation outside of a guild"));
-		}
-		var result = new TreeMap<Plugin, Map<String, String>>(Comparator.comparing(Plugin::getName));
-		var entriesForEachPlugin = new TreeMap<String, String>();
-		// Flux.fromIterable(..).concatMap(...)       // Is used as a reactive way to iterate a collection, concatMap being used as a forEach
-		//         .takeLast(1).doOnNext(__ -> ...)   // Allows to execute an action after the iteration is done.
-		return Flux.fromIterable(bot.getPlugins())
-				.concatMap(plugin -> Flux.fromIterable(plugin.getGuildConfigurationEntries().entrySet())
-						.concatMap(entry -> entry.getValue().valueFromDatabaseAsString(bot.getDatabase(), event.getGuildId().get().asLong())
-								.doOnNext(strVal -> entriesForEachPlugin.put(entry.getKey(), strVal)))
-						.takeLast(1)
-						.doOnNext(__ -> {
-							result.put(plugin, new TreeMap<>(entriesForEachPlugin));
-							entriesForEachPlugin.clear(); // We are done with this plugin, clear the map so that it can be used for next plugins
-						}))
-				.then(Mono.just(Collections.unmodifiableMap(result)));
-	}
-
-	/**
-	 * Edits an entry of the guild settings.
-	 * 
-	 * @param key the setting key
-	 * @param val the setting value
-	 * @return a Mono that completes when successfully updated
-	 * @throws NoSuchElementException        if no entry is found for the given key
-	 * @throws IllegalArgumentException      if the given value is not accepted by
-	 *                                       the entry
-	 * @throws UnsupportedOperationException if this method is called in a context
-	 *                                       that is outside of a Discord guild
-	 * @deprecated This method only supports setting new values from their string
-	 *             conversion. It doesn't allow a lot of flexibility, and it isn't
-	 *             relevant to have a such method in the Context object to begin
-	 *             with. The recommended way to change a guild setting is by
-	 *             iterating through all plugins (Bot#getPlugins), checking for each
-	 *             plugin if key exists, and using the appropriate value setter on
-	 *             the found entry.
-	 */
-	@Deprecated
-	public Mono<Void> setGuildSetting(String key, String val) {
-		if (!event.getGuildId().isPresent()) {
-			throw new UnsupportedOperationException("Cannot perform this operation outside of a guild");
-		}
-		for (var map : bot.getPlugins().stream().map(Plugin::getGuildConfigurationEntries).collect(Collectors.toSet())) {
-			var entry = map.get(key);
-			if (entry != null) {
-				return entry.valueAsStringToDatabase(bot.getDatabase(), val, event.getGuildId().get().asLong());
-			}
-		}
-		return Mono.error(new NoSuchElementException());
 	}
 
 	@Override

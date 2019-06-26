@@ -8,6 +8,8 @@ import java.util.Properties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.alex1304.ultimategdbot.api.Bot;
+
 class Main {
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
@@ -24,8 +26,8 @@ class Main {
 			try (var input = Files.newInputStream(PLUGINS_PROPS_FILE)) {
 				pluginsProps.load(input);
 			}
-			var bot = BotImpl.buildFromProperties(props, pluginsProps);
-			bot.start();	
+			var bot = Bot.buildFromProperties(props, pluginsProps);
+			bot.start().block();	
 		} catch (Exception e) {
 			LOGGER.error("The bot could not be started. Make sure that all configuration files are present and have a valid content", e);
 			System.exit(1);

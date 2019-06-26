@@ -10,17 +10,14 @@ import java.util.function.Function;
  * Allows to parse values from properties files.
  */
 public class PropertyParser {
-	
-	private final String filename;
 	private final Properties props;
 	
-	public PropertyParser(String filename, Properties props) {
-		this.filename = Objects.requireNonNull(filename);
+	public PropertyParser(Properties props) {
 		this.props = Objects.requireNonNull(props);
 	}
 	
 	private IllegalArgumentException iae(String reason) {
-		return new IllegalArgumentException("Error in configuration file " + filename + ": " + reason);
+		return new IllegalArgumentException("Unable to parse property: " + reason);
 	}
 	
 	/**

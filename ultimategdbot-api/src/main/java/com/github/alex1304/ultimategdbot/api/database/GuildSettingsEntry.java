@@ -8,7 +8,6 @@ import java.util.function.Function;
 
 import org.hibernate.Session;
 
-import com.github.alex1304.ultimategdbot.api.Database;
 import com.github.alex1304.ultimategdbot.api.utils.GuildSettingsValueConverter;
 
 import reactor.core.publisher.Mono;
@@ -63,28 +62,6 @@ public class GuildSettingsEntry<E extends GuildSettings, D> {
 		return stringToValue.apply(strValue, guildId)
 				.switchIfEmpty(Mono.fromRunnable(() -> setRaw(s, null, guildId)))
 				.flatMap(raw -> Mono.fromRunnable(() -> setRaw(s, raw, guildId)));
-	}
-	
-	@Deprecated
-	public Mono<D> valueFromDatabase(Database db, long guildId) {
-		return db.findByIDOrCreate(entityClass, guildId, GuildSettings::setGuildId).map(valueGetter::apply);
-	}
-
-	@Deprecated
-	public Mono<String> valueFromDatabaseAsString(Database db, long guildId) {
-		return valueFromDatabase(db, guildId).flatMap(val -> valueToString.apply(val, guildId));
-	}
-
-	@Deprecated
-	public Mono<Void> valueToDatabase(Database db, D value, long guildId) {
-		return db.findByIDOrCreate(entityClass, guildId, GuildSettings::setGuildId)
-				.doOnNext(entity -> valueSetter.accept(entity, value))
-				.flatMap(db::save);
-	}
-
-	@Deprecated
-	public Mono<Void> valueAsStringToDatabase(Database db, String strVal, long guildId) {
-		return stringToValue.apply(strVal, guildId).flatMap(value -> valueToDatabase(db, value, guildId));
 	}
 	
 	private E findOrCreate(Session s, long guildId) {

@@ -7,16 +7,13 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
-import java.util.Set;
-import java.util.StringJoiner;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import com.github.alex1304.ultimategdbot.api.Bot;
-import com.github.alex1304.ultimategdbot.api.Command;
-import com.github.alex1304.ultimategdbot.api.CommandFailedException;
-import com.github.alex1304.ultimategdbot.api.Context;
 import com.github.alex1304.ultimategdbot.api.Plugin;
+import com.github.alex1304.ultimategdbot.api.command.CommandFailedException;
+import com.github.alex1304.ultimategdbot.api.command.Context;
 
 import discord4j.core.object.entity.Channel;
 import discord4j.core.object.entity.Message;
@@ -32,55 +29,6 @@ import reactor.core.publisher.Mono;
  */
 public class BotUtils {
 	private BotUtils() {
-	}
-	
-	/**
-	 * Generates a default documentation for the command in a String format.
-	 * 
-	 * @param cmd the command to generate the doc for
-	 * @param ctx the context to generate a more specific documentation according to the user permissions etc
-	 * @param cmdName the alias that should be used for the command name 
-	 * @return the documentation
-	 */
-	public static Mono<String> generateDefaultDocumentation(Command cmd, Context ctx, String cmdName) {
-		Objects.requireNonNull(cmd);
-		Objects.requireNonNull(ctx);
-		Objects.requireNonNull(cmdName);
-		return cmd.getPermissionLevel().isGranted(ctx)
-				.filter(Boolean::booleanValue)
-				.switchIfEmpty(Mono.error(new CommandFailedException("You are not granted the privileges to "
-						+ "access the documentation of this command.")))
-				.flatMap(__ -> {
-					var sb = new StringBuilder();
-					sb.append("```diff\n");
-					sb.append(ctx.getPrefixUsed());
-					sb.append(cmdName);
-					sb.append(' ');
-					sb.append(cmd.getSyntax());
-					sb.append("\n```\n");
-					sb.append(cmd.getDescription());
-					sb.append("\n");
-					sb.append(cmd.getLongDescription());
-					sb.append("\n");
-					return Flux.fromIterable(cmd.getSubcommands())
-							.filterWhen(scmd -> scmd.getPermissionLevel().isGranted(ctx))
-							.map(scmd -> "`" + ctx.getPrefixUsed() + cmdName + " " + joinAliases(scmd.getAliases()) + "`: " + scmd.getDescription())
-							.collect(Collectors.joining("\n"))
-							.filter(scmdStr -> !scmdStr.isEmpty())
-							.map(scmdStr -> sb.append("\n**Subcommands:**\n").append(scmdStr).toString())
-							.defaultIfEmpty(sb.toString());
-				});
-	}
-	
-	public static String joinAliases(Set<String> aliases) {
-		if (aliases.size() == 1) {
-			return aliases.stream().findAny().get();
-		} else {
-			var aliasJoiner = new StringJoiner("|");
-			aliases.stream().sorted((a, b) -> b.length() == a.length() ? a.compareTo(b) : b.length() - a.length())
-					.forEach(aliasJoiner::add);
-			return aliasJoiner.toString();
-		}
 	}
 	
 	private static int occurrences(String str, String substr) {
@@ -148,65 +96,6 @@ public class BotUtils {
 	
 	public static Flux<Message> sendOneMessageToMultipleChannels(Flux<Channel> channels, Consumer<MessageCreateSpec> spec) {
 		return channels.ofType(MessageChannel.class).flatMap(c -> c.createMessage(spec));
-	}
-	
-	public static List<String> parseArgs(String input, String prefix) {
-		if (prefix.equalsIgnoreCase(input.substring(0, Math.min(input.length(), prefix.length())))) {
-			var inputWithoutPrefix = input.substring(prefix.length());
-			return parseArgs("\"" + prefix + "\"" + inputWithoutPrefix);
-		}
-		return parseArgs(input);
-	}
-	
-	public static List<String> parseArgs(String input) {
-		var args = new ArrayList<String>();
-		var buffer = new StringBuilder();
-		var inQuotes = false;
-		var escaping = false;
-		for (var c : input.toCharArray()) {
-			if (!escaping) {
-				if (c == '\\') {
-					escaping = true;
-					continue;
-				} else if (c == '"') {
-					inQuotes = !inQuotes;
-					continue;
-				}
-			}
-			if (!inQuotes) {
-				if (Character.isWhitespace(c)) {
-					args.add(buffer.toString());
-					buffer.delete(0, buffer.length());
-				} else {
-					buffer.append(c);
-				}
-			} else {
-				buffer.append(c);
-			}
-			escaping = false;
-		}
-		if (buffer.length() != 0) {
-			args.add(buffer.toString());
-		}
-		return args;
-	}
-	
-	/**
-	 * Returns the same test but without quotes, unless they are escaped with a
-	 * backslash.
-	 * 
-	 * @param text the text
-	 * @return the same text but without unescaped quotes
-	 */
-	public static String removeQuotesUnlessEscaped(String text) {
-		var sb = new StringBuilder();
-		char prev = 0;
-		for (var c : text.toCharArray()) {
-			if (prev != '\\' && c == '"') continue;
-			sb.append(c);
-			prev = c;
-		}
-		return sb.toString();
 	}
 	
 	/**

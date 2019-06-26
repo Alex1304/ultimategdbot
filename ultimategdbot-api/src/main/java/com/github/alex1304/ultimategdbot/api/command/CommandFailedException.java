@@ -1,4 +1,4 @@
-package com.github.alex1304.ultimategdbot.api;
+package com.github.alex1304.ultimategdbot.api.command;
 
 /**
  * Thrown when something goes wrong during the execution of a command.

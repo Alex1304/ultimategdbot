@@ -1,62 +1,44 @@
 package com.github.alex1304.ultimategdbot.core;
 
-import java.util.Objects;
-import java.util.Set;
-
-import com.github.alex1304.ultimategdbot.api.Command;
-import com.github.alex1304.ultimategdbot.api.Context;
-import com.github.alex1304.ultimategdbot.api.InvalidSyntaxException;
-import com.github.alex1304.ultimategdbot.api.PermissionLevel;
-import com.github.alex1304.ultimategdbot.api.Plugin;
+import com.github.alex1304.ultimategdbot.api.command.CommandAction;
+import com.github.alex1304.ultimategdbot.api.command.CommandFailedException;
+import com.github.alex1304.ultimategdbot.api.command.CommandSpec;
+import com.github.alex1304.ultimategdbot.api.command.Context;
+import com.github.alex1304.ultimategdbot.api.command.PermissionLevel;
+import com.github.alex1304.ultimategdbot.api.command.Subcommand;
+import com.github.alex1304.ultimategdbot.api.command.argument.LongParser;
+import com.github.alex1304.ultimategdbot.api.database.BlacklistedIds;
 
 import reactor.core.publisher.Mono;
 
-class BlacklistCommand implements Command {
+@CommandSpec(aliases="blacklist", permLevel=PermissionLevel.BOT_OWNER)
+class BlacklistCommand {
 
-	private final NativePlugin plugin;
-	
-	public BlacklistCommand(NativePlugin plugin) {
-		this.plugin = Objects.requireNonNull(plugin);
+	@Subcommand("add")
+	@CommandAction(LongParser.class)
+	public Mono<Void> runAdd(Context ctx, long id) {
+		return ctx.getBot().getDatabase().findByID(BlacklistedIds.class, id)
+				.flatMap(__ -> Mono.error(new CommandFailedException("This ID is already blacklisted")))
+				.then(Mono.fromCallable(() -> {
+							var b = new BlacklistedIds();
+							b.setId(id);
+							return b;
+						}).flatMap(ctx.getBot().getDatabase()::save))
+				.then(Mono.fromRunnable(() -> ctx.getBot().getCommandKernel().blacklist(id)))
+				.then(ctx.reply("**" + id + "** is now blacklisted!"))
+				.then(ctx.getBot().log("ID added to blacklist: " + id))
+				.then();
 	}
 
-	@Override
-	public Mono<Void> execute(Context ctx) {
-		return Mono.error(new InvalidSyntaxException(this));
-	}
-
-	@Override
-	public Set<String> getAliases() {
-		return Set.of("blacklist");
-	}
-
-	@Override
-	public Set<Command> getSubcommands() {
-		return Set.of(new BlacklistAddCommand(plugin), new BlacklistRemoveCommand(plugin));
-	}
-
-	@Override
-	public String getDescription() {
-		return "Restrict guilds, channels or users from using the bot.";
-	}
-
-	@Override
-	public String getLongDescription() {
-		return "In case of abuse, you may use this command to disable the bot for a specific user, "
-				+ "a specific channel or a whole Discord server.";
-	}
-
-	@Override
-	public String getSyntax() {
-		return "";
-	}
-
-	@Override
-	public PermissionLevel getPermissionLevel() {
-		return PermissionLevel.BOT_OWNER;
-	}
-
-	@Override
-	public Plugin getPlugin() {
-		return plugin;
+	@Subcommand("remove")
+	@CommandAction(LongParser.class)
+	public Mono<Void> runRemove(Context ctx, long id) {
+		return ctx.getBot().getDatabase().findByID(BlacklistedIds.class, id)
+				.switchIfEmpty(Mono.error(new CommandFailedException("This ID is already not blacklisted")))
+				.flatMap(ctx.getBot().getDatabase()::delete)
+				.then(Mono.fromRunnable(() -> ctx.getBot().getCommandKernel().unblacklist(id)))
+				.then(ctx.reply("**" + id + "** is no longer blacklisted!"))
+				.then(ctx.getBot().log("ID removed from blacklist: " + id))
+				.then();
 	}
 }

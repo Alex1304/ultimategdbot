@@ -3,6 +3,7 @@ package com.github.alex1304.ultimategdbot.api;
 import java.util.Map;
 import java.util.Set;
 
+import com.github.alex1304.ultimategdbot.api.command.CommandProvider;
 import com.github.alex1304.ultimategdbot.api.database.GuildSettingsEntry;
 import com.github.alex1304.ultimategdbot.api.utils.PropertyParser;
 
@@ -14,7 +15,7 @@ import reactor.core.publisher.Mono;
 public interface Plugin {
 	/**
 	 * Code executed when the plugin is loaded. This allows the plugin to perform
-	 * additional configuration. Throwing an unchecked exception here will cancel
+	 * additional configuration. Emittiong an error here will cancel
 	 * the loading of this plugin and will display a warning in the standard output.
 	 * Other plugins won't be affected.
 	 * 
@@ -22,7 +23,7 @@ public interface Plugin {
 	 * @param parser contains everything defined in plugins.properties, ready to be
 	 *               parsed
 	 */
-	void setup(Bot bot, PropertyParser parser);
+	Mono<Void> setup(Bot bot, PropertyParser parser);
 	
 	/**
 	 * Action to execute when the bot is ready. Errors emitted from here will be
@@ -35,13 +36,6 @@ public interface Plugin {
 	default Mono<Void> onBotReady(Bot bot) {
 		return Mono.empty();
 	}
-
-	/**
-	 * Gets the set of commands that this plugin provides.
-	 * 
-	 * @return a set of commands
-	 */
-	Set<Command> getProvidedCommands();
 
 	/**
 	 * Gets the name of the plugin.
@@ -68,9 +62,9 @@ public interface Plugin {
 	Map<String, GuildSettingsEntry<?, ?>> getGuildConfigurationEntries();
 	
 	/**
-	 * Gets the command error handler to apply to all commands provided by this plugin.
+	 * Gets the command provider for this plugin.
 	 * 
-	 * @return the command error handler
+	 * @return the command provider
 	 */
-	CommandErrorHandler getCommandErrorHandler();
+	CommandProvider getCommandProvider();
 }

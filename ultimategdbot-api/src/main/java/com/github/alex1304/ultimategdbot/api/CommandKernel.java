@@ -1,47 +1,50 @@
 package com.github.alex1304.ultimategdbot.api;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.github.alex1304.ultimategdbot.api.command.CommandProvider;
+import com.github.alex1304.ultimategdbot.api.command.ExecutableCommand;
+import com.github.alex1304.ultimategdbot.api.database.NativeGuildSettings;
+
+import discord4j.core.event.domain.message.MessageCreateEvent;
+import discord4j.core.object.entity.User;
+import discord4j.core.object.util.Snowflake;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple2;
 
 /**
  * The kernel for all bot commands. Command instances are stored, managed
  * and executed here.
  */
-public interface CommandKernel {
-	/**
-	 * Reads the command line and retrieves the corresponding Command instance.
-	 * Arguments passed to the command are also returned as a list.
-	 * 
-	 * @param commandLine the command line
-	 * 
-	 * @return the command with its arguments, if present
-	 */
-	Optional<Tuple2<Command, List<String>>> parseCommandLine(String commandLine);
+public class CommandKernel {
+	private static final Logger LOGGER = LoggerFactory.getLogger("ultimategdbot.commandkernel");
+
+	private final Bot bot;
+	private final Set<CommandProvider> providers;
+	private final Set<Long> blacklist = new HashSet<>();
+	
+	public CommandKernel(Bot bot) {
+		this.bot = Objects.requireNonNull(bot);
+		this.providers = new HashSet<>();
+	}
 	
 	/**
-	 * Reads the command line and retrieves the corresponding Command instance.
-	 * Arguments passed to the command are also returned as a list.
+	 * Adds a new command provider to this kernel.
 	 * 
-	 * @param commandLine the command line as a list of string containing the
-	 *                    command name as first element and arguments then
-	 * 
-	 * @return the command with its arguments, if present
+	 * @param provider the command provider to add
 	 */
-	Optional<Tuple2<Command, List<String>>> parseCommandLine(List<String> commandLine);
-	
+	public void addProvider(CommandProvider provider) {
+		providers.add(Objects.requireNonNull(provider));
+	}
+
 	/**
-	 * Gets an unmodifiable set of all commands available in the kernel.
-	 * 
-	 * @return a Set of Command
-	 */
-	Set<Command> getCommands();
-	
-	/**
-	 * Invokes a command with the specified context.
+	 * Processes a MessageCreateEvent. 
 	 * 
 	 * @param cmd the command to invoke
 	 * @param ctx the context of the command
@@ -49,7 +52,51 @@ public interface CommandKernel {
 	 *         that may occur when running the command are transmitted through this
 	 *         Mono.
 	 */
-	Mono<Void> invokeCommand(Command cmd, Context ctx);
+	public Mono<Void> processEvent(MessageCreateEvent event) {
+		Objects.requireNonNull(event);
+		var authorId = event.getMessage().getAuthor().map(User::getId);
+		var guildId = event.getGuildId();
+		var channelId = event.getMessage().getChannelId();
+		if (event.getMessage().getAuthor().map(User::isBot).orElse(true)) {
+			return Mono.empty();
+		}
+		if (authorId.map(id -> blacklist.contains(id.asLong())).orElse(false)) {
+			LOGGER.debug("Ignoring event due to AUTHOR being blackisted: {}", event);
+			return Mono.empty();
+		}
+		if (guildId.map(id -> blacklist.contains(id.asLong())).orElse(false)) {
+			LOGGER.debug("Ignoring event due to GUILD being blackisted: {}", event);
+			return Mono.empty();
+		}
+		if (blacklist.contains(channelId.asLong())) {
+			LOGGER.debug("Ignoring event due to CHANNEL being blackisted: {}", event);
+			return Mono.empty();
+		}
+		return findGuildSpecificPrefix(event)
+				.flatMapMany(prefix -> Flux.fromIterable(providers)
+						.flatMap(provider -> Mono.justOrEmpty(provider.provideFromEvent(bot, prefix, event))))
+				.log()
+				.flatMap(ExecutableCommand::execute)
+				.then();
+	}
+	
+	public void start() {
+		bot.getDiscordClients()
+				.flatMap(client -> client.getEventDispatcher().on(MessageCreateEvent.class))
+				.flatMap(event -> processEvent(event).onErrorResume(e -> Mono
+						.fromRunnable(() -> LOGGER.error("An error occured when processing event " + event, e))
+						.and(event.getMessage().getChannel()
+								.flatMap(c -> c.createMessage(":no_entry_sign: Something went wrong. "
+										+ "A crash report has been sent to the developer. Sorry for "
+										+ "the inconvenience."))
+								.onErrorResume(__ -> Mono.empty()))
+						.and(bot.log("An error occured when processing event `" + event + "`\n"
+								+ "Exception thrown: `" + e.getClass().getName()
+								+ (e.getMessage() == null ? "" : ": " + e.getMessage()) + "`"))))
+				.retry()
+				.repeat()
+				.subscribe();
+	}
 	
 	/**
 	 * Gets an unmodifiable set of IDs that are not allowed to perform operations on
@@ -57,7 +104,9 @@ public interface CommandKernel {
 	 * 
 	 * @return an unmodifiable set of IDs
 	 */
-	Set<Long> getBlacklist();
+	public Set<Long> getBlacklist() {
+		return Collections.unmodifiableSet(blacklist);
+	}
 	
 	/**
 	 * Blacklists a new ID.
@@ -65,7 +114,9 @@ public interface CommandKernel {
 	 * @param id the ID of a user, a channel or a guild that won't be allowed to run
 	 *           commands from this kernel.
 	 */
-	void blacklist(long id);
+	public void blacklist(long id) {
+		blacklist.add(id);
+	}
 
 	/**
 	 * Removes an ID from the blacklist.
@@ -73,5 +124,26 @@ public interface CommandKernel {
 	 * @param id the ID of a user, a channel or a guild that will be allowed to run
 	 *           commands from this kernel again.
 	 */
-	void unblacklist(long id);
+	public void unblacklist(long id) {
+		blacklist.remove(id);
+	}
+
+	private Mono<String> findGuildSpecificPrefix(MessageCreateEvent event) {
+		return Mono.justOrEmpty(event.getGuildId())
+				.map(Snowflake::asLong)
+				.flatMap(guildId -> bot.getDatabase().findByID(NativeGuildSettings.class, guildId)
+						.switchIfEmpty(Mono.fromCallable(() -> {
+									var gs = new NativeGuildSettings();
+									gs.setGuildId(guildId);
+									return gs;
+								})
+								.flatMap(gs -> bot.getDatabase().save(gs)
+										.then(Mono.fromRunnable(() -> LOGGER.debug("Created guild settings: {}", gs)))
+										.onErrorResume(e -> Mono.fromRunnable(() -> LOGGER
+												.error("Unable to save guild settings for " + guildId, e)))
+										.thenReturn(gs)))
+						.flatMap(gs -> Mono.justOrEmpty(gs.getPrefix())))
+				.defaultIfEmpty(bot.getDefaultPrefix())
+				.map(String::strip);
+	}
 }

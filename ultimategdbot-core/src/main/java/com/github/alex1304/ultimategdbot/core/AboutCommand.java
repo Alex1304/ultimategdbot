@@ -2,11 +2,10 @@ package com.github.alex1304.ultimategdbot.core;
 
 import java.util.HashMap;
 import java.util.Objects;
-import java.util.Set;
 
-import com.github.alex1304.ultimategdbot.api.Command;
-import com.github.alex1304.ultimategdbot.api.Context;
-import com.github.alex1304.ultimategdbot.api.Plugin;
+import com.github.alex1304.ultimategdbot.api.command.CommandAction;
+import com.github.alex1304.ultimategdbot.api.command.CommandSpec;
+import com.github.alex1304.ultimategdbot.api.command.Context;
 import com.github.alex1304.ultimategdbot.api.utils.BotUtils;
 
 import discord4j.core.object.entity.ApplicationInfo;
@@ -14,7 +13,8 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 import reactor.function.TupleUtils;
 
-class AboutCommand implements Command {
+@CommandSpec(aliases="about")
+class AboutCommand {
 	
 	private final NativePlugin plugin;
 	
@@ -22,8 +22,8 @@ class AboutCommand implements Command {
 		this.plugin = Objects.requireNonNull(plugin);
 	}
 
-	@Override
-	public Mono<Void> execute(Context ctx) {
+	@CommandAction
+	public Mono<Void> run(Context ctx) {
 		return ctx.getBot().getApplicationInfo()
 				.zipWhen(ApplicationInfo::getOwner)
 				.zipWith(Mono.zip(ctx.getBot().getMainDiscordClient().getGuilds().count(),
@@ -56,30 +56,5 @@ class AboutCommand implements Command {
 				}))
 				.subscribeOn(Schedulers.elastic())
 				.then();
-	}
-
-	@Override
-	public Set<String> getAliases() {
-		return Set.of("about");
-	}
-
-	@Override
-	public String getDescription() {
-		return "Get information about the bot itself.";
-	}
-
-	@Override
-	public String getLongDescription() {
-		return "Displays information such as bot version, support server link, credits, etc.";
-	}
-
-	@Override
-	public String getSyntax() {
-		return "";
-	}
-
-	@Override
-	public Plugin getPlugin() {
-		return plugin;
 	}
 }

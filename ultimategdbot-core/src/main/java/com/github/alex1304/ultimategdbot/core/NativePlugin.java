@@ -1,7 +1,5 @@
 package com.github.alex1304.ultimategdbot.core;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Duration;
@@ -17,9 +15,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.alex1304.ultimategdbot.api.Bot;
-import com.github.alex1304.ultimategdbot.api.Command;
-import com.github.alex1304.ultimategdbot.api.CommandErrorHandler;
 import com.github.alex1304.ultimategdbot.api.Plugin;
+import com.github.alex1304.ultimategdbot.api.command.CommandProvider;
 import com.github.alex1304.ultimategdbot.api.database.BlacklistedIds;
 import com.github.alex1304.ultimategdbot.api.database.GuildSettingsEntry;
 import com.github.alex1304.ultimategdbot.api.database.NativeGuildSettings;
@@ -40,39 +37,43 @@ public class NativePlugin implements Plugin {
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(NativePlugin.class);
 	
-	private String aboutText;
+	private volatile String aboutText;
+	private final CommandProvider cmdProvider = new CommandProvider();
 	private final Set<Snowflake> unavailableGuildIds = Collections.synchronizedSet(new HashSet<>());
 	private final AtomicInteger shardsNotReady = new AtomicInteger();
 	private final Map<String, GuildSettingsEntry<?, ?>> configEntries = new HashMap<String, GuildSettingsEntry<?, ?>>();
-	private final CommandErrorHandler cmdErrorHandler = new CommandErrorHandler();
-	private final Set<Command> providedCommands = Set.of(new HelpCommand(this), new PingCommand(this), new SetupCommand(this),
-			new SystemCommand(this), new AboutCommand(this), new BotAdminsCommand(this), new TimeCommand(this),
-			new DelayCommand(this), new SequenceCommand(this), new BlacklistCommand(this), new CacheInfoCommand(this));
 
 	@Override
-	public void setup(Bot bot, PropertyParser parser) {
-		try {
-			this.aboutText = Files.readAllLines(Paths.get(".", "config", "about.txt")).stream().collect(Collectors.joining("\n"));
-		} catch (IOException e) {
-			throw new UncheckedIOException(e);
-		}
-		initEventListeners(bot);
-		// Guild settings
-		var valueConverter = new GuildSettingsValueConverter(bot);
-		configEntries.put("prefix", new GuildSettingsEntry<>(
-				NativeGuildSettings.class,
-				NativeGuildSettings::getPrefix,
-				NativeGuildSettings::setPrefix,
-				(value, guildId) -> valueConverter.justCheck(value, guildId, x -> !x.isBlank(), "Cannot be blank"),
-				valueConverter::noConversion
-		));
-		configEntries.put("server_mod_role", new GuildSettingsEntry<>(
-				NativeGuildSettings.class,
-				NativeGuildSettings::getServerModRoleId,
-				NativeGuildSettings::setServerModRoleId,
-				valueConverter::toRoleId,
-				valueConverter::fromRoleId
-		));
+	public Mono<Void> setup(Bot bot, PropertyParser parser) {
+		return Mono.fromCallable(() -> Files.readAllLines(Paths.get(".", "config", "about.txt")).stream().collect(Collectors.joining("\n")))
+				.doOnNext(aboutText -> this.aboutText = aboutText)
+				.and(Mono.fromRunnable(() -> {
+					cmdProvider.addAnnotated(new HelpCommand());
+					cmdProvider.addAnnotated(new PingCommand());
+					cmdProvider.addAnnotated(new SetupCommand());
+					cmdProvider.addAnnotated(new SystemCommand());
+					cmdProvider.addAnnotated(new AboutCommand(this));
+					cmdProvider.addAnnotated(new BotAdminsCommand());
+					cmdProvider.addAnnotated(new BlacklistCommand());
+					cmdProvider.addAnnotated(new CacheInfoCommand());
+					initEventListeners(bot);
+					var valueConverter = new GuildSettingsValueConverter(bot);
+					configEntries.put("prefix", new GuildSettingsEntry<>(
+							NativeGuildSettings.class,
+							NativeGuildSettings::getPrefix,
+							NativeGuildSettings::setPrefix,
+							(value, guildId) -> valueConverter.justCheck(value, guildId, x -> !x.isBlank(), "Cannot be blank"),
+							valueConverter::noConversion
+					));
+					configEntries.put("server_mod_role", new GuildSettingsEntry<>(
+							NativeGuildSettings.class,
+							NativeGuildSettings::getServerModRoleId,
+							NativeGuildSettings::setServerModRoleId,
+							valueConverter::toRoleId,
+							valueConverter::fromRoleId
+					));
+				}))
+				.then();
 	}
 	
 	@Override
@@ -154,11 +155,6 @@ public class NativePlugin implements Plugin {
 	}
 
 	@Override
-	public Set<Command> getProvidedCommands() {
-		return providedCommands;
-	}
-
-	@Override
 	public String getName() {
 		return "Core";
 	}
@@ -174,8 +170,8 @@ public class NativePlugin implements Plugin {
 	}
 
 	@Override
-	public CommandErrorHandler getCommandErrorHandler() {
-		return cmdErrorHandler;
+	public CommandProvider getCommandProvider() {
+		return cmdProvider;
 	}
 
 	public String getAboutText() {

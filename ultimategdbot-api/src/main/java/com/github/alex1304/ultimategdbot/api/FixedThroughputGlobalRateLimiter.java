@@ -1,4 +1,4 @@
-package com.github.alex1304.ultimategdbot.core;
+package com.github.alex1304.ultimategdbot.api;
 
 import java.time.Duration;
 
