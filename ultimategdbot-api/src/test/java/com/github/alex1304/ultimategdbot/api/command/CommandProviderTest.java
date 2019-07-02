@@ -10,7 +10,7 @@ import com.github.alex1304.ultimategdbot.api.command.argument.StringParser;
 
 import reactor.core.publisher.Mono;
 
-class CommandProviderTest {
+public class CommandProviderTest {
 	
 	private CommandProvider provider;
 	private TestCommand testCmd;
