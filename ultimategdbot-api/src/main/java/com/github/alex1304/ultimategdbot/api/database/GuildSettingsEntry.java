@@ -8,8 +8,6 @@ import java.util.function.Function;
 
 import org.hibernate.Session;
 
-import com.github.alex1304.ultimategdbot.api.utils.GuildSettingsValueConverter;
-
 import reactor.core.publisher.Mono;
 
 /**
@@ -52,12 +50,12 @@ public class GuildSettingsEntry<E extends GuildSettings, D> {
 	public Mono<String> getAsString(Session s, long guildId) {
 		return Mono.fromCallable(() -> getRaw(s, guildId))
 				.flatMap(raw -> valueToString.apply(raw, guildId))
-				.defaultIfEmpty(GuildSettingsValueConverter.NONE_VALUE);
+				.defaultIfEmpty("None");
 	}
 	
 	public Mono<Void> setFromString(Session s, String strValue, long guildId) {
 		if (strValue == null) {
-			strValue = GuildSettingsValueConverter.NONE_VALUE;
+			strValue = "None";
 		}
 		return stringToValue.apply(strValue, guildId)
 				.switchIfEmpty(Mono.fromRunnable(() -> setRaw(s, null, guildId)))

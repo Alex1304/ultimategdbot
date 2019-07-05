@@ -21,7 +21,8 @@ import com.github.alex1304.ultimategdbot.api.database.BlacklistedIds;
 import com.github.alex1304.ultimategdbot.api.database.GuildSettingsEntry;
 import com.github.alex1304.ultimategdbot.api.database.NativeGuildSettings;
 import com.github.alex1304.ultimategdbot.api.utils.BotUtils;
-import com.github.alex1304.ultimategdbot.api.utils.GuildSettingsValueConverter;
+import com.github.alex1304.ultimategdbot.api.utils.DatabaseInputFunction;
+import com.github.alex1304.ultimategdbot.api.utils.DatabaseOutputFunction;
 import com.github.alex1304.ultimategdbot.api.utils.PropertyParser;
 
 import discord4j.core.event.domain.guild.GuildCreateEvent;
@@ -58,20 +59,19 @@ public class NativePlugin implements Plugin {
 					cmdProvider.addAnnotated(new CacheInfoCommand());
 					cmdProvider.addAnnotated(new BurstMessagesCommand());
 					initEventListeners(bot);
-					var valueConverter = new GuildSettingsValueConverter(bot);
 					configEntries.put("prefix", new GuildSettingsEntry<>(
 							NativeGuildSettings.class,
 							NativeGuildSettings::getPrefix,
 							NativeGuildSettings::setPrefix,
-							(value, guildId) -> valueConverter.justCheck(value, guildId, x -> !x.isBlank(), "Cannot be blank"),
-							valueConverter::noConversion
+							DatabaseInputFunction.asIs().withInputCheck(x -> !x.isBlank(), "Cannot be blank"),
+							DatabaseOutputFunction.stringValue()
 					));
 					configEntries.put("server_mod_role", new GuildSettingsEntry<>(
 							NativeGuildSettings.class,
 							NativeGuildSettings::getServerModRoleId,
 							NativeGuildSettings::setServerModRoleId,
-							valueConverter::toRoleId,
-							valueConverter::fromRoleId
+							DatabaseInputFunction.toRoleId(bot),
+							DatabaseOutputFunction.fromRoleId(bot, Object::toString)
 					));
 				}))
 				.then();

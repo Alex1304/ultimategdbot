@@ -12,6 +12,7 @@ import discord4j.rest.request.GlobalRateLimiter;
 import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 /**
  * <p>
@@ -36,7 +37,7 @@ public class ClockRateLimiter implements GlobalRateLimiter {
 	
 	private final AtomicLong stageIds;
 	private final EmitterProcessor<Long> clock;
-	private final AtomicLong lastTargetedTick;
+	private final AtomicLong lastAssignedTick;
 	private final AtomicLong lastElapsedTick;
 	private final AtomicBoolean isGloballyRateLimited;
 	private final AtomicLong limitedUntil;
@@ -48,11 +49,11 @@ public class ClockRateLimiter implements GlobalRateLimiter {
 	 */
 	public ClockRateLimiter(int frequency) {
 		if (frequency < 1) {
-			throw new IllegalArgumentException("throughput must be >= 1");
+			throw new IllegalArgumentException("frequency must be >= 1");
 		}
 		this.stageIds = new AtomicLong();
 		this.clock = EmitterProcessor.create(false);
-		this.lastTargetedTick = new AtomicLong();
+		this.lastAssignedTick = new AtomicLong();
 		this.lastElapsedTick = new AtomicLong();
 		this.isGloballyRateLimited = new AtomicBoolean();
 		this.limitedUntil = new AtomicLong();
@@ -66,7 +67,7 @@ public class ClockRateLimiter implements GlobalRateLimiter {
 	public void rateLimitFor(Duration duration) {
 		isGloballyRateLimited.set(true);
 		limitedUntil.set(System.nanoTime() + duration.toNanos());
-		Mono.delay(duration)
+		Mono.delay(duration, Schedulers.elastic())
 				.doOnNext(__ -> isGloballyRateLimited.set(false))
 				.subscribe();
 	}
@@ -85,9 +86,9 @@ public class ClockRateLimiter implements GlobalRateLimiter {
 	public <T> Flux<T> withLimiter(Publisher<T> stage) {
 		var stageId = stageIds.incrementAndGet();
 		var targetTick = new AtomicLong();
-		synchronized (lastTargetedTick) {
-			targetTick.set(Math.max(lastElapsedTick.get(), lastTargetedTick.get()) + 1);
-			lastTargetedTick.set(targetTick.get());
+		synchronized (lastAssignedTick) {
+			targetTick.set(Math.max(lastElapsedTick.get(), lastAssignedTick.get()) + 1);
+			lastAssignedTick.set(targetTick.get());
 			LOGGER.debug("Stage #{} is targeting tick: {}", stageId, targetTick);
 		}
 		return clock.skipUntil(tick -> {
@@ -96,9 +97,9 @@ public class ClockRateLimiter implements GlobalRateLimiter {
 							LOGGER.debug("Stage #{} has reached target tick {} and has received permit", stageId, tick);
 							return true;
 						} else {
-							synchronized (lastTargetedTick) {
-								targetTick.set(Math.max(lastElapsedTick.get(), lastTargetedTick.get()) + 1);
-								lastTargetedTick.set(targetTick.get());
+							synchronized (lastAssignedTick) {
+								targetTick.set(Math.max(lastElapsedTick.get(), lastAssignedTick.get()) + 1);
+								lastAssignedTick.set(targetTick.get());
 							}
 							LOGGER.debug("Stage #{} has reached target tick {} but is globally rate limited. "
 									+ "New target set to {}", stageId, tick, targetTick.get());
