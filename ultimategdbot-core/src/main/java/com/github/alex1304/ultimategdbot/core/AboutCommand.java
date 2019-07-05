@@ -7,6 +7,7 @@ import com.github.alex1304.ultimategdbot.api.command.CommandAction;
 import com.github.alex1304.ultimategdbot.api.command.CommandSpec;
 import com.github.alex1304.ultimategdbot.api.command.Context;
 import com.github.alex1304.ultimategdbot.api.utils.BotUtils;
+import com.github.alex1304.ultimategdbot.api.utils.DiscordFormatter;
 
 import discord4j.core.object.entity.ApplicationInfo;
 import reactor.core.publisher.Mono;
@@ -46,7 +47,7 @@ class AboutCommand {
 					}
 					var vars = new HashMap<String, String>();
 					vars.put("bot_name", appInfoWithOwner.getT1().getName());
-					vars.put("bot_owner", BotUtils.formatDiscordUsername(appInfoWithOwner.getT2()));
+					vars.put("bot_owner", DiscordFormatter.formatUser(appInfoWithOwner.getT2()));
 					vars.put("server_count", "" + guildAndUserCount.getT1());
 					vars.put("user_count", "" + guildAndUserCount.getT2());
 					vars.put("version_info", versionInfoBuilder.toString());

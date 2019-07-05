@@ -23,6 +23,7 @@ import com.github.alex1304.ultimategdbot.api.database.NativeGuildSettings;
 import com.github.alex1304.ultimategdbot.api.utils.BotUtils;
 import com.github.alex1304.ultimategdbot.api.utils.DatabaseInputFunction;
 import com.github.alex1304.ultimategdbot.api.utils.DatabaseOutputFunction;
+import com.github.alex1304.ultimategdbot.api.utils.Markdown;
 import com.github.alex1304.ultimategdbot.api.utils.PropertyParser;
 
 import discord4j.core.event.domain.guild.GuildCreateEvent;
@@ -107,7 +108,7 @@ public class NativePlugin implements Plugin {
 						.filter(event -> shardsNotReady.get() == 0)
 						.filter(event -> !unavailableGuildIds.remove(event.getGuild().getId()))
 						.map(GuildCreateEvent::getGuild)
-						.flatMap(guild -> bot.log(":inbox_tray: New guild joined: " + BotUtils.escapeMarkdown(guild.getName())
+						.flatMap(guild -> bot.log(":inbox_tray: New guild joined: " + Markdown.escape(guild.getName())
 								+ " (" + guild.getId().asString() + ")"))
 						.onErrorContinue((error, obj) -> LOGGER.error("Error while procesing GuildCreateEvent on " + obj, error))
 						.subscribe();
@@ -122,7 +123,7 @@ public class NativePlugin implements Plugin {
 							unavailableGuildIds.remove(event.getGuildId());
 							return true;
 						})
-						.map(event -> event.getGuild().map(guild -> BotUtils.escapeMarkdown(guild.getName())
+						.map(event -> event.getGuild().map(guild -> Markdown.escape(guild.getName())
 								+ " (" + guild.getId().asString() + ")").orElse(event.getGuildId().asString() + " (no data)"))
 						.flatMap(str -> bot.log(":outbox_tray: Guild left: " + str))
 						.onErrorContinue((error, obj) -> LOGGER.error("Error while procesing GuildDeleteEvent on " + obj, error))
