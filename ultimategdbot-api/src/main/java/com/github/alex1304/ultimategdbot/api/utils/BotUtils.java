@@ -3,23 +3,18 @@ package com.github.alex1304.ultimategdbot.api.utils;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import com.github.alex1304.ultimategdbot.api.Bot;
 import com.github.alex1304.ultimategdbot.api.Plugin;
-import com.github.alex1304.ultimategdbot.api.command.CommandFailedException;
 import com.github.alex1304.ultimategdbot.api.command.Context;
 
 import discord4j.core.object.entity.Channel;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.MessageChannel;
-import discord4j.core.object.entity.User;
-import discord4j.core.object.util.Snowflake;
 import discord4j.core.spec.MessageCreateSpec;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -96,55 +91,6 @@ public class BotUtils {
 	
 	public static Flux<Message> sendOneMessageToMultipleChannels(Flux<Channel> channels, Consumer<MessageCreateSpec> spec) {
 		return channels.ofType(MessageChannel.class).flatMap(c -> c.createMessage(spec));
-	}
-	
-	/**
-	 * Escapes characters used in Markdown syntax using a backslash
-	 * 
-	 * @param text the Markdown text to escape
-	 * @return String
-	 */
-	public static String escapeMarkdown(String text) {
-		List<Character> resultList = new ArrayList<>();
-		Character[] charsToEscape = { '\\', '_', '*', '~', '`', ':', '@', '#', '|' };
-		List<Character> charsToEscapeList = Arrays.asList(charsToEscape);
-		
-		for (char c : text.toCharArray()) {
-			if (charsToEscapeList.contains(c))
-				resultList.add('\\');
-			resultList.add(c);
-		}
-		
-		char[] result = new char[resultList.size()];
-		for (int i = 0 ; i < result.length ; i++)
-			result[i] = resultList.get(i);
-		
-		return new String(result);
-	}
-	
-	/**
-	 * Formats the username of the user specified as argument with the format username#discriminator
-	 * @param user The user whom username will be formatted
-	 * @return The formatted username as String.
-	 */
-	public static String formatDiscordUsername(User user) {
-		return escapeMarkdown(user.getUsername() + "#" + user.getDiscriminator());
-	}
-	
-	public static Mono<User> convertStringToUser(Bot bot, String str) {
-		String id;
-		if (str.matches("[0-9]{1,19}")) {
-			id = str;
-		} else if (str.matches("<@!?[0-9]{1,19}>")) {
-			id = str.substring(str.startsWith("<@!") ? 3 : 2, str.length() - 1);
-		} else {
-			return Mono.error(new CommandFailedException("Not a valid mention/ID."));
-		}
-		return Mono.just(id)
-				.map(Snowflake::of)
-				.onErrorMap(e -> new CommandFailedException("Not a valid mention/ID."))
-				.flatMap(snowflake -> bot.getDiscordClients().flatMap(client -> client.getUserById(snowflake)).next())
-				.onErrorMap(e -> new CommandFailedException("Could not resolve the mention/ID to a valid user."));
 	}
 	
 	public static String formatTimeMillis(Duration time) {

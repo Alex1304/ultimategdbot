@@ -3,10 +3,12 @@ package com.github.alex1304.ultimategdbot.api.database;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Objects;
 import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import org.hibernate.Session;
+
+import com.github.alex1304.ultimategdbot.api.utils.DatabaseInputFunction;
+import com.github.alex1304.ultimategdbot.api.utils.DatabaseOutputFunction;
 
 import reactor.core.publisher.Mono;
 
@@ -21,11 +23,11 @@ public class GuildSettingsEntry<E extends GuildSettings, D> {
 	private final Class<E> entityClass;
 	private final Function<E, D> valueGetter;
 	private final BiConsumer<E, D> valueSetter;
-	private final BiFunction<String, Long, Mono<D>> stringToValue;
-	private final BiFunction<D, Long, Mono<String>> valueToString;
+	private final DatabaseInputFunction<D> stringToValue;
+	private final DatabaseOutputFunction<D> valueToString;
 	
-	public GuildSettingsEntry(Class<E> entityClass, Function<E, D> valueGetter,
-			BiConsumer<E, D> valueSetter, BiFunction<String, Long, Mono<D>> stringToValue, BiFunction<D, Long, Mono<String>> valueToString) {
+	public GuildSettingsEntry(Class<E> entityClass, Function<E, D> valueGetter, BiConsumer<E, D> valueSetter,
+			DatabaseInputFunction<D> stringToValue, DatabaseOutputFunction<D> valueToString) {
 		this.entityClass = Objects.requireNonNull(entityClass);
 		this.valueGetter = Objects.requireNonNull(valueGetter);
 		this.valueSetter = Objects.requireNonNull(valueSetter);

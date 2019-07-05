@@ -71,10 +71,9 @@ public class NativePlugin implements Plugin {
 							NativeGuildSettings::getServerModRoleId,
 							NativeGuildSettings::setServerModRoleId,
 							DatabaseInputFunction.toRoleId(bot),
-							DatabaseOutputFunction.fromRoleId(bot, Object::toString)
+							DatabaseOutputFunction.fromRoleId(bot)
 					));
-				}))
-				.then();
+				}));
 	}
 	
 	@Override

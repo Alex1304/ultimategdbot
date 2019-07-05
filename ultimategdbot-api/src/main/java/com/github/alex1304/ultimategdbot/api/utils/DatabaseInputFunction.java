@@ -6,14 +6,11 @@ import java.util.function.Predicate;
 
 import com.github.alex1304.ultimategdbot.api.Bot;
 
-import discord4j.core.object.entity.Channel;
 import discord4j.core.object.entity.GuildChannel;
 import discord4j.core.object.entity.Role;
 import discord4j.core.object.entity.User;
 import discord4j.core.object.util.Snowflake;
 import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple2;
-import reactor.util.function.Tuples;
 
 /**
  * Function that determines the value to save to the database after reading the user input as String.
@@ -92,14 +89,8 @@ public interface DatabaseInputFunction<D> extends BiFunction<String, Long, Mono<
 	 */
 	public static DatabaseInputFunction<Long> toRoleId(Bot bot) {
 		return (input, guildId) -> asIs().apply(input, guildId)
-				.map(Snowflake::of)
-				.onErrorResume(e -> Mono.just(input.substring(3, input.length() - 1))
-						.map(Snowflake::of))
-				.onErrorResume(e -> bot.getMainDiscordClient().getGuildById(Snowflake.of(guildId))
-								.flatMap(g -> g.getRoles()
-										.filter(r -> r.getName().equalsIgnoreCase(input))
-										.map(Role::getId).next().single()))
-				.onErrorMap(e -> new IllegalArgumentException("Could not convert '" + input + "' to a valid role"))
+				.flatMap(str -> DiscordParser.parseRole(bot, Snowflake.of(guildId), str))
+				.map(Role::getId)
 				.map(Snowflake::asLong);
 	}
 	
@@ -112,19 +103,8 @@ public interface DatabaseInputFunction<D> extends BiFunction<String, Long, Mono<
 	 */
 	public static DatabaseInputFunction<Long> toUserId(Bot bot) {
 		return (input, guildId) -> asIs().apply(input, guildId)
-				.map(Snowflake::of)
-				.onErrorResume(e -> Mono.just(input.substring(2, input.length() - 1))
-						.map(Snowflake::of))
-				.onErrorResume(e -> Mono.just(input.substring(3, input.length() - 1))
-						.map(Snowflake::of))
-				.onErrorResume(e -> bot.getMainDiscordClient().getUsers()
-						.map(user -> Tuples.of(user, BotUtils.formatDiscordUsername(user)))
-						.filter(u -> u.getT2().startsWith(input))
-						.map(Tuple2::getT1)
-						.map(User::getId)
-						.next()
-						.single())
-				.onErrorMap(e -> new IllegalArgumentException("Could not convert '" + input + "' to a valid user"))
+				.flatMap(str -> DiscordParser.parseUser(bot, str))
+				.map(User::getId)
 				.map(Snowflake::asLong);
 	}
 	
@@ -138,15 +118,9 @@ public interface DatabaseInputFunction<D> extends BiFunction<String, Long, Mono<
 	 */
 	public static DatabaseInputFunction<Long> toChannelId(Bot bot, Class<? extends GuildChannel> channelType) {
 		return (input, guildId) -> asIs().apply(input, guildId)
-				.map(Snowflake::of)
-				.onErrorResume(e -> Mono.just(input.substring(2, input.length() - 1))
-						.map(Snowflake::of))
-				.onErrorResume(e -> bot.getMainDiscordClient().getGuildById(Snowflake.of(guildId))
-								.flatMap(g -> g.getChannels()
-										.ofType(channelType)
-										.filter(r -> r.getName().equalsIgnoreCase(input))
-										.map(Channel::getId).next().single()))
-				.onErrorMap(e -> new IllegalArgumentException("Could not convert '" + input + "' to a valid channel"))
+				.flatMap(str -> DiscordParser.parseGuildChannel(bot, Snowflake.of(guildId), str))
+				.ofType(channelType)
+				.map(GuildChannel::getId)
 				.map(Snowflake::asLong);
 	}
 }
