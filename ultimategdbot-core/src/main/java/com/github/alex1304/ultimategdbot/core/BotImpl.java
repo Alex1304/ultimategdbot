@@ -238,7 +238,7 @@ class BotImpl implements Bot {
 				.setRouterOptions(RouterOptions.builder()
 						.onClientResponse(ResponseFunction.emptyIfNotFound())
 						.onClientResponse(ResponseFunction.emptyOnErrorStatus(RouteMatcher.route(Routes.REACTION_CREATE), 400))
-						.globalRateLimiter(new FixedThroughputGlobalRateLimiter(requestThroughput))
+						.globalRateLimiter(new ClockRateLimiter(requestThroughput))
 						.build())
 				.build()
 				.map(dcb -> dcb.setInitialPresence(presenceStatus)
