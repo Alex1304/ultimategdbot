@@ -20,7 +20,6 @@ import com.github.alex1304.ultimategdbot.api.command.CommandProvider;
 import com.github.alex1304.ultimategdbot.api.database.BlacklistedIds;
 import com.github.alex1304.ultimategdbot.api.database.GuildSettingsEntry;
 import com.github.alex1304.ultimategdbot.api.database.NativeGuildSettings;
-import com.github.alex1304.ultimategdbot.api.utils.BotUtils;
 import com.github.alex1304.ultimategdbot.api.utils.DatabaseInputFunction;
 import com.github.alex1304.ultimategdbot.api.utils.DatabaseOutputFunction;
 import com.github.alex1304.ultimategdbot.api.utils.Markdown;

@@ -1,13 +1,17 @@
 package com.github.alex1304.ultimategdbot.api;
 
+import java.io.IOException;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 
 import com.github.alex1304.ultimategdbot.api.command.CommandProvider;
 import com.github.alex1304.ultimategdbot.api.database.GuildSettingsEntry;
+import com.github.alex1304.ultimategdbot.api.utils.BotUtils;
 import com.github.alex1304.ultimategdbot.api.utils.PropertyParser;
 
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 /**
  * Represents a plugin. A plugin has a name and provides a list of commands.
@@ -67,4 +71,28 @@ public interface Plugin {
 	 * @return the command provider
 	 */
 	CommandProvider getCommandProvider();
+	
+	/**
+	 * Gets the Git properties for this plugin. By default, it will look for a file
+	 * named <code>[plugin name].git.properties</code> (where plugin name is the
+	 * name of the plugin as returned by {@link #getName()} but all lowercase and
+	 * with spaces replaced with underscores), in the <code>gitprops/</code>
+	 * subdirectory of the resource classpath. If none is found, the returned Mono
+	 * will complete empty.
+	 * 
+	 * @return a Mono emitting the git properties if found
+	 */
+	default Mono<Properties> getGitProperties() {
+		return Mono.fromCallable(() -> {
+			var props = new Properties();
+			try (var stream = BotUtils.class
+					.getResourceAsStream("/gitprops/" + getName().toLowerCase().replace(' ', '_') + ".git.properties")) {
+				if (stream != null) {
+					props.load(stream);
+				}
+			} catch (IOException e) {
+			}
+			return props;
+		}).subscribeOn(Schedulers.elastic());
+	}
 }

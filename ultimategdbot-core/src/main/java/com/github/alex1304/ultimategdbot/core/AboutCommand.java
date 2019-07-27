@@ -2,17 +2,20 @@ package com.github.alex1304.ultimategdbot.core;
 
 import java.util.HashMap;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import com.github.alex1304.ultimategdbot.api.command.CommandAction;
 import com.github.alex1304.ultimategdbot.api.command.CommandSpec;
 import com.github.alex1304.ultimategdbot.api.command.Context;
-import com.github.alex1304.ultimategdbot.api.utils.BotUtils;
 import com.github.alex1304.ultimategdbot.api.utils.DiscordFormatter;
 
 import discord4j.core.object.entity.ApplicationInfo;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 import reactor.function.TupleUtils;
+import reactor.util.function.Tuple2;
+import reactor.util.function.Tuples;
 
 @CommandSpec(aliases="about")
 class AboutCommand {
@@ -25,31 +28,35 @@ class AboutCommand {
 
 	@CommandAction
 	public Mono<Void> run(Context ctx) {
-		return ctx.getBot().getApplicationInfo()
-				.zipWhen(ApplicationInfo::getOwner)
-				.zipWith(Mono.zip(ctx.getBot().getMainDiscordClient().getGuilds().count(),
-						ctx.getBot().getMainDiscordClient().getUsers().count()))
-				.flatMap(TupleUtils.function((appInfoWithOwner, guildAndUserCount) -> {
+		return Mono.zip(
+				ctx.getBot().getApplicationInfo().zipWhen(ApplicationInfo::getOwner),
+				ctx.getBot().getMainDiscordClient().getGuilds().count(),
+				ctx.getBot().getMainDiscordClient().getUsers().count(),
+				Flux.fromIterable(ctx.getBot().getPlugins())
+						.flatMap(p -> p.getGitProperties()
+								.map(g -> g.getProperty("git.build.version", "*unknown*"))
+								.defaultIfEmpty("*unknown*")
+								.map(v -> Tuples.of(p, v)))
+						.collect(Collectors.toMap(Tuple2::getT1, Tuple2::getT2)))
+				.flatMap(TupleUtils.function((appInfoWithOwner, guildCount, userCount, pluginMap) -> {
 					var versionInfoBuilder = new StringBuilder("**")
 							.append(appInfoWithOwner.getT1().getName())
 							.append(" version:** ");
-					var nativeGitProps = BotUtils.getGitPropertiesForPlugin(plugin);
-					versionInfoBuilder.append(nativeGitProps.getProperty("git.build.version", "*unknown*")).append("\n");
-					for (var plugin : ctx.getBot().getPlugins()) {
-						if (plugin == this.plugin) continue;
-						var gitProps = BotUtils.getGitPropertiesForPlugin(plugin);
+					var nativeGitProps = pluginMap.get(plugin);
+					versionInfoBuilder.append(nativeGitProps).append("\n");
+					pluginMap.forEach((k, v) -> {
+						if (k == this.plugin) return;
 						versionInfoBuilder.append("**")
-								.append(plugin.getName())
-								.append(" plugin version:** ")
-								.append(gitProps.getProperty("git.build.version", "*unknown*"))
-								.append("\n");
-						
-					}
+							.append(k.getName())
+							.append(" plugin version:** ")
+							.append(v)
+							.append("\n");
+					});
 					var vars = new HashMap<String, String>();
 					vars.put("bot_name", appInfoWithOwner.getT1().getName());
 					vars.put("bot_owner", DiscordFormatter.formatUser(appInfoWithOwner.getT2()));
-					vars.put("server_count", "" + guildAndUserCount.getT1());
-					vars.put("user_count", "" + guildAndUserCount.getT2());
+					vars.put("server_count", "" + guildCount);
+					vars.put("user_count", "" + userCount);
 					vars.put("version_info", versionInfoBuilder.toString());
 					var result = new String[] { plugin.getAboutText() };
 					vars.forEach((k, v) -> result[0] = result[0].replaceAll("\\{\\{ *" + k + " *\\}\\}", String.valueOf(v)));
