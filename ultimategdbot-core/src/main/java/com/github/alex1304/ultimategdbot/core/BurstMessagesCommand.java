@@ -30,11 +30,11 @@ class BurstMessagesCommand {
 						.flatMap(channel -> Flux.range(1, 5)
 								.map(String::valueOf)
 								.flatMap(channel::createMessage))
-						.collectList()
+						.count()
 						.elapsed()
 						.doOnNext(TupleUtils.consumer(
-								(time, list) -> LOGGER.info("Sent {} messages in {} milliseconds ({} messages/s)",
-										list.size(), time, (list.size() / (double) time) * 1000)))
+								(time, count) -> LOGGER.info("Sent {} messages in {} milliseconds ({} messages/s)",
+										count, time, (count / (double) time) * 1000)))
 						.subscribe()) // Separate subscribe in order to improve accuracy of elapsed time
 				.then();
 	}

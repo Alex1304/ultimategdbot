@@ -56,7 +56,7 @@ public class Bot {
 	private final int replyMenuTimeout;
 	private final Snowflake debugLogChannelId;
 	private final Snowflake attachmentsChannelId;
-	private final List<Snowflake> emojiGuildIds;
+	private final Flux<GuildEmoji> emojis;
 	private final Properties pluginsProps;
 	private final CommandKernel cmdKernel;
 	private final Set<Plugin> plugins = new HashSet<>();
@@ -74,7 +74,10 @@ public class Bot {
 		this.replyMenuTimeout = replyMenuTimeout;
 		this.debugLogChannelId = debugLogChannelId;
 		this.attachmentsChannelId = attachmentsChannelId;
-		this.emojiGuildIds = emojiGuildIds;
+		this.emojis = mainDiscordClient.getGuilds()
+				.filter(g -> emojiGuildIds.stream().anyMatch(g.getId()::equals))
+				.flatMap(Guild::getEmojis)
+				.cache();
 		this.pluginsProps = pluginsProps;
 		this.cmdKernel = new CommandKernel(this);
 		this.appInfo = mainDiscordClient.getApplicationInfo()
@@ -187,10 +190,7 @@ public class Bot {
 	 */
 	public Mono<String> getEmoji(String emojiName) {
 		var defaultVal = ":" + emojiName + ":";
-		return mainDiscordClient.getGuilds()
-				.filter(g -> emojiGuildIds.stream().anyMatch(g.getId()::equals))
-				.flatMap(Guild::getEmojis)
-				.filter(emoji -> emoji.getName().equalsIgnoreCase(emojiName))
+		return emojis.filter(emoji -> emoji.getName().equalsIgnoreCase(emojiName))
 				.next()
 				.map(GuildEmoji::asFormat)
 				.defaultIfEmpty(defaultVal).onErrorReturn(defaultVal);
@@ -256,7 +256,7 @@ public class Bot {
 				.setRouterOptions(RouterOptions.builder()
 						.onClientResponse(ResponseFunction.emptyIfNotFound())
 						.onClientResponse(ResponseFunction.emptyOnErrorStatus(RouteMatcher.route(Routes.REACTION_CREATE), 400))
-						.globalRateLimiter(new ClockRateLimiter(requestThroughput))
+						.globalRateLimiter(new ClockRateLimiter(requestThroughput, Duration.ofSeconds(1)))
 						.build())
 				.build()
 				.map(dcb -> dcb.setInitialPresence(presenceStatus)
@@ -276,9 +276,8 @@ public class Bot {
 		var loader = ServiceLoader.load(Plugin.class);
 		var parser = new PropertyParser(pluginsProps);
 		return Flux.fromIterable(loader)
-				.flatMap(plugin -> plugin.setup(this, parser)
-						.onErrorResume(e -> Mono.fromRunnable(() -> LOGGER.error("Failed to load plugin " + plugin.getName(), e)))
-						.thenReturn(plugin))
+				.flatMap(plugin -> plugin.setup(this, parser).thenReturn(plugin)
+						.doOnError(e -> LOGGER.error("Failed to load plugin " + plugin.getName(), e)))
 				.doOnNext(plugin -> database.addAllMappingResources(plugin.getDatabaseMappingResources()))
 				.doOnNext(plugin -> LOGGER.info("Loaded plugin: {}", plugin.getName()))
 				.doOnNext(plugins::add)

@@ -61,15 +61,15 @@ public class CommandKernel {
 			return Mono.empty();
 		}
 		if (authorId.map(id -> blacklist.contains(id.asLong())).orElse(false)) {
-			LOGGER.debug("Ignoring event due to AUTHOR being blackisted: {}", event);
+			LOGGER.debug("Ignoring event due to AUTHOR being blacklisted: {}", event);
 			return Mono.empty();
 		}
 		if (guildId.map(id -> blacklist.contains(id.asLong())).orElse(false)) {
-			LOGGER.debug("Ignoring event due to GUILD being blackisted: {}", event);
+			LOGGER.debug("Ignoring event due to GUILD being blacklisted: {}", event);
 			return Mono.empty();
 		}
 		if (blacklist.contains(channelId.asLong())) {
-			LOGGER.debug("Ignoring event due to CHANNEL being blackisted: {}", event);
+			LOGGER.debug("Ignoring event due to CHANNEL being blacklisted: {}", event);
 			return Mono.empty();
 		}
 		return findGuildSpecificPrefix(event)

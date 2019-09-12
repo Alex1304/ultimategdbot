@@ -92,8 +92,10 @@ public class CommandProvider {
 			}
 			if (!inQuotes) {
 				if (Character.isWhitespace(c)) {
-					tokens.add(buffer.toString());
-					buffer.delete(0, buffer.length());
+					if (buffer.length() > 0) {
+						tokens.add(buffer.toString());
+						buffer.delete(0, buffer.length());
+					}
 				} else {
 					buffer.append(c);
 				}
