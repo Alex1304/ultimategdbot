@@ -4,17 +4,13 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import com.github.alex1304.ultimategdbot.api.command.Context;
 
-import discord4j.core.object.entity.Channel;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.MessageChannel;
-import discord4j.core.spec.MessageCreateSpec;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 /**
  * Contains various utility methods.
@@ -23,30 +19,24 @@ public class BotUtils {
 	private BotUtils() {
 	}
 	
-	private static int occurrences(String str, String substr) {
-		int res = 0;
-		for (var i = 0 ; i < str.length() - substr.length() + 1 ; i++) {
-			var substr0 = str.substring(i, i + substr.length());
-			if (substr.equals(substr0)) {
-				res++;
-			}
-		}
-		return res;
-	}
-	
 	/**
-	 * Splits a message into several chunks which size is specified.
+	 * Splits a message into several chunks which size is specified. If the chunk
+	 * ends while the text is inside a codeblock or a blockquote, proper markdown is
+	 * added to make the message continuous across chunks. This does not apply to
+	 * inline markdown such as bold, italic or spoilers.
 	 * 
 	 * @param superLongMessage the message to split
 	 * @param maxCharacters    the max characters that a single chunk may have
 	 * @return a List which elements are the chunks in the correct order
 	 */
-	public static List<String> chunkMessage(String superLongMessage, int maxCharacters) {
+	public static List<String> splitMessage(String superLongMessage, int maxCharacters) {
 		var chunks = new ArrayList<String>();
 		var currentChunk = new StringBuilder();
 		var inCodeblock = false;
+		var inBlockquote = false;
 		for (var line : superLongMessage.lines().collect(Collectors.toList())) {
-			inCodeblock = occurrences(line, "```") % 2 == 1 ? !inCodeblock : inCodeblock;
+			inCodeblock = line.startsWith("```") && !line.substring(3).contains("```") ? !inCodeblock : inCodeblock;
+			inBlockquote = inBlockquote || line.startsWith(">>> ");
 			if (currentChunk.length() + line.length() + 1 >= maxCharacters) {
 				if (inCodeblock) {
 					currentChunk.append("```\n");
@@ -55,6 +45,9 @@ public class BotUtils {
 				currentChunk.delete(0, currentChunk.length());
 			} else {
 				if (!chunks.isEmpty() && currentChunk.length() == 0) {
+					if (inBlockquote) {
+						currentChunk.append(">>> ");
+					}
 					if (inCodeblock) {
 						currentChunk.append("```\n");
 					}
@@ -74,22 +67,16 @@ public class BotUtils {
 	 * @param superLongMessage the message to split
 	 * @return a List which elements are the chunks in the correct order
 	 */
-	public static List<String> chunkMessage(String superLongMessage) {
-		return chunkMessage(superLongMessage, Message.MAX_CONTENT_LENGTH - 10);
+	public static List<String> splitMessage(String superLongMessage) {
+		return splitMessage(superLongMessage, Message.MAX_CONTENT_LENGTH - 10);
 	}
 	
-	public static Flux<Message> sendMultipleMessagesToOneChannel(Mono<Channel> channel, Iterable<Consumer<MessageCreateSpec>> specs) {
-		return channel.ofType(MessageChannel.class).flatMapMany(c -> Flux.fromIterable(specs).flatMap(spec -> c.createMessage(spec)));
-	}
-	
-	public static Flux<Message> sendMultipleSimpleMessagesToOneChannel(Mono<Channel> channel, Iterable<String> strings) {
-		return channel.ofType(MessageChannel.class).flatMapMany(c -> Flux.fromIterable(strings).flatMap(spec -> c.createMessage(spec)));
-	}
-	
-	public static Flux<Message> sendOneMessageToMultipleChannels(Flux<Channel> channels, Consumer<MessageCreateSpec> spec) {
-		return channels.ofType(MessageChannel.class).flatMap(c -> c.createMessage(spec));
-	}
-	
+	/**
+	 * Formats a Duration into a human readable String.
+	 * 
+	 * @param time the duration to format
+	 * @return the formatted duration
+	 */
 	public static String formatDuration(Duration time) {
 		var result = (time.toDaysPart() > 0 ? time.toDaysPart() + "d " : "")
 				+ (time.toHoursPart() > 0 ? time.toHoursPart() + "h " : "")
@@ -99,6 +86,17 @@ public class BotUtils {
 		return result.isEmpty() ? "0ms" : result.substring(0, result.length() - 1);
 	}
 	
+	/**
+	 * Sends an error report to the debug log channel.
+	 * 
+	 * @param header the first sentence to write on the report
+	 * @param ctx    the context of the error
+	 * @param error  the error itself
+	 * @return a Flux of messages that were sent in the debug log channel. If the
+	 *         error report exceeds {@link Message#MAX_CONTENT_LENGTH} characters, it will be split using
+	 *         {@link #splitMessage(String)}, in this case the Flux may emit more
+	 *         than one message instance.
+	 */
 	public static Flux<Message> debugError(String header, Context ctx, Throwable error) {
 		Objects.requireNonNull(header, "header was null");
 		Objects.requireNonNull(ctx, "ctx was null");
@@ -116,6 +114,9 @@ public class BotUtils {
 					.append("`\n");
 			separator = "Caused by: `";
 		}
-		return sendMultipleSimpleMessagesToOneChannel(ctx.getBot().getDebugLogChannel(), chunkMessage(sb.toString()));
+		return ctx.getBot().getDebugLogChannel()
+				.ofType(MessageChannel.class)
+				.flatMapMany(c -> Flux.fromIterable(splitMessage(sb.toString()))
+						.flatMap(c::createMessage));
 	}
 }
