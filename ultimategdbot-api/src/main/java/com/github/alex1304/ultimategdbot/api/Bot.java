@@ -56,12 +56,13 @@ public class Bot {
 	private final int replyMenuTimeout;
 	private final Snowflake debugLogChannelId;
 	private final Snowflake attachmentsChannelId;
-	private final Flux<GuildEmoji> emojis;
+	private final List<Snowflake> emojiGuildIds;
 	private final Properties pluginsProps;
 	private final CommandKernel cmdKernel;
 	private final Set<Plugin> plugins = new HashSet<>();
 	private final Mono<ApplicationInfo> appInfo;
 	private final boolean blockhoundMode;
+	private Flux<GuildEmoji> emojis;
 
 	private Bot(String token, String defaultPrefix, Flux<DiscordClient> discordClients, Database database,
 			int replyMenuTimeout, Snowflake debugLogChannelId, Snowflake attachmentsChannelId,
@@ -74,15 +75,13 @@ public class Bot {
 		this.replyMenuTimeout = replyMenuTimeout;
 		this.debugLogChannelId = debugLogChannelId;
 		this.attachmentsChannelId = attachmentsChannelId;
-		this.emojis = mainDiscordClient.getGuilds()
-				.filter(g -> emojiGuildIds.stream().anyMatch(g.getId()::equals))
-				.flatMap(Guild::getEmojis)
-				.cache();
+		this.emojiGuildIds = emojiGuildIds;
 		this.pluginsProps = pluginsProps;
 		this.cmdKernel = new CommandKernel(this);
 		this.appInfo = mainDiscordClient.getApplicationInfo()
 				.cache(Duration.ofMinutes(30));
 		this.blockhoundMode = blockhoundMode;
+		installEmojis();
 	}
 
 	/**
@@ -178,6 +177,28 @@ public class Bot {
 		return mainDiscordClient.getChannelById(debugLogChannelId)
 				.ofType(MessageChannel.class)
 				.flatMap(c -> c.createMessage(spec));
+	}
+	
+	/**
+	 * Gathers all emojis from the configured emoji guilds and put them in cache.
+	 * Subsequent calls of this method will remove the old cache and perform the
+	 * installation again.
+	 */
+	public void installEmojis() {
+		this.emojis = mainDiscordClient.getGuilds()
+				.filter(g -> emojiGuildIds.stream().anyMatch(g.getId()::equals))
+				.flatMap(Guild::getEmojis)
+				.cache();
+	}
+
+	/**
+	 * Gets all emojis installed. An emoji qualifies as "installed" if it is present
+	 * in one of the emoji guilds configured in {@code bot.properties}.
+	 * 
+	 * @return a Flux emitting the installed emojis.
+	 */
+	public Flux<GuildEmoji> getInstalledEmojis() {
+		return emojis;
 	}
 
 	/**

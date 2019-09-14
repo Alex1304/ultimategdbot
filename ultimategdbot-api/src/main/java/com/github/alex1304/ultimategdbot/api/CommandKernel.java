@@ -80,7 +80,6 @@ public class CommandKernel {
 		return findGuildSpecificPrefix(event)
 				.flatMapMany(prefix -> Flux.fromIterable(providers)
 						.flatMap(provider -> Mono.justOrEmpty(provider.provideFromEvent(bot, prefix, event))))
-				.log()
 				.flatMap(executable -> executable.execute()
 						.onErrorResume(e -> Mono.when(event.getMessage().getChannel()
 								.flatMap(c -> c.createMessage(":no_entry_sign: Something went wrong. "

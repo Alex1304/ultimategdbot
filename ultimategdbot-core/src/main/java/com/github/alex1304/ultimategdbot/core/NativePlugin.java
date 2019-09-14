@@ -58,6 +58,7 @@ public class NativePlugin implements Plugin {
 					cmdProvider.addAnnotated(new BlacklistCommand());
 					cmdProvider.addAnnotated(new CacheInfoCommand());
 					cmdProvider.addAnnotated(new BurstMessagesCommand());
+					cmdProvider.addAnnotated(new TestMenuCommand());
 					initEventListeners(bot);
 					configEntries.put("prefix", new GuildSettingsEntry<>(
 							NativeGuildSettings.class,
