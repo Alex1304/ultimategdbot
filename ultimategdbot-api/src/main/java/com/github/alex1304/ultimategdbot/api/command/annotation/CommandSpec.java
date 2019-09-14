@@ -1,4 +1,4 @@
-package com.github.alex1304.ultimategdbot.api.command;
+package com.github.alex1304.ultimategdbot.api.command.annotation;
 
 import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
@@ -8,6 +8,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
 import com.github.alex1304.ultimategdbot.api.command.Command.Scope;
+import com.github.alex1304.ultimategdbot.api.command.PermissionLevel;
 
 @Documented
 @Retention(RUNTIME)

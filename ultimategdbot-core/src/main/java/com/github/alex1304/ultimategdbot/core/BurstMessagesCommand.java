@@ -3,10 +3,10 @@ package com.github.alex1304.ultimategdbot.core;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.alex1304.ultimategdbot.api.command.CommandAction;
-import com.github.alex1304.ultimategdbot.api.command.CommandSpec;
 import com.github.alex1304.ultimategdbot.api.command.Context;
 import com.github.alex1304.ultimategdbot.api.command.PermissionLevel;
+import com.github.alex1304.ultimategdbot.api.command.annotation.CommandAction;
+import com.github.alex1304.ultimategdbot.api.command.annotation.CommandSpec;
 
 import discord4j.core.object.entity.Guild;
 import discord4j.core.object.entity.TextChannel;

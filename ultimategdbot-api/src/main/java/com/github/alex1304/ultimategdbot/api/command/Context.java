@@ -22,9 +22,9 @@ public class Context {
 	private final Bot bot;
 	private final Map<String, Object> variables;
 	private final String prefixUsed;
-	private final Flags flags;
+	private final FlagSet flags;
 
-	public Context(Command command, MessageCreateEvent event, List<String> args, Flags flags, Bot bot, String prefixUsed) {
+	public Context(Command command, MessageCreateEvent event, List<String> args, FlagSet flags, Bot bot, String prefixUsed) {
 		this.command = Objects.requireNonNull(command);
 		this.event = Objects.requireNonNull(event);
 		this.args = Objects.requireNonNull(args);
@@ -61,7 +61,7 @@ public class Context {
 		return args;
 	}
 	
-	public Flags getFlags() {
+	public FlagSet getFlags() {
 		return flags;
 	}
 
@@ -182,7 +182,7 @@ public class Context {
 	public String toString() {
 		return "Context{"
 				+ "command=" + command.getClass().getCanonicalName()
-				+ ", event=" + event
+				+ ", message=" + event.getMessage()
 				+ ", args=" + args
 				+ ", variables=" + variables.keySet()
 				+ ", prefixUsed=" + prefixUsed

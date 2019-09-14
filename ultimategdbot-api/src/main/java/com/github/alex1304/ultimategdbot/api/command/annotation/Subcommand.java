@@ -1,4 +1,4 @@
-package com.github.alex1304.ultimategdbot.api.command;
+package com.github.alex1304.ultimategdbot.api.command.annotation;
 
 import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;

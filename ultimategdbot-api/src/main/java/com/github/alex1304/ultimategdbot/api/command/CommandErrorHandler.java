@@ -2,14 +2,15 @@ package com.github.alex1304.ultimategdbot.api.command;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.StringJoiner;
 import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.alex1304.ultimategdbot.api.DatabaseException;
 import com.github.alex1304.ultimategdbot.api.utils.BotUtils;
+import com.github.alex1304.ultimategdbot.api.utils.Markdown;
 
 import discord4j.rest.http.client.ClientException;
 import reactor.core.publisher.Mono;
@@ -63,16 +64,22 @@ public class CommandErrorHandler {
 			LOGGER.debug("Discord ClientException thrown when using a command. User input: "
 					+ ctx.getEvent().getMessage().getContent().orElse("") + ", Error:", e);
 			var h = e.getErrorResponse();
-			var sj = new StringJoiner("", "```\n", "```\n");
-			h.getFields().forEach((k, v) -> sj.add(k).add(": ").add(String.valueOf(v)).add("\n"));
+			var sb = new StringBuilder();
+			h.getFields().forEach((k, v) -> sb.append(k).append(": ").append(String.valueOf(v)).append("\n"));
 			return ctx.reply(":no_entry_sign: Discord returned an error when executing this command: "
-							+ "`" + e.getStatus().code() + " " + e.getStatus().reasonPhrase() + "`\n"
-							+ sj.toString()
+							+ Markdown.code(e.getStatus().code() + " " + e.getStatus().reasonPhrase()) + "\n"
+							+ Markdown.codeBlock(sb.toString())
 							+ (e.getStatus().code() == 403 ? "Make sure that I have sufficient permissions in this server and try again." : ""))
 					.then();
 		});
 		addHandler(DatabaseException.class, (e, ctx) -> Mono.when(
 				ctx.reply(":no_entry_sign: An error occured when accessing the database. Try again."),
-				BotUtils.debugError(":no_entry_sign: **A database error occured.**", ctx, e)));
+				BotUtils.debugError(":no_entry_sign: " + Markdown.bold("A database error occured."), ctx, e)));
+	}
+	
+	@Override
+	public String toString() {
+		return "CommandErrorHandler{handledErrors=[" + handlers.keySet().stream()
+				.map(Class::getName).collect(Collectors.joining(", ")) + "]}";
 	}
 }

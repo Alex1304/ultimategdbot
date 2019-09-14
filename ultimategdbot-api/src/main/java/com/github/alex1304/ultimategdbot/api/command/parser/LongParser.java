@@ -1,10 +1,10 @@
-package com.github.alex1304.ultimategdbot.api.command.argument;
+package com.github.alex1304.ultimategdbot.api.command.parser;
 
 import com.github.alex1304.ultimategdbot.api.command.Context;
 
 import reactor.core.publisher.Mono;
 
-public class LongParser implements ArgumentParser<Long> {
+public class LongParser implements Parser<Long> {
 
 	@Override
 	public Mono<Long> parse(Context ctx, String input) {

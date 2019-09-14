@@ -1,12 +1,12 @@
 package com.github.alex1304.ultimategdbot.core;
 
-import com.github.alex1304.ultimategdbot.api.command.CommandAction;
 import com.github.alex1304.ultimategdbot.api.command.CommandFailedException;
-import com.github.alex1304.ultimategdbot.api.command.CommandSpec;
 import com.github.alex1304.ultimategdbot.api.command.Context;
 import com.github.alex1304.ultimategdbot.api.command.PermissionLevel;
-import com.github.alex1304.ultimategdbot.api.command.Subcommand;
-import com.github.alex1304.ultimategdbot.api.command.argument.IntParser;
+import com.github.alex1304.ultimategdbot.api.command.annotation.CommandAction;
+import com.github.alex1304.ultimategdbot.api.command.annotation.CommandSpec;
+import com.github.alex1304.ultimategdbot.api.command.annotation.Subcommand;
+import com.github.alex1304.ultimategdbot.api.command.parser.IntParser;
 import com.github.alex1304.ultimategdbot.api.utils.SystemUnit;
 
 import reactor.core.publisher.Mono;

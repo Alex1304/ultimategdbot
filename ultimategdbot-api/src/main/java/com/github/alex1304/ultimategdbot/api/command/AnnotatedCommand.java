@@ -12,7 +12,10 @@ import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.alex1304.ultimategdbot.api.command.argument.ArgumentParser;
+import com.github.alex1304.ultimategdbot.api.command.annotation.CommandAction;
+import com.github.alex1304.ultimategdbot.api.command.annotation.CommandSpec;
+import com.github.alex1304.ultimategdbot.api.command.annotation.Subcommand;
+import com.github.alex1304.ultimategdbot.api.command.parser.Parser;
 
 import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
@@ -21,6 +24,9 @@ import reactor.function.TupleUtils;
 import reactor.util.function.Tuple4;
 import reactor.util.function.Tuples;
 
+/**
+ * Command implemented via annotations.
+ */
 public class AnnotatedCommand implements Command {
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(AnnotatedCommand.class);
@@ -73,7 +79,7 @@ public class AnnotatedCommand implements Command {
 		if (cmdSpecAnnot.aliases().length == 0) {
 			throw new InvalidAnnotatedObjectException("@CommandSpec does not define any alias for the command");
 		}
-		var parsers = new TreeSet<Tuple4<String, Class<? extends ArgumentParser<?>>[], ArgumentParser<?>[], Method>>(
+		var parsers = new TreeSet<Tuple4<String, Class<? extends Parser<?>>[], Parser<?>[], Method>>(
 				(a, b) -> a.getT1().equalsIgnoreCase(b.getT1()) && Arrays.equals(a.getT2(), b.getT2(), (c1, c2) -> 
 						isCompatible(c1, c2) || isCompatible(c2, c1) ? 0 : 1) ? 0 : 1);
 		for (var method : obj.getClass().getMethods()) {
@@ -157,8 +163,8 @@ public class AnnotatedCommand implements Command {
 				cmdSpecAnnot.scope());
 	}
 
-	private static ArgumentParser<?>[] instantiateArgParsers(Class<? extends ArgumentParser<?>>[] parserTypes)  {
-		var parserInstances = new ArgumentParser<?>[parserTypes.length];
+	private static Parser<?>[] instantiateArgParsers(Class<? extends Parser<?>>[] parserTypes)  {
+		var parserInstances = new Parser<?>[parserTypes.length];
 		for (var i = 0 ; i < parserInstances.length ; i++) {
 			try {
 				parserInstances[i] = parserTypes[i].getConstructor().newInstance();

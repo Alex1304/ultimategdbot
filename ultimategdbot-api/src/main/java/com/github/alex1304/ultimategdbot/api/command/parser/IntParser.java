@@ -1,10 +1,10 @@
-package com.github.alex1304.ultimategdbot.api.command.argument;
+package com.github.alex1304.ultimategdbot.api.command.parser;
 
 import com.github.alex1304.ultimategdbot.api.command.Context;
 
 import reactor.core.publisher.Mono;
 
-public class IntParser implements ArgumentParser<Integer> {
+public class IntParser implements Parser<Integer> {
 
 	@Override
 	public Mono<Integer> parse(Context ctx, String input) {

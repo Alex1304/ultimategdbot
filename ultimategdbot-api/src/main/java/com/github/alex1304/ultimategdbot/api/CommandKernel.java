@@ -9,8 +9,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.alex1304.ultimategdbot.api.command.CommandProvider;
-import com.github.alex1304.ultimategdbot.api.command.ExecutableCommand;
 import com.github.alex1304.ultimategdbot.api.database.NativeGuildSettings;
+import com.github.alex1304.ultimategdbot.api.utils.BotUtils;
 
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.entity.User;
@@ -19,8 +19,10 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
- * The kernel for all bot commands. Command instances are stored, managed
- * and executed here.
+ * The command kernel coordinates the command providers from all plugins. It
+ * also holds a blacklist to restrict the usage of commands from certain guilds,
+ * channels or users. It listens to message create events and dispatch the to
+ * the proper command providers to trigger the execution of commands.
  */
 public class CommandKernel {
 	private static final Logger LOGGER = LoggerFactory.getLogger("ultimategdbot.commandkernel");
@@ -44,13 +46,16 @@ public class CommandKernel {
 	}
 
 	/**
-	 * Processes a MessageCreateEvent. 
+	 * Processes a MessageCreateEvent. It first checks if neither the guild, the
+	 * channel and the user is blacklisted, then proceeds to find the guild-specific
+	 * prefix and trigger the command if it matches with one provided by one of the
+	 * command providers.
 	 * 
-	 * @param cmd the command to invoke
-	 * @param ctx the context of the command
-	 * @return a Mono that completes when the command has terminated. Any errors
-	 *         that may occur when running the command are transmitted through this
-	 *         Mono.
+	 * @param event the {@link MessageCreateEvent} that was received
+	 * @return a Mono that completes when the command has terminated. If the
+	 *         blacklist check doesn't pass, a Mono completing immediately is
+	 *         returned. Any errors that may occur when running the command are
+	 *         forwarded through this Mono.
 	 */
 	public Mono<Void> processEvent(MessageCreateEvent event) {
 		Objects.requireNonNull(event);
@@ -76,7 +81,13 @@ public class CommandKernel {
 				.flatMapMany(prefix -> Flux.fromIterable(providers)
 						.flatMap(provider -> Mono.justOrEmpty(provider.provideFromEvent(bot, prefix, event))))
 				.log()
-				.flatMap(ExecutableCommand::execute)
+				.flatMap(executable -> executable.execute()
+						.onErrorResume(e -> Mono.when(event.getMessage().getChannel()
+								.flatMap(c -> c.createMessage(":no_entry_sign: Something went wrong. "
+										+ "A crash report has been sent to the developer. Sorry for "
+										+ "the inconvenience."))
+								.onErrorResume(__ -> Mono.empty()),
+						BotUtils.debugError("Something went wrong when executing a command", executable.getContext(), e))))
 				.then();
 	}
 	
@@ -84,15 +95,7 @@ public class CommandKernel {
 		bot.getDiscordClients()
 				.flatMap(client -> client.getEventDispatcher().on(MessageCreateEvent.class))
 				.flatMap(event -> processEvent(event).onErrorResume(e -> Mono
-						.fromRunnable(() -> LOGGER.error("An error occured when processing event " + event, e))
-						.and(event.getMessage().getChannel()
-								.flatMap(c -> c.createMessage(":no_entry_sign: Something went wrong. "
-										+ "A crash report has been sent to the developer. Sorry for "
-										+ "the inconvenience."))
-								.onErrorResume(__ -> Mono.empty()))
-						.and(bot.log("An error occured when processing event `" + event + "`\n"
-								+ "Exception thrown: `" + e.getClass().getName()
-								+ (e.getMessage() == null ? "" : ": " + e.getMessage()) + "`"))))
+						.fromRunnable(() -> LOGGER.error("An error occured when processing event " + event, e))))
 				.retry()
 				.repeat()
 				.subscribe();

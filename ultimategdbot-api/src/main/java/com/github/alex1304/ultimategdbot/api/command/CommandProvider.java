@@ -18,35 +18,69 @@ import discord4j.core.event.domain.message.MessageCreateEvent;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
+/**
+ * Provides a set of commands. Each command handler provides their own way to
+ * handle errors via a {@link CommandErrorHandler}.
+ */
 public class CommandProvider {
 	private static final Logger LOGGER = LoggerFactory.getLogger(CommandProvider.class);
 
 	private CommandErrorHandler errorHandler = new CommandErrorHandler();
 	private final Map<String, Command> commandMap = new HashMap<>();
 	
+	/**
+	 * Allows to supply a custom command handler. If this method is not called, it will use a default handler.
+	 * 
+	 * @param errorHandler the error handler to set
+	 */
 	public void setErrorHandler(CommandErrorHandler errorHandler) {
 		this.errorHandler = Objects.requireNonNull(errorHandler);
 	}
 	
+	/**
+	 * Adds a command to this provider.
+	 * 
+	 * @param command the command to add
+	 */
 	public void add(Command command) {
 		for (var alias : command.getAliases()) {
 			commandMap.put(alias, command);
 		}
 	}
 	
+	/**
+	 * Adds a command implemented with the command annotation API.
+	 * 
+	 * @param annotatedCommand the annotated object
+	 * @throws InvalidAnnotatedObjectException if the given object is not a valid
+	 *                                         annotated command
+	 */
 	public void addAnnotated(Object annotatedCommand) {
 		add(AnnotatedCommand.buildFromAnnotatedObject(annotatedCommand));
 	}
 	
-	public Optional<ExecutableCommand> provideFromEvent(Bot bot, String guildSpecificPrefix, MessageCreateEvent event) {
+	/**
+	 * Provides a command based on a MessageCreateEvent. The event must come with a
+	 * message body containing a prefix and the alias of one of the commands
+	 * provided by this provider. If it matches with a provided command, arguments
+	 * and flags are parsed, and everything is wrapped in an
+	 * {@link ExecutableCommand} which is returned. If the event does not match with
+	 * any command, an empty {@link Optional} is returned.
+	 * 
+	 * @param bot the bot instance
+	 * @param prefix 
+	 * @param event
+	 * @return
+	 */
+	public Optional<ExecutableCommand> provideFromEvent(Bot bot, String prefix, MessageCreateEvent event) {
 		var botId = bot.getMainDiscordClient().getSelfId();
-		var prefixes = Set.of("<@" + botId + ">", "<@!" + botId + ">", guildSpecificPrefix);
+		var prefixes = Set.of("<@" + botId + ">", "<@!" + botId + ">", prefix);
 		var content = event.getMessage().getContent().orElse("");
 		String prefixUsed = null;
-		for (var prefix : prefixes) {
-			if (content.toLowerCase().startsWith(prefix.toLowerCase())) {
-				content = content.substring(prefix.length());
-				prefixUsed = prefix;
+		for (var p : prefixes) {
+			if (content.toLowerCase().startsWith(p.toLowerCase())) {
+				content = content.substring(p.length());
+				prefixUsed = p;
 				break;
 			}
 		}
@@ -71,6 +105,11 @@ public class CommandProvider {
 				.map(cmd -> new ExecutableCommand(cmd, new Context(cmd, event, args, flags, bot, fPrefixUsed), errorHandler));
 	}
 	
+	/**
+	 * Gets the error handler assigned to this provider.
+	 * 
+	 * @return the error handler
+	 */
 	public CommandErrorHandler getErrorHandler() {
 		return errorHandler;
 	}
@@ -110,8 +149,8 @@ public class CommandProvider {
 		return tokens;
 	}
 	
-	private static Tuple2<Flags, List<String>> processTokens(List<String> tokens) {
-		var flags = Flags.builder();
+	private static Tuple2<FlagSet, List<String>> processTokens(List<String> tokens) {
+		var flags = FlagSet.builder();
 		var args = new ArrayList<String>();
 		if (!tokens.isEmpty()) {
 			var tokenDeque = new ArrayDeque<>(tokens);
@@ -134,6 +173,6 @@ public class CommandProvider {
 	
 	@Override
 	public String toString() {
-		return "CommandProvider{commandMap=" + commandMap + "}";
+		return "CommandProvider{commandMap=" + commandMap + ", errorHandler=" + errorHandler + "}";
 	}
 }

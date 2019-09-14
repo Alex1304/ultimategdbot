@@ -5,8 +5,10 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.github.alex1304.ultimategdbot.api.command.argument.IntParser;
-import com.github.alex1304.ultimategdbot.api.command.argument.StringParser;
+import com.github.alex1304.ultimategdbot.api.command.annotation.CommandAction;
+import com.github.alex1304.ultimategdbot.api.command.annotation.CommandSpec;
+import com.github.alex1304.ultimategdbot.api.command.parser.IntParser;
+import com.github.alex1304.ultimategdbot.api.command.parser.StringParser;
 
 import reactor.core.publisher.Mono;
 

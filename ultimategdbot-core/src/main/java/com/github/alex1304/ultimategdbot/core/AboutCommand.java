@@ -4,9 +4,9 @@ import java.util.HashMap;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import com.github.alex1304.ultimategdbot.api.command.CommandAction;
-import com.github.alex1304.ultimategdbot.api.command.CommandSpec;
 import com.github.alex1304.ultimategdbot.api.command.Context;
+import com.github.alex1304.ultimategdbot.api.command.annotation.CommandAction;
+import com.github.alex1304.ultimategdbot.api.command.annotation.CommandSpec;
 import com.github.alex1304.ultimategdbot.api.utils.DiscordFormatter;
 
 import discord4j.core.object.entity.ApplicationInfo;
