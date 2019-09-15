@@ -68,10 +68,6 @@ public class CommandProviderTest {
 				"Add invalid annotated command, too many arg parsers");
 		assertThrows(InvalidAnnotatedObjectException.class, () -> provider.addAnnotated(testCmdIncompTypes),
 				"Add invalid annotated command, incompatible types");
-		assertThrows(InvalidAnnotatedObjectException.class, () -> provider.addAnnotated(testCmdDupActions),
-				"Add invalid annotated command, duplicate actions");
-		assertThrows(InvalidAnnotatedObjectException.class, () -> provider.addAnnotated(testCmdConflActions),
-				"Add invalid annotated command, conflicting actions");
 		assertThrows(InvalidAnnotatedObjectException.class, () -> provider.addAnnotated(testCmdInvRetType),
 				"Add invalid annotated command, invalid return type");
 	}

@@ -4,13 +4,13 @@ import java.util.Comparator;
 
 import com.github.alex1304.ultimategdbot.api.Plugin;
 import com.github.alex1304.ultimategdbot.api.command.Command.Scope;
+import com.github.alex1304.ultimategdbot.api.command.CommandFailedException;
+import com.github.alex1304.ultimategdbot.api.command.Context;
+import com.github.alex1304.ultimategdbot.api.command.PermissionLevel;
 import com.github.alex1304.ultimategdbot.api.command.annotation.CommandAction;
 import com.github.alex1304.ultimategdbot.api.command.annotation.CommandSpec;
 import com.github.alex1304.ultimategdbot.api.command.annotation.Subcommand;
 import com.github.alex1304.ultimategdbot.api.command.parser.StringParser;
-import com.github.alex1304.ultimategdbot.api.command.CommandFailedException;
-import com.github.alex1304.ultimategdbot.api.command.Context;
-import com.github.alex1304.ultimategdbot.api.command.PermissionLevel;
 
 import discord4j.core.object.util.Snowflake;
 import reactor.core.publisher.Flux;
@@ -55,7 +55,7 @@ class SetupCommand {
 									sb.append('\n');
 								}))
 						.then())
-				.then(ctx.reply(sb.toString()))
+				.then(Mono.defer(() -> ctx.reply(sb.toString())))
 				.then();
 	}
 	

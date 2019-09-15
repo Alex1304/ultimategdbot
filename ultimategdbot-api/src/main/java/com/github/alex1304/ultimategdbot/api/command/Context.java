@@ -18,7 +18,7 @@ public class Context {
 	
 	private final Command command;
 	private final MessageCreateEvent event;
-	private final List<String> args;
+	private final ArgumentList args;
 	private final Bot bot;
 	private final Map<String, Object> variables;
 	private final String prefixUsed;
@@ -27,7 +27,7 @@ public class Context {
 	public Context(Command command, MessageCreateEvent event, List<String> args, FlagSet flags, Bot bot, String prefixUsed) {
 		this.command = Objects.requireNonNull(command);
 		this.event = Objects.requireNonNull(event);
-		this.args = Objects.requireNonNull(args);
+		this.args = new ArgumentList(Objects.requireNonNull(args), this);
 		this.bot = Objects.requireNonNull(bot);
 		this.variables = new ConcurrentHashMap<>();
 		this.prefixUsed = Objects.requireNonNull(prefixUsed);
@@ -57,7 +57,7 @@ public class Context {
 	 *
 	 * @return the args
 	 */
-	public List<String> getArgs() {
+	public ArgumentList getArgs() {
 		return args;
 	}
 	

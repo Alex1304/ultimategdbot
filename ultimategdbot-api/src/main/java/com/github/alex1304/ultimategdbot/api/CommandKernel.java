@@ -86,7 +86,9 @@ public class CommandKernel {
 										+ "A crash report has been sent to the developer. Sorry for "
 										+ "the inconvenience."))
 								.onErrorResume(__ -> Mono.empty()),
-						BotUtils.debugError("Something went wrong when executing a command", executable.getContext(), e))))
+						BotUtils.debugError("Something went wrong when executing a command", executable.getContext(), e),
+						Mono.fromRunnable(() -> LOGGER.error("Something went wrong when executing a command. Context dump: "
+								+ executable.getContext(), e)))))
 				.then();
 	}
 	

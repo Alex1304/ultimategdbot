@@ -1,13 +1,16 @@
 package com.github.alex1304.ultimategdbot.api.command;
 
 import java.lang.reflect.Method;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.TreeSet;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,11 +19,13 @@ import com.github.alex1304.ultimategdbot.api.command.annotation.CommandAction;
 import com.github.alex1304.ultimategdbot.api.command.annotation.CommandSpec;
 import com.github.alex1304.ultimategdbot.api.command.annotation.Subcommand;
 import com.github.alex1304.ultimategdbot.api.command.parser.Parser;
+import com.github.alex1304.ultimategdbot.api.utils.Markdown;
 
 import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.function.TupleUtils;
+import reactor.util.function.Tuple2;
 import reactor.util.function.Tuple4;
 import reactor.util.function.Tuples;
 
@@ -79,9 +84,7 @@ public class AnnotatedCommand implements Command {
 		if (cmdSpecAnnot.aliases().length == 0) {
 			throw new InvalidAnnotatedObjectException("@CommandSpec does not define any alias for the command");
 		}
-		var parsers = new TreeSet<Tuple4<String, Class<? extends Parser<?>>[], Parser<?>[], Method>>(
-				(a, b) -> a.getT1().equalsIgnoreCase(b.getT1()) && Arrays.equals(a.getT2(), b.getT2(), (c1, c2) -> 
-						isCompatible(c1, c2) || isCompatible(c2, c1) ? 0 : 1) ? 0 : 1);
+		var cmdActions = new ArrayList<Tuple4<String, Class<? extends Parser<?>>[], Parser<?>[], Method>>();
 		for (var method : obj.getClass().getMethods()) {
 			method.setAccessible(true);
 			var cmdActionAnnot = method.getAnnotation(CommandAction.class);
@@ -90,7 +93,7 @@ public class AnnotatedCommand implements Command {
 				var subcmdAliases = subcmdAnnot == null || subcmdAnnot.value().length == 0 ? new String[] { "" } : subcmdAnnot.value();
 				var parserInstances = instantiateArgParsers(cmdActionAnnot.value());
 				for (var alias : subcmdAliases) {
-					if (!parsers.add(Tuples.of(alias, cmdActionAnnot.value(), parserInstances, method))) {
+					if (!cmdActions.add(Tuples.of(alias, cmdActionAnnot.value(), parserInstances, method))) {
 						throw new InvalidAnnotatedObjectException("Two or more methods are annotated with conflicting argument "
 								+ "types and/or conflicting subcommand aliases");
 					}
@@ -119,42 +122,70 @@ public class AnnotatedCommand implements Command {
 				}
 			}
 		}
-		if (parsers.isEmpty()) {
+		if (cmdActions.isEmpty()) {
 			throw new InvalidAnnotatedObjectException("At least one method must define an action for the command via @CommandAction");
 		}
 		return new AnnotatedCommand(obj,
 				ctx -> {
-					var args = new ArrayDeque<>(ctx.getArgs());
-					args.removeFirst(); // evict first argument which corresponds to command alias
-					return Flux.fromIterable(parsers)
-							.flatMap(TupleUtils.function((subcmdAlias, parserClasses, parserInstances, method) -> {
-								LOGGER.debug("Reading method {}#{}", method.getDeclaringClass().getName(), method.getName());
-								if (!subcmdAlias.isEmpty()) {
-									if (!args.isEmpty() && args.getFirst().equalsIgnoreCase(subcmdAlias)) {
-										args.removeFirst();
-									} else {
-										return Mono.empty();
-									}
-								}
-								if (args.size() < parserInstances.length) {
+					var args = ctx.getArgs();
+					var firstArgIndex = new AtomicInteger(1);
+					var foundMatchingAction = new AtomicBoolean();
+					var expectedArguments = Collections.synchronizedList(new ArrayList<String>());
+					var argumentParseException = new AtomicReference<Tuple2<Long, ArgumentParseException>>();
+					var isSubcommandUsed = args.tokenCount() > 1 && cmdActions.stream().anyMatch(action -> action.getT1().equalsIgnoreCase(args.get(1)));
+					return Flux.fromIterable(cmdActions)
+							.filter(TupleUtils.predicate((subcmdAlias, parserClasses, parserInstances, method) -> isSubcommandUsed 
+									? subcmdAlias.equalsIgnoreCase(args.get(1)) : subcmdAlias.isEmpty()))
+							.doOnNext(__ -> firstArgIndex.set(isSubcommandUsed ? 2 : 1))
+							.concatMap(TupleUtils.function((subcmdAlias, parserClasses, parserInstances, method) -> {
+								if (foundMatchingAction.get()) {
+									LOGGER.debug("Skipping method {}#{}: another matching method was already found.", method
+											.getDeclaringClass().getName(), method.getName());
 									return Mono.empty();
 								}
-								// Join overflowing args
-								while (args.size() > 1 && args.size() > parserInstances.length) {
-									var lastArg = args.removeLast();
-									var beforeLastArg = args.removeLast();
-									args.addLast(beforeLastArg + " " + lastArg);
+								var actualTokenCount = args.tokenCount() - firstArgIndex.get();
+								if (actualTokenCount < method.getParameters().length - 1) {
+									for (var i = actualTokenCount + 1 ; i < method.getParameters().length ; i++) {
+										expectedArguments.add(method.getParameters()[i].getName());
+									}
+									LOGGER.debug("Skipping method {}#{}: Missing arguments.", method
+											.getDeclaringClass().getName(), method.getName());
+									return Mono.empty();
 								}
-								LOGGER.debug("Executing method {}#{}", method.getDeclaringClass().getName(), method.getName());
-								return Flux.zip(Flux.fromArray(parserInstances), Flux.fromIterable(args))
-										.flatMapSequential(TupleUtils.function((parser, arg) -> parser.parse(ctx, arg)))
+								var mergedArgs = args.getTokens(method.getParameters().length - 1 + firstArgIndex.get());
+								mergedArgs = mergedArgs.subList(firstArgIndex.get(), mergedArgs.size());
+								//LOGGER.debug("Executing method {}#{}", method.getDeclaringClass().getName(), method.getName());
+								return Flux.zip(Flux.fromArray(parserInstances), Flux.fromIterable(mergedArgs))
+										.index()
+										.flatMapSequential(TupleUtils.function((i, parserWithArg) -> parserWithArg.getT1().parse(ctx, parserWithArg.getT2())
+												.onErrorResume(ArgumentParseException.class, e -> Mono.fromRunnable(() -> argumentParseException
+														.compareAndSet(null, Tuples.of(i + 1, e))))))
 										.collectList()
 										.defaultIfEmpty(List.of())
+										.filter(argList -> argList.size() == parserInstances.length)
+										.switchIfEmpty(Mono.fromRunnable(() -> 
+												LOGGER.debug("Skipping method {}#{}: cannot parse one of the arguments.", method
+														.getDeclaringClass().getName(), method.getName())))
 										.map(argList -> new ArrayList<Object>(argList))
 										.doOnNext(argList -> argList.add(0, ctx))
 										.flatMap(argList -> Mono.fromCallable(() -> method.invoke(obj, argList.toArray())))
 										.cast(Mono.class)
-										.flatMap(mono -> (Mono<?>) mono);
+										.flatMap(mono -> (Mono<?>) mono)
+										.doOnTerminate(() -> LOGGER.debug("Successfully executed method {}#{}", method
+														.getDeclaringClass().getName(), method.getName()));
+							}))
+							.then(Mono.fromCallable(() -> {
+								if (!foundMatchingAction.get()) {
+									if (!expectedArguments.isEmpty()) {
+										throw new CommandFailedException("Missing arguments: " + expectedArguments.stream()
+												.map(Markdown::code)
+												.collect(Collectors.joining(", ")));
+									} else if (argumentParseException.get() != null) {
+										throw new CommandFailedException("Failed to parse argument " + argumentParseException.get().getT1() + ":"
+												+ argumentParseException.get().getT2().getMessage());
+									}
+								}
+								return null;
 							}))
 							.then();
 				},

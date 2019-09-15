@@ -5,10 +5,12 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
+import com.github.alex1304.ultimategdbot.api.command.ArgumentList;
 import com.github.alex1304.ultimategdbot.api.command.Context;
+import com.github.alex1304.ultimategdbot.api.command.FlagSet;
 
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.event.domain.message.ReactionAddEvent;
@@ -25,48 +27,66 @@ import reactor.core.publisher.Mono;
 public class InteractiveMenu {
 	
 	private final Consumer<MessageCreateSpec> spec;
-	private final Map<String, BiFunction<Message, Context, Mono<Void>>> replyItems;
-	private final Map<String, BiFunction<Message, ReactionAddEvent, Mono<Void>>> reactionItems;
-	private final boolean deleteMenuOnReply;
+	private final Map<String, Function<ReplyContext, Mono<Void>>> replyItems;
+	private final Map<String, Function<ReactionContext, Mono<Void>>> reactionItems;
+	private final boolean deleteMenuOnClose;
 	private final boolean deleteMenuOnTimeout;
+	private final boolean closeAfterReply;
+	private final boolean closeAfterReaction;
 
 	private InteractiveMenu(Consumer<MessageCreateSpec> spec,
-			Map<String, BiFunction<Message, Context, Mono<Void>>> replyItems,
-			Map<String, BiFunction<Message, ReactionAddEvent, Mono<Void>>> reactionItems, boolean deleteMenuOnReply,
-			boolean deleteMenuOnTimeout) {
+			Map<String, Function<ReplyContext, Mono<Void>>> replyItems,
+			Map<String, Function<ReactionContext, Mono<Void>>> reactionItems, boolean deleteMenuOnClose,
+			boolean deleteMenuOnTimeout, boolean closeAfterReply, boolean closeAfterReaction) {
 		this.spec = spec;
 		this.replyItems = replyItems;
 		this.reactionItems = reactionItems;
-		this.deleteMenuOnReply = deleteMenuOnReply;
+		this.deleteMenuOnClose = deleteMenuOnClose;
 		this.deleteMenuOnTimeout = deleteMenuOnTimeout;
+		this.closeAfterReply = closeAfterReply;
+		this.closeAfterReaction = closeAfterReaction;
 	}
 	
 	public static InteractiveMenu create(Consumer<MessageCreateSpec> spec) {
-		return new InteractiveMenu(spec, Map.of(), Map.of(), false, false);
+		return new InteractiveMenu(spec, Map.of(), Map.of(), false, false, true, true);
 	}
 	
 	public static InteractiveMenu create(String message) {
 		return create(mcs -> mcs.setContent(message));
 	}
 
-	public InteractiveMenu addReplyItem(String reply, BiFunction<Message, Context, Mono<Void>> action) {
+	public InteractiveMenu addReplyItem(String reply, Function<ReplyContext, Mono<Void>> action) {
 		var newReplyItems = new HashMap<>(replyItems);
 		newReplyItems.put(Objects.requireNonNull(reply), Objects.requireNonNull(action));
-		return new InteractiveMenu(spec, Collections.unmodifiableMap(newReplyItems), reactionItems, deleteMenuOnReply, deleteMenuOnTimeout);
+		return new InteractiveMenu(spec, Collections.unmodifiableMap(newReplyItems), reactionItems, deleteMenuOnClose,
+				deleteMenuOnTimeout, closeAfterReply, closeAfterReaction);
 	}
 
-	public InteractiveMenu addReactionItem(String emojiName, BiFunction<Message, ReactionAddEvent, Mono<Void>> action) {
+	public InteractiveMenu addReactionItem(String emojiName, Function<ReactionContext, Mono<Void>> action) {
 		var newReactionItems = new HashMap<>(reactionItems);
 		newReactionItems.put(Objects.requireNonNull(emojiName), Objects.requireNonNull(action));
-		return new InteractiveMenu(spec, replyItems, Collections.unmodifiableMap(newReactionItems), deleteMenuOnReply, deleteMenuOnTimeout);
+		return new InteractiveMenu(spec, replyItems, Collections.unmodifiableMap(newReactionItems), deleteMenuOnClose,
+				deleteMenuOnTimeout, closeAfterReply, closeAfterReaction);
 	}
 	
-	public InteractiveMenu deleteMenuOnReply(boolean deleteMenuOnReply) {
-		return new InteractiveMenu(spec, replyItems, reactionItems, deleteMenuOnReply, deleteMenuOnTimeout);
+	public InteractiveMenu deleteMenuOnClose(boolean deleteMenuOnClose) {
+		return new InteractiveMenu(spec, replyItems, reactionItems, deleteMenuOnClose, deleteMenuOnTimeout,
+				closeAfterReply, closeAfterReaction);
 	}
 	
 	public InteractiveMenu deleteMenuOnTimeout(boolean deleteMenuOnTimeout) {
-		return new InteractiveMenu(spec, replyItems, reactionItems, deleteMenuOnReply, deleteMenuOnTimeout);
+		return new InteractiveMenu(spec, replyItems, reactionItems, deleteMenuOnClose, deleteMenuOnTimeout,
+				closeAfterReply, closeAfterReaction);
+	}
+	
+	public InteractiveMenu closeAfterReply(boolean closeAfterReply) {
+		return new InteractiveMenu(spec, replyItems, reactionItems, deleteMenuOnClose, deleteMenuOnTimeout,
+				closeAfterReply, closeAfterReaction);
+	}
+	
+	public InteractiveMenu closeAfterReaction(boolean closeAfterReaction) {
+		return new InteractiveMenu(spec, replyItems, reactionItems, deleteMenuOnClose, deleteMenuOnTimeout,
+				closeAfterReply, closeAfterReaction);
 	}
 	
 	public Mono<Void> open(Context ctx) {
@@ -88,11 +108,10 @@ public class InteractiveMenu {
 									if (action == null) {
 										return Mono.empty();
 									}
-									var replyCtx = new Context(ctx.getCommand(), event, args, flags, ctx.getBot(), "");
-									return action.apply(menuMessage, replyCtx).materialize();
+									var replyCtx = new ReplyContext(menuMessage, event, new ArgumentList(args, ctx), flags);
+									return action.apply(replyCtx).thenReturn(0);
 								})
-								.next()
-								.dematerialize()
+								.takeUntil(__ -> closeAfterReply)
 								.onErrorResume(UnexpectedReplyException.class, e -> ctx.reply(":no_entry_sign: " + e.getMessage()).then(Mono.error(e)))
 								.retry(UnexpectedReplyException.class::isInstance)
 								.then(),
@@ -108,11 +127,15 @@ public class InteractiveMenu {
 									if (action == null) {
 										return Mono.empty();
 									}
-									return action.apply(menuMessage, event);
-								}).then())
-						.then(deleteMenuOnReply ? menuMessage.delete().onErrorResume(e -> Mono.empty()) : Mono.empty())
+									var reactionCtx = new ReactionContext(menuMessage, event);
+									return action.apply(reactionCtx).thenReturn(0);
+								})
+								.takeUntil(__ -> closeAfterReaction)
+								.then())
+						.then(deleteMenuOnClose ? menuMessage.delete().onErrorResume(e -> Mono.empty()) : Mono.empty())
 						.timeout(Duration.ofSeconds(ctx.getBot().getReplyMenuTimeout()), deleteMenuOnTimeout 
-								? menuMessage.delete().onErrorResume(e -> Mono.empty()) : Mono.empty()));
+								? menuMessage.delete().onErrorResume(e -> Mono.empty())
+								: menuMessage.removeAllReactions().onErrorResume(e -> Mono.empty())));
 	}
 	
 	private Mono<Message> addReactionsToMenu(Context ctx, Message menuMessage) {
@@ -125,8 +148,63 @@ public class InteractiveMenu {
 						.switchIfEmpty(Mono.just(emojiName)
 								.map(ReactionEmoji::unicode)))
 				.concatMap(reaction -> menuMessage.addReaction(reaction)
-						.onErrorResume(ClientException.class, e -> Mono.empty()))
+						.onErrorResume(ClientException.isStatusCode(403).negate(), e -> Mono.empty()))
+				.onErrorResume(ClientException.isStatusCode(403), e -> ctx.reply(":warning: It seems that I am missing Add Reactions permission. "
+						+ "Interactive menus using reactions (such as navigation controls or confirmation dialogs) may not work properly.").then())
 				.then()
 				.thenReturn(menuMessage);
+	}
+	
+	private static abstract class InteractionContext {
+		
+		private final Message menuMessage;
+
+		private InteractionContext(Message menuMessage) {
+			this.menuMessage = menuMessage;
+		}
+
+		public Message getMenuMessage() {
+			return menuMessage;
+		}
+	}
+	
+	public static class ReplyContext extends InteractionContext {
+		
+		private final MessageCreateEvent event;
+		private final ArgumentList args;
+		private final FlagSet flags;
+
+		private ReplyContext(Message menuMessage, MessageCreateEvent event, ArgumentList args, FlagSet flags) {
+			super(menuMessage);
+			this.event = event;
+			this.args = args;
+			this.flags = flags;
+		}
+
+		public MessageCreateEvent getEvent() {
+			return event;
+		}
+
+		public ArgumentList getArgs() {
+			return args;
+		}
+
+		public FlagSet getFlags() {
+			return flags;
+		}
+	}
+	
+	public static class ReactionContext extends InteractionContext {
+		
+		private final ReactionAddEvent event;
+
+		private ReactionContext(Message menuMessage, ReactionAddEvent event) {
+			super(menuMessage);
+			this.event = event;
+		}
+
+		public ReactionAddEvent getEvent() {
+			return event;
+		}
 	}
 }
