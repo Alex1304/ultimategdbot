@@ -1,6 +1,8 @@
 package com.github.alex1304.ultimategdbot.api.command;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -99,7 +101,24 @@ public class CommandProvider {
 		return errorHandler;
 	}
 	
+	/**
+	 * Gets a command instance corresponding to the given alias.
+	 *  
+	 * @param alias the alias of the command
+	 * @return the corresponding command instance, or null if not found
+	 */
+	public Command getCommandByAlias(String alias) {
+		return commandMap.get(alias);
+	}
 	
+	/**
+	 * Gets all provided commands.
+	 * 
+	 * @return an unmodifiable Set containing all commands provided by this provider
+	 */
+	public Set<Command> getProvidedCommands() {
+		return Collections.unmodifiableSet(new HashSet<>(commandMap.values()));
+	}
 	
 	@Override
 	public String toString() {

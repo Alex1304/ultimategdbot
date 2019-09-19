@@ -17,4 +17,5 @@ public @interface CommandSpec {
 	String[] aliases();
 	PermissionLevel permLevel() default PermissionLevel.PUBLIC;
 	Scope scope() default Scope.ANYWHERE;
+	String shortDescription() default "";
 }

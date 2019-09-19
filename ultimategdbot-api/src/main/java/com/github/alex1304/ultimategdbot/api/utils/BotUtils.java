@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import com.github.alex1304.ultimategdbot.api.command.Context;
@@ -11,6 +12,7 @@ import com.github.alex1304.ultimategdbot.api.command.Context;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.MessageChannel;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 /**
  * Contains various utility methods.
@@ -118,5 +120,20 @@ public class BotUtils {
 				.ofType(MessageChannel.class)
 				.flatMapMany(c -> Flux.fromIterable(splitMessage(sb.toString()))
 						.flatMap(c::createMessage));
+	}
+	
+	public static Mono<Void> sendPaginatedMessage(Context ctx, String text, int pageLength) {
+		if (text.length() <= pageLength) {
+			return ctx.reply(text).then();
+		}
+		var parts = splitMessage(text, pageLength);
+		var currentPageNumber = new AtomicInteger();
+		return InteractiveMenu.create(parts.get(0))
+				.closeAfterReaction(false)
+				.addReactionItem("◀", reactionCtx -> reactionCtx.getMenuMessage()
+						.edit(spec -> spec.setContent(parts.get((currentPageNumber.decrementAndGet() + parts.size()) % parts.size()))).then())
+				.addReactionItem("▶", reactionCtx -> reactionCtx.getMenuMessage()
+						.edit(spec -> spec.setContent(parts.get(currentPageNumber.incrementAndGet() % parts.size()))).then())
+				.open(ctx);
 	}
 }

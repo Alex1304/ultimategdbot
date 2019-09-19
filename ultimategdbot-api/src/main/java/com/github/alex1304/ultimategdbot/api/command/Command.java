@@ -23,6 +23,13 @@ public interface Command {
 	 * @return the set of aliases
 	 */
 	Set<String> getAliases();
+	
+	/**
+	 * Gets the documentation of the command.
+	 * 
+	 * @return the documentation
+	 */
+	CommandDocumentation getDocumentation();
 
 	/**
 	 * Gets the permission level required to execute this command.
