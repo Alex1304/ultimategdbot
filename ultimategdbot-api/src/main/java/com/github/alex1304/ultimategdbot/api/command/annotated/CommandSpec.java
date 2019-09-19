@@ -7,8 +7,8 @@ import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
-import com.github.alex1304.ultimategdbot.api.command.Command.Scope;
 import com.github.alex1304.ultimategdbot.api.command.PermissionLevel;
+import com.github.alex1304.ultimategdbot.api.command.Scope;
 
 @Documented
 @Retention(RUNTIME)

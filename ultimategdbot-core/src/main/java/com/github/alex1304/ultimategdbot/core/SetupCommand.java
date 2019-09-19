@@ -3,10 +3,10 @@ package com.github.alex1304.ultimategdbot.core;
 import java.util.Comparator;
 
 import com.github.alex1304.ultimategdbot.api.Plugin;
-import com.github.alex1304.ultimategdbot.api.command.Command.Scope;
 import com.github.alex1304.ultimategdbot.api.command.CommandFailedException;
 import com.github.alex1304.ultimategdbot.api.command.Context;
 import com.github.alex1304.ultimategdbot.api.command.PermissionLevel;
+import com.github.alex1304.ultimategdbot.api.command.Scope;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandAction;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandSpec;
 

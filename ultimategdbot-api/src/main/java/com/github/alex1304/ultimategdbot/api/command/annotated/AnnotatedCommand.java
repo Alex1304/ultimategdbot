@@ -16,6 +16,7 @@ import com.github.alex1304.ultimategdbot.api.command.Command;
 import com.github.alex1304.ultimategdbot.api.command.CommandFailedException;
 import com.github.alex1304.ultimategdbot.api.command.Context;
 import com.github.alex1304.ultimategdbot.api.command.PermissionLevel;
+import com.github.alex1304.ultimategdbot.api.command.Scope;
 import com.github.alex1304.ultimategdbot.api.utils.Markdown;
 
 import reactor.core.publisher.Flux;
