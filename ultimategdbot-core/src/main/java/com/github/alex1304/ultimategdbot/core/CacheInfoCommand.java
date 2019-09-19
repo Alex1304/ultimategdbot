@@ -5,8 +5,8 @@ import java.util.stream.Collectors;
 
 import com.github.alex1304.ultimategdbot.api.command.Context;
 import com.github.alex1304.ultimategdbot.api.command.PermissionLevel;
-import com.github.alex1304.ultimategdbot.api.command.annotation.CommandAction;
-import com.github.alex1304.ultimategdbot.api.command.annotation.CommandSpec;
+import com.github.alex1304.ultimategdbot.api.command.annotated.CommandAction;
+import com.github.alex1304.ultimategdbot.api.command.annotated.CommandSpec;
 
 import reactor.core.publisher.Mono;
 

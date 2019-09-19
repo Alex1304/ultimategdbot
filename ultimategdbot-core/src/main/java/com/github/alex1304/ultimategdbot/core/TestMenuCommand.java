@@ -4,8 +4,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.github.alex1304.ultimategdbot.api.command.CommandFailedException;
 import com.github.alex1304.ultimategdbot.api.command.Context;
-import com.github.alex1304.ultimategdbot.api.command.annotation.CommandAction;
-import com.github.alex1304.ultimategdbot.api.command.annotation.CommandSpec;
+import com.github.alex1304.ultimategdbot.api.command.annotated.CommandAction;
+import com.github.alex1304.ultimategdbot.api.command.annotated.CommandSpec;
 import com.github.alex1304.ultimategdbot.api.utils.InteractiveMenu;
 import com.github.alex1304.ultimategdbot.api.utils.UnexpectedReplyException;
 

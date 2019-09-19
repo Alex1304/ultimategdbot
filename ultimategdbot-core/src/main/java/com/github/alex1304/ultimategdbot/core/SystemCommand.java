@@ -3,10 +3,8 @@ package com.github.alex1304.ultimategdbot.core;
 import com.github.alex1304.ultimategdbot.api.command.CommandFailedException;
 import com.github.alex1304.ultimategdbot.api.command.Context;
 import com.github.alex1304.ultimategdbot.api.command.PermissionLevel;
-import com.github.alex1304.ultimategdbot.api.command.annotation.CommandAction;
-import com.github.alex1304.ultimategdbot.api.command.annotation.CommandSpec;
-import com.github.alex1304.ultimategdbot.api.command.annotation.Subcommand;
-import com.github.alex1304.ultimategdbot.api.command.parser.IntParser;
+import com.github.alex1304.ultimategdbot.api.command.annotated.CommandAction;
+import com.github.alex1304.ultimategdbot.api.command.annotated.CommandSpec;
 import com.github.alex1304.ultimategdbot.api.utils.SystemUnit;
 
 import reactor.core.publisher.Mono;
@@ -14,8 +12,7 @@ import reactor.core.publisher.Mono;
 @CommandSpec(aliases="system", permLevel=PermissionLevel.BOT_ADMIN)
 class SystemCommand {
 	
-	@Subcommand("memory")
-	@CommandAction
+	@CommandAction("memory")
 	public Mono<Void> runMemory(Context ctx) {
 		System.gc();
 		var total = Runtime.getRuntime().totalMemory();
@@ -30,8 +27,7 @@ class SystemCommand {
 		return ctx.reply(sb.toString()).then();
 	}
 	
-	@Subcommand("exit")
-	@CommandAction(IntParser.class)
+	@CommandAction("exit")
 	public Mono<Void> runExit(Context ctx, int code) {
 		if (code < 0 || code > 255) {
 			return Mono.error(new CommandFailedException("Exit code must be between 0 and 255. "

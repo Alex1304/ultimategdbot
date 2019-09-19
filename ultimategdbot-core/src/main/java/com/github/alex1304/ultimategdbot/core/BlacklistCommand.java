@@ -3,10 +3,8 @@ package com.github.alex1304.ultimategdbot.core;
 import com.github.alex1304.ultimategdbot.api.command.CommandFailedException;
 import com.github.alex1304.ultimategdbot.api.command.Context;
 import com.github.alex1304.ultimategdbot.api.command.PermissionLevel;
-import com.github.alex1304.ultimategdbot.api.command.annotation.CommandAction;
-import com.github.alex1304.ultimategdbot.api.command.annotation.CommandSpec;
-import com.github.alex1304.ultimategdbot.api.command.annotation.Subcommand;
-import com.github.alex1304.ultimategdbot.api.command.parser.LongParser;
+import com.github.alex1304.ultimategdbot.api.command.annotated.CommandAction;
+import com.github.alex1304.ultimategdbot.api.command.annotated.CommandSpec;
 import com.github.alex1304.ultimategdbot.api.database.BlacklistedIds;
 
 import reactor.core.publisher.Mono;
@@ -14,8 +12,7 @@ import reactor.core.publisher.Mono;
 @CommandSpec(aliases="blacklist", permLevel=PermissionLevel.BOT_OWNER)
 class BlacklistCommand {
 
-	@Subcommand("add")
-	@CommandAction(LongParser.class)
+	@CommandAction("add")
 	public Mono<Void> runAdd(Context ctx, long id) {
 		return ctx.getBot().getDatabase().findByID(BlacklistedIds.class, id)
 				.flatMap(__ -> Mono.error(new CommandFailedException("This ID is already blacklisted")))
@@ -30,8 +27,7 @@ class BlacklistCommand {
 				.then();
 	}
 
-	@Subcommand("remove")
-	@CommandAction(LongParser.class)
+	@CommandAction("remove")
 	public Mono<Void> runRemove(Context ctx, long id) {
 		return ctx.getBot().getDatabase().findByID(BlacklistedIds.class, id)
 				.switchIfEmpty(Mono.error(new CommandFailedException("This ID is already not blacklisted")))

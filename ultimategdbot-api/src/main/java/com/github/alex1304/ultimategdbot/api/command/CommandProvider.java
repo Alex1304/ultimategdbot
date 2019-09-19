@@ -45,17 +45,6 @@ public class CommandProvider {
 	}
 	
 	/**
-	 * Adds a command implemented with the command annotation API.
-	 * 
-	 * @param annotatedCommand the annotated object
-	 * @throws InvalidAnnotatedObjectException if the given object is not a valid
-	 *                                         annotated command
-	 */
-	public void addAnnotated(Object annotatedCommand) {
-		add(AnnotatedCommand.buildFromAnnotatedObject(annotatedCommand));
-	}
-	
-	/**
 	 * Provides a command based on a MessageCreateEvent. The event must come with a
 	 * message body containing a prefix and the alias of one of the commands
 	 * provided by this provider. If it matches with a provided command, arguments

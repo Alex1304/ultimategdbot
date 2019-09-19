@@ -3,10 +3,8 @@ package com.github.alex1304.ultimategdbot.core;
 import com.github.alex1304.ultimategdbot.api.command.CommandFailedException;
 import com.github.alex1304.ultimategdbot.api.command.Context;
 import com.github.alex1304.ultimategdbot.api.command.PermissionLevel;
-import com.github.alex1304.ultimategdbot.api.command.annotation.CommandAction;
-import com.github.alex1304.ultimategdbot.api.command.annotation.CommandSpec;
-import com.github.alex1304.ultimategdbot.api.command.annotation.Subcommand;
-import com.github.alex1304.ultimategdbot.api.command.parser.UserParser;
+import com.github.alex1304.ultimategdbot.api.command.annotated.CommandAction;
+import com.github.alex1304.ultimategdbot.api.command.annotated.CommandSpec;
 import com.github.alex1304.ultimategdbot.api.database.BotAdmins;
 import com.github.alex1304.ultimategdbot.api.utils.DiscordFormatter;
 
@@ -16,36 +14,9 @@ import reactor.core.publisher.Mono;
 
 @CommandSpec(aliases="botadmins", permLevel=PermissionLevel.BOT_OWNER)
 class BotAdminsCommand {
-	
-	@Subcommand("grant")
-	@CommandAction(UserParser.class)
-	public Mono<Void> runGrant(Context ctx, User user) {
-		return ctx.getBot().getDatabase().findByID(BotAdmins.class, user.getId().asLong())
-				.flatMap(__ -> Mono.error(new CommandFailedException("This user is already an admin.")))
-				.then(Mono.just(new BotAdmins())
-						.doOnNext(newAdmin -> newAdmin.setUserId(user.getId().asLong()))
-						.flatMap(ctx.getBot().getDatabase()::save))
-				.then(ctx.reply("**" + DiscordFormatter.formatUser(user) + "** is now a bot administrator!"))
-				.then(ctx.getBot().log("Bot administrator added: **" 
-						+ DiscordFormatter.formatUser(user) + "** (" + user.getId().asString() + ")"))
-				.then();
-	}
-	
-	@Subcommand("revoke")
-	@CommandAction(UserParser.class)
-	public Mono<Void> runRevoke(Context ctx, User user) {
-		return ctx.getBot().getDatabase().findByID(BotAdmins.class, user.getId().asLong())
-				.switchIfEmpty(Mono.error(new CommandFailedException("This user is already not an admin.")))
-				.flatMap(ctx.getBot().getDatabase()::delete)
-				.then(ctx.reply("**" + DiscordFormatter.formatUser(user) + "** is no longer a bot administrator!"))
-				.then(ctx.getBot().log("Bot administrator removed: **" 
-						+ DiscordFormatter.formatUser(user) + "** (" + user.getId().asString() + ")"))
-				.then();
-	}
-	
-	@Subcommand("list")
+
 	@CommandAction
-	public Mono<Void> runList(Context ctx) {
+	public Mono<Void> run(Context ctx) {
 		return ctx.getBot().getDatabase().query(BotAdmins.class, "from BotAdmins")
 				.flatMap(admin -> ctx.getBot().getDiscordClients().next().flatMap(client -> client.getUserById(Snowflake.of(admin.getUserId()))))
 				.map(DiscordFormatter::formatUser)
@@ -59,6 +30,30 @@ class BotAdminsCommand {
 					return sb.toString().substring(0, Math.min(sb.toString().length(), 800));
 				})
 				.flatMap(ctx::reply)
+				.then();
+	}
+	
+	@CommandAction("grant")
+	public Mono<Void> runGrant(Context ctx, User user) {
+		return ctx.getBot().getDatabase().findByID(BotAdmins.class, user.getId().asLong())
+				.flatMap(__ -> Mono.error(new CommandFailedException("This user is already an admin.")))
+				.then(Mono.just(new BotAdmins())
+						.doOnNext(newAdmin -> newAdmin.setUserId(user.getId().asLong()))
+						.flatMap(ctx.getBot().getDatabase()::save))
+				.then(ctx.reply("**" + DiscordFormatter.formatUser(user) + "** is now a bot administrator!"))
+				.then(ctx.getBot().log("Bot administrator added: **" 
+						+ DiscordFormatter.formatUser(user) + "** (" + user.getId().asString() + ")"))
+				.then();
+	}
+	
+	@CommandAction("revoke")
+	public Mono<Void> runRevoke(Context ctx, User user) {
+		return ctx.getBot().getDatabase().findByID(BotAdmins.class, user.getId().asLong())
+				.switchIfEmpty(Mono.error(new CommandFailedException("This user is already not an admin.")))
+				.flatMap(ctx.getBot().getDatabase()::delete)
+				.then(ctx.reply("**" + DiscordFormatter.formatUser(user) + "** is no longer a bot administrator!"))
+				.then(ctx.getBot().log("Bot administrator removed: **" 
+						+ DiscordFormatter.formatUser(user) + "** (" + user.getId().asString() + ")"))
 				.then();
 	}
 }

@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import com.github.alex1304.ultimategdbot.api.Bot;
 import com.github.alex1304.ultimategdbot.api.Plugin;
 import com.github.alex1304.ultimategdbot.api.command.CommandProvider;
+import com.github.alex1304.ultimategdbot.api.command.annotated.AnnotatedCommandProvider;
 import com.github.alex1304.ultimategdbot.api.database.BlacklistedIds;
 import com.github.alex1304.ultimategdbot.api.database.GuildSettingsEntry;
 import com.github.alex1304.ultimategdbot.api.database.NativeGuildSettings;
@@ -39,7 +40,7 @@ public class NativePlugin implements Plugin {
 	private static final Logger LOGGER = LoggerFactory.getLogger(NativePlugin.class);
 	
 	private volatile String aboutText;
-	private final CommandProvider cmdProvider = new CommandProvider();
+	private final AnnotatedCommandProvider cmdProvider = new AnnotatedCommandProvider();
 	private final Set<Snowflake> unavailableGuildIds = Collections.synchronizedSet(new HashSet<>());
 	private final AtomicInteger shardsNotReady = new AtomicInteger();
 	private final Map<String, GuildSettingsEntry<?, ?>> configEntries = new HashMap<String, GuildSettingsEntry<?, ?>>();

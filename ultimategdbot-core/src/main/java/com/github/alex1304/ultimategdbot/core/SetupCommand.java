@@ -7,10 +7,8 @@ import com.github.alex1304.ultimategdbot.api.command.Command.Scope;
 import com.github.alex1304.ultimategdbot.api.command.CommandFailedException;
 import com.github.alex1304.ultimategdbot.api.command.Context;
 import com.github.alex1304.ultimategdbot.api.command.PermissionLevel;
-import com.github.alex1304.ultimategdbot.api.command.annotation.CommandAction;
-import com.github.alex1304.ultimategdbot.api.command.annotation.CommandSpec;
-import com.github.alex1304.ultimategdbot.api.command.annotation.Subcommand;
-import com.github.alex1304.ultimategdbot.api.command.parser.StringParser;
+import com.github.alex1304.ultimategdbot.api.command.annotated.CommandAction;
+import com.github.alex1304.ultimategdbot.api.command.annotated.CommandSpec;
 
 import discord4j.core.object.util.Snowflake;
 import reactor.core.publisher.Flux;
@@ -59,8 +57,7 @@ class SetupCommand {
 				.then();
 	}
 	
-	@Subcommand("set")
-	@CommandAction({ StringParser.class, StringParser.class })
+	@CommandAction("set")
 	public Mono<Void> runSet(Context ctx, String key, String value) {
 		var guildId = ctx.getEvent().getGuildId().map(Snowflake::asLong).orElse(0L);
 		return Flux.fromIterable(ctx.getBot().getPlugins())

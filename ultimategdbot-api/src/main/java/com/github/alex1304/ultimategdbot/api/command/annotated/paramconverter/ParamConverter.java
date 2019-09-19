@@ -1,4 +1,4 @@
-package com.github.alex1304.ultimategdbot.api.command.parser;
+package com.github.alex1304.ultimategdbot.api.command.annotated.paramconverter;
 
 import com.github.alex1304.ultimategdbot.api.command.Context;
 
@@ -10,7 +10,7 @@ import reactor.core.publisher.Mono;
  * 
  * @param <T> the type of object this argument should be parsed to
  */
-public interface Parser<T> {
+public interface ParamConverter<T> {
 	/**
 	 * Accepts a String input and parses it into an object of type T. This method
 	 * has asynchronous capabilities, and may error to indicate that it cannot be
@@ -22,7 +22,7 @@ public interface Parser<T> {
 	 * @return a Mono emittng the result of the parsing, a error if the parsing
 	 *         fails, or empty if non applicable or not provided.
 	 */
-	Mono<T> parse(Context ctx, String input);
+	Mono<T> convert(Context ctx, String input);
 	
 	/**
 	 * Returns the type of object resulting of the parsing.

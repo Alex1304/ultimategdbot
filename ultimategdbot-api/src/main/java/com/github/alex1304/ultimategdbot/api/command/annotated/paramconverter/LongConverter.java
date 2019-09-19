@@ -1,13 +1,13 @@
-package com.github.alex1304.ultimategdbot.api.command.parser;
+package com.github.alex1304.ultimategdbot.api.command.annotated.paramconverter;
 
 import com.github.alex1304.ultimategdbot.api.command.Context;
 
 import reactor.core.publisher.Mono;
 
-public class LongParser implements Parser<Long> {
+public class LongConverter implements ParamConverter<Long> {
 
 	@Override
-	public Mono<Long> parse(Context ctx, String input) {
+	public Mono<Long> convert(Context ctx, String input) {
 		return Mono.just(input).map(Long::parseLong);
 	}
 

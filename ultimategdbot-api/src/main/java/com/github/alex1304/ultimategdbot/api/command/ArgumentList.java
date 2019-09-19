@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import com.github.alex1304.ultimategdbot.api.command.parser.Parser;
+import com.github.alex1304.ultimategdbot.api.command.annotated.paramconverter.ParamConverter;
 
 import reactor.core.publisher.Mono;
 
@@ -31,8 +31,8 @@ public class ArgumentList {
 		return new ArrayDeque<>(getTokens(position + 1)).getLast();
 	}
 	
-	public <T> Mono<T> parseAndGet(int position, Parser<T> parser) {
-		return Mono.fromCallable(() -> get(position)).flatMap(arg -> parser.parse(context, arg));
+	public <T> Mono<T> parseAndGet(int position, ParamConverter<T> parser) {
+		return Mono.fromCallable(() -> get(position)).flatMap(arg -> parser.convert(context, arg));
 	}
 
 	public List<String> getTokens() {

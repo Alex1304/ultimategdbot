@@ -1,18 +1,17 @@
-package com.github.alex1304.ultimategdbot.api.command.parser;
+package com.github.alex1304.ultimategdbot.api.command.annotated.paramconverter;
 
-import com.github.alex1304.ultimategdbot.api.command.ArgumentParseException;
 import com.github.alex1304.ultimategdbot.api.command.Context;
 import com.github.alex1304.ultimategdbot.api.utils.DiscordParser;
 
 import discord4j.core.object.entity.User;
 import reactor.core.publisher.Mono;
 
-public class UserParser implements Parser<User> {
+public class UserConverter implements ParamConverter<User> {
 
 	@Override
-	public Mono<User> parse(Context ctx, String input) {
+	public Mono<User> convert(Context ctx, String input) {
 		return DiscordParser.parseUser(ctx.getBot(), input)
-				.onErrorMap(e -> new ArgumentParseException(e.getMessage()));
+				.onErrorMap(e -> new ParamConversionException(e.getMessage()));
 	}
 
 	@Override
