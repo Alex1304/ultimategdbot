@@ -8,6 +8,7 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.alex1304.ultimategdbot.api.command.Command;
 import com.github.alex1304.ultimategdbot.api.command.CommandProvider;
 import com.github.alex1304.ultimategdbot.api.database.NativeGuildSettings;
 import com.github.alex1304.ultimategdbot.api.utils.BotUtils;
@@ -100,6 +101,22 @@ public class CommandKernel {
 				.retry()
 				.repeat()
 				.subscribe();
+	}
+	
+	/**
+	 * Gets a command instance corresponding to the given alias.
+	 *  
+	 * @param alias the alias of the command
+	 * @return the corresponding command instance, or null if not found
+	 */
+	public Command getCommandByAlias(String alias) {
+		for (var p : providers) {
+			var cmd = p.getCommandByAlias(alias);
+			if (cmd != null) {
+				return cmd;
+			}
+		}
+		return null;
 	}
 	
 	/**

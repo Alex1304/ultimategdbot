@@ -72,22 +72,16 @@ public class CommandProvider {
 			}
 		}
 		if (prefixUsed == null) {
-			LOGGER.debug("Message doesn't match any prefix");
 			return Optional.empty();
 		}
 		var parsed = InputTokenizer.tokenize(content);
 		var flags = parsed.getT1();
 		var args = parsed.getT2();
-		LOGGER.debug("content={}, prefixUsed={}, args={}, flags={}", content, prefixUsed, args, flags);
 		if (args.isEmpty()) {
-			LOGGER.debug("Prefix was used alone, without command name");
 			return Optional.empty();
 		}
 		final String fPrefixUsed = prefixUsed;
 		var command = commandMap.get(args.get(0));
-		if (command == null) {
-			LOGGER.debug("No command found");
-		}
 		return Optional.ofNullable(command)
 				.map(cmd -> new ExecutableCommand(cmd, new Context(cmd, event, args, flags, bot, fPrefixUsed), errorHandler));
 	}
@@ -108,7 +102,7 @@ public class CommandProvider {
 	 * @return the corresponding command instance, or null if not found
 	 */
 	public Command getCommandByAlias(String alias) {
-		return commandMap.get(alias);
+		return commandMap.get(alias.toLowerCase());
 	}
 	
 	/**
