@@ -58,7 +58,6 @@ public class NativePlugin implements Plugin {
 					cmdProvider.addAnnotated(new BotAdminsCommand());
 					cmdProvider.addAnnotated(new BlacklistCommand());
 					cmdProvider.addAnnotated(new CacheInfoCommand());
-					cmdProvider.addAnnotated(new BurstMessagesCommand());
 					cmdProvider.addAnnotated(new TestMenuCommand());
 					initEventListeners(bot);
 					configEntries.put("prefix", new GuildSettingsEntry<>(
@@ -80,7 +79,10 @@ public class NativePlugin implements Plugin {
 	
 	@Override
 	public Mono<Void> onBotReady(Bot bot) {
-		return Mono.fromRunnable(() -> initBlacklist(bot));
+		return bot.getDatabase().query(BlacklistedIds.class, "from BlacklistedIds")
+				.map(BlacklistedIds::getId)
+				.doOnNext(bot.getCommandKernel()::blacklist)
+				.then();
 	}
 	
 	private void initEventListeners(Bot bot) {
@@ -147,13 +149,6 @@ public class NativePlugin implements Plugin {
 						.onErrorContinue((error, obj) -> LOGGER.error("Error while procesing ReadyEvent on " + obj, error))
 						.subscribe();
 			});
-	}
-	
-	private void initBlacklist(Bot bot) {
-		bot.getDatabase().query(BlacklistedIds.class, "from BlacklistedIds")
-			.map(BlacklistedIds::getId)
-			.doOnNext(bot.getCommandKernel()::blacklist)
-			.subscribe();
 	}
 
 	@Override

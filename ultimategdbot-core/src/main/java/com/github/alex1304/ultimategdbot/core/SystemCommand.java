@@ -4,15 +4,22 @@ import com.github.alex1304.ultimategdbot.api.command.CommandFailedException;
 import com.github.alex1304.ultimategdbot.api.command.Context;
 import com.github.alex1304.ultimategdbot.api.command.PermissionLevel;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandAction;
+import com.github.alex1304.ultimategdbot.api.command.annotated.CommandDoc;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandSpec;
 import com.github.alex1304.ultimategdbot.api.utils.SystemUnit;
 
 import reactor.core.publisher.Mono;
 
-@CommandSpec(aliases="system", permLevel=PermissionLevel.BOT_ADMIN)
+@CommandSpec(
+		aliases = "system",
+		shortDescription = "Audit and take control of the usage of system resources.",
+		permLevel = PermissionLevel.BOT_ADMIN
+)
 class SystemCommand {
 	
 	@CommandAction("memory")
+	@CommandDoc("Checks the amount of memory that the bot is currently taking up. The JVM garbage "
+			+ "collector is invoked before running this command in order to provide accurate values.")
 	public Mono<Void> runMemory(Context ctx) {
 		System.gc();
 		var total = Runtime.getRuntime().totalMemory();
@@ -28,6 +35,7 @@ class SystemCommand {
 	}
 	
 	@CommandAction("exit")
+	@CommandDoc("Allows to shutdown the bot with a custom exit status code.")
 	public Mono<Void> runExit(Context ctx, int code) {
 		if (code < 0 || code > 255) {
 			return Mono.error(new CommandFailedException("Exit code must be between 0 and 255. "
@@ -35,7 +43,7 @@ class SystemCommand {
 		}
 		var message = "Terminating JVM with exit code " + code + "...";
 		return ctx.reply(message)
-				.then(ctx.getBot().log(":warning: " + message))
+				.and(ctx.getBot().log(":warning: " + message))
 				.doAfterTerminate(() -> System.exit(code))
 				.then();
 	}

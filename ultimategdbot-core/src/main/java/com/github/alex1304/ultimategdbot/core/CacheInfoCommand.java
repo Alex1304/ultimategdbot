@@ -6,17 +6,24 @@ import java.util.stream.Collectors;
 import com.github.alex1304.ultimategdbot.api.command.Context;
 import com.github.alex1304.ultimategdbot.api.command.PermissionLevel;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandAction;
+import com.github.alex1304.ultimategdbot.api.command.annotated.CommandDoc;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandSpec;
 
 import reactor.core.publisher.Mono;
 
-@CommandSpec(aliases="cacheinfo", permLevel=PermissionLevel.BOT_ADMIN)
+@CommandSpec(
+		aliases = "cacheinfo",
+		shortDescription = "Give statistics on the cache used to store Discord entities.",
+		permLevel = PermissionLevel.BOT_ADMIN
+)
 class CacheInfoCommand {
 
 	private static final String[] STORE_NAMES = { "Channels", "Emojis", "Guilds", "Messages", "Members", "Presences",
 			"Roles", "Users", "Voice states" };
 
 	@CommandAction
+	@CommandDoc("Check the amount of guilds, roles, messages, etc that the bot is storing. Useful to track down what "
+			+ "is consuming the most memory resources during the bot's runtime.")
 	public Mono<Void> run(Context ctx) {
 		var stateHolder = ctx.getBot().getMainDiscordClient().getServiceMediator().getStateHolder();
 		return Mono.zip(

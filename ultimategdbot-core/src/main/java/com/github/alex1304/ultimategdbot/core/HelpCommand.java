@@ -23,8 +23,8 @@ import reactor.util.annotation.Nullable;
 import reactor.util.function.Tuples;
 
 @CommandSpec(
-	aliases = { "help", "manual" },
-	shortDescription = "Provides documentation for all commands."
+		aliases = { "help", "manual" },
+		shortDescription = "Provides documentation for all commands."
 )
 class HelpCommand {
 	
@@ -34,7 +34,7 @@ class HelpCommand {
 			+ "detailed description of what it does. Each command may have one or several subcommands, each of them with their own "
 			+ "documentation. For such commands, you can specify which subcommand you want to get info on via the second `subcommand` "
 			+ "argument.")
-	public Mono<Void> execute(Context ctx, @Nullable String command, @Nullable String subcommand) {
+	public Mono<Void> run(Context ctx, @Nullable String command, @Nullable String subcommand) {
 		return command == null ? displayCommandList(ctx) : displayCommandDocumentation(ctx, command.toLowerCase(), subcommand);
 	}
 
@@ -46,7 +46,7 @@ class HelpCommand {
 						.concatMap(plugin -> Flux.fromIterable(plugin.getCommandProvider().getProvidedCommands())
 								.filter(cmd -> cmd.getScope().isInScope(channel))
 								.filterWhen(cmd -> cmd.getPermissionLevel().isGranted(ctx))
-								.collectSortedList(Comparator.comparing(this::joinAliases))
+								.collectSortedList(Comparator.comparing(HelpCommand::joinAliases))
 								.map(cmdList -> Tuples.of(plugin.getName(), cmdList)))
 						.doOnNext(TupleUtils.consumer((pluginName, cmdList) -> {
 							sb.append(Markdown.bold(Markdown.underline(pluginName))).append("\n");
@@ -83,13 +83,13 @@ class HelpCommand {
 				.flatMap(doc -> BotUtils.sendPaginatedMessage(ctx, doc, Message.MAX_CONTENT_LENGTH));
 	}
 	
-	private String joinAliases(Command cmd) {
+	private static String joinAliases(Command cmd) {
 		return cmd.getAliases().stream()
 				.sorted((a, b) -> a.length() - b.length() == 0 ? a.compareTo(b) : a.length() - b.length())
 				.collect(Collectors.joining("|"));
 	}
 	
-	private String formatDoc(Command cmd, String prefix, String selectedCommand, String selectedSubcommand) {
+	private static String formatDoc(Command cmd, String prefix, String selectedCommand, String selectedSubcommand) {
 		var entry = cmd.getDocumentation().getEntries().get(selectedSubcommand);
 		var sb = new StringBuilder(Markdown.code(prefix + selectedCommand))
 				.append(" - ")
@@ -116,9 +116,10 @@ class HelpCommand {
 				if (otherPage.equals(selectedSubcommand)) {
 					return;
 				}
-				sb.append(Markdown.code(prefix + selectedCommand + (otherPage.isEmpty() ? "" : " " + otherPage)))
+				sb.append(Markdown.code(prefix + "help " + selectedCommand + (otherPage.isEmpty() ? "" : " " + otherPage)))
 						.append(": ")
-						.append(extractFirstSentence(otherEntry.getDescription()));
+						.append(extractFirstSentence(otherEntry.getDescription()))
+						.append("\n");
 			});
 		}
 		return sb.toString();

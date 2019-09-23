@@ -4,6 +4,7 @@ import com.github.alex1304.ultimategdbot.api.command.CommandFailedException;
 import com.github.alex1304.ultimategdbot.api.command.Context;
 import com.github.alex1304.ultimategdbot.api.command.PermissionLevel;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandAction;
+import com.github.alex1304.ultimategdbot.api.command.annotated.CommandDoc;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandSpec;
 import com.github.alex1304.ultimategdbot.api.database.BotAdmins;
 import com.github.alex1304.ultimategdbot.api.utils.DiscordFormatter;
@@ -12,10 +13,15 @@ import discord4j.core.object.entity.User;
 import discord4j.core.object.util.Snowflake;
 import reactor.core.publisher.Mono;
 
-@CommandSpec(aliases="botadmins", permLevel=PermissionLevel.BOT_OWNER)
+@CommandSpec(
+		aliases = "botadmins",
+		shortDescription = "Manage users who have bot admin privileges.",
+		permLevel = PermissionLevel.BOT_OWNER
+)
 class BotAdminsCommand {
 
 	@CommandAction
+	@CommandDoc("Lists all users that have admin privileges on the bot.")
 	public Mono<Void> run(Context ctx) {
 		return ctx.getBot().getDatabase().query(BotAdmins.class, "from BotAdmins")
 				.flatMap(admin -> ctx.getBot().getDiscordClients().next().flatMap(client -> client.getUserById(Snowflake.of(admin.getUserId()))))
@@ -34,6 +40,7 @@ class BotAdminsCommand {
 	}
 	
 	@CommandAction("grant")
+	@CommandDoc("Grants bot admin access to a user.")
 	public Mono<Void> runGrant(Context ctx, User user) {
 		return ctx.getBot().getDatabase().findByID(BotAdmins.class, user.getId().asLong())
 				.flatMap(__ -> Mono.error(new CommandFailedException("This user is already an admin.")))
@@ -47,6 +54,7 @@ class BotAdminsCommand {
 	}
 	
 	@CommandAction("revoke")
+	@CommandDoc("Revokes bot admin access from a user.")
 	public Mono<Void> runRevoke(Context ctx, User user) {
 		return ctx.getBot().getDatabase().findByID(BotAdmins.class, user.getId().asLong())
 				.switchIfEmpty(Mono.error(new CommandFailedException("This user is already not an admin.")))

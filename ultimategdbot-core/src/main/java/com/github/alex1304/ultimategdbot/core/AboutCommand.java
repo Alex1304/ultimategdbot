@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 import com.github.alex1304.ultimategdbot.api.command.Context;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandAction;
+import com.github.alex1304.ultimategdbot.api.command.annotated.CommandDoc;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandSpec;
 import com.github.alex1304.ultimategdbot.api.utils.DiscordFormatter;
 
@@ -17,7 +18,10 @@ import reactor.function.TupleUtils;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
-@CommandSpec(aliases="about")
+@CommandSpec(
+		aliases = "about",
+		shortDescription = "Shows information about the bot itself."
+)
 class AboutCommand {
 	
 	private final NativePlugin plugin;
@@ -27,6 +31,10 @@ class AboutCommand {
 	}
 
 	@CommandAction
+	@CommandDoc("Displays a custom text containing various information about the bot, such as the number "
+			+ "of servers the bot is in, the link to add it to your server, the link to the official "
+			+ "support server, the version of plugins it uses, and credits to people who contributed to "
+			+ "its development.")
 	public Mono<Void> run(Context ctx) {
 		return Mono.zip(
 				ctx.getBot().getApplicationInfo().zipWhen(ApplicationInfo::getOwner),
