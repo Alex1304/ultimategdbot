@@ -5,6 +5,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
 
+/**
+ * Holds the documentation for a specific command.
+ */
 public class CommandDocumentation {
 
 	private final String shortDescription;
@@ -15,10 +18,20 @@ public class CommandDocumentation {
 		this.docEntries = Collections.unmodifiableMap(new TreeMap<>(docEntries));
 	}
 	
+	/**
+	 * Gets the short description of the command.
+	 * 
+	 * @return the short description
+	 */
 	public String getShortDescription() {
 		return shortDescription;
 	}
-
+	
+	/**
+	 * Gets all entries corresponding to subsections of the command documentation.
+	 * 
+	 * @return the documentation entries
+	 */
 	public Map<String, CommandDocumentationEntry> getEntries() {
 		return docEntries;
 	}

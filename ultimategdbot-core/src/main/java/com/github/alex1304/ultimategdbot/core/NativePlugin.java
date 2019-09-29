@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -34,6 +35,7 @@ import discord4j.core.event.domain.lifecycle.ResumeEvent;
 import discord4j.core.object.util.Snowflake;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.retry.Retry;
 
 public class NativePlugin implements Plugin {
 	
@@ -84,9 +86,8 @@ public class NativePlugin implements Plugin {
 				.then();
 	}
 	
-	private void initEventListeners(Bot bot) {
-		// Initial Ready
-		bot.getDiscordClients().flatMap(client -> client.getEventDispatcher().on(ReadyEvent.class).next()
+	private Mono<Void> initEventListeners(Bot bot) {
+		return bot.getDiscordClients().flatMap(client -> client.getEventDispatcher().on(ReadyEvent.class).next()
 					.doOnNext(readyEvent -> readyEvent.getGuilds().stream()
 							.map(Guild::getId)
 							.forEach(unavailableGuildIds::add))
@@ -100,11 +101,11 @@ public class NativePlugin implements Plugin {
 									.filter(id -> !unavailableGuildIds.contains(id))
 									.count() + " guilds.")))))
 			.then(Flux.fromIterable(bot.getPlugins())
-					.flatMap(plugin -> plugin.onBotReady(bot))
-					.onErrorContinue((error, obj) -> LOGGER.warn("onBotReady action failed for plugin " + ((Plugin) obj).getName(), error))
+					.flatMap(plugin -> plugin.onBotReady(bot)
+							.onErrorResume(e -> Mono.fromRunnable(() -> LOGGER.warn("onBotReady action failed for plugin " + plugin.getName(), e))))
 					.then())
 			.then(bot.log("Bot ready!"))
-			.subscribe(__ -> {
+			.doOnSuccess(__ -> {
 				// Guild join
 				bot.getDiscordClients().flatMap(client -> client.getEventDispatcher().on(GuildCreateEvent.class))
 						.filter(event -> shardsNotReady.get() == 0)
@@ -112,7 +113,7 @@ public class NativePlugin implements Plugin {
 						.map(GuildCreateEvent::getGuild)
 						.flatMap(guild -> bot.log(":inbox_tray: New guild joined: " + Markdown.escape(guild.getName())
 								+ " (" + guild.getId().asString() + ")"))
-						.onErrorContinue((error, obj) -> LOGGER.error("Error while procesing GuildCreateEvent on " + obj, error))
+						.retryWhen(Retry.any().doOnRetry(retryCtx -> LOGGER.error("Error while procesing GuildCreateEvent", retryCtx.exception())))
 						.subscribe();
 				// Guild leave
 				bot.getDiscordClients().flatMap(client -> client.getEventDispatcher().on(GuildDeleteEvent.class))
@@ -128,26 +129,30 @@ public class NativePlugin implements Plugin {
 						.map(event -> event.getGuild().map(guild -> Markdown.escape(guild.getName())
 								+ " (" + guild.getId().asString() + ")").orElse(event.getGuildId().asString() + " (no data)"))
 						.flatMap(str -> bot.log(":outbox_tray: Guild left: " + str))
-						.onErrorContinue((error, obj) -> LOGGER.error("Error while procesing GuildDeleteEvent on " + obj, error))
+						.retryWhen(Retry.any().doOnRetry(retryCtx -> LOGGER.error("Error while procesing GuildDeleteEvent", retryCtx.exception())))
 						.subscribe();
 				// Resume on partial reconnections
-				bot.getDiscordClients().flatMap(client -> client.getEventDispatcher().on(ResumeEvent.class)
-						.flatMap(resumeEvent -> bot.log("Shard " + client.getConfig().getShardIndex()
-								+ ": session resumed after websocket disconnection.")))
-						.onErrorContinue((error, obj) -> LOGGER.error("Error while procesing ResumeEvent on " + obj, error))
+				bot.getDiscordClients()
+						.flatMap(client -> client.getEventDispatcher().on(ResumeEvent.class)
+								.flatMap(resumeEvent -> bot.log("Shard " + client.getConfig().getShardIndex()
+										+ ": session resumed after websocket disconnection.")))
+						.retryWhen(Retry.any().doOnRetry(retryCtx -> LOGGER.error("Error while procesing ResumeEvent", retryCtx.exception())))
 						.subscribe();
 				// Ready on full reconnections
-				bot.getDiscordClients().flatMap(client -> client.getEventDispatcher().on(ReadyEvent.class)
-						.doOnNext(readyEvent -> shardsNotReady.incrementAndGet())
-						.map(readyEvent -> readyEvent.getGuilds().size())
-						.flatMap(guildCount -> client.getEventDispatcher().on(GuildCreateEvent.class)
-								.take(guildCount)
-								.timeout(Duration.ofMinutes(2), Mono.empty())
-								.doAfterTerminate(() -> shardsNotReady.decrementAndGet())
-								.then(bot.log("Shard " + client.getConfig().getShardIndex() + " reconnected (" + guildCount + " guilds)"))))
-						.onErrorContinue((error, obj) -> LOGGER.error("Error while procesing ReadyEvent on " + obj, error))
+				bot.getDiscordClients()
+						.flatMap(client -> client.getEventDispatcher().on(ReadyEvent.class)
+								.doOnNext(readyEvent -> shardsNotReady.incrementAndGet())
+								.map(readyEvent -> readyEvent.getGuilds().size())
+								.flatMap(guildCount -> client.getEventDispatcher().on(GuildCreateEvent.class)
+										.take(guildCount)
+										.timeout(Duration.ofMinutes(2), Mono.error(new TimeoutException("Unable to load guilds of shard "
+												+ client.getConfig().getShardIndex() + " in time")))
+										.doAfterTerminate(() -> shardsNotReady.decrementAndGet())
+										.then(bot.log("Shard " + client.getConfig().getShardIndex() + " reconnected (" + guildCount + " guilds)"))))
+						.retryWhen(Retry.any().doOnRetry(retryCtx -> LOGGER.error("Error while procesing ReadyEvent", retryCtx.exception())))
 						.subscribe();
-			});
+			})
+			.then();
 	}
 
 	@Override

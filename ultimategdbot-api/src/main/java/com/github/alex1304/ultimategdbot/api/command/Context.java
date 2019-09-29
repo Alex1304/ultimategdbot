@@ -27,7 +27,7 @@ public class Context {
 	public Context(Command command, MessageCreateEvent event, List<String> args, FlagSet flags, Bot bot, String prefixUsed) {
 		this.command = Objects.requireNonNull(command);
 		this.event = Objects.requireNonNull(event);
-		this.args = new ArgumentList(Objects.requireNonNull(args), this);
+		this.args = new ArgumentList(Objects.requireNonNull(args));
 		this.bot = Objects.requireNonNull(bot);
 		this.variables = new ConcurrentHashMap<>();
 		this.prefixUsed = Objects.requireNonNull(prefixUsed);

@@ -5,34 +5,48 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import com.github.alex1304.ultimategdbot.api.command.annotated.paramconverter.ParamConverter;
-
-import reactor.core.publisher.Mono;
-
+/**
+ * Represents the list of the arguments of a command.
+ */
 public class ArgumentList {
 
 	private final List<String> tokens;
-	private final Context context;
 	
-	public ArgumentList(List<String> tokens, Context context) {
+	public ArgumentList(List<String> tokens) {
 		this.tokens = tokens;
-		this.context = context;
 	}
 
+	/**
+	 * Gets the number of tokens (arguments) present in the list.
+	 * 
+	 * @return the token count
+	 */
 	public int tokenCount() {
 		return tokens.size();
 	}
 	
+	/**
+	 * Returns the argument at the specified position.
+	 * 
+	 * @param position the position of the argument
+	 * @return the argument at the specified position
+	 * @throws IndexOutOfBoundsException if the position is out of bounds
+	 */
 	public String get(int position) {
 		return tokens.get(position);
 	}
 	
+	/**
+	 * Gets all arguments from the specified position to the last one, into one
+	 * String resulting of the concatenation of all arguments (separated with a
+	 * whitespace). Specifying a position <= 0 returns all arguments. Specifying a
+	 * position >= tokenCount will result in an empty String.
+	 * 
+	 * @param position the position of the first arguments
+	 * @return all arguments into one concatenated String
+	 */
 	public String getAllAfter(int position) {
 		return new ArrayDeque<>(getTokens(position + 1)).getLast();
-	}
-	
-	public <T> Mono<T> parseAndGet(int position, ParamConverter<T> parser) {
-		return Mono.fromCallable(() -> get(position)).flatMap(arg -> parser.convert(context, arg));
 	}
 
 	public List<String> getTokens() {

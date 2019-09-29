@@ -6,6 +6,9 @@ import java.util.function.Predicate;
 import discord4j.core.object.entity.Channel;
 import discord4j.core.object.entity.Channel.Type;
 
+/**
+ * The scope of a command, that is, the kind of channels where the command is applicable.
+ */
 public enum Scope {
 	ANYWHERE(c -> true),
 	DM_ONLY(c -> c.getType() == Type.DM),

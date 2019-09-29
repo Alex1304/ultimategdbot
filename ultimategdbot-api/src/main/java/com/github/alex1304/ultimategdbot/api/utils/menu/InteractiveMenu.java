@@ -113,7 +113,7 @@ public class InteractiveMenu {
 									if (action == null) {
 										return Mono.empty();
 									}
-									var replyCtx = new MessageMenuInteraction(menuMessage, event, new ArgumentList(args, ctx), flags);
+									var replyCtx = new MessageMenuInteraction(menuMessage, event, new ArgumentList(args), flags);
 									return action.apply(replyCtx).thenReturn(0);
 								})
 								.takeUntil(__ -> closeAfterMessage)

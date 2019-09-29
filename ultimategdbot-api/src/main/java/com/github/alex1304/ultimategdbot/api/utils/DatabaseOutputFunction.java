@@ -12,7 +12,7 @@ import discord4j.core.object.util.Snowflake;
 import reactor.core.publisher.Mono;
 
 /**
- * Function that determines the value to save to the database after reading the user input as String.
+ * Function that determines the string to display to the user after reading the value from teh database.
  */
 public interface DatabaseOutputFunction<D> extends BiFunction<D, Long, Mono<String>> {
 	/**
