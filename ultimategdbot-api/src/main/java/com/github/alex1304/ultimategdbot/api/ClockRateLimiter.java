@@ -65,12 +65,7 @@ public class ClockRateLimiter implements GlobalRateLimiter {
 	
 	@Override
 	public Duration getRemaining() {
-		var remaining = limitedUntil.get() - System.nanoTime();
-		var duration = Duration.ofNanos(remaining);
-		if (remaining > 0) {
-			LOGGER.debug("On hold for {}", duration);
-		}
-		return duration;
+		return Duration.ofNanos(limitedUntil.get() - System.nanoTime());
 	}
 	
 	@Override

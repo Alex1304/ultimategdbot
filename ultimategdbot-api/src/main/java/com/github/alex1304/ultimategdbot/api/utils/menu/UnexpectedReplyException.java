@@ -1,4 +1,4 @@
-package com.github.alex1304.ultimategdbot.api.utils;
+package com.github.alex1304.ultimategdbot.api.utils.menu;
 
 public class UnexpectedReplyException extends RuntimeException {
 	

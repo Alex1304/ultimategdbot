@@ -243,15 +243,14 @@ public class Bot {
 					+ " or 'streaming:<url>' in lower case. Defaulting to no activity");
 			return null;
 		}, null);
-		var presenceStatus = propParser.parseOrDefault("presence_status", value -> {
-			switch (value) {
-				case "online": return Presence.online(activity);
-				case "idle": return Presence.idle(activity);
-				case "dnd": return Presence.doNotDisturb(activity);
-				case "invisible": return Presence.invisible();
-				default:
-					LOGGER.warn("presence_status: Expected one of 'online', 'idle', 'dnd', 'invisible'. Defaulting to 'online'.");
-					return Presence.online(activity);
+		var presenceStatus = propParser.parseOrDefault("presence_status", value -> switch (value) {
+			case "online" -> Presence.online(activity);
+			case "idle" -> Presence.idle(activity);
+			case "dnd" -> Presence.doNotDisturb(activity);
+			case "invisible" -> Presence.invisible();
+			default -> {
+				LOGGER.warn("presence_status: Expected one of 'online', 'idle', 'dnd', 'invisible'. Defaulting to 'online'.");
+				yield Presence.online(activity);
 			}
 		}, Presence.online(activity));
 		var requestThroughput = propParser.parseAsIntOrDefault("request_throughput", 48);

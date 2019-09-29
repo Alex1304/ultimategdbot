@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import com.github.alex1304.ultimategdbot.api.command.Context;
+import com.github.alex1304.ultimategdbot.api.utils.menu.InteractiveMenu;
 
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.MessageChannel;

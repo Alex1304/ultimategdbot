@@ -8,9 +8,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.github.alex1304.ultimategdbot.api.Bot;
 import com.github.alex1304.ultimategdbot.api.utils.InputTokenizer;
 
@@ -21,8 +18,7 @@ import discord4j.core.event.domain.message.MessageCreateEvent;
  * handle errors via a {@link CommandErrorHandler}.
  */
 public class CommandProvider {
-	private static final Logger LOGGER = LoggerFactory.getLogger(CommandProvider.class);
-
+	
 	private CommandErrorHandler errorHandler = new CommandErrorHandler();
 	private final Map<String, Command> commandMap = new HashMap<>();
 	

@@ -47,8 +47,9 @@
 	</distributionManagement>
 
 	<properties>
-		<java.version>11</java.version>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<java.version>13</java.version>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>                                                                
+    	<argLine>--enable-preview</argLine>  
 	</properties>
 
 	<build>
@@ -63,6 +64,7 @@
 						<target>${java.version}</target>
 						<compilerArgs>
 							<compilerArg>-parameters</compilerArg>
+							<compilerArg>--enable-preview</compilerArg>
 						</compilerArgs>
 					</configuration>
 				</plugin>
@@ -88,6 +90,11 @@
 						<releaseProfiles>release</releaseProfiles>
 						<goals>deploy</goals>
 					</configuration>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-surefire-plugin</artifactId>
+					<version>3.0.0-M3</version>
 				</plugin>
 			</plugins>
 		</pluginManagement>
