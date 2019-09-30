@@ -48,8 +48,7 @@
 
 	<properties>
 		<java.version>13</java.version>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>                                                                
-    	<argLine>--enable-preview</argLine>  
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 
 	<build>
@@ -64,7 +63,6 @@
 						<target>${java.version}</target>
 						<compilerArgs>
 							<compilerArg>-parameters</compilerArg>
-							<compilerArg>--enable-preview</compilerArg>
 						</compilerArgs>
 					</configuration>
 				</plugin>
@@ -212,17 +210,6 @@
 				<groupId>org.hibernate</groupId>
 				<artifactId>hibernate-hikaricp</artifactId>
 				<version>5.4.2.Final</version>
-			</dependency>
-			<dependency>
-				<groupId>org.hibernate</groupId>
-				<artifactId>hibernate-ehcache</artifactId>
-				<version>5.4.2.Final</version>
-				<exclusions>
-					<exclusion>
-						<groupId>org.hibernate</groupId>
-						<artifactId>hibernate-core</artifactId>
-					</exclusion>
-				</exclusions>
 			</dependency>
 			<dependency>
 				<groupId>org.glassfish.jaxb</groupId>

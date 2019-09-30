@@ -1,15 +1,15 @@
 package com.github.alex1304.ultimategdbot.api.command;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 import com.github.alex1304.ultimategdbot.api.Bot;
 
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.entity.Message;
+import discord4j.core.object.entity.MessageChannel;
+import discord4j.core.object.entity.User;
 import discord4j.core.spec.MessageCreateSpec;
 import discord4j.rest.http.client.ClientException;
 import reactor.core.publisher.Mono;
@@ -20,18 +20,20 @@ public class Context {
 	private final MessageCreateEvent event;
 	private final ArgumentList args;
 	private final Bot bot;
-	private final Map<String, Object> variables;
 	private final String prefixUsed;
 	private final FlagSet flags;
+	private final User author;
+	private final MessageChannel channel;
 
-	public Context(Command command, MessageCreateEvent event, List<String> args, FlagSet flags, Bot bot, String prefixUsed) {
+	public Context(Command command, MessageCreateEvent event, List<String> args, FlagSet flags, Bot bot, String prefixUsed, MessageChannel channel) {
 		this.command = Objects.requireNonNull(command);
 		this.event = Objects.requireNonNull(event);
 		this.args = new ArgumentList(Objects.requireNonNull(args));
 		this.bot = Objects.requireNonNull(bot);
-		this.variables = new ConcurrentHashMap<>();
 		this.prefixUsed = Objects.requireNonNull(prefixUsed);
 		this.flags = Objects.requireNonNull(flags);
+		this.author = event.getMessage().getAuthor().orElseThrow();
+		this.channel = Objects.requireNonNull(channel);
 	}
 	
 	/**
@@ -116,66 +118,28 @@ public class Context {
 	public String getPrefixUsed() {
 		return prefixUsed;
 	}
-
+	
 	/**
-	 * Adds a variable in this context. If a variable of the same name exists, it is
-	 * overwritten.
+	 * Gets the author of the message that created this context. It is a convenient way to do
+	 * <pre>
+	 * getEvent().getMessage().getAuthor().orElseThrow();
+	 * </pre>
 	 * 
-	 * @param name the name of the variable
-	 * @param val  the value of the variable
+	 * @return the author
 	 */
-	public void setVar(String name, Object val) {
-		variables.put(name, val);
+	public User getAuthor() {
+		return author;
 	}
-
+	
 	/**
-	 * Adds a variable in this context. If a variable of the same name exists,
-	 * nothing happens.
+	 * Gets the channel of the message that created this context. The channel was
+	 * cached beforehand, so it can return a MessageChannel instance directly as
+	 * opposed to a Mono of it.
 	 * 
-	 * @param name the name of the variable
-	 * @param val  the value of the variable
+	 * @return the author
 	 */
-	public void setVarIfNotExists(String name, Object val) {
-		if (variables.containsKey(name)) {
-			return;
-		}
-		setVar(name, val);
-	}
-
-	/**
-	 * Gets the value of a variable.
-	 * 
-	 * @param name the variable name
-	 * @param type the type of the variable
-	 * @param      <T> the variable type
-	 * @return the value of the variable, or null if not found or exists in the
-	 *         wrong type
-	 */
-	public <T> T getVar(String name, Class<T> type) {
-		var val = variables.get(name);
-		if (val == null || !type.isInstance(val)) {
-			return null;
-		}
-		return type.cast(val);
-	}
-
-	/**
-	 * Gets the value of a variable. If not found, the provided default value is
-	 * returned instead.
-	 * 
-	 * @param name       the variable name
-	 * @param defaultVal the default value to return if not found
-	 * @param      <T> the variable type
-	 * @return the value of the variable, or the default value if not found or
-	 *         exists in the wrong type
-	 */
-	@SuppressWarnings("unchecked")
-	public <T> T getVarOrDefault(String name, T defaultVal) {
-		var val = variables.getOrDefault(name, defaultVal);
-		if (!defaultVal.getClass().isInstance(val)) {
-			return defaultVal;
-		}
-		return (T) val;
+	public MessageChannel getChannel() {
+		return channel;
 	}
 
 	@Override
@@ -184,7 +148,6 @@ public class Context {
 				+ "command=" + command.getClass().getCanonicalName()
 				+ ", message=" + event.getMessage()
 				+ ", args=" + args
-				+ ", variables=" + variables.keySet()
 				+ ", prefixUsed=" + prefixUsed
 				+ "}";
 	}

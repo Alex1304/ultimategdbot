@@ -1,5 +1,7 @@
 package com.github.alex1304.ultimategdbot.api.command.annotated;
 
+import static reactor.function.TupleUtils.function;
+
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,11 +25,11 @@ import com.github.alex1304.ultimategdbot.api.command.Context;
 import com.github.alex1304.ultimategdbot.api.command.FlagInformation;
 import com.github.alex1304.ultimategdbot.api.command.PermissionLevel;
 import com.github.alex1304.ultimategdbot.api.command.Scope;
+import com.github.alex1304.ultimategdbot.api.command.annotated.paramconverter.ParamConversionException;
 import com.github.alex1304.ultimategdbot.api.utils.Markdown;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.function.TupleUtils;
 import reactor.util.annotation.Nullable;
 import reactor.util.function.Tuples;
 
@@ -133,7 +135,8 @@ public class AnnotatedCommand implements Command {
 								var argTokens = Flux.fromIterable(args.getTokens(method.getParameters().length + firstArgIndex.get() - 1))
 										.skip(firstArgIndex.get());
 								return Flux.zip(parameterTypes, argTokens)
-										.concatMap(TupleUtils.function((paramType, arg) -> provider.convert(ctx, arg, paramType)))
+										.concatMap(function((paramType, arg) -> provider.convert(ctx, arg, paramType)
+												.onErrorMap(e -> new ParamConversionException(e.getMessage()))))
 										.collectList()
 										.defaultIfEmpty(List.of())
 										.map(argList -> new ArrayList<Object>(argList))
@@ -185,12 +188,13 @@ public class AnnotatedCommand implements Command {
 		if (mainMethod != null) {
 			methodsToProcess.put("", mainMethod);
 		}
+		var isHidden = methodsToProcess.values().stream().anyMatch(m -> m.getDeclaringClass().isAnnotationPresent(HiddenCommand.class));
 		var docEntries = new HashMap<String, CommandDocumentationEntry>();
 		methodsToProcess.forEach((name, method) -> {
 			var syntax = Arrays.stream(method.getParameters())
 					.skip(1)
 					.map(param -> Tuples.of(param.getName(), param.isAnnotationPresent(Nullable.class)))
-					.map(TupleUtils.function((paramName, isNullable) -> isNullable ? "[" + paramName + "]" : "<" + paramName + ">"))
+					.map(function((paramName, isNullable) -> isNullable ? "[" + paramName + "]" : "<" + paramName + ">"))
 					.collect(Collectors.joining(" "));
 			var cmdDocAnnot = method.getAnnotation(CommandDoc.class);
 			var description = cmdDocAnnot == null ? "" : cmdDocAnnot.value();
@@ -203,6 +207,6 @@ public class AnnotatedCommand implements Command {
 			}
 			docEntries.put(name, new CommandDocumentationEntry(syntax, description, flagInfo));
 		});
-		return new CommandDocumentation(shortDescription, docEntries);
+		return new CommandDocumentation(shortDescription, docEntries, isHidden);
 	}
 }

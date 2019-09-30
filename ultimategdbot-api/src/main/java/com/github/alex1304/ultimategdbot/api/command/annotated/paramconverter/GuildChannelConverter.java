@@ -12,8 +12,7 @@ public class GuildChannelConverter implements ParamConverter<GuildChannel> {
 	public Mono<GuildChannel> convert(Context ctx, String input) {
 		return Mono.justOrEmpty(ctx.getEvent().getGuildId())
 				.flatMap(guildId -> DiscordParser.parseGuildChannel(ctx.getBot(), guildId, input))
-				.onErrorMap(e -> new ParamConversionException(e.getMessage()))
-				.switchIfEmpty(Mono.error(new ParamConversionException("Cannot find guild channels outside of a guild.")));
+				.switchIfEmpty(Mono.error(new RuntimeException("Cannot find guild channels outside of a guild.")));
 	}
 
 	@Override

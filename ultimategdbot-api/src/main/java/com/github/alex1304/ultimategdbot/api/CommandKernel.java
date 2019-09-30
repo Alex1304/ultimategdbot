@@ -1,9 +1,12 @@
 package com.github.alex1304.ultimategdbot.api;
 
+import static com.github.alex1304.ultimategdbot.api.utils.BotUtils.debugError;
+
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,7 +14,6 @@ import org.slf4j.LoggerFactory;
 import com.github.alex1304.ultimategdbot.api.command.Command;
 import com.github.alex1304.ultimategdbot.api.command.CommandProvider;
 import com.github.alex1304.ultimategdbot.api.database.NativeGuildSettings;
-import com.github.alex1304.ultimategdbot.api.utils.BotUtils;
 
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.entity.User;
@@ -29,12 +31,12 @@ public class CommandKernel {
 	private static final Logger LOGGER = LoggerFactory.getLogger("ultimategdbot.commandkernel");
 
 	private final Bot bot;
-	private final Set<CommandProvider> providers;
+	private final Set<CommandProvider> providers = new HashSet<>();
 	private final Set<Long> blacklist = new HashSet<>();
+	private final ConcurrentHashMap<Long, String> guildPrefixCache = new ConcurrentHashMap<>();
 	
 	public CommandKernel(Bot bot) {
 		this.bot = Objects.requireNonNull(bot);
-		this.providers = new HashSet<>();
 	}
 	
 	/**
@@ -80,14 +82,15 @@ public class CommandKernel {
 		}
 		return findGuildSpecificPrefix(event)
 				.flatMapMany(prefix -> Flux.fromIterable(providers)
-						.flatMap(provider -> Mono.justOrEmpty(provider.provideFromEvent(bot, prefix, event))))
+						.flatMap(provider -> event.getMessage().getChannel()
+								.flatMap(channel -> Mono.justOrEmpty(provider.provideFromEvent(bot, prefix, event, channel)))))
 				.flatMap(executable -> executable.execute()
 						.onErrorResume(e -> Mono.when(event.getMessage().getChannel()
 								.flatMap(c -> c.createMessage(":no_entry_sign: Something went wrong. "
 										+ "A crash report has been sent to the developer. Sorry for "
 										+ "the inconvenience."))
 								.onErrorResume(__ -> Mono.empty()),
-						BotUtils.debugError("Something went wrong when executing a command", executable.getContext(), e),
+						debugError("Something went wrong when executing a command", executable.getContext(), e),
 						Mono.fromRunnable(() -> LOGGER.error("Something went wrong when executing a command. Context dump: "
 								+ executable.getContext(), e)))))
 				.then();
@@ -149,22 +152,36 @@ public class CommandKernel {
 		blacklist.remove(id);
 	}
 
+	/**
+	 * Forces this command kernel to evict the prefix from cache for the specified
+	 * guild.
+	 * 
+	 * @param guildId the guild id
+	 */
+	public void invalidateCachedPrefixForGuild(long guildId) {
+		guildPrefixCache.remove(guildId);
+		LOGGER.debug("Invalidated cached prefix for guild {}", guildId);
+	}
+	
 	private Mono<String> findGuildSpecificPrefix(MessageCreateEvent event) {
 		return Mono.justOrEmpty(event.getGuildId())
 				.map(Snowflake::asLong)
-				.flatMap(guildId -> bot.getDatabase().findByID(NativeGuildSettings.class, guildId)
-						.switchIfEmpty(Mono.fromCallable(() -> {
-									var gs = new NativeGuildSettings();
-									gs.setGuildId(guildId);
-									return gs;
-								})
-								.flatMap(gs -> bot.getDatabase().save(gs)
-										.then(Mono.fromRunnable(() -> LOGGER.debug("Created guild settings: {}", gs)))
-										.onErrorResume(e -> Mono.fromRunnable(() -> LOGGER
-												.error("Unable to save guild settings for " + guildId, e)))
-										.thenReturn(gs)))
-						.flatMap(gs -> Mono.justOrEmpty(gs.getPrefix())))
-				.defaultIfEmpty(bot.getDefaultPrefix())
-				.map(String::strip);
+				.flatMap(guildId -> Mono.justOrEmpty(guildPrefixCache.get(guildId))
+						.switchIfEmpty(bot.getDatabase()
+								.findByID(NativeGuildSettings.class, guildId)
+								.switchIfEmpty(Mono.fromCallable(() -> {
+											var gs = new NativeGuildSettings();
+											gs.setGuildId(guildId);
+											return gs;
+										})
+										.flatMap(gs -> bot.getDatabase().save(gs)
+												.then(Mono.fromRunnable(() -> LOGGER.debug("Created guild settings: {}", gs)))
+												.onErrorResume(e -> Mono.fromRunnable(() -> LOGGER
+														.error("Unable to save guild settings for " + guildId, e)))
+												.thenReturn(gs)))
+								.flatMap(gs -> Mono.justOrEmpty(gs.getPrefix()))
+								.defaultIfEmpty(bot.getDefaultPrefix())
+								.map(String::strip)
+								.doOnNext(prefix -> guildPrefixCache.put(guildId, prefix))));
 	}
 }

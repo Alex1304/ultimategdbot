@@ -65,7 +65,10 @@ public class NativePlugin implements Plugin {
 							NativeGuildSettings.class,
 							NativeGuildSettings::getPrefix,
 							NativeGuildSettings::setPrefix,
-							DatabaseInputFunction.asIs().withInputCheck(x -> !x.isBlank(), "Cannot be blank"),
+							(v, guildId) -> DatabaseInputFunction.asIs()
+									.withInputCheck(x -> !x.isBlank(), "Cannot be blank")
+									.apply(v, guildId)
+									.doOnTerminate(() -> bot.getCommandKernel().invalidateCachedPrefixForGuild(guildId)),
 							DatabaseOutputFunction.stringValue()
 					));
 					configEntries.put("server_mod_role", new GuildSettingsEntry<>(

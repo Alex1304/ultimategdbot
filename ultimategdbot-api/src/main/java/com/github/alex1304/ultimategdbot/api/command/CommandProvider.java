@@ -12,6 +12,7 @@ import com.github.alex1304.ultimategdbot.api.Bot;
 import com.github.alex1304.ultimategdbot.api.utils.InputTokenizer;
 
 import discord4j.core.event.domain.message.MessageCreateEvent;
+import discord4j.core.object.entity.MessageChannel;
 
 /**
  * Provides a set of commands. Each command handler provides their own way to
@@ -55,7 +56,7 @@ public class CommandProvider {
 	 * @param event
 	 * @return
 	 */
-	public Optional<ExecutableCommand> provideFromEvent(Bot bot, String prefix, MessageCreateEvent event) {
+	public Optional<ExecutableCommand> provideFromEvent(Bot bot, String prefix, MessageCreateEvent event, MessageChannel channel) {
 		var botId = bot.getMainDiscordClient().getSelfId();
 		var prefixes = Set.of("<@" + botId + ">", "<@!" + botId + ">", prefix);
 		var content = event.getMessage().getContent().orElse("");
@@ -79,7 +80,7 @@ public class CommandProvider {
 		final String fPrefixUsed = prefixUsed;
 		var command = commandMap.get(args.get(0));
 		return Optional.ofNullable(command)
-				.map(cmd -> new ExecutableCommand(cmd, new Context(cmd, event, args, flags, bot, fPrefixUsed), errorHandler));
+				.map(cmd -> new ExecutableCommand(cmd, new Context(cmd, event, args, flags, bot, fPrefixUsed, channel), errorHandler));
 	}
 	
 	/**
