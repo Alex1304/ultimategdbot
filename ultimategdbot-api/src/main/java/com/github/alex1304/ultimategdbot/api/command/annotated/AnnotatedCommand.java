@@ -193,7 +193,7 @@ public class AnnotatedCommand implements Command {
 		methodsToProcess.forEach((name, method) -> {
 			var syntax = Arrays.stream(method.getParameters())
 					.skip(1)
-					.map(param -> Tuples.of(param.getName(), param.isAnnotationPresent(Nullable.class)))
+					.map(param -> Tuples.of(formatParamName(param.getName()), param.isAnnotationPresent(Nullable.class)))
 					.map(function((paramName, isNullable) -> isNullable ? "[" + paramName + "]" : "<" + paramName + ">"))
 					.collect(Collectors.joining(" "));
 			var cmdDocAnnot = method.getAnnotation(CommandDoc.class);
@@ -208,5 +208,17 @@ public class AnnotatedCommand implements Command {
 			docEntries.put(name, new CommandDocumentationEntry(syntax, description, flagInfo));
 		});
 		return new CommandDocumentation(shortDescription, docEntries, isHidden);
+	}
+	
+	private static String formatParamName(String paramName) {
+		var sb = new StringBuilder();
+		for (var c : paramName.toCharArray()) {
+			if (Character.isUpperCase(c)) {
+				sb.append('_').append("" + Character.toLowerCase(c));
+			} else {
+				sb.append(c);
+			}
+		}
+		return sb.toString();
 	}
 }
