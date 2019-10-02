@@ -52,7 +52,27 @@ public enum PermissionLevel {
 		this.isGranted = isGranted;
 	}
 	
+	/**
+	 * Emits true if the permission is granted in the given context, false otherwise.
+	 * 
+	 * @param ctx the context
+	 * @return a Mono emitting a boolean value
+	 */
 	public Mono<Boolean> isGranted(Context ctx) {
 		return isGranted.apply(ctx);
+	}
+	
+	/**
+	 * Completes empty if the permission is granted in the given context, or errors
+	 * with {@link PermissionDeniedException} otherwise.
+	 * 
+	 * @param ctx the context
+	 * @return a Mono completing empty or with an error if not granted
+	 */
+	public Mono<Void> checkGranted(Context ctx) {
+		return isGranted.apply(ctx)
+				.filter(isGranted -> isGranted)
+				.switchIfEmpty(Mono.error(new PermissionDeniedException()))
+				.then();
 	}
 }

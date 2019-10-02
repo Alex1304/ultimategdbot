@@ -1,5 +1,7 @@
 package com.github.alex1304.ultimategdbot.api.command;
 
+import static java.util.stream.Collectors.joining;
+
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -46,7 +48,7 @@ public class ArgumentList {
 	 * @return all arguments into one concatenated String
 	 */
 	public String getAllAfter(int position) {
-		return new ArrayDeque<>(getTokens(position + 1)).getLast();
+		return tokens.stream().skip(position).collect(joining(" "));
 	}
 
 	public List<String> getTokens() {

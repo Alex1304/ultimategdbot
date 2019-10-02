@@ -1,16 +1,20 @@
 package com.github.alex1304.ultimategdbot.api.utils.menu;
 
+import static java.util.Objects.requireNonNull;
+
 import java.time.Duration;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.IntFunction;
 
 import com.github.alex1304.ultimategdbot.api.command.ArgumentList;
 import com.github.alex1304.ultimategdbot.api.command.Context;
 import com.github.alex1304.ultimategdbot.api.utils.InputTokenizer;
+import com.github.alex1304.ultimategdbot.api.utils.UniversalMessageSpec;
 
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.event.domain.message.ReactionAddEvent;
@@ -52,24 +56,95 @@ public class InteractiveMenu {
 		this.closeAfterReaction = closeAfterReaction;
 	}
 	
+	/**
+	 * Creates a new empty InteractiveMenu with a given message that will serve as
+	 * menu prompt.
+	 * 
+	 * @param spec the spec to build the menu message
+	 * @return a new InteractiveMenu
+	 */
 	public static InteractiveMenu create(Consumer<MessageCreateSpec> spec) {
+		requireNonNull(spec);
 		return new InteractiveMenu(spec, Map.of(), Map.of(), false, false, true, true);
 	}
 	
+	/**
+	 * Creates a new empty InteractiveMenu with a given message that will serve as
+	 * menu prompt.
+	 * 
+	 * @param message the menu message
+	 * @return a new InteractiveMenu
+	 */
 	public static InteractiveMenu create(String message) {
+		requireNonNull(message);
 		return create(mcs -> mcs.setContent(message));
 	}
 
+	/**
+	 * Creates a new InteractiveMenu prefilled with menu items useful for
+	 * pagination.
+	 * 
+	 * @param currentPage an AtomicInteger that stores the current page number
+	 * @param paginator   a Function that generates the message to display according
+	 *                    to the current page number. If the page number is out of
+	 *                    range, the function may throw a
+	 *                    {@link PageNumberOutOfRangeException} which is handled by
+	 *                    default to cover cases where the user inputs an invalid
+	 *                    page number. Note that if the paginator function throws
+	 *                    {@link PageNumberOutOfRangeException} with min/max values
+	 *                    that aren't the same depending on the current page number,
+	 *                    the behavior of the InteractiveMenu will be undefined.
+	 * @return a new InteractiveMenu prefilled with menu items useful for
+	 *         pagination.
+	 */
+	public static InteractiveMenu createPaginated(AtomicInteger currentPage, IntFunction<UniversalMessageSpec> paginator) {
+		requireNonNull(currentPage);
+		requireNonNull(paginator);
+		return create(paginator.apply(0).toMessageCreateSpec())
+				.addReactionItem("◀", interaction -> Mono.fromCallable(currentPage::decrementAndGet)
+						.map(targetPage -> paginator.apply(targetPage).toMessageEditSpec())
+						.onErrorResume(PageNumberOutOfRangeException.class, e -> Mono
+								.just(currentPage.get() + e.getMaxPage() - e.getMinPage() + 1)
+								.doOnNext(currentPage::set)
+								.map(targetPage -> paginator.apply(targetPage).toMessageEditSpec()))
+						.flatMap(interaction.getMenuMessage()::edit)
+						.then())
+				.addReactionItem("▶", interaction -> Mono.fromCallable(currentPage::incrementAndGet)
+						.map(targetPage -> paginator.apply(targetPage).toMessageEditSpec())
+						.onErrorResume(PageNumberOutOfRangeException.class, e -> Mono
+								.just(currentPage.get() - e.getMaxPage() + e.getMinPage() - 1)
+								.doOnNext(currentPage::set)
+								.map(targetPage -> paginator.apply(targetPage).toMessageEditSpec()))
+						.flatMap(interaction.getMenuMessage()::edit)
+						.then())
+				.addMessageItem("page", interaction -> Mono.fromCallable(() -> Integer.parseInt(interaction.getArgs().get(1)))
+						.onErrorMap(IndexOutOfBoundsException.class, e -> new UnexpectedReplyException("Please specify a page number."))
+						.onErrorMap(NumberFormatException.class, e -> new UnexpectedReplyException("Invalid page number."))
+						.map(p -> p - 1)
+						.flatMap(targetPage -> interaction.getMenuMessage()
+								.edit(paginator.apply(targetPage).toMessageEditSpec())
+								.doOnNext(__ -> currentPage.set(targetPage)))
+						.onErrorMap(PageNumberOutOfRangeException.class, e -> new UnexpectedReplyException("Page number must be between "
+								+ (e.getMinPage() + 1) + " and " + (e.getMaxPage() + 1) + "."))
+						.then(interaction.getEvent().getMessage().delete().onErrorResume(e -> Mono.empty())))
+				.closeAfterMessage(false)
+				.closeAfterReaction(false);
+	}
+
 	public InteractiveMenu addMessageItem(String message, Function<MessageMenuInteraction, Mono<Void>> action) {
+		requireNonNull(message);
+		requireNonNull(action);
 		var newMessageItems = new HashMap<>(messageItems);
-		newMessageItems.put(Objects.requireNonNull(message), Objects.requireNonNull(action));
+		newMessageItems.put(message, action);
 		return new InteractiveMenu(spec, Collections.unmodifiableMap(newMessageItems), reactionItems, deleteMenuOnClose,
 				deleteMenuOnTimeout, closeAfterMessage, closeAfterReaction);
 	}
 
 	public InteractiveMenu addReactionItem(String emojiName, Function<ReactionMenuInteraction, Mono<Void>> action) {
+		requireNonNull(emojiName);
+		requireNonNull(action);
 		var newReactionItems = new HashMap<>(reactionItems);
-		newReactionItems.put(Objects.requireNonNull(emojiName), Objects.requireNonNull(action));
+		newReactionItems.put(emojiName, action);
 		return new InteractiveMenu(spec, messageItems, Collections.unmodifiableMap(newReactionItems), deleteMenuOnClose,
 				deleteMenuOnTimeout, closeAfterMessage, closeAfterReaction);
 	}
@@ -94,7 +169,17 @@ public class InteractiveMenu {
 				closeAfterMessage, closeAfterReaction);
 	}
 	
+	/**
+	 * Opens the interactive menu, that is, sends the menu message over Discord and
+	 * starts listening for user's interaction. The returned Mono completes once the
+	 * menu closes or timeouts.
+	 * 
+	 * @param ctx the context of the command invoking this menu
+	 * @return a Mono completing when the menu closes or timeouts. Any error
+	 *         happening while the menu is open will be forwarded through the Mono
+	 */
 	public Mono<Void> open(Context ctx) {
+		requireNonNull(ctx);
 		return ctx.reply(spec)
 				.flatMap(menuMessage -> addReactionsToMenu(ctx, menuMessage))
 				.flatMap(menuMessage -> Mono.first(

@@ -129,12 +129,8 @@ public class BotUtils {
 		}
 		var parts = splitMessage(text, pageLength);
 		var currentPageNumber = new AtomicInteger();
-		return InteractiveMenu.create(parts.get(0))
-				.closeAfterReaction(false)
-				.addReactionItem("◀", reactionCtx -> reactionCtx.getMenuMessage()
-						.edit(spec -> spec.setContent(parts.get((currentPageNumber.decrementAndGet() + parts.size()) % parts.size()))).then())
-				.addReactionItem("▶", reactionCtx -> reactionCtx.getMenuMessage()
-						.edit(spec -> spec.setContent(parts.get(currentPageNumber.incrementAndGet() % parts.size()))).then())
+		return InteractiveMenu.createPaginated(currentPageNumber, page ->
+						new UniversalMessageSpec(parts.get((page + parts.size()) % parts.size())))
 				.open(ctx);
 	}
 }

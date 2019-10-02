@@ -35,10 +35,8 @@ public class ExecutableCommand {
 	public Mono<Void> execute() {
 		var commandMono = context.getEvent().getMessage().getChannel()
 				.filter(command.getScope()::isInScope)
-				.zipWhen(c -> command.getPermissionLevel().isGranted(context))
-				.flatMap(TupleUtils.function((channel, isGranted) -> isGranted
-						? command.run(context)
-						: Mono.error(new PermissionDeniedException())));
+				.flatMap(c -> command.getPermissionLevel().checkGranted(context)
+						.then(command.run(context)));
 		return errorHandler.apply(commandMono, context);
 	}
 	
