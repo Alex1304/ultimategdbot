@@ -35,7 +35,7 @@ import reactor.core.publisher.Mono;
  */
 public class InteractiveMenu {
 	
-	private final Consumer<MessageCreateSpec> spec;
+	private final Mono<Consumer<MessageCreateSpec>> specMono;
 	private final Map<String, Function<MessageMenuInteraction, Mono<Void>>> messageItems;
 	private final Map<String, Function<ReactionMenuInteraction, Mono<Void>>> reactionItems;
 	private final boolean deleteMenuOnClose;
@@ -43,11 +43,11 @@ public class InteractiveMenu {
 	private final boolean closeAfterMessage;
 	private final boolean closeAfterReaction;
 
-	private InteractiveMenu(Consumer<MessageCreateSpec> spec,
+	private InteractiveMenu(Mono<Consumer<MessageCreateSpec>> specMono,
 			Map<String, Function<MessageMenuInteraction, Mono<Void>>> messageItems,
 			Map<String, Function<ReactionMenuInteraction, Mono<Void>>> reactionItems, boolean deleteMenuOnClose,
 			boolean deleteMenuOnTimeout, boolean closeAfterMessage, boolean closeAfterReaction) {
-		this.spec = spec;
+		this.specMono = specMono;
 		this.messageItems = messageItems;
 		this.reactionItems = reactionItems;
 		this.deleteMenuOnClose = deleteMenuOnClose;
@@ -65,7 +65,7 @@ public class InteractiveMenu {
 	 */
 	public static InteractiveMenu create(Consumer<MessageCreateSpec> spec) {
 		requireNonNull(spec);
-		return new InteractiveMenu(spec, Map.of(), Map.of(), false, false, true, true);
+		return createWhen(Mono.just(spec));
 	}
 	
 	/**
@@ -78,6 +78,18 @@ public class InteractiveMenu {
 	public static InteractiveMenu create(String message) {
 		requireNonNull(message);
 		return create(mcs -> mcs.setContent(message));
+	}
+	
+	/**
+	 * Creates a new empty InteractiveMenu with a given message that will serve as
+	 * menu prompt. The menu message may be supplied from an asynchronous source. 
+	 * 
+	 * @param specMono the Mono emitting the spec to build the menu message
+	 * @return a new InteractiveMenu
+	 */
+	public static InteractiveMenu createWhen(Mono<Consumer<MessageCreateSpec>> specMono) {
+		requireNonNull(specMono);
+		return new InteractiveMenu(specMono, Map.of(), Map.of(), false, false, true, true);
 	}
 
 	/**
@@ -98,31 +110,60 @@ public class InteractiveMenu {
 	 *         pagination.
 	 */
 	public static InteractiveMenu createPaginated(AtomicInteger currentPage, IntFunction<UniversalMessageSpec> paginator) {
-		requireNonNull(currentPage);
 		requireNonNull(paginator);
-		return create(paginator.apply(0).toMessageCreateSpec())
+		return createPaginatedWhen(currentPage, p -> Mono.just(paginator.apply(p)));
+	}
+
+	/**
+	 * Creates a new InteractiveMenu prefilled with menu items useful for
+	 * pagination. Unlike {@link #createPaginated(AtomicInteger, IntFunction)}, this
+	 * method support asynchronous paginator functions.
+	 * 
+	 * @param currentPage    an AtomicInteger that stores the current page number
+	 * @param asyncPaginator a Function that asynchronously generates the message to
+	 *                       display according to the current page number. If the
+	 *                       page number is out of range, the Mono returned by this
+	 *                       function may emit a
+	 *                       {@link PageNumberOutOfRangeException} which is handled
+	 *                       by default to cover cases where the user inputs an
+	 *                       invalid page number. Note that if
+	 *                       {@link PageNumberOutOfRangeException} is emitted with
+	 *                       min/max values that aren't the same depending on the
+	 *                       current page number, the behavior of the
+	 *                       InteractiveMenu will be undefined.
+	 * @return a new InteractiveMenu prefilled with menu items useful for
+	 *         pagination.
+	 */
+	public static InteractiveMenu createPaginatedWhen(AtomicInteger currentPage, IntFunction<Mono<UniversalMessageSpec>> asyncPaginator) {
+		requireNonNull(currentPage);
+		requireNonNull(asyncPaginator);
+		return createWhen(asyncPaginator.apply(0).map(UniversalMessageSpec::toMessageCreateSpec))
 				.addReactionItem("◀", interaction -> Mono.fromCallable(currentPage::decrementAndGet)
-						.map(targetPage -> paginator.apply(targetPage).toMessageEditSpec())
+						.flatMap(targetPage -> asyncPaginator.apply(targetPage)
+								.map(UniversalMessageSpec::toMessageEditSpec))
 						.onErrorResume(PageNumberOutOfRangeException.class, e -> Mono
 								.just(currentPage.get() + e.getMaxPage() - e.getMinPage() + 1)
 								.doOnNext(currentPage::set)
-								.map(targetPage -> paginator.apply(targetPage).toMessageEditSpec()))
+								.flatMap(targetPage -> asyncPaginator.apply(targetPage)
+										.map(UniversalMessageSpec::toMessageEditSpec)))
 						.flatMap(interaction.getMenuMessage()::edit)
 						.then())
 				.addReactionItem("▶", interaction -> Mono.fromCallable(currentPage::incrementAndGet)
-						.map(targetPage -> paginator.apply(targetPage).toMessageEditSpec())
+						.flatMap(targetPage -> asyncPaginator.apply(targetPage).map(UniversalMessageSpec::toMessageEditSpec))
 						.onErrorResume(PageNumberOutOfRangeException.class, e -> Mono
 								.just(currentPage.get() - e.getMaxPage() + e.getMinPage() - 1)
 								.doOnNext(currentPage::set)
-								.map(targetPage -> paginator.apply(targetPage).toMessageEditSpec()))
+								.flatMap(targetPage -> asyncPaginator.apply(targetPage)
+										.map(UniversalMessageSpec::toMessageEditSpec)))
 						.flatMap(interaction.getMenuMessage()::edit)
 						.then())
 				.addMessageItem("page", interaction -> Mono.fromCallable(() -> Integer.parseInt(interaction.getArgs().get(1)))
 						.onErrorMap(IndexOutOfBoundsException.class, e -> new UnexpectedReplyException("Please specify a page number."))
 						.onErrorMap(NumberFormatException.class, e -> new UnexpectedReplyException("Invalid page number."))
 						.map(p -> p - 1)
-						.flatMap(targetPage -> interaction.getMenuMessage()
-								.edit(paginator.apply(targetPage).toMessageEditSpec())
+						.flatMap(targetPage -> asyncPaginator.apply(targetPage)
+								.map(UniversalMessageSpec::toMessageEditSpec)
+								.flatMap(interaction.getMenuMessage()::edit)
 								.doOnNext(__ -> currentPage.set(targetPage)))
 						.onErrorMap(PageNumberOutOfRangeException.class, e -> new UnexpectedReplyException("Page number must be between "
 								+ (e.getMinPage() + 1) + " and " + (e.getMaxPage() + 1) + "."))
@@ -136,7 +177,7 @@ public class InteractiveMenu {
 		requireNonNull(action);
 		var newMessageItems = new HashMap<>(messageItems);
 		newMessageItems.put(message, action);
-		return new InteractiveMenu(spec, Collections.unmodifiableMap(newMessageItems), reactionItems, deleteMenuOnClose,
+		return new InteractiveMenu(specMono, Collections.unmodifiableMap(newMessageItems), reactionItems, deleteMenuOnClose,
 				deleteMenuOnTimeout, closeAfterMessage, closeAfterReaction);
 	}
 
@@ -145,34 +186,36 @@ public class InteractiveMenu {
 		requireNonNull(action);
 		var newReactionItems = new HashMap<>(reactionItems);
 		newReactionItems.put(emojiName, action);
-		return new InteractiveMenu(spec, messageItems, Collections.unmodifiableMap(newReactionItems), deleteMenuOnClose,
+		return new InteractiveMenu(specMono, messageItems, Collections.unmodifiableMap(newReactionItems), deleteMenuOnClose,
 				deleteMenuOnTimeout, closeAfterMessage, closeAfterReaction);
 	}
 	
 	public InteractiveMenu deleteMenuOnClose(boolean deleteMenuOnClose) {
-		return new InteractiveMenu(spec, messageItems, reactionItems, deleteMenuOnClose, deleteMenuOnTimeout,
+		return new InteractiveMenu(specMono, messageItems, reactionItems, deleteMenuOnClose, deleteMenuOnTimeout,
 				closeAfterMessage, closeAfterReaction);
 	}
 	
 	public InteractiveMenu deleteMenuOnTimeout(boolean deleteMenuOnTimeout) {
-		return new InteractiveMenu(spec, messageItems, reactionItems, deleteMenuOnClose, deleteMenuOnTimeout,
+		return new InteractiveMenu(specMono, messageItems, reactionItems, deleteMenuOnClose, deleteMenuOnTimeout,
 				closeAfterMessage, closeAfterReaction);
 	}
 	
 	public InteractiveMenu closeAfterMessage(boolean closeAfterMessage) {
-		return new InteractiveMenu(spec, messageItems, reactionItems, deleteMenuOnClose, deleteMenuOnTimeout,
+		return new InteractiveMenu(specMono, messageItems, reactionItems, deleteMenuOnClose, deleteMenuOnTimeout,
 				closeAfterMessage, closeAfterReaction);
 	}
 	
 	public InteractiveMenu closeAfterReaction(boolean closeAfterReaction) {
-		return new InteractiveMenu(spec, messageItems, reactionItems, deleteMenuOnClose, deleteMenuOnTimeout,
+		return new InteractiveMenu(specMono, messageItems, reactionItems, deleteMenuOnClose, deleteMenuOnTimeout,
 				closeAfterMessage, closeAfterReaction);
 	}
 	
 	/**
 	 * Opens the interactive menu, that is, sends the menu message over Discord and
 	 * starts listening for user's interaction. The returned Mono completes once the
-	 * menu closes or timeouts.
+	 * menu closes or timeouts. If the menu was created using the factory method
+	 * {@link #createWhen(Mono)} and the supplied Mono completes empty or with an
+	 * error, the respective signals will be forwarded through the returning Mono.
 	 * 
 	 * @param ctx the context of the command invoking this menu
 	 * @return a Mono completing when the menu closes or timeouts. Any error
@@ -180,7 +223,7 @@ public class InteractiveMenu {
 	 */
 	public Mono<Void> open(Context ctx) {
 		requireNonNull(ctx);
-		return ctx.reply(spec)
+		return specMono.flatMap(ctx::reply)
 				.flatMap(menuMessage -> addReactionsToMenu(ctx, menuMessage))
 				.flatMap(menuMessage -> Mono.first(
 						ctx.getBot().getDiscordClients()

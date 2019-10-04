@@ -53,4 +53,12 @@ public class UniversalMessageSpec {
 			}
 		};
 	}
+
+	public String getContent() {
+		return content;
+	}
+
+	public Consumer<EmbedCreateSpec> getEmbed() {
+		return embed;
+	}
 }
