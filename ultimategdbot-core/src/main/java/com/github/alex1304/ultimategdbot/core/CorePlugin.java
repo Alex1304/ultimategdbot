@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,9 +36,9 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.retry.Retry;
 
-public class NativePlugin implements Plugin {
+public class CorePlugin implements Plugin {
 	
-	private static final Logger LOGGER = LoggerFactory.getLogger(NativePlugin.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(CorePlugin.class);
 	
 	private volatile String aboutText;
 	private final AnnotatedCommandProvider cmdProvider = new AnnotatedCommandProvider();
@@ -49,7 +48,7 @@ public class NativePlugin implements Plugin {
 
 	@Override
 	public Mono<Void> setup(Bot bot, PropertyParser parser) {
-		return Mono.fromCallable(() -> Files.readAllLines(Paths.get(".", "config", "about.txt")).stream().collect(Collectors.joining("\n")))
+		return Mono.fromCallable(() -> String.join("\n", Files.readAllLines(Paths.get(".", "config", "about.txt"))))
 				.doOnNext(aboutText -> this.aboutText = aboutText)
 				.and(Mono.fromRunnable(() -> {
 					cmdProvider.addAnnotated(new HelpCommand());

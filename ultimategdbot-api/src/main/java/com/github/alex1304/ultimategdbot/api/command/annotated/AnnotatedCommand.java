@@ -98,18 +98,16 @@ public class AnnotatedCommand implements Command {
 				continue;
 			}
 			validateMethodPrototype(method);
-			if (cmdActionAnnot.value().length == 0) {
+			if (cmdActionAnnot.value().isEmpty()) {
 				if (mainMethod != null) {
 					throw new InvalidAnnotatedObjectException("Duplicate action declaration");
 				}
 				mainMethod = method;
 			} else {
-				for (var alias : cmdActionAnnot.value()) {
-					if (subMethods.containsKey(alias)) {
-						throw new InvalidAnnotatedObjectException("Duplicate subcommand declaration for '" + alias + "'");
-					}
-					subMethods.put(alias, method);
+				if (subMethods.containsKey(cmdActionAnnot.value())) {
+					throw new InvalidAnnotatedObjectException("Duplicate subcommand declaration for '" + cmdActionAnnot.value() + "'");
 				}
+				subMethods.put(cmdActionAnnot.value(), method);
 			}
 		}
 		if (mainMethod == null && subMethods.isEmpty()) {
@@ -142,7 +140,8 @@ public class AnnotatedCommand implements Command {
 										.map(argList -> new ArrayList<Object>(argList))
 										.doOnNext(argList -> {
 											argList.add(0, ctx);
-											// Filling missing arguments with null, or throw an exception if args aren't nullable
+											// Filling missing arguments with null, or throw an
+											// exception if args aren't marked as @Nullable
 											while (argList.size() < method.getParameters().length) {
 												if (!method.getParameters()[argList.size()].isAnnotationPresent(Nullable.class)) {
 													throw invalidSyntax;

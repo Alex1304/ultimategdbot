@@ -74,6 +74,7 @@ public class CommandErrorHandler {
 		});
 		addHandler(DatabaseException.class, (e, ctx) -> Mono.when(
 				ctx.reply(":no_entry_sign: An error occured when accessing the database. Try again."),
+				Mono.fromRunnable(() -> LOGGER.error("A database error occured", e)),
 				BotUtils.debugError(":no_entry_sign: " + Markdown.bold("A database error occured."), ctx, e)));
 	}
 	

@@ -24,9 +24,9 @@ import reactor.util.function.Tuples;
 )
 class AboutCommand {
 	
-	private final NativePlugin plugin;
+	private final CorePlugin plugin;
 	
-	public AboutCommand(NativePlugin plugin) {
+	public AboutCommand(CorePlugin plugin) {
 		this.plugin = Objects.requireNonNull(plugin);
 	}
 

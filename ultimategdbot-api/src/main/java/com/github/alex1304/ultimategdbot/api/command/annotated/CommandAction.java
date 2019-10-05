@@ -11,5 +11,5 @@ import java.lang.annotation.Target;
 @Retention(RUNTIME)
 @Target(METHOD)
 public @interface CommandAction {
-	String[] value() default {};
+	String value() default "";
 }
