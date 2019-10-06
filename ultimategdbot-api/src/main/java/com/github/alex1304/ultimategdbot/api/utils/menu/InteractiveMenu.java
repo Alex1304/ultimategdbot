@@ -261,7 +261,10 @@ public class InteractiveMenu {
 										return Mono.empty();
 									}
 									var reactionCtx = new ReactionMenuInteraction(menuMessage, event);
-									return action.apply(reactionCtx).thenReturn(0);
+									return action.apply(reactionCtx)
+											.then(event.getMessage().flatMap(m -> m.removeReaction(event.getEmoji(), event.getUserId())))
+											.onErrorResume(e -> Mono.empty())
+											.thenReturn(0);
 								})
 								.takeUntil(__ -> closeAfterReaction)
 								.then())
