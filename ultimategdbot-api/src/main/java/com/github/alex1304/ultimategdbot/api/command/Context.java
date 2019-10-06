@@ -106,7 +106,8 @@ public class Context {
 									+ event.getMessage().getChannelId().asString()
 									+ ">. Make sure that I have permissions to talk and send embeds there.\nError response: `"
 									+ e.getErrorResponse() + "`"))
-							.onErrorResume(__ -> Mono.empty());
+							.onErrorResume(__ -> Mono.empty())
+							.then(Mono.empty());
 				});
 	}
 
