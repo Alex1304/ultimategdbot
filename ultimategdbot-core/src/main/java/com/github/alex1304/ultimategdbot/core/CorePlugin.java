@@ -50,6 +50,7 @@ public class CorePlugin implements Plugin {
 	public Mono<Void> setup(Bot bot, PropertyParser parser) {
 		return Mono.fromCallable(() -> String.join("\n", Files.readAllLines(Paths.get(".", "config", "about.txt"))))
 				.doOnNext(aboutText -> this.aboutText = aboutText)
+				.and(initEventListeners(bot))
 				.and(Mono.fromRunnable(() -> {
 					cmdProvider.addAnnotated(new HelpCommand());
 					cmdProvider.addAnnotated(new PingCommand());
@@ -59,7 +60,6 @@ public class CorePlugin implements Plugin {
 					cmdProvider.addAnnotated(new BotAdminsCommand());
 					cmdProvider.addAnnotated(new BlacklistCommand());
 					cmdProvider.addAnnotated(new CacheInfoCommand());
-					initEventListeners(bot);
 					configEntries.put("prefix", new GuildSettingsEntry<>(
 							NativeGuildSettings.class,
 							NativeGuildSettings::getPrefix,
