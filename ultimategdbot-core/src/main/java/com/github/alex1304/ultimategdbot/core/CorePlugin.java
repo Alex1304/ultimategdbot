@@ -50,7 +50,6 @@ public class CorePlugin implements Plugin {
 	public Mono<Void> setup(Bot bot, PropertyParser parser) {
 		return Mono.fromCallable(() -> String.join("\n", Files.readAllLines(Paths.get(".", "config", "about.txt"))))
 				.doOnNext(aboutText -> this.aboutText = aboutText)
-				.and(initEventListeners(bot))
 				.and(Mono.fromRunnable(() -> {
 					cmdProvider.addAnnotated(new HelpCommand());
 					cmdProvider.addAnnotated(new PingCommand());
@@ -77,6 +76,7 @@ public class CorePlugin implements Plugin {
 							DatabaseInputFunction.toRoleId(bot),
 							DatabaseOutputFunction.fromRoleId(bot)
 					));
+					initEventListeners(bot);
 				}));
 	}
 	
@@ -88,8 +88,8 @@ public class CorePlugin implements Plugin {
 				.then();
 	}
 	
-	private Mono<Void> initEventListeners(Bot bot) {
-		return bot.getDiscordClients().flatMap(client -> client.getEventDispatcher().on(ReadyEvent.class).next()
+	private void initEventListeners(Bot bot) {
+		bot.getDiscordClients().flatMap(client -> client.getEventDispatcher().on(ReadyEvent.class).next()
 					.doOnNext(readyEvent -> readyEvent.getGuilds().stream()
 							.map(Guild::getId)
 							.forEach(unavailableGuildIds::add))
@@ -107,7 +107,7 @@ public class CorePlugin implements Plugin {
 							.onErrorResume(e -> Mono.fromRunnable(() -> LOGGER.warn("onBotReady action failed for plugin " + plugin.getName(), e))))
 					.then())
 			.then(bot.log("Bot ready!"))
-			.doOnSuccess(__ -> {
+			.doOnTerminate(() -> {
 				// Guild join
 				bot.getDiscordClients().flatMap(client -> client.getEventDispatcher().on(GuildCreateEvent.class))
 						.filter(event -> shardsNotReady.get() == 0)
@@ -154,7 +154,7 @@ public class CorePlugin implements Plugin {
 						.retryWhen(Retry.any().doOnRetry(retryCtx -> LOGGER.error("Error while procesing ReadyEvent", retryCtx.exception())))
 						.subscribe();
 			})
-			.then();
+			.subscribe();
 	}
 
 	@Override

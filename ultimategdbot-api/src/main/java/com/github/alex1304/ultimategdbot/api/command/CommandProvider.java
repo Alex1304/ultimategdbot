@@ -13,6 +13,7 @@ import com.github.alex1304.ultimategdbot.api.utils.InputTokenizer;
 
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.entity.MessageChannel;
+import discord4j.core.object.util.Snowflake;
 
 /**
  * Provides a set of commands. Each command handler provides their own way to
@@ -57,30 +58,31 @@ public class CommandProvider {
 	 * @return
 	 */
 	public Optional<ExecutableCommand> provideFromEvent(Bot bot, String prefix, MessageCreateEvent event, MessageChannel channel) {
-		var botId = bot.getMainDiscordClient().getSelfId();
-		var prefixes = Set.of("<@" + botId + ">", "<@!" + botId + ">", prefix);
-		var content = event.getMessage().getContent().orElse("");
-		String prefixUsed = null;
-		for (var p : prefixes) {
-			if (content.toLowerCase().startsWith(p.toLowerCase())) {
-				content = content.substring(p.length());
-				prefixUsed = p;
-				break;
+		return bot.getMainDiscordClient().getSelfId().map(Snowflake::asLong).flatMap(botId -> {
+			var prefixes = Set.of("<@" + botId + ">", "<@!" + botId + ">", prefix);
+			var content = event.getMessage().getContent().orElse("");
+			String prefixUsed = null;
+			for (var p : prefixes) {
+				if (content.toLowerCase().startsWith(p.toLowerCase())) {
+					content = content.substring(p.length());
+					prefixUsed = p;
+					break;
+				}
 			}
-		}
-		if (prefixUsed == null) {
-			return Optional.empty();
-		}
-		var parsed = InputTokenizer.tokenize(content);
-		var flags = parsed.getT1();
-		var args = parsed.getT2();
-		if (args.isEmpty()) {
-			return Optional.empty();
-		}
-		final String fPrefixUsed = prefixUsed;
-		var command = commandMap.get(args.get(0));
-		return Optional.ofNullable(command)
-				.map(cmd -> new ExecutableCommand(cmd, new Context(cmd, event, args, flags, bot, fPrefixUsed, channel), errorHandler));
+			if (prefixUsed == null) {
+				return Optional.empty();
+			}
+			var parsed = InputTokenizer.tokenize(content);
+			var flags = parsed.getT1();
+			var args = parsed.getT2();
+			if (args.isEmpty()) {
+				return Optional.empty();
+			}
+			final var fPrefixUsed = prefixUsed;
+			var command = commandMap.get(args.get(0));
+			return Optional.ofNullable(command)
+					.map(cmd -> new ExecutableCommand(cmd, new Context(cmd, event, args, flags, bot, fPrefixUsed, channel), errorHandler));
+		});
 	}
 	
 	/**
