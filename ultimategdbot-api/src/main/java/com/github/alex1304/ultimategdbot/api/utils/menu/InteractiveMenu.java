@@ -18,6 +18,7 @@ import com.github.alex1304.ultimategdbot.api.utils.UniversalMessageSpec;
 
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.event.domain.message.ReactionAddEvent;
+import discord4j.core.event.domain.message.ReactionRemoveEvent;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.User;
 import discord4j.core.object.reaction.ReactionEmoji;
@@ -249,7 +250,10 @@ public class InteractiveMenu {
 								.retry(UnexpectedReplyException.class::isInstance)
 								.then(),
 						ctx.getBot().getDiscordClients()
-								.flatMap(client -> client.getEventDispatcher().on(ReactionAddEvent.class))
+								.flatMap(client -> Flux.merge(
+										client.getEventDispatcher().on(ReactionAddEvent.class),
+										client.getEventDispatcher().on(ReactionRemoveEvent.class)))
+								.map(ReactionToggleEvent::new)
 								.filter(event -> event.getMessageId().equals(menuMessage.getId())
 										&& event.getUserId().equals(ctx.getEvent().getMessage().getAuthor().map(User::getId).orElse(null)))
 								.flatMap(event -> {
@@ -261,10 +265,7 @@ public class InteractiveMenu {
 										return Mono.empty();
 									}
 									var reactionCtx = new ReactionMenuInteraction(menuMessage, event);
-									return action.apply(reactionCtx)
-											.then(event.getMessage().flatMap(m -> m.removeReaction(event.getEmoji(), event.getUserId())))
-											.onErrorResume(e -> Mono.empty())
-											.thenReturn(0);
+									return action.apply(reactionCtx).thenReturn(0);
 								})
 								.takeUntil(__ -> closeAfterReaction)
 								.then())
