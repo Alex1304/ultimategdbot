@@ -146,7 +146,7 @@ public class Context {
 	@Override
 	public String toString() {
 		return "Context{"
-				+ "command=" + command.getClass().getCanonicalName()
+				+ "command=" + command
 				+ ", message=" + event.getMessage()
 				+ ", args=" + args
 				+ ", prefixUsed=" + prefixUsed
