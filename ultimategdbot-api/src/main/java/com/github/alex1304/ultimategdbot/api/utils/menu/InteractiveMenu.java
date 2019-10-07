@@ -140,6 +140,7 @@ public class InteractiveMenu {
 		requireNonNull(currentPage);
 		requireNonNull(controls);
 		requireNonNull(asyncPaginator);
+		var oldPage = new AtomicInteger();
 		return create(asyncPaginator.apply(currentPage.get()).map(UniversalMessageSpec::toMessageCreateSpec))
 				.addReactionItem(controls.getPreviousEmoji(), interaction -> Mono.fromCallable(currentPage::decrementAndGet)
 						.flatMap(targetPage -> asyncPaginator.apply(targetPage)
@@ -164,12 +165,18 @@ public class InteractiveMenu {
 						.onErrorMap(IndexOutOfBoundsException.class, e -> new UnexpectedReplyException("Please specify a page number."))
 						.onErrorMap(NumberFormatException.class, e -> new UnexpectedReplyException("Invalid page number."))
 						.map(p -> p - 1)
+						.doOnNext(targetPage -> {
+							oldPage.set(currentPage.get());
+							currentPage.set(targetPage);
+						})
 						.flatMap(targetPage -> asyncPaginator.apply(targetPage)
 								.map(UniversalMessageSpec::toMessageEditSpec)
-								.flatMap(interaction.getMenuMessage()::edit)
-								.doOnNext(__ -> currentPage.set(targetPage)))
-						.onErrorMap(PageNumberOutOfRangeException.class, e -> new UnexpectedReplyException("Page number must be between "
-								+ (e.getMinPage() + 1) + " and " + (e.getMaxPage() + 1) + "."))
+								.flatMap(interaction.getMenuMessage()::edit))
+						.onErrorMap(PageNumberOutOfRangeException.class, e -> {
+							currentPage.set(oldPage.get());
+							return new UnexpectedReplyException("Page number must be between "
+									+ (e.getMinPage() + 1) + " and " + (e.getMaxPage() + 1) + ".");
+						})
 						.then(interaction.getEvent().getMessage().delete().onErrorResume(e -> Mono.empty())))
 				.addReactionItem(controls.getCloseEmoji(), interaction -> Mono.fromRunnable(interaction::closeMenu))
 				.closeAfterMessage(false)
