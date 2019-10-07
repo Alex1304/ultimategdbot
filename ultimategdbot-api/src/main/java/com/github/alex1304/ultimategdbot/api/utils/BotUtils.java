@@ -9,6 +9,8 @@ import java.util.stream.Collectors;
 
 import com.github.alex1304.ultimategdbot.api.command.Context;
 import com.github.alex1304.ultimategdbot.api.utils.menu.InteractiveMenu;
+import com.github.alex1304.ultimategdbot.api.utils.menu.PageNumberOutOfRangeException;
+import com.github.alex1304.ultimategdbot.api.utils.menu.PaginationControls;
 
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.MessageChannel;
@@ -123,14 +125,28 @@ public class BotUtils {
 						.flatMap(c::createMessage));
 	}
 	
-	public static Mono<Void> sendPaginatedMessage(Context ctx, String text, int pageLength) {
+	// "◀", "▶"
+	public static Mono<Void> sendPaginatedMessage(Context ctx, String text, PaginationControls controls, int pageLength) {
+		Objects.requireNonNull(ctx);
+		Objects.requireNonNull(text);
+		Objects.requireNonNull(controls);
 		if (text.length() <= pageLength) {
 			return ctx.reply(text).then();
 		}
 		var parts = splitMessage(text, pageLength);
-		var currentPageNumber = new AtomicInteger();
-		return InteractiveMenu.createPaginated(currentPageNumber, page ->
-						new UniversalMessageSpec(parts.get((page + parts.size()) % parts.size())))
+		return InteractiveMenu.createPaginated(new AtomicInteger(), controls, page -> {
+					PageNumberOutOfRangeException.check(page, 0, parts.size() - 1);
+					return new UniversalMessageSpec(parts.get(page), embed -> embed.addField("Page " + (page + 1) + "/" + parts.size(),
+							"To go to a specific page, type `page <number>`, e.g `page 3`", true));
+				})
 				.open(ctx);
+	}
+	
+	public static Mono<Void> sendPaginatedMessage(Context ctx, String text, PaginationControls controls) {
+		return sendPaginatedMessage(ctx, text, controls, 800);
+	}
+	
+	public static Mono<Void> sendPaginatedMessage(Context ctx, String text) {
+		return sendPaginatedMessage(ctx, text, ctx.getBot().getDefaultPaginationControls(), 800);
 	}
 }

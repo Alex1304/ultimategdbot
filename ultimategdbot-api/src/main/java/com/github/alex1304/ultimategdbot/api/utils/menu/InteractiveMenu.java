@@ -4,7 +4,7 @@ import static java.util.Objects.requireNonNull;
 
 import java.time.Duration;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
@@ -28,6 +28,7 @@ import discord4j.core.spec.MessageCreateSpec;
 import discord4j.rest.http.client.ClientException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.MonoProcessor;
 
 /**
  * Utility to create interactive menus in Discord. An interactive menu first
@@ -66,7 +67,7 @@ public class InteractiveMenu {
 	 */
 	public static InteractiveMenu create(Consumer<MessageCreateSpec> spec) {
 		requireNonNull(spec);
-		return createWhen(Mono.just(spec));
+		return create(Mono.just(spec));
 	}
 	
 	/**
@@ -88,7 +89,7 @@ public class InteractiveMenu {
 	 * @param specMono the Mono emitting the spec to build the menu message
 	 * @return a new InteractiveMenu
 	 */
-	public static InteractiveMenu createWhen(Mono<Consumer<MessageCreateSpec>> specMono) {
+	public static InteractiveMenu create(Mono<Consumer<MessageCreateSpec>> specMono) {
 		requireNonNull(specMono);
 		return new InteractiveMenu(specMono, Map.of(), Map.of(), false, false, true, true);
 	}
@@ -110,9 +111,9 @@ public class InteractiveMenu {
 	 * @return a new InteractiveMenu prefilled with menu items useful for
 	 *         pagination.
 	 */
-	public static InteractiveMenu createPaginated(AtomicInteger currentPage, IntFunction<UniversalMessageSpec> paginator) {
+	public static InteractiveMenu createPaginated(AtomicInteger currentPage, PaginationControls controls, IntFunction<UniversalMessageSpec> paginator) {
 		requireNonNull(paginator);
-		return createPaginatedWhen(currentPage, p -> Mono.just(paginator.apply(p)));
+		return createAsyncPaginated(currentPage, controls, p -> Mono.just(paginator.apply(p)));
 	}
 
 	/**
@@ -135,11 +136,12 @@ public class InteractiveMenu {
 	 * @return a new InteractiveMenu prefilled with menu items useful for
 	 *         pagination.
 	 */
-	public static InteractiveMenu createPaginatedWhen(AtomicInteger currentPage, IntFunction<Mono<UniversalMessageSpec>> asyncPaginator) {
+	public static InteractiveMenu createAsyncPaginated(AtomicInteger currentPage, PaginationControls controls, IntFunction<Mono<UniversalMessageSpec>> asyncPaginator) {
 		requireNonNull(currentPage);
+		requireNonNull(controls);
 		requireNonNull(asyncPaginator);
-		return createWhen(asyncPaginator.apply(0).map(UniversalMessageSpec::toMessageCreateSpec))
-				.addReactionItem("◀", interaction -> Mono.fromCallable(currentPage::decrementAndGet)
+		return create(asyncPaginator.apply(currentPage.get()).map(UniversalMessageSpec::toMessageCreateSpec))
+				.addReactionItem(controls.getPreviousEmoji(), interaction -> Mono.fromCallable(currentPage::decrementAndGet)
 						.flatMap(targetPage -> asyncPaginator.apply(targetPage)
 								.map(UniversalMessageSpec::toMessageEditSpec))
 						.onErrorResume(PageNumberOutOfRangeException.class, e -> Mono
@@ -149,7 +151,7 @@ public class InteractiveMenu {
 										.map(UniversalMessageSpec::toMessageEditSpec)))
 						.flatMap(interaction.getMenuMessage()::edit)
 						.then())
-				.addReactionItem("▶", interaction -> Mono.fromCallable(currentPage::incrementAndGet)
+				.addReactionItem(controls.getNextEmoji(), interaction -> Mono.fromCallable(currentPage::incrementAndGet)
 						.flatMap(targetPage -> asyncPaginator.apply(targetPage).map(UniversalMessageSpec::toMessageEditSpec))
 						.onErrorResume(PageNumberOutOfRangeException.class, e -> Mono
 								.just(currentPage.get() - e.getMaxPage() + e.getMinPage() - 1)
@@ -169,6 +171,7 @@ public class InteractiveMenu {
 						.onErrorMap(PageNumberOutOfRangeException.class, e -> new UnexpectedReplyException("Page number must be between "
 								+ (e.getMinPage() + 1) + " and " + (e.getMaxPage() + 1) + "."))
 						.then(interaction.getEvent().getMessage().delete().onErrorResume(e -> Mono.empty())))
+				.addReactionItem(controls.getCloseEmoji(), interaction -> Mono.fromRunnable(interaction::closeMenu))
 				.closeAfterMessage(false)
 				.closeAfterReaction(false);
 	}
@@ -176,7 +179,7 @@ public class InteractiveMenu {
 	public InteractiveMenu addMessageItem(String message, Function<MessageMenuInteraction, Mono<Void>> action) {
 		requireNonNull(message);
 		requireNonNull(action);
-		var newMessageItems = new HashMap<>(messageItems);
+		var newMessageItems = new LinkedHashMap<>(messageItems);
 		newMessageItems.put(message, action);
 		return new InteractiveMenu(specMono, Collections.unmodifiableMap(newMessageItems), reactionItems, deleteMenuOnClose,
 				deleteMenuOnTimeout, closeAfterMessage, closeAfterReaction);
@@ -185,7 +188,7 @@ public class InteractiveMenu {
 	public InteractiveMenu addReactionItem(String emojiName, Function<ReactionMenuInteraction, Mono<Void>> action) {
 		requireNonNull(emojiName);
 		requireNonNull(action);
-		var newReactionItems = new HashMap<>(reactionItems);
+		var newReactionItems = new LinkedHashMap<>(reactionItems);
 		newReactionItems.put(emojiName, action);
 		return new InteractiveMenu(specMono, messageItems, Collections.unmodifiableMap(newReactionItems), deleteMenuOnClose,
 				deleteMenuOnTimeout, closeAfterMessage, closeAfterReaction);
@@ -215,7 +218,7 @@ public class InteractiveMenu {
 	 * Opens the interactive menu, that is, sends the menu message over Discord and
 	 * starts listening for user's interaction. The returned Mono completes once the
 	 * menu closes or timeouts. If the menu was created using the factory method
-	 * {@link #createWhen(Mono)} and the supplied Mono completes empty or with an
+	 * {@link #create(Mono)} and the supplied Mono completes empty or with an
 	 * error, the respective signals will be forwarded through the returning Mono.
 	 * 
 	 * @param ctx the context of the command invoking this menu
@@ -224,9 +227,11 @@ public class InteractiveMenu {
 	 */
 	public Mono<Void> open(Context ctx) {
 		requireNonNull(ctx);
+		var closeNotifier = MonoProcessor.<Void>create();
 		return specMono.flatMap(ctx::reply)
 				.flatMap(menuMessage -> addReactionsToMenu(ctx, menuMessage))
 				.flatMap(menuMessage -> Mono.first(
+						closeNotifier,
 						ctx.getBot().getDiscordClients()
 								.flatMap(client -> client.getEventDispatcher().on(MessageCreateEvent.class))
 								.filter(event -> event.getMessage().getAuthor().equals(ctx.getEvent().getMessage().getAuthor())
@@ -242,7 +247,7 @@ public class InteractiveMenu {
 									if (action == null) {
 										return Mono.empty();
 									}
-									var replyCtx = new MessageMenuInteraction(menuMessage, event, new ArgumentList(args), flags);
+									var replyCtx = new MessageMenuInteraction(menuMessage, closeNotifier, event, new ArgumentList(args), flags);
 									return action.apply(replyCtx).thenReturn(0);
 								})
 								.takeUntil(__ -> closeAfterMessage)
@@ -264,15 +269,21 @@ public class InteractiveMenu {
 									if (action == null) {
 										return Mono.empty();
 									}
-									var reactionCtx = new ReactionMenuInteraction(menuMessage, event);
+									var reactionCtx = new ReactionMenuInteraction(menuMessage, closeNotifier, event);
 									return action.apply(reactionCtx).thenReturn(0);
 								})
 								.takeUntil(__ -> closeAfterReaction)
 								.then())
-						.then(deleteMenuOnClose ? menuMessage.delete().onErrorResume(e -> Mono.empty()) : Mono.empty())
-						.timeout(Duration.ofSeconds(ctx.getBot().getReplyMenuTimeout()), deleteMenuOnTimeout 
-								? menuMessage.delete().onErrorResume(e -> Mono.empty())
-								: menuMessage.removeAllReactions().onErrorResume(e -> Mono.empty())));
+						.then(handleTermination(menuMessage, deleteMenuOnClose))
+						.timeout(Duration.ofSeconds(ctx.getBot().getInteractiveMenuTimeout()),
+								handleTermination(menuMessage, deleteMenuOnTimeout)));
+	}
+	
+	private static Mono<Void> handleTermination(Message menuMessage, boolean shouldDelete) {
+		return (shouldDelete 
+						? menuMessage.delete()
+						: menuMessage.removeAllReactions())
+				.onErrorResume(e -> Mono.empty());
 	}
 	
 	private Mono<Message> addReactionsToMenu(Context ctx, Message menuMessage) {

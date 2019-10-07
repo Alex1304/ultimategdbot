@@ -64,4 +64,9 @@ public class ArgumentList {
 		}
 		return Collections.unmodifiableList(new ArrayList<>(mergedTokens));
 	}
+	
+	@Override
+	public String toString() {
+		return "ArgumentList{tokens=" + tokens.toString() + "}";
+	}
 }

@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.alex1304.ultimategdbot.api.utils.PropertyParser;
+import com.github.alex1304.ultimategdbot.api.utils.menu.PaginationControls;
 
 import discord4j.core.DiscordClient;
 import discord4j.core.DiscordClientBuilder;
@@ -53,7 +54,7 @@ public class Bot {
 	private final Flux<DiscordClient> discordClients;
 	private final DiscordClient mainDiscordClient;
 	private final Database database;
-	private final int replyMenuTimeout;
+	private final int interactiveMenuTimeout;
 	private final Snowflake debugLogChannelId;
 	private final Snowflake attachmentsChannelId;
 	private final List<Snowflake> emojiGuildIds;
@@ -62,17 +63,18 @@ public class Bot {
 	private final Set<Plugin> plugins = new HashSet<>();
 	private final Mono<ApplicationInfo> appInfo;
 	private final boolean blockhoundMode;
+	private final PaginationControls controls;
 	private Flux<GuildEmoji> emojis;
 
 	private Bot(String token, String defaultPrefix, Flux<DiscordClient> discordClients, Database database,
-			int replyMenuTimeout, Snowflake debugLogChannelId, Snowflake attachmentsChannelId,
-			List<Snowflake> emojiGuildIds, boolean blockhoundMode, Properties pluginsProps) {
+			int interactiveMenuTimeout, Snowflake debugLogChannelId, Snowflake attachmentsChannelId,
+			List<Snowflake> emojiGuildIds, boolean blockhoundMode, Properties pluginsProps, PaginationControls controls) {
 		this.token = token;
 		this.defaultPrefix = defaultPrefix;
 		this.discordClients = discordClients;
 		this.mainDiscordClient = discordClients.blockFirst();
 		this.database = database;
-		this.replyMenuTimeout = replyMenuTimeout;
+		this.interactiveMenuTimeout = interactiveMenuTimeout;
 		this.debugLogChannelId = debugLogChannelId;
 		this.attachmentsChannelId = attachmentsChannelId;
 		this.emojiGuildIds = emojiGuildIds;
@@ -81,6 +83,7 @@ public class Bot {
 		this.appInfo = mainDiscordClient.getApplicationInfo()
 				.cache(Duration.ofMinutes(30));
 		this.blockhoundMode = blockhoundMode;
+		this.controls = controls;
 		installEmojis();
 	}
 
@@ -130,13 +133,17 @@ public class Bot {
 	}
 
 	/**
-	 * Gets the maximum time in seconds that the bot should wait for a reply when a
-	 * reply menu is open.
+	 * Gets the maximum time in seconds that the bot should wait for a user
+	 * interaction when an interactive menu is open.
 	 * 
 	 * @return the value as int (in seconds)
 	 */
-	public int getReplyMenuTimeout() {
-		return replyMenuTimeout;
+	public int getInteractiveMenuTimeout() {
+		return interactiveMenuTimeout;
+	}
+	
+	public PaginationControls getDefaultPaginationControls() {
+		return controls;
 	}
 
 	/**
@@ -222,7 +229,11 @@ public class Bot {
 		var token = propParser.parseAsString("token");
 		var defaultPrefix = propParser.parseAsString("default_prefix");
 		var database = new Database();
-		var replyMenuTimeout = propParser.parseAsInt("reply_menu_timeout");
+		var interactiveMenuTimeout = propParser.parseAsIntOrDefault("interactive_menu.timeout", 600);
+		var controls = new PaginationControls(
+				propParser.parseAsStringOrDefault("interactive_menu.previous_emoji", "◀"),
+				propParser.parseAsStringOrDefault("interactive_menu.next_emoji", "▶"),
+				propParser.parseAsStringOrDefault("interactive_menu.close_emoji", "🚫"));
 		var debugLogChannelId = propParser.parse("debug_log_channel_id", Snowflake::of);
 		var attachmentsChannelId = propParser.parse("attachments_channel_id", Snowflake::of);
 		var emojiGuildIds = propParser.parseAsList("emoji_guild_ids", ",", Snowflake::of);
@@ -285,8 +296,8 @@ public class Bot {
 				.map(DiscordClientBuilder::build)
 				.cache();
 
-		return new Bot(token, defaultPrefix, discordClients, database, replyMenuTimeout, debugLogChannelId,
-				attachmentsChannelId, emojiGuildIds, blockhoundMode, pluginsProps);
+		return new Bot(token, defaultPrefix, discordClients, database, interactiveMenuTimeout, debugLogChannelId,
+				attachmentsChannelId, emojiGuildIds, blockhoundMode, pluginsProps, controls);
 	}
 
 	public Mono<Void> start() {

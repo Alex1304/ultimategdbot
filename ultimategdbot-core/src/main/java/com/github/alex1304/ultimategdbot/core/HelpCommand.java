@@ -65,7 +65,7 @@ class HelpCommand {
 									});
 							sb.append('\n');
 						})).then())
-				.then(Mono.defer(() -> sendPaginatedMessage(ctx, sb.toString(), Message.MAX_CONTENT_LENGTH)));
+				.then(Mono.defer(() -> sendPaginatedMessage(ctx, sb.toString(), ctx.getBot().getDefaultPaginationControls(), Message.MAX_CONTENT_LENGTH)));
 	}
 	
 	private Mono<Void> displayCommandDocumentation(Context ctx, String commandName, String subcommand) {
@@ -87,7 +87,7 @@ class HelpCommand {
 							+ "Available subcommands:\n" + subcommands);
 				}))
 				.map(cmd -> formatDoc(cmd, ctx.getPrefixUsed(), commandName, selectedSubcommand))
-				.flatMap(doc -> sendPaginatedMessage(ctx, doc, Message.MAX_CONTENT_LENGTH));
+				.flatMap(doc -> sendPaginatedMessage(ctx, doc));
 	}
 	
 	private static String joinAliases(Command cmd) {
