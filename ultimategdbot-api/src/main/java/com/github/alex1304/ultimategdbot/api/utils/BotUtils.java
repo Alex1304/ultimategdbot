@@ -125,7 +125,6 @@ public class BotUtils {
 						.flatMap(c::createMessage));
 	}
 	
-	// "◀", "▶"
 	public static Mono<Void> sendPaginatedMessage(Context ctx, String text, PaginationControls controls, int pageLength) {
 		Objects.requireNonNull(ctx);
 		Objects.requireNonNull(text);

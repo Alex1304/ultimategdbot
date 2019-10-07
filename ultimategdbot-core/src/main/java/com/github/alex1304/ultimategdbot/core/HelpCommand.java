@@ -44,7 +44,8 @@ class HelpCommand {
 	}
 
 	private Mono<Void> displayCommandList(Context ctx) {
-		var sb = new StringBuilder();
+		var sb = new StringBuilder("Here is the list of commands you can use in this channel. "
+				+ "Use " + code("u!help <command>") + " to view the detailed documentation of a specific command.\n\n");
 		return ctx.getEvent().getMessage().getChannel()
 				.flatMap(channel -> Flux.fromIterable(ctx.getBot().getPlugins())
 						.sort(comparing(Plugin::getName))

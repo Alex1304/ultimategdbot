@@ -127,8 +127,14 @@ public class Database {
 				txConsumer.accept(s);
 				tx.commit();
 			} catch (RuntimeException e) {
-				if (tx != null && tx.isActive())
-					tx.rollback();
+				if (tx != null && tx.isActive()) {
+					try {
+						tx.rollback();
+					} catch (RuntimeException e0) {
+						e.addSuppressed(e0);
+						throw e;
+					}
+				}
 				throw e;
 			}
 			return null;
@@ -157,8 +163,15 @@ public class Database {
 				returnVal = txFunction.apply(s);
 				tx.commit();
 			} catch (RuntimeException e) {
-				if (tx != null && tx.isActive())
-					tx.rollback();
+				e.printStackTrace();
+				if (tx != null && tx.isActive()) {
+					try {
+						tx.rollback();
+					} catch (RuntimeException e0) {
+						e.addSuppressed(e0);
+						throw e;
+					}
+				}
 				throw e;
 			}
 			return returnVal;
