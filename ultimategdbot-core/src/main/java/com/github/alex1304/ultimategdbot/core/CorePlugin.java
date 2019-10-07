@@ -2,52 +2,33 @@ package com.github.alex1304.ultimategdbot.core;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.time.Duration;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.github.alex1304.ultimategdbot.api.Bot;
 import com.github.alex1304.ultimategdbot.api.Plugin;
 import com.github.alex1304.ultimategdbot.api.command.CommandProvider;
 import com.github.alex1304.ultimategdbot.api.command.annotated.AnnotatedCommandProvider;
-import com.github.alex1304.ultimategdbot.api.database.BlacklistedIds;
 import com.github.alex1304.ultimategdbot.api.database.GuildSettingsEntry;
 import com.github.alex1304.ultimategdbot.api.database.NativeGuildSettings;
 import com.github.alex1304.ultimategdbot.api.utils.DatabaseInputFunction;
 import com.github.alex1304.ultimategdbot.api.utils.DatabaseOutputFunction;
-import com.github.alex1304.ultimategdbot.api.utils.Markdown;
 import com.github.alex1304.ultimategdbot.api.utils.PropertyParser;
 
-import discord4j.core.event.domain.guild.GuildCreateEvent;
-import discord4j.core.event.domain.guild.GuildDeleteEvent;
-import discord4j.core.event.domain.lifecycle.ReadyEvent;
-import discord4j.core.event.domain.lifecycle.ReadyEvent.Guild;
-import discord4j.core.event.domain.lifecycle.ResumeEvent;
-import discord4j.core.object.util.Snowflake;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.retry.Retry;
 
 public class CorePlugin implements Plugin {
 	
-	private static final Logger LOGGER = LoggerFactory.getLogger(CorePlugin.class);
-	
 	private volatile String aboutText;
 	private final AnnotatedCommandProvider cmdProvider = new AnnotatedCommandProvider();
-	private final Set<Snowflake> unavailableGuildIds = Collections.synchronizedSet(new HashSet<>());
-	private final AtomicInteger shardsNotReady = new AtomicInteger();
 	private final Map<String, GuildSettingsEntry<?, ?>> configEntries = new HashMap<String, GuildSettingsEntry<?, ?>>();
 
 	@Override
 	public Mono<Void> setup(Bot bot, PropertyParser parser) {
+		if (bot.isCorePluginDisabled()) {
+			return Mono.empty();
+		}
 		return Mono.fromCallable(() -> String.join("\n", Files.readAllLines(Paths.get(".", "config", "about.txt"))))
 				.doOnNext(aboutText -> this.aboutText = aboutText)
 				.and(Mono.fromRunnable(() -> {
@@ -76,85 +57,12 @@ public class CorePlugin implements Plugin {
 							DatabaseInputFunction.toRoleId(bot),
 							DatabaseOutputFunction.fromRoleId(bot)
 					));
-					initEventListeners(bot);
 				}));
 	}
 	
 	@Override
 	public Mono<Void> onBotReady(Bot bot) {
-		return bot.getDatabase().query(BlacklistedIds.class, "from BlacklistedIds")
-				.map(BlacklistedIds::getId)
-				.doOnNext(bot.getCommandKernel()::blacklist)
-				.then();
-	}
-	
-	private void initEventListeners(Bot bot) {
-		bot.getDiscordClients().flatMap(client -> client.getEventDispatcher().on(ReadyEvent.class).next()
-					.doOnNext(readyEvent -> readyEvent.getGuilds().stream()
-							.map(Guild::getId)
-							.forEach(unavailableGuildIds::add))
-					.map(ReadyEvent::getGuilds)
-					.flatMap(guilds -> client.getEventDispatcher().on(GuildCreateEvent.class)
-							.doOnNext(guildCreateEvent -> unavailableGuildIds.remove(guildCreateEvent.getGuild().getId()))
-							.take(guilds.size())
-							.timeout(Duration.ofMinutes(2), Mono.empty())
-							.then(Mono.defer(() -> bot.log("Shard " + client.getConfig().getShardIndex() + " connected! Serving " + guilds.stream()
-									.map(Guild::getId)
-									.filter(id -> !unavailableGuildIds.contains(id))
-									.count() + " guilds.")))))
-			.then(Flux.fromIterable(bot.getPlugins())
-					.flatMap(plugin -> plugin.onBotReady(bot)
-							.onErrorResume(e -> Mono.fromRunnable(() -> LOGGER.warn("onBotReady action failed for plugin " + plugin.getName(), e))))
-					.then())
-			.then(bot.log("Bot ready!"))
-			.doOnTerminate(() -> {
-				// Guild join
-				bot.getDiscordClients().flatMap(client -> client.getEventDispatcher().on(GuildCreateEvent.class))
-						.filter(event -> shardsNotReady.get() == 0)
-						.filter(event -> !unavailableGuildIds.remove(event.getGuild().getId()))
-						.map(GuildCreateEvent::getGuild)
-						.flatMap(guild -> bot.log(":inbox_tray: New guild joined: " + Markdown.escape(guild.getName())
-								+ " (" + guild.getId().asString() + ")"))
-						.retryWhen(Retry.any().doOnRetry(retryCtx -> LOGGER.error("Error while procesing GuildCreateEvent", retryCtx.exception())))
-						.subscribe();
-				// Guild leave
-				bot.getDiscordClients().flatMap(client -> client.getEventDispatcher().on(GuildDeleteEvent.class))
-						.filter(event -> shardsNotReady.get() == 0)
-						.filter(event -> {
-							if (event.isUnavailable()) {
-								unavailableGuildIds.add(event.getGuildId());
-								return false;
-							}
-							unavailableGuildIds.remove(event.getGuildId());
-							return true;
-						})
-						.map(event -> event.getGuild().map(guild -> Markdown.escape(guild.getName())
-								+ " (" + guild.getId().asString() + ")").orElse(event.getGuildId().asString() + " (no data)"))
-						.flatMap(str -> bot.log(":outbox_tray: Guild left: " + str))
-						.retryWhen(Retry.any().doOnRetry(retryCtx -> LOGGER.error("Error while procesing GuildDeleteEvent", retryCtx.exception())))
-						.subscribe();
-				// Resume on partial reconnections
-				bot.getDiscordClients()
-						.flatMap(client -> client.getEventDispatcher().on(ResumeEvent.class)
-								.flatMap(resumeEvent -> bot.log("Shard " + client.getConfig().getShardIndex()
-										+ ": session resumed after websocket disconnection.")))
-						.retryWhen(Retry.any().doOnRetry(retryCtx -> LOGGER.error("Error while procesing ResumeEvent", retryCtx.exception())))
-						.subscribe();
-				// Ready on full reconnections
-				bot.getDiscordClients()
-						.flatMap(client -> client.getEventDispatcher().on(ReadyEvent.class)
-								.doOnNext(readyEvent -> shardsNotReady.incrementAndGet())
-								.map(readyEvent -> readyEvent.getGuilds().size())
-								.flatMap(guildCount -> client.getEventDispatcher().on(GuildCreateEvent.class)
-										.take(guildCount)
-										.timeout(Duration.ofMinutes(2), Mono.error(new TimeoutException("Unable to load guilds of shard "
-												+ client.getConfig().getShardIndex() + " in time")))
-										.doAfterTerminate(() -> shardsNotReady.decrementAndGet())
-										.then(bot.log("Shard " + client.getConfig().getShardIndex() + " reconnected (" + guildCount + " guilds)"))))
-						.retryWhen(Retry.any().doOnRetry(retryCtx -> LOGGER.error("Error while procesing ReadyEvent", retryCtx.exception())))
-						.subscribe();
-			})
-			.subscribe();
+		return Mono.empty();
 	}
 
 	@Override
@@ -164,7 +72,7 @@ public class CorePlugin implements Plugin {
 
 	@Override
 	public Set<String> getDatabaseMappingResources() {
-		return Set.of("/NativeGuildSettings.hbm.xml", "/BotAdmins.hbm.xml", "/BlacklistedIds.hbm.xml");
+		return Set.of();
 	}
 
 	@Override

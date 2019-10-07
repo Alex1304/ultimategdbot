@@ -7,16 +7,24 @@ import java.util.List;
 import java.util.Properties;
 import java.util.ServiceLoader;
 import java.util.Set;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.alex1304.ultimategdbot.api.database.BlacklistedIds;
+import com.github.alex1304.ultimategdbot.api.utils.Markdown;
 import com.github.alex1304.ultimategdbot.api.utils.PropertyParser;
 import com.github.alex1304.ultimategdbot.api.utils.menu.PaginationControls;
 
 import discord4j.core.DiscordClient;
 import discord4j.core.DiscordClientBuilder;
+import discord4j.core.event.domain.guild.GuildCreateEvent;
+import discord4j.core.event.domain.guild.GuildDeleteEvent;
+import discord4j.core.event.domain.lifecycle.ReadyEvent;
+import discord4j.core.event.domain.lifecycle.ResumeEvent;
 import discord4j.core.object.data.stored.MessageBean;
 import discord4j.core.object.data.stored.VoiceStateBean;
 import discord4j.core.object.entity.ApplicationInfo;
@@ -42,6 +50,7 @@ import reactor.blockhound.BlockHound;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
+import reactor.retry.Retry;
 
 /**
  * Represents the bot itself.
@@ -61,14 +70,18 @@ public class Bot {
 	private final Properties pluginsProps;
 	private final CommandKernel cmdKernel;
 	private final Set<Plugin> plugins = new HashSet<>();
+	private final Set<Snowflake> unavailableGuildIds = Collections.synchronizedSet(new HashSet<>());
+	private final AtomicInteger shardsNotReady = new AtomicInteger();
 	private final Mono<ApplicationInfo> appInfo;
 	private final boolean blockhoundMode;
 	private final PaginationControls controls;
+	private final boolean corePluginDisabled;
 	private Flux<GuildEmoji> emojis;
 
 	private Bot(String token, String defaultPrefix, Flux<DiscordClient> discordClients, Database database,
 			int interactiveMenuTimeout, Snowflake debugLogChannelId, Snowflake attachmentsChannelId,
-			List<Snowflake> emojiGuildIds, boolean blockhoundMode, Properties pluginsProps, PaginationControls controls) {
+			List<Snowflake> emojiGuildIds, boolean blockhoundMode, Properties pluginsProps, PaginationControls controls,
+			boolean corePluginDisabled) {
 		this.token = token;
 		this.defaultPrefix = defaultPrefix;
 		this.discordClients = discordClients;
@@ -84,6 +97,7 @@ public class Bot {
 				.cache(Duration.ofMinutes(30));
 		this.blockhoundMode = blockhoundMode;
 		this.controls = controls;
+		this.corePluginDisabled = corePluginDisabled;
 		installEmojis();
 	}
 
@@ -142,6 +156,11 @@ public class Bot {
 		return interactiveMenuTimeout;
 	}
 	
+	/**
+	 * Gets the default emojis used for pagination controls configured for the bot.
+	 * 
+	 * @return a {@link PaginationControls} instance
+	 */
 	public PaginationControls getDefaultPaginationControls() {
 		return controls;
 	}
@@ -224,6 +243,42 @@ public class Bot {
 				.defaultIfEmpty(defaultVal).onErrorReturn(defaultVal);
 	}
 
+	/**
+	 * Gets the command kernel of this bot.
+	 * 
+	 * @return the command kernel
+	 */
+	public CommandKernel getCommandKernel() {
+		return cmdKernel;
+	}
+
+	/**
+	 * Gets a Set containing all successfully loaded plugins.
+	 * 
+	 * @return a Set of Plugin
+	 */
+	public Set<Plugin> getPlugins() {
+		return Collections.unmodifiableSet(plugins);
+	}
+
+	/**
+	 * Get the application info of the bot
+	 * 
+	 * @return a Mono emitting the application info
+	 */
+	public Mono<ApplicationInfo> getApplicationInfo() {
+		return appInfo;
+	}
+	
+	/**
+	 * Gets whether the core plugin is disabled.
+	 * 
+	 * @return a boolean
+	 */
+	public boolean isCorePluginDisabled() {
+		return corePluginDisabled;
+	}
+
 	public static Bot buildFromProperties(Properties props, Properties pluginsProps) {
 		var propParser = new PropertyParser(props);
 		var token = propParser.parseAsString("token");
@@ -271,6 +326,7 @@ public class Bot {
 		var disableVoiceStateCache = propParser.parseOrDefault("disable_voice_state_cache", Boolean::parseBoolean, false);
 		var blockhoundMode = propParser.parseOrDefault("blockhound_mode", Boolean::parseBoolean, false);
 		var useImmediateScheduler = propParser.parseOrDefault("use_immediate_scheduler", Boolean::parseBoolean, false);
+		var corePluginDisabled = propParser.parseOrDefault("disable_core_plugin", Boolean::parseBoolean, false);
 		
 		if (useImmediateScheduler) {
 			LOGGER.info("Using immediate scheduler for Discord events. While it may improve performances, {} {}",
@@ -297,7 +353,7 @@ public class Bot {
 				.cache();
 
 		return new Bot(token, defaultPrefix, discordClients, database, interactiveMenuTimeout, debugLogChannelId,
-				attachmentsChannelId, emojiGuildIds, blockhoundMode, pluginsProps, controls);
+				attachmentsChannelId, emojiGuildIds, blockhoundMode, pluginsProps, controls, corePluginDisabled);
 	}
 
 	public Mono<Void> start() {
@@ -307,6 +363,8 @@ public class Bot {
 		}
 		var loader = ServiceLoader.load(Plugin.class);
 		var parser = new PropertyParser(pluginsProps);
+		initEventListeners();
+		database.addAllMappingResources(Set.of("/NativeGuildSettings.hbm.xml", "/BotAdmins.hbm.xml", "/BlacklistedIds.hbm.xml"));
 		return Flux.fromIterable(loader)
 				.flatMap(plugin -> plugin.setup(this, parser).thenReturn(plugin)
 						.doOnError(e -> LOGGER.error("Failed to load plugin " + plugin.getName(), e)))
@@ -316,34 +374,78 @@ public class Bot {
 				.doOnNext(plugin -> cmdKernel.addProvider(plugin.getCommandProvider()))
 				.doOnNext(plugin -> LOGGER.debug("Plugin {} is providing commands: {}", plugin.getName(), plugin.getCommandProvider()))
 				.then(Mono.fromRunnable(database::configure))
+				.then(database.query(BlacklistedIds.class, "from BlacklistedIds")
+						.map(BlacklistedIds::getId)
+						.doOnNext(cmdKernel::blacklist)
+						.then())
 				.then(Mono.fromRunnable(cmdKernel::start)
 						.and(discordClients.flatMap(DiscordClient::login)));
 	}
-
-	/**
-	 * Gets the command kernel of this bot.
-	 * 
-	 * @return the command kernel
-	 */
-	public CommandKernel getCommandKernel() {
-		return cmdKernel;
-	}
-
-	/**
-	 * Gets a Set containing all successfully loaded plugins.
-	 * 
-	 * @return a Set of Plugin
-	 */
-	public Set<Plugin> getPlugins() {
-		return Collections.unmodifiableSet(plugins);
-	}
-
-	/**
-	 * Get the application info of the bot
-	 * 
-	 * @return a Mono emitting the application info
-	 */
-	public Mono<ApplicationInfo> getApplicationInfo() {
-		return appInfo;
+	
+	private void initEventListeners() {
+		discordClients.flatMap(client -> client.getEventDispatcher().on(ReadyEvent.class).next()
+					.doOnNext(readyEvent -> readyEvent.getGuilds().stream()
+							.map(ReadyEvent.Guild::getId)
+							.forEach(unavailableGuildIds::add))
+					.map(ReadyEvent::getGuilds)
+					.flatMap(guilds -> client.getEventDispatcher().on(GuildCreateEvent.class)
+							.doOnNext(guildCreateEvent -> unavailableGuildIds.remove(guildCreateEvent.getGuild().getId()))
+							.take(guilds.size())
+							.timeout(Duration.ofMinutes(2), Mono.empty())
+							.then(Mono.defer(() -> log("Shard " + client.getConfig().getShardIndex() + " connected! Serving " + guilds.stream()
+									.map(ReadyEvent.Guild::getId)
+									.filter(id -> !unavailableGuildIds.contains(id))
+									.count() + " guilds.")))))
+			.then(Flux.fromIterable(plugins)
+					.flatMap(plugin -> plugin.onBotReady(this)
+							.onErrorResume(e -> Mono.fromRunnable(() -> LOGGER.warn("onBotReady action failed for plugin " + plugin.getName(), e))))
+					.then())
+			.then(log("Bot ready!"))
+			.doOnTerminate(() -> {
+				// Guild join
+				discordClients.flatMap(client -> client.getEventDispatcher().on(GuildCreateEvent.class))
+						.filter(event -> shardsNotReady.get() == 0)
+						.filter(event -> !unavailableGuildIds.remove(event.getGuild().getId()))
+						.map(GuildCreateEvent::getGuild)
+						.flatMap(guild -> log(":inbox_tray: New guild joined: " + Markdown.escape(guild.getName())
+								+ " (" + guild.getId().asString() + ")"))
+						.retryWhen(Retry.any().doOnRetry(retryCtx -> LOGGER.error("Error while procesing GuildCreateEvent", retryCtx.exception())))
+						.subscribe();
+				// Guild leave
+				discordClients.flatMap(client -> client.getEventDispatcher().on(GuildDeleteEvent.class))
+						.filter(event -> shardsNotReady.get() == 0)
+						.filter(event -> {
+							if (event.isUnavailable()) {
+								unavailableGuildIds.add(event.getGuildId());
+								return false;
+							}
+							unavailableGuildIds.remove(event.getGuildId());
+							return true;
+						})
+						.map(event -> event.getGuild().map(guild -> Markdown.escape(guild.getName())
+								+ " (" + guild.getId().asString() + ")").orElse(event.getGuildId().asString() + " (no data)"))
+						.flatMap(str -> log(":outbox_tray: Guild left: " + str))
+						.retryWhen(Retry.any().doOnRetry(retryCtx -> LOGGER.error("Error while procesing GuildDeleteEvent", retryCtx.exception())))
+						.subscribe();
+				// Resume on partial reconnections
+				discordClients.flatMap(client -> client.getEventDispatcher().on(ResumeEvent.class)
+								.flatMap(resumeEvent -> log("Shard " + client.getConfig().getShardIndex()
+										+ ": session resumed after websocket disconnection.")))
+						.retryWhen(Retry.any().doOnRetry(retryCtx -> LOGGER.error("Error while procesing ResumeEvent", retryCtx.exception())))
+						.subscribe();
+				// Ready on full reconnections
+				discordClients.flatMap(client -> client.getEventDispatcher().on(ReadyEvent.class)
+								.doOnNext(readyEvent -> shardsNotReady.incrementAndGet())
+								.map(readyEvent -> readyEvent.getGuilds().size())
+								.flatMap(guildCount -> client.getEventDispatcher().on(GuildCreateEvent.class)
+										.take(guildCount)
+										.timeout(Duration.ofMinutes(2), Mono.error(new TimeoutException("Unable to load guilds of shard "
+												+ client.getConfig().getShardIndex() + " in time")))
+										.doAfterTerminate(() -> shardsNotReady.decrementAndGet())
+										.then(log("Shard " + client.getConfig().getShardIndex() + " reconnected (" + guildCount + " guilds)"))))
+						.retryWhen(Retry.any().doOnRetry(retryCtx -> LOGGER.error("Error while procesing ReadyEvent", retryCtx.exception())))
+						.subscribe();
+			})
+			.subscribe();
 	}
 }
