@@ -1,4 +1,6 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>com.github.alex1304</groupId>
@@ -45,7 +47,7 @@
 	</distributionManagement>
 
 	<properties>
-		<java.version>11</java.version>
+		<java.version>13</java.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 
@@ -59,6 +61,9 @@
 						<release>${java.version}</release>
 						<source>${java.version}</source>
 						<target>${java.version}</target>
+						<compilerArgs>
+							<compilerArg>-parameters</compilerArg>
+						</compilerArgs>
 					</configuration>
 				</plugin>
 				<plugin>
@@ -83,6 +88,11 @@
 						<releaseProfiles>release</releaseProfiles>
 						<goals>deploy</goals>
 					</configuration>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-surefire-plugin</artifactId>
+					<version>3.0.0-M3</version>
 				</plugin>
 			</plugins>
 		</pluginManagement>
@@ -137,7 +147,7 @@
 			</build>
 		</profile>
 	</profiles>
-	
+
 	<repositories>
 		<repository>
 			<id>jitpack.io</id>
@@ -174,7 +184,7 @@
 			<dependency>
 				<groupId>com.discord4j</groupId>
 				<artifactId>discord4j-core</artifactId>
-				<version>3.0.9</version>
+				<version>3.0.10</version>
 			</dependency>
 			<dependency>
 				<groupId>com.discord4j</groupId>
@@ -202,17 +212,6 @@
 				<version>5.4.2.Final</version>
 			</dependency>
 			<dependency>
-				<groupId>org.hibernate</groupId>
-				<artifactId>hibernate-ehcache</artifactId>
-				<version>5.4.2.Final</version>
-				<exclusions>
-					<exclusion>
-						<groupId>org.hibernate</groupId>
-						<artifactId>hibernate-core</artifactId>
-					</exclusion>
-				</exclusions>
-			</dependency>
-			<dependency>
 				<groupId>org.glassfish.jaxb</groupId>
 				<artifactId>jaxb-runtime</artifactId>
 				<version>2.4.0-b180830.0438</version>
@@ -221,6 +220,12 @@
 				<groupId>io.projectreactor.tools</groupId>
 				<artifactId>blockhound</artifactId>
 				<version>1.0.0.M3</version>
+			</dependency>
+			<dependency>
+				<groupId>org.junit.jupiter</groupId>
+				<artifactId>junit-jupiter</artifactId>
+				<version>5.4.2</version>
+				<scope>test</scope>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>

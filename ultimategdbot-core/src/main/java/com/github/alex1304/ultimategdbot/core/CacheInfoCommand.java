@@ -1,30 +1,30 @@
 package com.github.alex1304.ultimategdbot.core;
 
 import java.util.Arrays;
-import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.github.alex1304.ultimategdbot.api.Command;
-import com.github.alex1304.ultimategdbot.api.Context;
-import com.github.alex1304.ultimategdbot.api.PermissionLevel;
-import com.github.alex1304.ultimategdbot.api.Plugin;
+import com.github.alex1304.ultimategdbot.api.command.Context;
+import com.github.alex1304.ultimategdbot.api.command.PermissionLevel;
+import com.github.alex1304.ultimategdbot.api.command.annotated.CommandAction;
+import com.github.alex1304.ultimategdbot.api.command.annotated.CommandDoc;
+import com.github.alex1304.ultimategdbot.api.command.annotated.CommandSpec;
 
 import reactor.core.publisher.Mono;
 
-class CacheInfoCommand implements Command {
+@CommandSpec(
+		aliases = "cacheinfo",
+		shortDescription = "Give statistics on the cache used to store Discord entities.",
+		permLevel = PermissionLevel.BOT_ADMIN
+)
+class CacheInfoCommand {
 
 	private static final String[] STORE_NAMES = { "Channels", "Emojis", "Guilds", "Messages", "Members", "Presences",
 			"Roles", "Users", "Voice states" };
 
-	private final NativePlugin plugin;
-	
-	public CacheInfoCommand(NativePlugin plugin) {
-		this.plugin = Objects.requireNonNull(plugin);
-	}
-
-	@Override
-	public Mono<Void> execute(Context ctx) {
+	@CommandAction
+	@CommandDoc("Check the amount of guilds, roles, messages, etc that the bot is storing. Useful to track down what "
+			+ "is consuming the most memory resources during the bot's runtime.")
+	public Mono<Void> run(Context ctx) {
 		var stateHolder = ctx.getBot().getMainDiscordClient().getServiceMediator().getStateHolder();
 		return Mono.zip(
 					o -> Arrays.stream(o).map(x -> (Long) x).collect(Collectors.toList()),
@@ -58,35 +58,5 @@ class CacheInfoCommand implements Command {
 				})
 				.flatMap(ctx::reply)
 				.then();
-	}
-
-	@Override
-	public Set<String> getAliases() {
-		return Set.of("cacheinfo");
-	}
-
-	@Override
-	public String getDescription() {
-		return "Give statistics on the cache used to store Discord entities.";
-	}
-
-	@Override
-	public String getLongDescription() {
-		return "";
-	}
-
-	@Override
-	public String getSyntax() {
-		return "";
-	}
-	
-	@Override
-	public PermissionLevel getPermissionLevel() {
-		return PermissionLevel.BOT_ADMIN;
-	}
-
-	@Override
-	public Plugin getPlugin() {
-		return plugin;
 	}
 }

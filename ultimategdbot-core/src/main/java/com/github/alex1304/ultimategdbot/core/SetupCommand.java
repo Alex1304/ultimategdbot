@@ -1,36 +1,35 @@
 package com.github.alex1304.ultimategdbot.core;
 
 import java.util.Comparator;
-import java.util.EnumSet;
-import java.util.Objects;
-import java.util.Set;
 
-import com.github.alex1304.ultimategdbot.api.Command;
-import com.github.alex1304.ultimategdbot.api.Context;
-import com.github.alex1304.ultimategdbot.api.PermissionLevel;
 import com.github.alex1304.ultimategdbot.api.Plugin;
-import com.github.alex1304.ultimategdbot.api.utils.reply.PaginatedReplyMenuBuilder;
+import com.github.alex1304.ultimategdbot.api.command.CommandFailedException;
+import com.github.alex1304.ultimategdbot.api.command.Context;
+import com.github.alex1304.ultimategdbot.api.command.PermissionLevel;
+import com.github.alex1304.ultimategdbot.api.command.Scope;
+import com.github.alex1304.ultimategdbot.api.command.annotated.CommandAction;
+import com.github.alex1304.ultimategdbot.api.command.annotated.CommandDoc;
+import com.github.alex1304.ultimategdbot.api.command.annotated.CommandSpec;
 
-import discord4j.core.object.entity.Channel.Type;
 import discord4j.core.object.util.Snowflake;
-import discord4j.core.object.entity.Message;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.function.TupleUtils;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
-class SetupCommand implements Command {
+@CommandSpec(
+	aliases = { "setup", "settings", "configure", "config" },
+	shortDescription = "View and edit the bot configuration in this server.",
+	permLevel = PermissionLevel.SERVER_ADMIN,
+	scope = Scope.GUILD_ONLY
+)
+class SetupCommand {
 
-	private final NativePlugin plugin;
-	
-	public SetupCommand(NativePlugin plugin) {
-		this.plugin = Objects.requireNonNull(plugin);
-	}
-
-	@Override
-	public Mono<Void> execute(Context ctx) {
-		var rb = new PaginatedReplyMenuBuilder(this, ctx, true, false, Message.MAX_CONTENT_LENGTH - 10);
+	@CommandAction
+	@CommandDoc("Lists all configuration entries available in the bot, listed in alphabetical order and grouped by plugins. "
+			+ "Each entry has a unique name with a value associated to it. You can edit an entry using the `set` subcommand.")
+	public Mono<Void> run(Context ctx) {
 		var sb = new StringBuffer("Here you can configure the bot for this server. "
 				+ "You can update a field by doing `" + ctx.getPrefixUsed() + "setup set <field> <value>`. "
 				+ "Use `None` as value to reset a field.\n\n");
@@ -58,63 +57,26 @@ class SetupCommand implements Command {
 									sb.append('\n');
 								}))
 						.then())
-				.then(Mono.defer(() -> rb.build(sb.toString().stripTrailing())))
+				.then(Mono.defer(() -> ctx.reply(sb.toString())))
 				.then();
-//		return ctx.getGuildSettings().doOnNext(map -> map.forEach((plugin, entries) -> {
-//			sb.append("**__").append(plugin.getName()).append("__**\n");
-//			if (entries.isEmpty()) {
-//				sb.append("_(Nothing to configure here)_\n");
-//				return;
-//			}
-//			entries.forEach((k, v) -> {
-//				sb.append('`');
-//				sb.append(k);
-//				sb.append("`: ");
-//				sb.append(v);
-//				sb.append('\n');
-//			});
-//			sb.append('\n');
-//		})).flatMap(__ -> rb.build(sb.toString().stripTrailing())).then();
 	}
-
-	@Override
-	public Set<String> getAliases() {
-		return Set.of("setup", "settings", "configure", "config");
-	}
-
-	@Override
-	public Set<Command> getSubcommands() {
-		return Set.of(new SetupSetCommand(plugin));
-	}
-
-	@Override
-	public String getDescription() {
-		return "View and edit bot setup for this guild.";
-	}
-
-	@Override
-	public String getLongDescription() {
-		return "Running this command without arguments displays the current setup. Use the `set` subcommand to eidt a value.\n"
-				+ "By default you can only configure the prefix and the server mod role, but more configuration entries may be added by plugins.";
-	}
-
-	@Override
-	public String getSyntax() {
-		return "";
-	}
-
-	@Override
-	public PermissionLevel getPermissionLevel() {
-		return PermissionLevel.SERVER_ADMIN;
-	}
-
-	@Override
-	public EnumSet<Type> getChannelTypesAllowed() {
-		return EnumSet.of(Type.GUILD_TEXT);
-	}
-
-	@Override
-	public Plugin getPlugin() {
-		return plugin;
+	
+	@CommandAction("set")
+	@CommandDoc("Sets a new value to a configuration entry. The `key` corresponds to the name of the entry you want to edit, "
+			+ "and `value` corresponds to the new value you want to assign to the said key. If you input an invalid value, "
+			+ "the command will give you an error message with details. Otherwise, the new value will be saved and will respond "
+			+ "with a success message.")
+	public Mono<Void> runSet(Context ctx, String key, String value) {
+		var guildId = ctx.getEvent().getGuildId().map(Snowflake::asLong).orElse(0L);
+		return Flux.fromIterable(ctx.getBot().getPlugins())
+				.map(Plugin::getGuildConfigurationEntries)
+				.filter(map -> map.containsKey(key))
+				.switchIfEmpty(Mono.error(new CommandFailedException("There is no configuration entry with key `" + key + "`.")))
+				.next()
+				.map(map -> map.get(key))
+				.flatMapMany(entry -> ctx.getBot().getDatabase().performTransactionWhen(session -> entry.setFromString(session, value, guildId)))
+				.onErrorMap(IllegalArgumentException.class, e -> new CommandFailedException("Cannot assign this value as `" + key + "`: " + e.getMessage()))
+				.then(ctx.reply(":white_check_mark: Settings updated!"))
+				.then();
 	}
 }

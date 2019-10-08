@@ -3,13 +3,12 @@ package com.github.alex1304.ultimategdbot.api.database;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Objects;
 import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import org.hibernate.Session;
 
-import com.github.alex1304.ultimategdbot.api.Database;
-import com.github.alex1304.ultimategdbot.api.utils.GuildSettingsValueConverter;
+import com.github.alex1304.ultimategdbot.api.utils.DatabaseInputFunction;
+import com.github.alex1304.ultimategdbot.api.utils.DatabaseOutputFunction;
 
 import reactor.core.publisher.Mono;
 
@@ -24,11 +23,11 @@ public class GuildSettingsEntry<E extends GuildSettings, D> {
 	private final Class<E> entityClass;
 	private final Function<E, D> valueGetter;
 	private final BiConsumer<E, D> valueSetter;
-	private final BiFunction<String, Long, Mono<D>> stringToValue;
-	private final BiFunction<D, Long, Mono<String>> valueToString;
+	private final DatabaseInputFunction<D> stringToValue;
+	private final DatabaseOutputFunction<D> valueToString;
 	
-	public GuildSettingsEntry(Class<E> entityClass, Function<E, D> valueGetter,
-			BiConsumer<E, D> valueSetter, BiFunction<String, Long, Mono<D>> stringToValue, BiFunction<D, Long, Mono<String>> valueToString) {
+	public GuildSettingsEntry(Class<E> entityClass, Function<E, D> valueGetter, BiConsumer<E, D> valueSetter,
+			DatabaseInputFunction<D> stringToValue, DatabaseOutputFunction<D> valueToString) {
 		this.entityClass = Objects.requireNonNull(entityClass);
 		this.valueGetter = Objects.requireNonNull(valueGetter);
 		this.valueSetter = Objects.requireNonNull(valueSetter);
@@ -53,38 +52,16 @@ public class GuildSettingsEntry<E extends GuildSettings, D> {
 	public Mono<String> getAsString(Session s, long guildId) {
 		return Mono.fromCallable(() -> getRaw(s, guildId))
 				.flatMap(raw -> valueToString.apply(raw, guildId))
-				.defaultIfEmpty(GuildSettingsValueConverter.NONE_VALUE);
+				.defaultIfEmpty("None");
 	}
 	
 	public Mono<Void> setFromString(Session s, String strValue, long guildId) {
 		if (strValue == null) {
-			strValue = GuildSettingsValueConverter.NONE_VALUE;
+			strValue = "None";
 		}
 		return stringToValue.apply(strValue, guildId)
 				.switchIfEmpty(Mono.fromRunnable(() -> setRaw(s, null, guildId)))
 				.flatMap(raw -> Mono.fromRunnable(() -> setRaw(s, raw, guildId)));
-	}
-	
-	@Deprecated
-	public Mono<D> valueFromDatabase(Database db, long guildId) {
-		return db.findByIDOrCreate(entityClass, guildId, GuildSettings::setGuildId).map(valueGetter::apply);
-	}
-
-	@Deprecated
-	public Mono<String> valueFromDatabaseAsString(Database db, long guildId) {
-		return valueFromDatabase(db, guildId).flatMap(val -> valueToString.apply(val, guildId));
-	}
-
-	@Deprecated
-	public Mono<Void> valueToDatabase(Database db, D value, long guildId) {
-		return db.findByIDOrCreate(entityClass, guildId, GuildSettings::setGuildId)
-				.doOnNext(entity -> valueSetter.accept(entity, value))
-				.flatMap(db::save);
-	}
-
-	@Deprecated
-	public Mono<Void> valueAsStringToDatabase(Database db, String strVal, long guildId) {
-		return stringToValue.apply(strVal, guildId).flatMap(value -> valueToDatabase(db, value, guildId));
 	}
 	
 	private E findOrCreate(Session s, long guildId) {
