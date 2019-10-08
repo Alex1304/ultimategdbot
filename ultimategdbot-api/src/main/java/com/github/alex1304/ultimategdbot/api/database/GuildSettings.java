@@ -13,5 +13,5 @@ public interface GuildSettings {
 	 * 
 	 * @param guildId the guildID
 	 */
-	void setGuildId(long guildId);
+	void setGuildId(Long guildId);
 }

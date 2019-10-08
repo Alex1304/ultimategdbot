@@ -1,5 +1,7 @@
 package com.github.alex1304.ultimategdbot.api.database;
 
+import static java.util.Objects.requireNonNullElse;
+
 public class BlacklistedIds {
 	
 	private long id;
@@ -8,7 +10,7 @@ public class BlacklistedIds {
 		return id;
 	}
 
-	public void setId(long id) {
-		this.id = id;
+	public void setId(Long id) {
+		this.id = requireNonNullElse(id, 0L);
 	}
 }

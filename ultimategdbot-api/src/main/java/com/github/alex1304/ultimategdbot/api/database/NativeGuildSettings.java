@@ -1,5 +1,7 @@
 package com.github.alex1304.ultimategdbot.api.database;
 
+import static java.util.Objects.requireNonNullElse;
+
 public class NativeGuildSettings implements GuildSettings {
 	
 	private long guildId;
@@ -12,8 +14,8 @@ public class NativeGuildSettings implements GuildSettings {
 	}
 
 	@Override
-	public void setGuildId(long guildId) {
-		this.guildId = guildId;
+	public void setGuildId(Long guildId) {
+		this.guildId = requireNonNullElse(guildId, 0L);
 	}
 
 	public String getPrefix() {
@@ -28,8 +30,8 @@ public class NativeGuildSettings implements GuildSettings {
 		return serverModRoleId;
 	}
 
-	public void setServerModRoleId(long serverModRoleId) {
-		this.serverModRoleId = serverModRoleId;
+	public void setServerModRoleId(Long serverModRoleId) {
+		this.serverModRoleId = requireNonNullElse(serverModRoleId, 0L);
 	}
 
 	@Override

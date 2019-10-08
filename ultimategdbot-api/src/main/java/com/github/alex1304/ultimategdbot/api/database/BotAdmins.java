@@ -1,5 +1,7 @@
 package com.github.alex1304.ultimategdbot.api.database;
 
+import static java.util.Objects.requireNonNullElse;
+
 public class BotAdmins {
 	
 	private long userId;
@@ -8,7 +10,7 @@ public class BotAdmins {
 		return userId;
 	}
 
-	public void setUserId(long userId) {
-		this.userId = userId;
+	public void setUserId(Long userId) {
+		this.userId = requireNonNullElse(userId, 0L);
 	}
 }
