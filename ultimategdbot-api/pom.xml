@@ -11,13 +11,8 @@
 	
 	<dependencies>
 		<dependency>
-<<<<<<< HEAD
-			<groupId>com.discord4j</groupId>
-			<artifactId>discord4j-core</artifactId>
-=======
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter</artifactId>
->>>>>>> v4.1-dev
 		</dependency>
 		<dependency>
 			<groupId>ch.qos.logback</groupId>
