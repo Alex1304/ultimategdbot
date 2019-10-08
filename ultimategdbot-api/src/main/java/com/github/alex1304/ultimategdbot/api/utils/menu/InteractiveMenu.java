@@ -99,6 +99,7 @@ public class InteractiveMenu {
 	 * pagination.
 	 * 
 	 * @param currentPage an AtomicInteger that stores the current page number
+	 * @param controls    the emojis to use for reaction-based navigation controls
 	 * @param paginator   a Function that generates the message to display according
 	 *                    to the current page number. If the page number is out of
 	 *                    range, the function may throw a
@@ -118,10 +119,12 @@ public class InteractiveMenu {
 
 	/**
 	 * Creates a new InteractiveMenu prefilled with menu items useful for
-	 * pagination. Unlike {@link #createPaginated(AtomicInteger, IntFunction)}, this
-	 * method support asynchronous paginator functions.
+	 * pagination. Unlike
+	 * {@link #createPaginated(AtomicInteger, PaginationControls, IntFunction)},
+	 * this method support asynchronous paginator functions.
 	 * 
 	 * @param currentPage    an AtomicInteger that stores the current page number
+	 * @param controls    the emojis to use for reaction-based navigation controls
 	 * @param asyncPaginator a Function that asynchronously generates the message to
 	 *                       display according to the current page number. If the
 	 *                       page number is out of range, the Mono returned by this

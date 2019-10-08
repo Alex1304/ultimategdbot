@@ -52,10 +52,13 @@ public class CommandProvider {
 	 * {@link ExecutableCommand} which is returned. If the event does not match with
 	 * any command, an empty {@link Optional} is returned.
 	 * 
-	 * @param bot the bot instance
-	 * @param prefix 
-	 * @param event
-	 * @return
+	 * @param bot     the bot instance
+	 * @param prefix  the guild-specific bot prefix
+	 * @param event   the MessageCreateEvent to process
+	 * @param channel the channel where the event happened
+	 * 
+	 * @return an ExecutableCommand if the event results in a command to be
+	 *         triggered, an empty Optional otherwise.
 	 */
 	public Optional<ExecutableCommand> provideFromEvent(Bot bot, String prefix, MessageCreateEvent event, MessageChannel channel) {
 		return bot.getMainDiscordClient().getSelfId().map(Snowflake::asLong).flatMap(botId -> {

@@ -17,8 +17,9 @@ import reactor.core.publisher.Mono;
 public interface DatabaseOutputFunction<D> extends BiFunction<D, Long, Mono<String>> {
 	/**
 	 * Forwards the value from the database by returning its string representation
-	 * provided by {@link #toString()}
+	 * provided by {@link Object#toString()}
 	 * 
+	 * @param <D> the database type to convert from
 	 * @return a database output function
 	 */
 	public static <D> DatabaseOutputFunction<D> stringValue() {
@@ -29,17 +30,19 @@ public interface DatabaseOutputFunction<D> extends BiFunction<D, Long, Mono<Stri
 	 * Encapsulates a regular BiFunction into an instance of
 	 * {@link DatabaseOutputFunction}.
 	 * 
+	 * @param <D>      the database type to convert from
 	 * @param function the function to encapsulate
 	 * @return a database output function wrapping the given function
 	 */
 	public static <D> DatabaseOutputFunction<D> of(BiFunction<D, Long, Mono<String>> function) {
 		return (value, guildId) -> function.apply(value, guildId);
 	}
-	
+
 	/**
 	 * Forwards the value from the database by returning its string representation
 	 * provided by the given function.
 	 * 
+	 * @param <D>       the database type to convert from
 	 * @param converter the conversion function
 	 * @return a database output function providing a string representation for the
 	 *         value

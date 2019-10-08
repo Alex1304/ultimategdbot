@@ -26,6 +26,7 @@ public interface Plugin {
 	 * @param bot    the bot instance
 	 * @param parser contains everything defined in plugins.properties, ready to be
 	 *               parsed
+	 * @return a Mono that completes to indicate that the setup is done
 	 */
 	Mono<Void> setup(Bot bot, PropertyParser parser);
 	

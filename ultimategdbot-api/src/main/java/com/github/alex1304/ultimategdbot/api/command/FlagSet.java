@@ -71,11 +71,12 @@ public class FlagSet {
 		}
 		return flagMap.get(name);
 	}
-	
+
 	/**
 	 * Gets the value of the flag with the given name, and transforms the value
 	 * using the supplied function.
 	 * 
+	 * @param <T>    the target type of the flag value
 	 * @param name   the name of the flag to look for
 	 * @param parser the transformation function of the value
 	 * @return the transformed value, or empty if no value

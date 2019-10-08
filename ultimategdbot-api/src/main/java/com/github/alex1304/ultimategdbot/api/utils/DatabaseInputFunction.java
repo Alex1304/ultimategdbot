@@ -63,6 +63,7 @@ public interface DatabaseInputFunction<D> extends BiFunction<String, Long, Mono<
 	 * Encapsulates a regular BiFunction into an instance of
 	 * {@link DatabaseInputFunction}.
 	 * 
+	 * @param <D>      the target database type
 	 * @param function the function to encapsulate
 	 * @return a database input function wrapping the given function
 	 */
@@ -73,6 +74,7 @@ public interface DatabaseInputFunction<D> extends BiFunction<String, Long, Mono<
 	/**
 	 * Converts the input using the supplied conversion function.
 	 * 
+	 * @param <D>       the target database type
 	 * @param converter the conversion function
 	 * @return a database input function transforming the output to a target type
 	 */

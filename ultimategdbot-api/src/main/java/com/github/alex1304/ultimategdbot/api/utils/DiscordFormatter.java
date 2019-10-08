@@ -26,7 +26,7 @@ public class DiscordFormatter {
 	/**
 	 * Formats a role to the following format: {@literal @}name (id)
 	 * 
-	 * @param user the user to format
+	 * @param role the role to format
 	 * @return the formatted user
 	 */
 	public static String formatRole(Role role) {

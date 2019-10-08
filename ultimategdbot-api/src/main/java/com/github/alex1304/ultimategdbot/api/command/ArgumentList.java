@@ -41,8 +41,8 @@ public class ArgumentList {
 	/**
 	 * Gets all arguments from the specified position to the last one, into one
 	 * String resulting of the concatenation of all arguments (separated with a
-	 * whitespace). Specifying a position <= 0 returns all arguments. Specifying a
-	 * position >= tokenCount will result in an empty String.
+	 * whitespace). Specifying a position &lt;= 0 returns all arguments. Specifying a
+	 * position &gt;= tokenCount will result in an empty String.
 	 * 
 	 * @param position the position of the first arguments
 	 * @return all arguments into one concatenated String
