@@ -8,7 +8,6 @@ import com.github.alex1304.ultimategdbot.api.command.Context;
 import com.github.alex1304.ultimategdbot.api.command.annotated.paramconverter.GuildChannelConverter;
 import com.github.alex1304.ultimategdbot.api.command.annotated.paramconverter.IntConverter;
 import com.github.alex1304.ultimategdbot.api.command.annotated.paramconverter.LongConverter;
-import com.github.alex1304.ultimategdbot.api.command.annotated.paramconverter.ParamConversionException;
 import com.github.alex1304.ultimategdbot.api.command.annotated.paramconverter.ParamConverter;
 import com.github.alex1304.ultimategdbot.api.command.annotated.paramconverter.RoleConverter;
 import com.github.alex1304.ultimategdbot.api.command.annotated.paramconverter.StringConverter;
@@ -46,7 +45,7 @@ public class AnnotatedCommandProvider extends CommandProvider {
 	<T> Mono<T> convert(Context ctx, String input, Class<T> targetType) {
 		var converter = (ParamConverter<T>) paramConverters.get(targetType);
 		if (converter == null) {
-			return Mono.error(new ParamConversionException("No param converter available for the type " + targetType.getName()));
+			return Mono.error(new RuntimeException("No param converter available for the type " + targetType.getName()));
 		}
 		return converter.convert(ctx, input);
 	}

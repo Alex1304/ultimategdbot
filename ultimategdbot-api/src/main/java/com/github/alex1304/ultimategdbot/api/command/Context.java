@@ -149,6 +149,7 @@ public class Context {
 				+ "command=" + command
 				+ ", message=" + event.getMessage()
 				+ ", args=" + args
+				+ ", flags=" + flags
 				+ ", prefixUsed=" + prefixUsed
 				+ "}";
 	}

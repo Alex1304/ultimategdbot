@@ -1,10 +1,11 @@
 package com.github.alex1304.ultimategdbot.api;
 
 import static com.github.alex1304.ultimategdbot.api.utils.BotUtils.debugError;
+import static java.util.Collections.synchronizedSet;
+import static java.util.Objects.requireNonNull;
 
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -31,12 +32,12 @@ public class CommandKernel {
 	private static final Logger LOGGER = LoggerFactory.getLogger("ultimategdbot.commandkernel");
 
 	private final Bot bot;
-	private final Set<CommandProvider> providers = new HashSet<>();
-	private final Set<Long> blacklist = new HashSet<>();
+	private final Set<CommandProvider> providers = synchronizedSet(new HashSet<>());
+	private final Set<Long> blacklist = synchronizedSet(new HashSet<>());
 	private final ConcurrentHashMap<Long, String> guildPrefixCache = new ConcurrentHashMap<>();
 	
 	public CommandKernel(Bot bot) {
-		this.bot = Objects.requireNonNull(bot);
+		this.bot = requireNonNull(bot);
 	}
 	
 	/**
@@ -45,7 +46,7 @@ public class CommandKernel {
 	 * @param provider the command provider to add
 	 */
 	public void addProvider(CommandProvider provider) {
-		providers.add(Objects.requireNonNull(provider));
+		providers.add(requireNonNull(provider));
 	}
 
 	/**
@@ -61,7 +62,7 @@ public class CommandKernel {
 	 *         forwarded through this Mono.
 	 */
 	public Mono<Void> processEvent(MessageCreateEvent event) {
-		Objects.requireNonNull(event);
+		requireNonNull(event);
 		var authorId = event.getMessage().getAuthor().map(User::getId);
 		var guildId = event.getGuildId();
 		var channelId = event.getMessage().getChannelId();
@@ -90,7 +91,7 @@ public class CommandKernel {
 										+ "A crash report has been sent to the developer. Sorry for "
 										+ "the inconvenience."))
 								.onErrorResume(__ -> Mono.empty()),
-						debugError("Something went wrong when executing a command", executable.getContext(), e),
+						debugError(":no_entry_sign: Something went wrong when executing a command", executable.getContext(), e),
 						Mono.fromRunnable(() -> LOGGER.error("Something went wrong when executing a command. Context dump: "
 								+ executable.getContext(), e)))))
 				.then();

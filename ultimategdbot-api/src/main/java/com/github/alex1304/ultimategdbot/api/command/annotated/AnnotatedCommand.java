@@ -129,12 +129,12 @@ public class AnnotatedCommand implements Command {
 							.switchIfEmpty(Mono.error(invalidSyntax))
 							.flatMap(method -> {
 								LOGGER.debug("Matching method: {}#{}", method.getDeclaringClass().getName(), method.getName());
-								var parameterTypes = Flux.fromArray(method.getParameterTypes()).skip(1);
+								var parameters = Flux.fromArray(method.getParameters()).skip(1);
 								var argTokens = Flux.fromIterable(args.getTokens(method.getParameters().length + firstArgIndex.get() - 1))
 										.skip(firstArgIndex.get());
-								return Flux.zip(parameterTypes, argTokens)
-										.concatMap(function((paramType, arg) -> provider.convert(ctx, arg, paramType)
-												.onErrorMap(e -> new ParamConversionException(e.getMessage()))))
+								return Flux.zip(parameters, argTokens)
+										.concatMap(function((param, arg) -> provider.convert(ctx, arg, param.getType())
+												.onErrorMap(e -> new ParamConversionException(formatParamName(param.getName()), arg, e.getMessage()))))
 										.collectList()
 										.defaultIfEmpty(List.of())
 										.map(argList -> new ArrayList<Object>(argList))
