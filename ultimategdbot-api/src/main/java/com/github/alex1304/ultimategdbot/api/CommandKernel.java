@@ -183,6 +183,7 @@ public class CommandKernel {
 								.flatMap(gs -> Mono.justOrEmpty(gs.getPrefix()))
 								.defaultIfEmpty(bot.getDefaultPrefix())
 								.map(String::strip)
-								.doOnNext(prefix -> guildPrefixCache.put(guildId, prefix))));
+								.doOnNext(prefix -> guildPrefixCache.put(guildId, prefix))))
+				.defaultIfEmpty(bot.getDefaultPrefix());
 	}
 }
