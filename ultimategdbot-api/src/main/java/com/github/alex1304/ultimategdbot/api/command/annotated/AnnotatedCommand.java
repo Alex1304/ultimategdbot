@@ -2,6 +2,7 @@ package com.github.alex1304.ultimategdbot.api.command.annotated;
 
 import static reactor.function.TupleUtils.function;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -150,6 +151,7 @@ public class AnnotatedCommand implements Command {
 											}
 										})
 										.flatMap(argList -> Mono.fromCallable(() -> method.invoke(obj, argList.toArray())))
+										.onErrorMap(InvocationTargetException.class, Throwable::getCause)
 										.flatMap(mono -> (Mono<?>) mono);
 							})
 							.then();
