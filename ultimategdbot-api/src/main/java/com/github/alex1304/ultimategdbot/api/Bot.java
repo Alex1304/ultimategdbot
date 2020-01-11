@@ -9,7 +9,6 @@ import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import org.slf4j.Logger;
@@ -82,14 +81,13 @@ public class Bot {
 	private Flux<GuildEmoji> emojis;
 
 	private Bot(String token, String defaultPrefix, String flagPrefix, Flux<DiscordClient> discordClients,
-			DiscordClient mainDiscordClient, Database database, int interactiveMenuTimeout, Snowflake debugLogChannelId,
-			Snowflake attachmentsChannelId, List<Snowflake> emojiGuildIds, boolean blockhoundMode,
-			Properties pluginsProps, PaginationControls controls, boolean corePluginDisabled) {
+			Database database, int interactiveMenuTimeout, Snowflake debugLogChannelId, Snowflake attachmentsChannelId,
+			List<Snowflake> emojiGuildIds, boolean blockhoundMode, Properties pluginsProps, PaginationControls controls, boolean corePluginDisabled) {
 		this.token = token;
 		this.defaultPrefix = defaultPrefix;
 		this.flagPrefix = flagPrefix;
 		this.discordClients = discordClients;
-		this.mainDiscordClient = mainDiscordClient;
+		this.mainDiscordClient = discordClients.blockFirst();
 		this.database = database;
 		this.interactiveMenuTimeout = interactiveMenuTimeout;
 		this.debugLogChannelId = debugLogChannelId;
@@ -348,7 +346,6 @@ public class Bot {
 					"it is recommended to switch `use_immediate_scheduler` to false in bot.properties");
 		}
 		
-		var mainDiscordClient = new AtomicReference<DiscordClient>();
 		var discordClients = new ShardingClientBuilder(token)
 				.setStoreService(MappingStoreService.create()
 						.setMapping(new CaffeineStoreService(builder -> builder
@@ -365,10 +362,9 @@ public class Bot {
 				.map(dcb -> dcb.setInitialPresence(presenceStatus)
 						.setEventScheduler(useImmediateScheduler ? Schedulers.immediate() : null))
 				.map(DiscordClientBuilder::build)
-				.doOnNext(client -> mainDiscordClient.compareAndSet(null, client))
 				.cache();
 
-		return new Bot(token, defaultPrefix, flagPrefix, discordClients, mainDiscordClient.get(), database, interactiveMenuTimeout, debugLogChannelId,
+		return new Bot(token, defaultPrefix, flagPrefix, discordClients, database, interactiveMenuTimeout, debugLogChannelId,
 				attachmentsChannelId, emojiGuildIds, blockhoundMode, pluginsProps, controls, corePluginDisabled);
 	}
 
