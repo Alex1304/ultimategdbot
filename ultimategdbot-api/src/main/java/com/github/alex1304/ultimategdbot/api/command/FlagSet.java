@@ -2,9 +2,7 @@ package com.github.alex1304.ultimategdbot.api.command;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Optional;
-import java.util.function.Function;
 
 /**
  * Contains the set of flags used in a command. A flag is defined by a name and
@@ -25,11 +23,11 @@ public class FlagSet {
 		}
 		
 		public void add(String name, String value) {
-			flagMap.put(name, Optional.ofNullable(value));
+			flagMap.put(name, Optional.of(value));
 		}
 		
 		public void add(String name) {
-			add(name, null);
+			add(name, "");
 		}
 		
 		public FlagSet build() {
@@ -45,48 +43,17 @@ public class FlagSet {
 	public static FlagSetBuilder builder() {
 		return new FlagSetBuilder();
 	}
-	
-	/**
-	 * Checks whether the flag with he given name is present in this set.
-	 * 
-	 * @param name the name of the flag to look for
-	 * @return true if present in the set, false otherwise
-	 */
-	public boolean has(String name) {
-		return flagMap.containsKey(name);
-	}
 
 	/**
-	 * Gets the value of the flag with the given name. If the flag has no value, an
-	 * empty Optional is returned. If the flag is not present at all,
-	 * {@link NoSuchElementException} will be thrown.
+	 * Gets the value of the flag with the given name. If the flag has no value, the
+	 * value is an empty string. If the flag is not present at all, and empty
+	 * Optional is returned.
 	 * 
 	 * @param name the name of the flag to look for
-	 * @return the value of the flag, or empty optional if no value
-	 * @throws NoSuchElementException if the flag is not present at all
+	 * @return the value of the flag, or empty optional if flag is not present
 	 */
 	public Optional<String> get(String name) {
-		if (!has(name)) {
-			throw new NoSuchElementException();
-		}
 		return flagMap.get(name);
-	}
-
-	/**
-	 * Gets the value of the flag with the given name, and transforms the value
-	 * using the supplied function.
-	 * 
-	 * @param <T>    the target type of the flag value
-	 * @param name   the name of the flag to look for
-	 * @param parser the transformation function of the value
-	 * @return the transformed value, or empty if no value
-	 * @throws NoSuchElementException if the flag is not present at all
-	 */
-	public <T> Optional<T> parseAndGet(String name, Function<String, T> parser) {
-		if (!has(name)) {
-			throw new NoSuchElementException();
-		}
-		return flagMap.get(name).map(parser::apply);
 	}
 	
 	@Override

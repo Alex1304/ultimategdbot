@@ -71,8 +71,8 @@ public class InputTokenizer {
 		var args = new ArrayList<String>();
 		while (!tokens.isEmpty()) {
 			var token = tokens.remove();
-			if (token.startsWith(flagPrefix) && token.length() > 2) {
-				var split = token.substring(2).split("=", 2);
+			if (token.startsWith(flagPrefix) && token.length() > flagPrefix.length()) {
+				var split = token.substring(flagPrefix.length()).split("=", 2);
 				if (split.length == 1) {
 					flags.add(split[0]);
 				} else {
