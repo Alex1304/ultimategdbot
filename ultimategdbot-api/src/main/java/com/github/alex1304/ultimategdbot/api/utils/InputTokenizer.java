@@ -27,12 +27,13 @@ public class InputTokenizer {
 	 * separated into flags and arguments. A token starting with "--" followed by at
 	 * least 1 character is treated as a flag, the rest are arguments.
 	 * 
+	 * @param flagPrefix the prefix used to introduce command flags
 	 * @param input the input to tokenize
 	 * @return a Tuple2 which first value is a {@link FlagSet} that contains the
 	 *         tokens that are flags, and second value is a List containing the
 	 *         tokens that are arguments
 	 */
-	public static Tuple2<FlagSet, List<String>> tokenize(String input) {
+	public static Tuple2<FlagSet, List<String>> tokenize(String flagPrefix, String input) {
 		// Extracting the tokens
 		var tokens = new ArrayDeque<String>();
 		var buffer = new StringBuilder();
@@ -70,7 +71,7 @@ public class InputTokenizer {
 		var args = new ArrayList<String>();
 		while (!tokens.isEmpty()) {
 			var token = tokens.remove();
-			if (token.startsWith("--") && token.length() > 2) {
+			if (token.startsWith(flagPrefix) && token.length() > 2) {
 				var split = token.substring(2).split("=", 2);
 				if (split.length == 1) {
 					flags.add(split[0]);

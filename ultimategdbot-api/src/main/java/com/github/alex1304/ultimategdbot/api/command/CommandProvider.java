@@ -75,7 +75,7 @@ public class CommandProvider {
 			if (prefixUsed == null) {
 				return Optional.empty();
 			}
-			var parsed = InputTokenizer.tokenize(content);
+			var parsed = InputTokenizer.tokenize(bot.getFlagPrefix(), content);
 			var flags = parsed.getT1();
 			var args = parsed.getT2();
 			if (args.isEmpty()) {

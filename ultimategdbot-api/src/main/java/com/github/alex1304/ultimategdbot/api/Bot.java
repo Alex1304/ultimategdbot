@@ -9,6 +9,7 @@ import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import org.slf4j.Logger;
@@ -40,6 +41,7 @@ import discord4j.core.shard.ShardingClientBuilder;
 import discord4j.core.spec.MessageCreateSpec;
 import discord4j.rest.request.RouteMatcher;
 import discord4j.rest.request.RouterOptions;
+import discord4j.rest.request.SemaphoreGlobalRateLimiter;
 import discord4j.rest.response.ResponseFunction;
 import discord4j.rest.route.Routes;
 import discord4j.store.api.mapping.MappingStoreService;
@@ -60,6 +62,7 @@ public class Bot {
 	
 	private final String token;
 	private final String defaultPrefix;
+	private final String flagPrefix;
 	private final Flux<DiscordClient> discordClients;
 	private final DiscordClient mainDiscordClient;
 	private final Database database;
@@ -78,14 +81,15 @@ public class Bot {
 	private final boolean corePluginDisabled;
 	private Flux<GuildEmoji> emojis;
 
-	private Bot(String token, String defaultPrefix, Flux<DiscordClient> discordClients, Database database,
-			int interactiveMenuTimeout, Snowflake debugLogChannelId, Snowflake attachmentsChannelId,
-			List<Snowflake> emojiGuildIds, boolean blockhoundMode, Properties pluginsProps, PaginationControls controls,
-			boolean corePluginDisabled) {
+	private Bot(String token, String defaultPrefix, String flagPrefix, Flux<DiscordClient> discordClients,
+			DiscordClient mainDiscordClient, Database database, int interactiveMenuTimeout, Snowflake debugLogChannelId,
+			Snowflake attachmentsChannelId, List<Snowflake> emojiGuildIds, boolean blockhoundMode,
+			Properties pluginsProps, PaginationControls controls, boolean corePluginDisabled) {
 		this.token = token;
 		this.defaultPrefix = defaultPrefix;
+		this.flagPrefix = flagPrefix;
 		this.discordClients = discordClients;
-		this.mainDiscordClient = discordClients.blockFirst();
+		this.mainDiscordClient = mainDiscordClient;
 		this.database = database;
 		this.interactiveMenuTimeout = interactiveMenuTimeout;
 		this.debugLogChannelId = debugLogChannelId;
@@ -117,6 +121,15 @@ public class Bot {
 	 */
 	public String getDefaultPrefix() {
 		return defaultPrefix;
+	}
+
+	/**
+	 * Gets the flag prefix.
+	 * 
+	 * @return the flag prefix
+	 */
+	public String getFlagPrefix() {
+		return flagPrefix;
 	}
 
 	/**
@@ -283,6 +296,7 @@ public class Bot {
 		var propParser = new PropertyParser(props);
 		var token = propParser.parseAsString("token");
 		var defaultPrefix = propParser.parseAsString("default_prefix");
+		var flagPrefix = propParser.parseAsStringOrDefault("flag_prefix", "-");
 		var database = new Database();
 		var interactiveMenuTimeout = propParser.parseAsIntOrDefault("interactive_menu.timeout", 600);
 		var controls = new PaginationControls(
@@ -320,7 +334,7 @@ public class Bot {
 					return Presence.online(activity);
 			}
 		}, Presence.online(activity));
-		var requestThroughput = propParser.parseAsIntOrDefault("request_throughput", 48);
+		var requestParallelism = propParser.parseAsIntOrDefault("request_parallelism", 12);
 		var messageCacheMaxSize = propParser.parseAsIntOrDefault("message_cache_max_size", 50_000);
 		var messageCacheTtl = Duration.ofMinutes(propParser.parseAsLongOrDefault("message_cache_ttl", 120));
 		var disableVoiceStateCache = propParser.parseOrDefault("disable_voice_state_cache", Boolean::parseBoolean, false);
@@ -334,6 +348,7 @@ public class Bot {
 					"it is recommended to switch `use_immediate_scheduler` to false in bot.properties");
 		}
 		
+		var mainDiscordClient = new AtomicReference<DiscordClient>();
 		var discordClients = new ShardingClientBuilder(token)
 				.setStoreService(MappingStoreService.create()
 						.setMapping(new CaffeineStoreService(builder -> builder
@@ -344,15 +359,16 @@ public class Bot {
 				.setRouterOptions(RouterOptions.builder()
 						.onClientResponse(ResponseFunction.emptyIfNotFound())
 						.onClientResponse(ResponseFunction.emptyOnErrorStatus(RouteMatcher.route(Routes.REACTION_CREATE), 400))
-						.globalRateLimiter(new ClockRateLimiter(requestThroughput, Duration.ofSeconds(1)))
+						.globalRateLimiter(new SemaphoreGlobalRateLimiter(requestParallelism))
 						.build())
 				.build()
 				.map(dcb -> dcb.setInitialPresence(presenceStatus)
 						.setEventScheduler(useImmediateScheduler ? Schedulers.immediate() : null))
 				.map(DiscordClientBuilder::build)
+				.doOnNext(client -> mainDiscordClient.compareAndSet(null, client))
 				.cache();
 
-		return new Bot(token, defaultPrefix, discordClients, database, interactiveMenuTimeout, debugLogChannelId,
+		return new Bot(token, defaultPrefix, flagPrefix, discordClients, mainDiscordClient.get(), database, interactiveMenuTimeout, debugLogChannelId,
 				attachmentsChannelId, emojiGuildIds, blockhoundMode, pluginsProps, controls, corePluginDisabled);
 	}
 
@@ -382,6 +398,7 @@ public class Bot {
 						.and(discordClients.flatMap(DiscordClient::login)));
 	}
 	
+	@SuppressWarnings("deprecation")
 	private void initEventListeners() {
 		discordClients.flatMap(client -> client.getEventDispatcher().on(ReadyEvent.class).next()
 					.doOnNext(readyEvent -> readyEvent.getGuilds().stream()

@@ -20,11 +20,10 @@ class Main {
 		try {
 			var props = new Properties();
 			var pluginsProps = new Properties();
-			try (var input = Files.newInputStream(PROPS_FILE)) {
-				props.load(input);
-			}
-			try (var input = Files.newInputStream(PLUGINS_PROPS_FILE)) {
-				pluginsProps.load(input);
+			try (var propsInput = Files.newInputStream(PROPS_FILE);
+					var pluginsPropsInput = Files.newInputStream(PLUGINS_PROPS_FILE)) {
+				props.load(propsInput);
+				pluginsProps.load(pluginsPropsInput);
 			}
 			var bot = Bot.buildFromProperties(props, pluginsProps);
 			bot.start().block();	

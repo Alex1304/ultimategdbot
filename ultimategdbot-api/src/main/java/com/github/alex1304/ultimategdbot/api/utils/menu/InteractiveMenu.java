@@ -247,7 +247,7 @@ public class InteractiveMenu {
 								.filter(event -> event.getMessage().getAuthor().equals(ctx.getEvent().getMessage().getAuthor())
 										&& event.getMessage().getChannelId().equals(ctx.getEvent().getMessage().getChannelId()))
 								.flatMap(event -> {
-									var tokens = InputTokenizer.tokenize(event.getMessage().getContent().orElse(""));
+									var tokens = InputTokenizer.tokenize(ctx.getBot().getFlagPrefix(), event.getMessage().getContent().orElse(""));
 									var args = tokens.getT2();
 									var flags = tokens.getT1();
 									if (args.isEmpty()) {
