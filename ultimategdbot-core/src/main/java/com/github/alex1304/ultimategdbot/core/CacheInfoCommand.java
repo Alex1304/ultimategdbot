@@ -25,6 +25,7 @@ class CacheInfoCommand {
 	@CommandDoc("Check the amount of guilds, roles, messages, etc that the bot is storing. Useful to track down what "
 			+ "is consuming the most memory resources during the bot's runtime.")
 	public Mono<Void> run(Context ctx) {
+		@SuppressWarnings("deprecation")
 		var stateHolder = ctx.getBot().getMainDiscordClient().getServiceMediator().getStateHolder();
 		return Mono.zip(
 					o -> Arrays.stream(o).map(x -> (Long) x).collect(Collectors.toList()),
