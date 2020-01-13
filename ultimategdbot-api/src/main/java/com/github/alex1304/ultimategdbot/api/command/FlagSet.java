@@ -53,7 +53,7 @@ public class FlagSet {
 	 * @return the value of the flag, or empty optional if flag is not present
 	 */
 	public Optional<String> get(String name) {
-		return flagMap.get(name);
+		return flagMap.getOrDefault(name, Optional.empty());
 	}
 	
 	@Override
