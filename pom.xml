@@ -1,4 +1,6 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>com.github.alex1304</groupId>
@@ -9,7 +11,8 @@
 	<name>ultimategdbot</name>
 	<url>http://ultimategdbot.readthedocs.io</url>
 
-	<description>An awesome Discord bot for Geometry Dash players!</description>
+	<description>An awesome Discord bot for Geometry Dash players!
+	</description>
 
 	<licenses>
 		<license>
@@ -28,8 +31,10 @@
 
 	<scm>
 		<url>https://github.com/Alex1304/ultimategdbot/tree/master</url>
-		<connection>scm:git:git://github.com/Alex1304/ultimategdbot.git</connection>
-		<developerConnection>scm:git:ssh://git@github.com/Alex1304/ultimategdbot.git</developerConnection>
+		<connection>scm:git:git://github.com/Alex1304/ultimategdbot.git
+		</connection>
+		<developerConnection>scm:git:ssh://git@github.com/Alex1304/ultimategdbot.git
+		</developerConnection>
 		<tag>HEAD</tag>
 	</scm>
 
@@ -40,7 +45,8 @@
 		</snapshotRepository>
 		<repository>
 			<id>ossrh</id>
-			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/
+			</url>
 		</repository>
 	</distributionManagement>
 
@@ -148,6 +154,13 @@
 
 	<repositories>
 		<repository>
+			<id>oss.sonatype.org-snapshot</id>
+			<url>http://oss.sonatype.org/content/repositories/snapshots</url>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</repository>
+		<repository>
 			<id>jitpack.io</id>
 			<url>https://jitpack.io</url>
 		</repository>
@@ -182,7 +195,7 @@
 			<dependency>
 				<groupId>com.discord4j</groupId>
 				<artifactId>discord4j-core</artifactId>
-				<version>3.0.12</version>
+				<version>3.0.13-SNAPSHOT</version>
 			</dependency>
 			<dependency>
 				<groupId>com.discord4j</groupId>
