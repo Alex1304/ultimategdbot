@@ -1,4 +1,4 @@
-package com.github.alex1304.ultimategdbot.api.utils.menu;
+package com.github.alex1304.ultimategdbot.api.util.menu;
 
 public class PageNumberOutOfRangeException extends RuntimeException {
 	private static final long serialVersionUID = -7545514938872465358L;

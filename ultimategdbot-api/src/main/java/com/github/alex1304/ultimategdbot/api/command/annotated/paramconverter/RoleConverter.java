@@ -1,7 +1,7 @@
 package com.github.alex1304.ultimategdbot.api.command.annotated.paramconverter;
 
 import com.github.alex1304.ultimategdbot.api.command.Context;
-import com.github.alex1304.ultimategdbot.api.utils.DiscordParser;
+import com.github.alex1304.ultimategdbot.api.util.DiscordParser;
 
 import discord4j.core.object.entity.Role;
 import reactor.core.publisher.Mono;

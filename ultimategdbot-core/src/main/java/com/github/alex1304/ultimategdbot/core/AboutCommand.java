@@ -1,20 +1,21 @@
 package com.github.alex1304.ultimategdbot.core;
 
+import static java.util.Objects.requireNonNull;
+import static java.util.stream.Collectors.toMap;
+import static reactor.function.TupleUtils.function;
+
 import java.util.HashMap;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 import com.github.alex1304.ultimategdbot.api.command.Context;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandAction;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandDoc;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandSpec;
-import com.github.alex1304.ultimategdbot.api.utils.DiscordFormatter;
+import com.github.alex1304.ultimategdbot.api.util.DiscordFormatter;
 
-import discord4j.core.object.entity.ApplicationInfo;
+import discord4j.core.object.util.Snowflake;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
-import reactor.function.TupleUtils;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
@@ -23,11 +24,13 @@ import reactor.util.function.Tuples;
 		shortDescription = "Shows information about the bot itself."
 )
 class AboutCommand {
+
+	private final String corePluginName;
+	private final String aboutText;
 	
-	private final CorePlugin plugin;
-	
-	public AboutCommand(CorePlugin plugin) {
-		this.plugin = Objects.requireNonNull(plugin);
+	public AboutCommand(String corePluginName, String aboutText) {
+		this.corePluginName = requireNonNull(corePluginName);
+		this.aboutText = requireNonNull(aboutText);
 	}
 
 	@CommandAction
@@ -37,36 +40,36 @@ class AboutCommand {
 			+ "its development.")
 	public Mono<Void> run(Context ctx) {
 		return Mono.zip(
-				ctx.getBot().getApplicationInfo().zipWhen(ApplicationInfo::getOwner),
-				ctx.getBot().getMainDiscordClient().getGuilds().count(),
-				ctx.getBot().getMainDiscordClient().getUsers().count(),
+				ctx.getBot().getOwnerId().map(Snowflake::of).flatMap(ctx.getBot().getGateway()::getUserById),
+				ctx.getBot().getGateway().getSelf(),
+				ctx.getBot().getGateway().getGuilds().count(),
+				ctx.getBot().getGateway().getUsers().count(),
 				Flux.fromIterable(ctx.getBot().getPlugins())
 						.flatMap(p -> p.getGitProperties()
 								.map(g -> g.getProperty("git.build.version", "*unknown*"))
 								.defaultIfEmpty("*unknown*")
-								.map(v -> Tuples.of(p, v)))
-						.collect(Collectors.toMap(Tuple2::getT1, Tuple2::getT2)))
-				.flatMap(TupleUtils.function((appInfoWithOwner, guildCount, userCount, pluginMap) -> {
+								.map(v -> Tuples.of(p.getName(), v)))
+						.collect(toMap(Tuple2::getT1, Tuple2::getT2)))
+				.flatMap(function((botOwner, self, guildCount, userCount, pluginMap) -> {
 					var versionInfoBuilder = new StringBuilder("**")
-							.append(appInfoWithOwner.getT1().getName())
-							.append(" version:** ");
-					var nativeGitProps = pluginMap.get(plugin);
+							.append("UltimateGDBot API version:** ");
+					var nativeGitProps = pluginMap.get(corePluginName);
 					versionInfoBuilder.append(nativeGitProps).append("\n");
 					pluginMap.forEach((k, v) -> {
-						if (k == this.plugin) return;
+						if (k.equals(corePluginName)) return;
 						versionInfoBuilder.append("**")
-							.append(k.getName())
+							.append(k)
 							.append(" plugin version:** ")
 							.append(v)
 							.append("\n");
 					});
 					var vars = new HashMap<String, String>();
-					vars.put("bot_name", appInfoWithOwner.getT1().getName());
-					vars.put("bot_owner", DiscordFormatter.formatUser(appInfoWithOwner.getT2()));
+					vars.put("bot_name", self.getUsername());
+					vars.put("bot_owner", DiscordFormatter.formatUser(botOwner));
 					vars.put("server_count", "" + guildCount);
 					vars.put("user_count", "" + userCount);
 					vars.put("version_info", versionInfoBuilder.toString());
-					var result = new String[] { plugin.getAboutText() };
+					var result = new String[] { aboutText };
 					vars.forEach((k, v) -> result[0] = result[0].replaceAll("\\{\\{ *" + k + " *\\}\\}", String.valueOf(v)));
 					return ctx.reply(result[0]);
 				}))

@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.stream.Collectors;
 
 import com.github.alex1304.ultimategdbot.api.command.Context;
-import com.github.alex1304.ultimategdbot.api.command.PermissionLevel;
+import com.github.alex1304.ultimategdbot.api.command.PermissionChecker;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandAction;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandDoc;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandSpec;
@@ -14,7 +14,7 @@ import reactor.core.publisher.Mono;
 @CommandSpec(
 		aliases = "cacheinfo",
 		shortDescription = "Give statistics on the cache used to store Discord entities.",
-		permLevel = PermissionLevel.BOT_ADMIN
+		permLevel = PermissionChecker.BOT_ADMIN
 )
 class CacheInfoCommand {
 

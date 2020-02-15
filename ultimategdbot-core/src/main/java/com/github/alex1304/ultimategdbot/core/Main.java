@@ -26,7 +26,7 @@ class Main {
 				pluginsProps.load(pluginsPropsInput);
 			}
 			var bot = Bot.buildFromProperties(props, pluginsProps);
-			bot.start().block();	
+			bot.start();	
 		} catch (Exception e) {
 			LOGGER.error("The bot could not be started. Make sure that all configuration files are present and have a valid content", e);
 			System.exit(1);

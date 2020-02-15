@@ -9,11 +9,12 @@ import java.util.Optional;
 import java.util.Set;
 
 import com.github.alex1304.ultimategdbot.api.Bot;
-import com.github.alex1304.ultimategdbot.api.utils.InputTokenizer;
+import com.github.alex1304.ultimategdbot.api.util.InputTokenizer;
 
 import discord4j.core.event.domain.message.MessageCreateEvent;
-import discord4j.core.object.entity.MessageChannel;
+import discord4j.core.object.entity.channel.MessageChannel;
 import discord4j.core.object.util.Snowflake;
+import reactor.core.publisher.Mono;
 
 /**
  * Provides a set of commands. Each command handler provides their own way to
@@ -60,8 +61,8 @@ public class CommandProvider {
 	 * @return an ExecutableCommand if the event results in a command to be
 	 *         triggered, an empty Optional otherwise.
 	 */
-	public Optional<ExecutableCommand> provideFromEvent(Bot bot, String prefix, MessageCreateEvent event, MessageChannel channel) {
-		return bot.getMainDiscordClient().getSelfId().map(Snowflake::asLong).flatMap(botId -> {
+	public Mono<ExecutableCommand> provideFromEvent(Bot bot, String prefix, MessageCreateEvent event, MessageChannel channel) {
+		return bot.getGateway().getSelfId().map(Snowflake::asLong).flatMap(botId -> {
 			var prefixes = Set.of("<@" + botId + ">", "<@!" + botId + ">", prefix);
 			var content = event.getMessage().getContent().orElse("");
 			String prefixUsed = null;
@@ -73,17 +74,17 @@ public class CommandProvider {
 				}
 			}
 			if (prefixUsed == null) {
-				return Optional.empty();
+				return Mono.empty();
 			}
-			var parsed = InputTokenizer.tokenize(bot.getFlagPrefix(), content);
+			var parsed = InputTokenizer.tokenize(bot.getConfig().getFlagPrefix(), content);
 			var flags = parsed.getT1();
 			var args = parsed.getT2();
 			if (args.isEmpty()) {
-				return Optional.empty();
+				return Mono.empty();
 			}
 			final var fPrefixUsed = prefixUsed;
 			var command = commandMap.get(args.get(0));
-			return Optional.ofNullable(command)
+			return Mono.justOrEmpty(command)
 					.map(cmd -> new ExecutableCommand(cmd, new Context(cmd, event, args, flags, bot, fPrefixUsed, channel), errorHandler));
 		});
 	}

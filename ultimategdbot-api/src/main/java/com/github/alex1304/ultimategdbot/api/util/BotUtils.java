@@ -1,4 +1,4 @@
-package com.github.alex1304.ultimategdbot.api.utils;
+package com.github.alex1304.ultimategdbot.api.util;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -7,14 +7,15 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+
 import com.github.alex1304.ultimategdbot.api.command.Context;
-import com.github.alex1304.ultimategdbot.api.utils.menu.InteractiveMenu;
-import com.github.alex1304.ultimategdbot.api.utils.menu.PageNumberOutOfRangeException;
-import com.github.alex1304.ultimategdbot.api.utils.menu.PaginationControls;
+import com.github.alex1304.ultimategdbot.api.util.menu.InteractiveMenu;
+import com.github.alex1304.ultimategdbot.api.util.menu.PageNumberOutOfRangeException;
+import com.github.alex1304.ultimategdbot.api.util.menu.PaginationControls;
 
 import discord4j.core.object.entity.Message;
-import discord4j.core.object.entity.MessageChannel;
-import reactor.core.publisher.Flux;
+import discord4j.core.object.entity.channel.MessageChannel;
 import reactor.core.publisher.Mono;
 
 /**
@@ -91,40 +92,6 @@ public class BotUtils {
 		return result.isEmpty() ? "0ms" : result.substring(0, result.length() - 1);
 	}
 	
-	/**
-	 * Sends an error report to the debug log channel.
-	 * 
-	 * @param header the first sentence to write on the report
-	 * @param ctx    the context of the error
-	 * @param error  the error itself
-	 * @return a Flux of messages that were sent in the debug log channel. If the
-	 *         error report exceeds {@link Message#MAX_CONTENT_LENGTH} characters, it will be split using
-	 *         {@link #splitMessage(String)}, in this case the Flux may emit more
-	 *         than one message instance.
-	 */
-	public static Flux<Message> debugError(String header, Context ctx, Throwable error) {
-		Objects.requireNonNull(header, "header was null");
-		Objects.requireNonNull(ctx, "ctx was null");
-		Objects.requireNonNull(error, "error was null");
-		var sb = new StringBuilder(header)
-				.append("\nContext dump: `")
-				.append(ctx)
-				.append("`\nException thrown: `");
-		var separator = "";
-		for (var current = error ; current != null ; current = current.getCause()) {
-			sb.append(separator)
-					.append(current.getClass().getCanonicalName())
-					.append(": ")
-					.append(current.getMessage())
-					.append("`\n");
-			separator = "Caused by: `";
-		}
-		return ctx.getBot().getDebugLogChannel()
-				.ofType(MessageChannel.class)
-				.flatMapMany(c -> Flux.fromIterable(splitMessage(sb.toString()))
-						.flatMap(c::createMessage));
-	}
-	
 	public static Mono<Void> sendPaginatedMessage(Context ctx, String text, PaginationControls controls, int pageLength) {
 		Objects.requireNonNull(ctx);
 		Objects.requireNonNull(text);
@@ -146,6 +113,24 @@ public class BotUtils {
 	}
 	
 	public static Mono<Void> sendPaginatedMessage(Context ctx, String text) {
-		return sendPaginatedMessage(ctx, text, ctx.getBot().getDefaultPaginationControls(), 800);
+		return sendPaginatedMessage(ctx, text, PaginationControls.getDefault(), Message.MAX_CONTENT_LENGTH - 10);
+	}
+	
+
+	
+	public static Mono<Void> logCommandError(Logger logger, Context ctx, Throwable e) {
+		var replyToUser = ctx.getChannel()
+				.createMessage(":no_entry_sign: Something went wrong. A crash report "
+						+ "has been sent to the developer. Sorry for the inconvenience.");
+		var logInDebugChannel = Mono.justOrEmpty(ctx.getBot().getConfig().getDebugLogChannelId())
+				.map(ctx.getBot().getGateway()::getChannelById)
+				.ofType(MessageChannel.class)
+				.flatMap(c -> c.createMessage(":no_entry_sign: **Something went wrong when executing a command.**\n"
+						+ "Trigger: " + ctx.getEvent().getMessage().getContent().orElse("") + '\n'
+						+ "Error: " + Markdown.code(e.getClass().getName() + (e.getMessage() == null ? "" : ": " + e.getMessage())) + '\n'));
+		var logInFile = Mono.fromRunnable(() -> logger.error("Something went wrong when executing a command. Context dump: "
+				+ ctx, e));
+		
+		return Mono.when(replyToUser, logInDebugChannel, logInFile);
 	}
 }

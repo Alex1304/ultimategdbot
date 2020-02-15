@@ -1,13 +1,13 @@
-package com.github.alex1304.ultimategdbot.api.utils;
+package com.github.alex1304.ultimategdbot.api.util;
 
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import com.github.alex1304.ultimategdbot.api.Bot;
 
-import discord4j.core.object.entity.GuildChannel;
 import discord4j.core.object.entity.Role;
 import discord4j.core.object.entity.User;
+import discord4j.core.object.entity.channel.GuildChannel;
 import discord4j.core.object.util.Snowflake;
 import reactor.core.publisher.Mono;
 
@@ -62,7 +62,7 @@ public interface DatabaseOutputFunction<D> extends BiFunction<D, Long, Mono<Stri
 	 *         role found.
 	 */
 	public static DatabaseOutputFunction<Long> fromRoleId(Bot bot, Function<? super Role, String> roleToString) {
-		return (roleId, guildId) -> bot.getMainDiscordClient()
+		return (roleId, guildId) -> bot.getGateway()
 				.getRoleById(Snowflake.of(guildId), Snowflake.of(roleId))
 				.map(roleToString::apply)
 				.onErrorResume(e -> Mono.empty());
@@ -92,7 +92,7 @@ public interface DatabaseOutputFunction<D> extends BiFunction<D, Long, Mono<Stri
 	 *         user found.
 	 */
 	public static DatabaseOutputFunction<Long> fromUserId(Bot bot, Function<? super User, String> userToString) {
-		return (userId, guildId) -> bot.getMainDiscordClient()
+		return (userId, guildId) -> bot.getGateway()
 				.getUserById(Snowflake.of(userId))
 				.map(userToString)
 				.onErrorResume(e -> Mono.empty());
@@ -122,7 +122,7 @@ public interface DatabaseOutputFunction<D> extends BiFunction<D, Long, Mono<Stri
 	 *         channel found.
 	 */
 	public static DatabaseOutputFunction<Long> fromChannelId(Bot bot, Function<? super GuildChannel, String> channelToString) {
-		return (channelId, guildId) -> bot.getMainDiscordClient()
+		return (channelId, guildId) -> bot.getGateway()
 				.getChannelById(Snowflake.of(channelId))
 				.ofType(GuildChannel.class)
 				.map(channelToString::apply)

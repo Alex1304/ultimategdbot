@@ -1,45 +1,40 @@
 package com.github.alex1304.ultimategdbot.api;
 
+import static java.util.Collections.unmodifiableMap;
+import static java.util.Collections.unmodifiableSet;
+import static java.util.Objects.requireNonNull;
+
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
 import com.github.alex1304.ultimategdbot.api.command.CommandProvider;
 import com.github.alex1304.ultimategdbot.api.database.GuildSettingsEntry;
-import com.github.alex1304.ultimategdbot.api.utils.BotUtils;
-import com.github.alex1304.ultimategdbot.api.utils.PropertyParser;
+import com.github.alex1304.ultimategdbot.api.util.BotUtils;
 
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 /**
- * Represents a plugin. A plugin has a name and provides a list of commands.
+ * Represents a plugin. A plugin has a name and provides commands.
  */
-public interface Plugin {
-	/**
-	 * Code executed when the plugin is loaded. This allows the plugin to perform
-	 * additional configuration. Emittiong an error here will cancel
-	 * the loading of this plugin and will display a warning in the standard output.
-	 * Other plugins won't be affected.
-	 * 
-	 * @param bot    the bot instance
-	 * @param parser contains everything defined in plugins.properties, ready to be
-	 *               parsed
-	 * @return a Mono that completes to indicate that the setup is done
-	 */
-	Mono<Void> setup(Bot bot, PropertyParser parser);
+public class Plugin {
 	
-	/**
-	 * Action to execute when the bot is ready. Errors emitted from here will be
-	 * logged on the WARN level then suppressed.
-	 * 
-	 * @param bot the bot instance
-	 * 
-	 * @return a Mono that completes when the action is finished
-	 */
-	default Mono<Void> onBotReady(Bot bot) {
-		return Mono.empty();
+	private final String name;
+	private final Set<String> databaseMappingResources;
+	private final Map<String, GuildSettingsEntry<?, ?>> guildSettingsEntries;
+	private final CommandProvider commandProvider;
+	
+	private Plugin(String name, Set<String> databaseMappingResources, Map<String, GuildSettingsEntry<?, ?>> guildSettingsEntries,
+			CommandProvider commandProvider) {
+		this.name = name;
+		this.databaseMappingResources = databaseMappingResources;
+		this.guildSettingsEntries = guildSettingsEntries;
+		this.commandProvider = commandProvider;
 	}
 
 	/**
@@ -47,7 +42,9 @@ public interface Plugin {
 	 * 
 	 * @return the name
 	 */
-	String getName();
+	public String getName() {
+		return name;
+	}
 
 	/**
 	 * Gets a set of resource names that corresponds to database mapping files.
@@ -56,7 +53,9 @@ public interface Plugin {
 	 * 
 	 * @return a set containing the name of all mapping files used in the plugin.
 	 */
-	Set<String> getDatabaseMappingResources();
+	public Set<String> getDatabaseMappingResources() {
+		return unmodifiableSet(databaseMappingResources);
+	}
 
 	/**
 	 * Gets a map of configuration entries for guilds. Anything added here will be
@@ -64,14 +63,18 @@ public interface Plugin {
 	 * 
 	 * @return the guild configuration entries
 	 */
-	Map<String, GuildSettingsEntry<?, ?>> getGuildConfigurationEntries();
+	public Map<String, GuildSettingsEntry<?, ?>> getGuildConfigurationEntries() {
+		return unmodifiableMap(guildSettingsEntries);
+	}
 	
 	/**
 	 * Gets the command provider for this plugin.
 	 * 
 	 * @return the command provider
 	 */
-	CommandProvider getCommandProvider();
+	public CommandProvider getCommandProvider() {
+		return commandProvider;
+	}
 	
 	/**
 	 * Gets the Git properties for this plugin. By default, it will look for a file
@@ -83,7 +86,7 @@ public interface Plugin {
 	 * 
 	 * @return a Mono emitting the git properties if found
 	 */
-	default Mono<Properties> getGitProperties() {
+	public Mono<Properties> getGitProperties() {
 		return Mono.fromCallable(() -> {
 			var props = new Properties();
 			try (var stream = BotUtils.class
@@ -92,8 +95,80 @@ public interface Plugin {
 					props.load(stream);
 				}
 			} catch (IOException e) {
+				
 			}
 			return props;
 		}).subscribeOn(Schedulers.elastic());
+	}
+	
+	/**
+	 * Creates a new plugin builder with the specified name.
+	 * 
+	 * @param name the name of the plugin to build
+	 * @return a new Builder
+	 */
+	public static Builder builder(String name) {
+		return new Builder(name);
+	}
+	
+	public static class Builder {
+		
+		private final String name;
+		private final Set<String> databaseMappingResources = new HashSet<>();
+		private final Map<String, GuildSettingsEntry<?, ?>> guildSettingsEntries = new LinkedHashMap<>();
+		private CommandProvider commandProvider = new CommandProvider();
+		
+		private Builder(String name) {
+			this.name = requireNonNull(name);
+		}
+		
+		/**
+		 * Adds one or more resource paths where database mapping files are located.
+		 * 
+		 * @param resource the first resource
+		 * @param more     other resources
+		 * @return this builder
+		 */
+		public Builder addDatabaseMappingRessources(String resource, String... more) {
+			requireNonNull(resource);
+			requireNonNull(more);
+			databaseMappingResources.add(resource);
+			databaseMappingResources.addAll(Arrays.asList(more));
+			return this;
+		}
+		
+		/**
+		 * Adds a new entry to guild settings.
+		 * 
+		 * @param key   the key of the entry
+		 * @param entry the entry itself
+		 * @return this builder
+		 */
+		public Builder addGuildSettingsEntry(String key, GuildSettingsEntry<?, ?> entry) {
+			requireNonNull(key);
+			requireNonNull(entry);
+			guildSettingsEntries.put(key, entry);
+			return this;
+		}
+		
+		/**
+		 * Sets the command provider for this plugin.
+		 * 
+		 * @param commandProvider the command provider
+		 * @return this builder
+		 */
+		public Builder setCommandProvider(CommandProvider commandProvider) {
+			this.commandProvider = requireNonNull(commandProvider);
+			return this;
+		}
+		
+		/**
+		 * Builds the plugin instance.
+		 * 
+		 * @return the plugin instance
+		 */
+		public Plugin build() {
+			return new Plugin(name, databaseMappingResources, guildSettingsEntries, commandProvider);
+		}
 	}
 }

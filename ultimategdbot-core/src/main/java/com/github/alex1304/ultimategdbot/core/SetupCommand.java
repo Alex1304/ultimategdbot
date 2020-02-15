@@ -5,7 +5,7 @@ import java.util.Comparator;
 import com.github.alex1304.ultimategdbot.api.Plugin;
 import com.github.alex1304.ultimategdbot.api.command.CommandFailedException;
 import com.github.alex1304.ultimategdbot.api.command.Context;
-import com.github.alex1304.ultimategdbot.api.command.PermissionLevel;
+import com.github.alex1304.ultimategdbot.api.command.PermissionChecker;
 import com.github.alex1304.ultimategdbot.api.command.Scope;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandAction;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandDoc;
@@ -21,7 +21,7 @@ import reactor.util.function.Tuples;
 @CommandSpec(
 	aliases = { "setup", "settings", "configure", "config" },
 	shortDescription = "View and edit the bot configuration in this server.",
-	permLevel = PermissionLevel.SERVER_ADMIN,
+	permLevel = PermissionChecker.SERVER_ADMIN,
 	scope = Scope.GUILD_ONLY
 )
 class SetupCommand {

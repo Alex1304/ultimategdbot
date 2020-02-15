@@ -1,10 +1,9 @@
 package com.github.alex1304.ultimategdbot.api;
 
-import static com.github.alex1304.ultimategdbot.api.utils.BotUtils.debugError;
+import static com.github.alex1304.ultimategdbot.api.util.BotUtils.logCommandError;
 import static java.util.Collections.synchronizedSet;
 import static java.util.Objects.requireNonNull;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -12,29 +11,30 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.alex1304.ultimategdbot.api.command.Command;
 import com.github.alex1304.ultimategdbot.api.command.CommandProvider;
-import com.github.alex1304.ultimategdbot.api.database.NativeGuildSettings;
+import com.github.alex1304.ultimategdbot.api.command.PermissionChecker;
 
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.entity.User;
 import discord4j.core.object.util.Snowflake;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.annotation.Nullable;
 
 /**
  * The command kernel coordinates the command providers from all plugins. It
  * also holds a blacklist to restrict the usage of commands from certain guilds,
- * channels or users. It listens to message create events and dispatch the to
+ * channels or users. It listens to message create events and dispatch them to
  * the proper command providers to trigger the execution of commands.
  */
 public class CommandKernel {
-	private static final Logger LOGGER = LoggerFactory.getLogger("ultimategdbot.commandkernel");
+	private static final Logger LOGGER = LoggerFactory.getLogger(CommandKernel.class);
 
 	private final Bot bot;
 	private final Set<CommandProvider> providers = synchronizedSet(new HashSet<>());
 	private final Set<Long> blacklist = synchronizedSet(new HashSet<>());
-	private final ConcurrentHashMap<Long, String> guildPrefixCache = new ConcurrentHashMap<>();
+	private final ConcurrentHashMap<Long, String> prefixByGuild = new ConcurrentHashMap<>();
+	private final PermissionChecker permissionChecker = new PermissionChecker();
 	
 	public CommandKernel(Bot bot) {
 		this.bot = requireNonNull(bot);
@@ -69,68 +69,45 @@ public class CommandKernel {
 		if (event.getMessage().getAuthor().map(User::isBot).orElse(true)) {
 			return Mono.empty();
 		}
-		if (authorId.map(id -> blacklist.contains(id.asLong())).orElse(false)) {
-			LOGGER.debug("Ignoring event due to AUTHOR being blacklisted: {}", event);
-			return Mono.empty();
-		}
-		if (guildId.map(id -> blacklist.contains(id.asLong())).orElse(false)) {
-			LOGGER.debug("Ignoring event due to GUILD being blacklisted: {}", event);
-			return Mono.empty();
-		}
-		if (blacklist.contains(channelId.asLong())) {
-			LOGGER.debug("Ignoring event due to CHANNEL being blacklisted: {}", event);
-			return Mono.empty();
-		}
-		return findGuildSpecificPrefix(event)
-				.flatMapMany(prefix -> Flux.fromIterable(providers)
-						.flatMap(provider -> event.getMessage().getChannel()
-								.flatMap(channel -> Mono.justOrEmpty(provider.provideFromEvent(bot, prefix, event, channel)))))
+		var prefix = guildId.map(Snowflake::asLong).map(prefixByGuild::get).orElse(bot.getConfig().getDefaultPrefix());
+		return Flux.fromIterable(providers)
+				.flatMap(provider -> event.getMessage().getChannel()
+						.flatMap(channel -> provider.provideFromEvent(bot, prefix, event, channel)))
+				.filter(executable -> {
+					if (authorId.map(id -> blacklist.contains(id.asLong())).orElse(false)) {
+						LOGGER.debug("Ignoring command due to AUTHOR being blacklisted: {}", executable);
+						return false;
+					}
+					if (guildId.map(id -> blacklist.contains(id.asLong())).orElse(false)) {
+						LOGGER.debug("Ignoring command due to GUILD being blacklisted: {}", executable);
+						return false;
+					}
+					if (blacklist.contains(channelId.asLong())) {
+						LOGGER.debug("Ignoring command due to CHANNEL being blacklisted: {}", executable);
+						return false;
+					}
+					return true;
+				})
 				.flatMap(executable -> executable.execute()
-						.onErrorResume(e -> Mono.when(event.getMessage().getChannel()
-								.flatMap(c -> c.createMessage(":no_entry_sign: Something went wrong. "
-										+ "A crash report has been sent to the developer. Sorry for "
-										+ "the inconvenience."))
-								.onErrorResume(__ -> Mono.empty()),
-						debugError(":no_entry_sign: Something went wrong when executing a command", executable.getContext(), e),
-						Mono.fromRunnable(() -> LOGGER.error("Something went wrong when executing a command. Context dump: "
-								+ executable.getContext(), e)))))
+						.onErrorResume(e -> logCommandError(LOGGER, executable.getContext(), e)))
 				.then();
 	}
 	
+	/**
+	 * Starts listening to message create events.
+	 */
 	public void start() {
-		bot.getDiscordClients()
-				.flatMap(client -> client.getEventDispatcher().on(MessageCreateEvent.class))
-				.flatMap(event -> processEvent(event).onErrorResume(e -> Mono
-						.fromRunnable(() -> LOGGER.error("An error occured when processing event " + event, e))))
-				.retry()
-				.repeat()
-				.subscribe();
+		bot.getGateway().on(MessageCreateEvent.class, this::processEvent).subscribe();
 	}
 	
 	/**
-	 * Gets a command instance corresponding to the given alias.
-	 *  
-	 * @param alias the alias of the command
-	 * @return the corresponding command instance, or null if not found
-	 */
-	public Command getCommandByAlias(String alias) {
-		for (var p : providers) {
-			var cmd = p.getCommandByAlias(alias);
-			if (cmd != null) {
-				return cmd;
-			}
-		}
-		return null;
-	}
-	
-	/**
-	 * Gets an unmodifiable set of IDs that are not allowed to perform operations on
-	 * the command kernel.
+	 * Gets the permission checker used to check permissions for commands provided
+	 * by this kernel.
 	 * 
-	 * @return an unmodifiable set of IDs
+	 * @return the permission checker
 	 */
-	public Set<Long> getBlacklist() {
-		return Collections.unmodifiableSet(blacklist);
+	public PermissionChecker getPermissionChecker() {
+		return permissionChecker;
 	}
 	
 	/**
@@ -154,36 +131,20 @@ public class CommandKernel {
 	}
 
 	/**
-	 * Forces this command kernel to evict the prefix from cache for the specified
-	 * guild.
+	 * Sets a prefix specific for the given guild. If one was already set for the
+	 * same guild, it is overwritten.
 	 * 
 	 * @param guildId the guild id
+	 * @param prefix  the new prefix. May be null, in which case the prefix is
+	 *                removed.
 	 */
-	public void invalidateCachedPrefixForGuild(long guildId) {
-		guildPrefixCache.remove(guildId);
-		LOGGER.debug("Invalidated cached prefix for guild {}", guildId);
-	}
-	
-	private Mono<String> findGuildSpecificPrefix(MessageCreateEvent event) {
-		return Mono.justOrEmpty(event.getGuildId())
-				.map(Snowflake::asLong)
-				.flatMap(guildId -> Mono.justOrEmpty(guildPrefixCache.get(guildId))
-						.switchIfEmpty(bot.getDatabase()
-								.findByID(NativeGuildSettings.class, guildId)
-								.switchIfEmpty(Mono.fromCallable(() -> {
-											var gs = new NativeGuildSettings();
-											gs.setGuildId(guildId);
-											return gs;
-										})
-										.flatMap(gs -> bot.getDatabase().save(gs)
-												.then(Mono.fromRunnable(() -> LOGGER.debug("Created guild settings: {}", gs)))
-												.onErrorResume(e -> Mono.fromRunnable(() -> LOGGER
-														.error("Unable to save guild settings for " + guildId, e)))
-												.thenReturn(gs)))
-								.flatMap(gs -> Mono.justOrEmpty(gs.getPrefix()))
-								.defaultIfEmpty(bot.getDefaultPrefix())
-								.map(String::strip)
-								.doOnNext(prefix -> guildPrefixCache.put(guildId, prefix))))
-				.defaultIfEmpty(bot.getDefaultPrefix());
+	public void setPrefixForGuild(long guildId, @Nullable String prefix) {
+		if (prefix == null) {
+			prefixByGuild.remove(guildId);
+			LOGGER.debug("Removed prefix for guild {}", guildId);
+			return;
+		}
+		prefixByGuild.put(guildId, prefix);
+		LOGGER.debug("Changed prefix for guild {}: {}", guildId, prefix);
 	}
 }

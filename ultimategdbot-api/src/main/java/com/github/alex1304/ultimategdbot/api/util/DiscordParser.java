@@ -1,11 +1,11 @@
-package com.github.alex1304.ultimategdbot.api.utils;
+package com.github.alex1304.ultimategdbot.api.util;
 
 import com.github.alex1304.ultimategdbot.api.Bot;
 
 import discord4j.core.object.entity.Guild;
-import discord4j.core.object.entity.GuildChannel;
 import discord4j.core.object.entity.Role;
 import discord4j.core.object.entity.User;
+import discord4j.core.object.entity.channel.GuildChannel;
 import discord4j.core.object.util.Snowflake;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
@@ -34,8 +34,8 @@ public class DiscordParser {
 						.map(Snowflake::of))
 				.onErrorResume(e -> Mono.just(str.substring(3, str.length() - 1))
 						.map(Snowflake::of))
-				.flatMap(bot.getMainDiscordClient()::getUserById)
-				.onErrorResume(e -> bot.getMainDiscordClient().getUsers()
+				.flatMap(bot.getGateway()::getUserById)
+				.onErrorResume(e -> bot.getGateway().getUsers()
 						.map(user -> Tuples.of(user, DiscordFormatter.formatUser(user)))
 						.filter(u -> u.getT2().startsWith(str))
 						.map(Tuple2::getT1)
@@ -58,8 +58,8 @@ public class DiscordParser {
 				.map(Snowflake::of)
 				.onErrorResume(e -> Mono.just(str.substring(3, str.length() - 1))
 						.map(Snowflake::of))
-				.flatMap(roleId -> bot.getMainDiscordClient().getRoleById(guildId, roleId))
-				.onErrorResume(e -> bot.getMainDiscordClient()
+				.flatMap(roleId -> bot.getGateway().getRoleById(guildId, roleId))
+				.onErrorResume(e -> bot.getGateway()
 						.getGuildById(guildId)
 						.flatMapMany(Guild::getRoles)
 						.filter(r -> r.getName().toLowerCase().startsWith(str.toLowerCase()))
@@ -82,9 +82,9 @@ public class DiscordParser {
 				.map(Snowflake::of)
 				.onErrorResume(e -> Mono.just(str.substring(2, str.length() - 1))
 						.map(Snowflake::of))
-				.flatMap(bot.getMainDiscordClient()::getChannelById)
+				.flatMap(bot.getGateway()::getChannelById)
 				.ofType(GuildChannel.class)
-				.onErrorResume(e -> bot.getMainDiscordClient().getGuildById(guildId)
+				.onErrorResume(e -> bot.getGateway().getGuildById(guildId)
 						.flatMapMany(Guild::getChannels)
 						.filter(r -> r.getName().toLowerCase().startsWith(str.toLowerCase()))
 						.next()

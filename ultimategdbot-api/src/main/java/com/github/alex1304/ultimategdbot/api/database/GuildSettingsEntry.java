@@ -7,8 +7,8 @@ import java.util.function.Function;
 
 import org.hibernate.Session;
 
-import com.github.alex1304.ultimategdbot.api.utils.DatabaseInputFunction;
-import com.github.alex1304.ultimategdbot.api.utils.DatabaseOutputFunction;
+import com.github.alex1304.ultimategdbot.api.util.DatabaseInputFunction;
+import com.github.alex1304.ultimategdbot.api.util.DatabaseOutputFunction;
 
 import reactor.core.publisher.Mono;
 

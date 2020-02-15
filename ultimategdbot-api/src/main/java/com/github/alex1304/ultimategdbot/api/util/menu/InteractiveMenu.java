@@ -1,4 +1,4 @@
-package com.github.alex1304.ultimategdbot.api.utils.menu;
+package com.github.alex1304.ultimategdbot.api.util.menu;
 
 import static java.util.Objects.requireNonNull;
 
@@ -13,12 +13,13 @@ import java.util.function.IntFunction;
 
 import com.github.alex1304.ultimategdbot.api.command.ArgumentList;
 import com.github.alex1304.ultimategdbot.api.command.Context;
-import com.github.alex1304.ultimategdbot.api.utils.InputTokenizer;
-import com.github.alex1304.ultimategdbot.api.utils.UniversalMessageSpec;
+import com.github.alex1304.ultimategdbot.api.util.InputTokenizer;
+import com.github.alex1304.ultimategdbot.api.util.UniversalMessageSpec;
 
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.event.domain.message.ReactionAddEvent;
 import discord4j.core.event.domain.message.ReactionRemoveEvent;
+import discord4j.core.object.entity.Guild;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.User;
 import discord4j.core.object.reaction.ReactionEmoji;
@@ -44,11 +45,12 @@ public class InteractiveMenu {
 	private final boolean deleteMenuOnTimeout;
 	private final boolean closeAfterMessage;
 	private final boolean closeAfterReaction;
+	private final int timeoutSeconds;
 
 	private InteractiveMenu(Mono<Consumer<MessageCreateSpec>> specMono,
 			Map<String, Function<MessageMenuInteraction, Mono<Void>>> messageItems,
 			Map<String, Function<ReactionMenuInteraction, Mono<Void>>> reactionItems, boolean deleteMenuOnClose,
-			boolean deleteMenuOnTimeout, boolean closeAfterMessage, boolean closeAfterReaction) {
+			boolean deleteMenuOnTimeout, boolean closeAfterMessage, boolean closeAfterReaction, int timeoutSeconds) {
 		this.specMono = specMono;
 		this.messageItems = messageItems;
 		this.reactionItems = reactionItems;
@@ -56,6 +58,7 @@ public class InteractiveMenu {
 		this.deleteMenuOnTimeout = deleteMenuOnTimeout;
 		this.closeAfterMessage = closeAfterMessage;
 		this.closeAfterReaction = closeAfterReaction;
+		this.timeoutSeconds = timeoutSeconds;
 	}
 	
 	/**
@@ -91,7 +94,7 @@ public class InteractiveMenu {
 	 */
 	public static InteractiveMenu create(Mono<Consumer<MessageCreateSpec>> specMono) {
 		requireNonNull(specMono);
-		return new InteractiveMenu(specMono, Map.of(), Map.of(), false, false, true, true);
+		return new InteractiveMenu(specMono, Map.of(), Map.of(), false, false, true, true, 0);
 	}
 
 	/**
@@ -192,7 +195,7 @@ public class InteractiveMenu {
 		var newMessageItems = new LinkedHashMap<>(messageItems);
 		newMessageItems.put(message, action);
 		return new InteractiveMenu(specMono, Collections.unmodifiableMap(newMessageItems), reactionItems, deleteMenuOnClose,
-				deleteMenuOnTimeout, closeAfterMessage, closeAfterReaction);
+				deleteMenuOnTimeout, closeAfterMessage, closeAfterReaction, timeoutSeconds);
 	}
 
 	public InteractiveMenu addReactionItem(String emojiName, Function<ReactionMenuInteraction, Mono<Void>> action) {
@@ -201,27 +204,32 @@ public class InteractiveMenu {
 		var newReactionItems = new LinkedHashMap<>(reactionItems);
 		newReactionItems.put(emojiName, action);
 		return new InteractiveMenu(specMono, messageItems, Collections.unmodifiableMap(newReactionItems), deleteMenuOnClose,
-				deleteMenuOnTimeout, closeAfterMessage, closeAfterReaction);
+				deleteMenuOnTimeout, closeAfterMessage, closeAfterReaction, timeoutSeconds);
 	}
 	
 	public InteractiveMenu deleteMenuOnClose(boolean deleteMenuOnClose) {
 		return new InteractiveMenu(specMono, messageItems, reactionItems, deleteMenuOnClose, deleteMenuOnTimeout,
-				closeAfterMessage, closeAfterReaction);
+				closeAfterMessage, closeAfterReaction, timeoutSeconds);
 	}
 	
 	public InteractiveMenu deleteMenuOnTimeout(boolean deleteMenuOnTimeout) {
 		return new InteractiveMenu(specMono, messageItems, reactionItems, deleteMenuOnClose, deleteMenuOnTimeout,
-				closeAfterMessage, closeAfterReaction);
+				closeAfterMessage, closeAfterReaction, timeoutSeconds);
 	}
 	
 	public InteractiveMenu closeAfterMessage(boolean closeAfterMessage) {
 		return new InteractiveMenu(specMono, messageItems, reactionItems, deleteMenuOnClose, deleteMenuOnTimeout,
-				closeAfterMessage, closeAfterReaction);
+				closeAfterMessage, closeAfterReaction, timeoutSeconds);
 	}
 	
 	public InteractiveMenu closeAfterReaction(boolean closeAfterReaction) {
 		return new InteractiveMenu(specMono, messageItems, reactionItems, deleteMenuOnClose, deleteMenuOnTimeout,
-				closeAfterMessage, closeAfterReaction);
+				closeAfterMessage, closeAfterReaction, timeoutSeconds);
+	}
+	
+	public InteractiveMenu withTimeoutSeconds(int timeoutSeconds) {
+		return new InteractiveMenu(specMono, messageItems, reactionItems, deleteMenuOnClose, deleteMenuOnTimeout,
+				closeAfterMessage, closeAfterReaction, timeoutSeconds);
 	}
 	
 	/**
@@ -240,14 +248,14 @@ public class InteractiveMenu {
 		var closeNotifier = MonoProcessor.<Void>create();
 		return specMono.flatMap(ctx::reply)
 				.flatMap(menuMessage -> addReactionsToMenu(ctx, menuMessage))
-				.flatMap(menuMessage -> Mono.first(
+				.flatMap(menuMessage -> {
+					var menuMono = Mono.first(
 						closeNotifier,
-						ctx.getBot().getDiscordClients()
-								.flatMap(client -> client.getEventDispatcher().on(MessageCreateEvent.class))
+						ctx.getBot().getGateway().on(MessageCreateEvent.class)
 								.filter(event -> event.getMessage().getAuthor().equals(ctx.getEvent().getMessage().getAuthor())
 										&& event.getMessage().getChannelId().equals(ctx.getEvent().getMessage().getChannelId()))
 								.flatMap(event -> {
-									var tokens = InputTokenizer.tokenize(ctx.getBot().getFlagPrefix(), event.getMessage().getContent().orElse(""));
+									var tokens = InputTokenizer.tokenize(ctx.getBot().getConfig().getFlagPrefix(), event.getMessage().getContent().orElse(""));
 									var args = tokens.getT2();
 									var flags = tokens.getT1();
 									if (args.isEmpty()) {
@@ -264,10 +272,7 @@ public class InteractiveMenu {
 								.onErrorResume(UnexpectedReplyException.class, e -> ctx.reply(":no_entry_sign: " + e.getMessage()).then(Mono.error(e)))
 								.retry(UnexpectedReplyException.class::isInstance)
 								.then(),
-						ctx.getBot().getDiscordClients()
-								.flatMap(client -> Flux.merge(
-										client.getEventDispatcher().on(ReactionAddEvent.class),
-										client.getEventDispatcher().on(ReactionRemoveEvent.class)))
+						Flux.merge(ctx.getBot().getGateway().on(ReactionAddEvent.class), ctx.getBot().getGateway().on(ReactionRemoveEvent.class))
 								.map(ReactionToggleEvent::new)
 								.filter(event -> event.getMessageId().equals(menuMessage.getId())
 										&& event.getUserId().equals(ctx.getEvent().getMessage().getAuthor().map(User::getId).orElse(null)))
@@ -284,9 +289,10 @@ public class InteractiveMenu {
 								})
 								.takeUntil(__ -> closeAfterReaction)
 								.then())
-						.then(handleTermination(menuMessage, deleteMenuOnClose))
-						.timeout(Duration.ofSeconds(ctx.getBot().getInteractiveMenuTimeout()),
-								handleTermination(menuMessage, deleteMenuOnTimeout)));
+						.then(handleTermination(menuMessage, deleteMenuOnClose));
+					return timeoutSeconds == 0 ? menuMono : menuMono.timeout(Duration.ofSeconds(timeoutSeconds),
+							handleTermination(menuMessage, deleteMenuOnTimeout));
+				});
 	}
 	
 	private static Mono<Void> handleTermination(Message menuMessage, boolean shouldDelete) {
@@ -298,8 +304,10 @@ public class InteractiveMenu {
 	
 	private Mono<Message> addReactionsToMenu(Context ctx, Message menuMessage) {
 		return Flux.fromIterable(reactionItems.keySet())
-				.flatMap(emojiName -> ctx.getBot().getInstalledEmojis()
-						.filter(installedEmoji -> installedEmoji.getName().equalsIgnoreCase(emojiName))
+				.flatMap(emojiName -> Flux.fromIterable(ctx.getBot().getConfig().getEmojiGuildIds())
+						.flatMap(ctx.getBot().getGateway()::getGuildById)
+						.flatMap(Guild::getEmojis)
+						.filter(emoji -> emoji.getName().equalsIgnoreCase(emojiName))
 						.next()
 						.map(ReactionEmoji::custom)
 						.cast(ReactionEmoji.class)

@@ -1,5 +1,6 @@
 package com.github.alex1304.ultimategdbot.api.command;
 
+import java.util.Optional;
 import java.util.Set;
 
 import reactor.core.publisher.Mono;
@@ -25,27 +26,17 @@ public interface Command {
 	Set<String> getAliases();
 	
 	/**
+	 * Gets the name of the permission required to use the command, if applicable
+	 * 
+	 * @return the required permission, or empty Optional if no special permission
+	 *         is required
+	 */
+	Optional<String> getRequiredPermission();
+	
+	/**
 	 * Gets the documentation of the command.
 	 * 
 	 * @return the documentation
 	 */
 	CommandDocumentation getDocumentation();
-
-	/**
-	 * Gets the permission level required to execute this command.
-	 * 
-	 * @return the permission level
-	 */
-	default PermissionLevel getPermissionLevel() {
-		return PermissionLevel.PUBLIC;
-	}
-
-	/**
-	 * Gets the type of channels this command is allowed for use in.
-	 * 
-	 * @return the set of allowed type of channels
-	 */
-	default Scope getScope() {
-		return Scope.ANYWHERE;
-	}
 }

@@ -24,10 +24,8 @@ import com.github.alex1304.ultimategdbot.api.command.CommandDocumentationEntry;
 import com.github.alex1304.ultimategdbot.api.command.CommandFailedException;
 import com.github.alex1304.ultimategdbot.api.command.Context;
 import com.github.alex1304.ultimategdbot.api.command.FlagInformation;
-import com.github.alex1304.ultimategdbot.api.command.PermissionLevel;
-import com.github.alex1304.ultimategdbot.api.command.Scope;
 import com.github.alex1304.ultimategdbot.api.command.annotated.paramconverter.ParamConversionException;
-import com.github.alex1304.ultimategdbot.api.utils.Markdown;
+import com.github.alex1304.ultimategdbot.api.util.Markdown;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -45,17 +43,15 @@ public class AnnotatedCommand implements Command {
 	private final Function<Context, Mono<Void>> action;
 	private final Set<String> aliases;
 	private final CommandDocumentation doc;
-	private final PermissionLevel permLevel;
-	private final Scope scope;
+	private final Optional<String> requiredPermission;
 
 	private AnnotatedCommand(Object obj, Function<Context, Mono<Void>> action, Set<String> aliases,
-			CommandDocumentation doc, PermissionLevel permLevel, Scope scope) {
+			CommandDocumentation doc, Optional<String> requiredPermission) {
 		this.obj = obj;
 		this.action = action;
 		this.aliases = aliases;
 		this.doc = doc;
-		this.permLevel = permLevel;
-		this.scope = scope;
+		this.requiredPermission = requiredPermission;
 	}
 
 	@Override
@@ -67,20 +63,15 @@ public class AnnotatedCommand implements Command {
 	public Set<String> getAliases() {
 		return aliases;
 	}
+
+	@Override
+	public Optional<String> getRequiredPermission() {
+		return requiredPermission;
+	}
 	
 	@Override
 	public CommandDocumentation getDocumentation() {
 		return doc;
-	}
-	
-	@Override
-	public PermissionLevel getPermissionLevel() {
-		return permLevel;
-	}
-	
-	@Override
-	public Scope getScope() {
-		return scope;
 	}
 	
 	@Override
@@ -158,8 +149,7 @@ public class AnnotatedCommand implements Command {
 				},
 				Set.of(cmdSpecAnnot.aliases()),
 				buildDocumentation(cmdSpecAnnot.shortDescription(), mainMethod, subMethods),
-				cmdSpecAnnot.permLevel(),
-				cmdSpecAnnot.scope());
+				Optional.of(cmdSpecAnnot.requiredPermission()).filter(perm -> !perm.isEmpty()));
 	}
 
 	private static CommandSpec readCommandSpecAnnotation(Object obj) {

@@ -13,9 +13,9 @@ import com.github.alex1304.ultimategdbot.api.command.annotated.paramconverter.Ro
 import com.github.alex1304.ultimategdbot.api.command.annotated.paramconverter.StringConverter;
 import com.github.alex1304.ultimategdbot.api.command.annotated.paramconverter.UserConverter;
 
-import discord4j.core.object.entity.GuildChannel;
 import discord4j.core.object.entity.Role;
 import discord4j.core.object.entity.User;
+import discord4j.core.object.entity.channel.GuildChannel;
 import reactor.core.publisher.Mono;
 
 public class AnnotatedCommandProvider extends CommandProvider {

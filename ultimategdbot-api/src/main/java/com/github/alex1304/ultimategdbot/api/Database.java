@@ -13,6 +13,8 @@ import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.hibernate.cfg.Configuration;
 import org.reactivestreams.Publisher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -23,6 +25,8 @@ import reactor.core.scheduler.Schedulers;
  * Manages interactions with the database.
  */
 public class Database {
+	
+	private static final Logger LOGGER = LoggerFactory.getLogger(Database.class);
 	
 	private SessionFactory sessionFactory = null;
 	private final Set<String> resourceNames = new HashSet<>();
@@ -40,6 +44,7 @@ public class Database {
 			sessionFactory.close();
 		}
 		sessionFactory = config.buildSessionFactory();
+		LOGGER.info("Database ready!");
 	}
 
 	/**

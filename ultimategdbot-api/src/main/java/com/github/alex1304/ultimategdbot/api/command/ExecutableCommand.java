@@ -22,21 +22,23 @@ public class ExecutableCommand {
 	
 	/**
 	 * Executes the command by taking into account the context and by applying the
-	 * error handler. Scope and permission checks are performed here. If the command
-	 * is not in scope, the execution completes immediately without any side effect.
-	 * If the user is not granted the permission to use the command, the command
-	 * will fail with a {@link PermissionDeniedException}.
+	 * error handler. Permission checks are performed here. If the user is not
+	 * granted the permission to use the command, the command will fail with a
+	 * {@link PermissionDeniedException}.
 	 * 
 	 * @return a Mono completing when the command execution is complete. Errors
 	 *         caused by a failed permission check or an abnormal termination of the
 	 *         command will be forwarded through this Mono.
 	 */
 	public Mono<Void> execute() {
-		var commandMono = context.getEvent().getMessage().getChannel()
-				.filter(command.getScope()::isInScope)
-				.flatMap(c -> command.getPermissionLevel().checkGranted(context)
-						.then(command.run(context)));
-		return errorHandler.apply(commandMono, context);
+		return command.getRequiredPermission()
+				.map(perm -> context.getBot().getCommandKernel().getPermissionChecker()
+						.isGranted(perm, context)
+						.filter(isGranted -> isGranted)
+						.switchIfEmpty(Mono.error(new PermissionDeniedException()))
+						.then())
+				.orElse(Mono.empty())
+				.then(errorHandler.apply(command.run(context), context));
 	}
 	
 	/**
@@ -65,5 +67,9 @@ public class ExecutableCommand {
 	public CommandErrorHandler getErrorHandler() {
 		return errorHandler;
 	}
-	
+
+	@Override
+	public String toString() {
+		return "ExecutableCommand{command=" + command + ", context=" + context + "}";
+	}
 }

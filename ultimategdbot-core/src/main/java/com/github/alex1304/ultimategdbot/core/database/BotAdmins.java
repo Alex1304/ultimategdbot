@@ -1,4 +1,4 @@
-package com.github.alex1304.ultimategdbot.api.database;
+package com.github.alex1304.ultimategdbot.core.database;
 
 import static java.util.Objects.requireNonNullElse;
 

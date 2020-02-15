@@ -1,10 +1,10 @@
 package com.github.alex1304.ultimategdbot.core;
 
-import static com.github.alex1304.ultimategdbot.api.utils.BotUtils.sendPaginatedMessage;
-import static com.github.alex1304.ultimategdbot.api.utils.Markdown.bold;
-import static com.github.alex1304.ultimategdbot.api.utils.Markdown.code;
-import static com.github.alex1304.ultimategdbot.api.utils.Markdown.codeBlock;
-import static com.github.alex1304.ultimategdbot.api.utils.Markdown.underline;
+import static com.github.alex1304.ultimategdbot.api.util.BotUtils.sendPaginatedMessage;
+import static com.github.alex1304.ultimategdbot.api.util.Markdown.bold;
+import static com.github.alex1304.ultimategdbot.api.util.Markdown.code;
+import static com.github.alex1304.ultimategdbot.api.util.Markdown.codeBlock;
+import static com.github.alex1304.ultimategdbot.api.util.Markdown.underline;
 import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.joining;
 import static reactor.function.TupleUtils.consumer;

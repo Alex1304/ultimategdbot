@@ -2,18 +2,18 @@ package com.github.alex1304.ultimategdbot.core;
 
 import com.github.alex1304.ultimategdbot.api.command.CommandFailedException;
 import com.github.alex1304.ultimategdbot.api.command.Context;
-import com.github.alex1304.ultimategdbot.api.command.PermissionLevel;
+import com.github.alex1304.ultimategdbot.api.command.PermissionChecker;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandAction;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandDoc;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandSpec;
-import com.github.alex1304.ultimategdbot.api.database.BlacklistedIds;
+import com.github.alex1304.ultimategdbot.core.database.BlacklistedIds;
 
 import reactor.core.publisher.Mono;
 
 @CommandSpec(
 		aliases = "blacklist",
 		shortDescription = "Restrict guilds, channels or users from using the bot.",
-		permLevel = PermissionLevel.BOT_OWNER
+		requiredPermission = ""
 )
 class BlacklistCommand {
 

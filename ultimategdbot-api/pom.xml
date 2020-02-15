@@ -21,10 +21,6 @@
 			<artifactId>discord4j-core</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>io.projectreactor.addons</groupId>
-			<artifactId>reactor-pool</artifactId>
-		</dependency>
-		<dependency>
 			<groupId>com.discord4j</groupId>
 			<artifactId>stores-caffeine</artifactId>
 		</dependency>
@@ -47,10 +43,6 @@
 		<dependency>
 			<groupId>org.glassfish.jaxb</groupId>
 			<artifactId>jaxb-runtime</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>io.projectreactor.tools</groupId>
-			<artifactId>blockhound</artifactId>
 		</dependency>
 	</dependencies>
 </project>

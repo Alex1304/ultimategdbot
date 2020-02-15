@@ -1,4 +1,4 @@
-package com.github.alex1304.ultimategdbot.api.utils;
+package com.github.alex1304.ultimategdbot.api.util;
 
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -6,9 +6,9 @@ import java.util.function.Predicate;
 
 import com.github.alex1304.ultimategdbot.api.Bot;
 
-import discord4j.core.object.entity.GuildChannel;
 import discord4j.core.object.entity.Role;
 import discord4j.core.object.entity.User;
+import discord4j.core.object.entity.channel.GuildChannel;
 import discord4j.core.object.util.Snowflake;
 import reactor.core.publisher.Mono;
 

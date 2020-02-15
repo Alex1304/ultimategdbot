@@ -1,4 +1,4 @@
-package com.github.alex1304.ultimategdbot.api.utils.menu;
+package com.github.alex1304.ultimategdbot.api.util.menu;
 
 import com.github.alex1304.ultimategdbot.api.command.ArgumentList;
 import com.github.alex1304.ultimategdbot.api.command.FlagSet;

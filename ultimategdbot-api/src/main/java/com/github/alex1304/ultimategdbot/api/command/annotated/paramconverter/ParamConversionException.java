@@ -1,6 +1,6 @@
 package com.github.alex1304.ultimategdbot.api.command.annotated.paramconverter;
 
-import static com.github.alex1304.ultimategdbot.api.utils.Markdown.code;
+import static com.github.alex1304.ultimategdbot.api.util.Markdown.code;
 
 import com.github.alex1304.ultimategdbot.api.command.CommandFailedException;
 

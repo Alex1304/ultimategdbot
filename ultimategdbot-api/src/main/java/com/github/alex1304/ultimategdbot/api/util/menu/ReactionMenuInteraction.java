@@ -1,4 +1,4 @@
-package com.github.alex1304.ultimategdbot.api.utils.menu;
+package com.github.alex1304.ultimategdbot.api.util.menu;
 
 import discord4j.core.object.entity.Message;
 import reactor.core.publisher.MonoProcessor;
