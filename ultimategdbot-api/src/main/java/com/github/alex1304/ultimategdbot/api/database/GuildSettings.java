@@ -6,7 +6,7 @@ public interface GuildSettings {
 	 * 
 	 * @return the guildID
 	 */
-	long getGuildId();
+	Long getGuildId();
 	
 	/**
 	 * Sets the guildID

@@ -1,6 +1,6 @@
 package com.github.alex1304.ultimategdbot.api.command;
 
-import java.util.Objects;
+import static java.util.Objects.requireNonNull;
 
 import reactor.core.publisher.Mono;
 
@@ -15,30 +15,42 @@ public class ExecutableCommand {
 	private final CommandErrorHandler errorHandler;
 	
 	public ExecutableCommand(Command command, Context context, CommandErrorHandler errorHandler) {
-		this.command = Objects.requireNonNull(command);
-		this.context = Objects.requireNonNull(context);
-		this.errorHandler = Objects.requireNonNull(errorHandler);
+		this.command = requireNonNull(command);
+		this.context = requireNonNull(context);
+		this.errorHandler = requireNonNull(errorHandler);
 	}
 	
 	/**
 	 * Executes the command by taking into account the context and by applying the
-	 * error handler. Permission checks are performed here. If the user is not
-	 * granted the permission to use the command, the command will fail with a
-	 * {@link PermissionDeniedException}.
+	 * error handler. Scope and permission checks are performed here. If the user is
+	 * not granted the permission to use the command, the command will fail with a
+	 * {@link PermissionDeniedException}. If the context is outside the scope of the
+	 * command, nothing happens and the command completes empty.
 	 * 
 	 * @return a Mono completing when the command execution is complete. Errors
 	 *         caused by a failed permission check or an abnormal termination of the
 	 *         command will be forwarded through this Mono.
 	 */
 	public Mono<Void> execute() {
-		return command.getRequiredPermission()
-				.map(perm -> context.getBot().getCommandKernel().getPermissionChecker()
-						.isGranted(perm, context)
-						.filter(isGranted -> isGranted)
-						.switchIfEmpty(Mono.error(new PermissionDeniedException()))
-						.then())
-				.orElse(Mono.empty())
+		if (!command.getScope().isInScope(context.getChannel())) {
+			return Mono.empty();
+		}
+		return checkPermission()
+				.and(checkPermissionLevel())
 				.then(errorHandler.apply(command.run(context), context));
+	}
+	
+	private Mono<?> checkPermission() {
+		return Mono.just(command.getRequiredPermission())
+				.filter(perm -> !perm.isEmpty())
+				.filterWhen(perm -> context.getBot().getCommandKernel().getPermissionChecker().isGranted(perm, context))
+				.switchIfEmpty(Mono.error(new PermissionDeniedException()));
+	}
+	
+	private Mono<?> checkPermissionLevel() {
+		return Mono.just(command.getRequiredPermissionLevel())
+				.filterWhen(perm -> context.getBot().getCommandKernel().getPermissionChecker().isGranted(perm, context))
+				.switchIfEmpty(Mono.error(new PermissionDeniedException()));
 	}
 	
 	/**

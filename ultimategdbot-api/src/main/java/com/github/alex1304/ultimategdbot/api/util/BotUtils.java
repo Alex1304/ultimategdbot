@@ -102,14 +102,14 @@ public class BotUtils {
 		var parts = splitMessage(text, pageLength);
 		return InteractiveMenu.createPaginated(new AtomicInteger(), controls, page -> {
 					PageNumberOutOfRangeException.check(page, 0, parts.size() - 1);
-					return new UniversalMessageSpec(parts.get(page), embed -> embed.addField("Page " + (page + 1) + "/" + parts.size(),
+					return new MessageSpecTemplate(parts.get(page), embed -> embed.addField("Page " + (page + 1) + "/" + parts.size(),
 							"To go to a specific page, type `page <number>`, e.g `page 3`", true));
 				})
 				.open(ctx);
 	}
 	
 	public static Mono<Void> sendPaginatedMessage(Context ctx, String text, PaginationControls controls) {
-		return sendPaginatedMessage(ctx, text, controls, 800);
+		return sendPaginatedMessage(ctx, text, controls, Message.MAX_CONTENT_LENGTH - 10);
 	}
 	
 	public static Mono<Void> sendPaginatedMessage(Context ctx, String text) {

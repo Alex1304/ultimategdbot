@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.alex1304.ultimategdbot.api.DatabaseException;
+import com.github.alex1304.ultimategdbot.api.database.DatabaseException;
 import com.github.alex1304.ultimategdbot.api.util.BotUtils;
 import com.github.alex1304.ultimategdbot.api.util.Markdown;
 

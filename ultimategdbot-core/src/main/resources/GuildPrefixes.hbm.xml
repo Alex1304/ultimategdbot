@@ -1,10 +1,11 @@
 <?xml version="1.0"?>
 <!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
 <hibernate-mapping default-lazy="false">
-	<class name="com.github.alex1304.ultimategdbot.api.database.BotAdmins" table="bot_admins">
+	<class name="com.github.alex1304.ultimategdbot.core.database.GuildPrefixes" table="native_guild_settings">
 		<cache usage="read-write" />
-		<id name="userId" type="long" column="user_id">
+		<id name="guildId" type="long" column="guild_id">
 			<generator class="assigned" />
 		</id>
+		<property name="prefix" type="string" column="prefix" />
 	</class>
 </hibernate-mapping>

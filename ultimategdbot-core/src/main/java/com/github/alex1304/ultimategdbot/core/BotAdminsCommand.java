@@ -2,7 +2,7 @@ package com.github.alex1304.ultimategdbot.core;
 
 import com.github.alex1304.ultimategdbot.api.command.CommandFailedException;
 import com.github.alex1304.ultimategdbot.api.command.Context;
-import com.github.alex1304.ultimategdbot.api.command.PermissionChecker;
+import com.github.alex1304.ultimategdbot.api.command.PermissionLevel;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandAction;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandDoc;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandSpec;
@@ -16,7 +16,7 @@ import reactor.core.publisher.Mono;
 @CommandSpec(
 		aliases = "botadmins",
 		shortDescription = "Manage users who have bot admin privileges.",
-		permLevel = PermissionChecker.BOT_OWNER
+		requiredPermissionLevel = PermissionLevel.BOT_OWNER
 )
 class BotAdminsCommand {
 
@@ -24,7 +24,7 @@ class BotAdminsCommand {
 	@CommandDoc("Lists all users that have admin privileges on the bot.")
 	public Mono<Void> run(Context ctx) {
 		return ctx.getBot().getDatabase().query(BotAdmins.class, "from BotAdmins")
-				.flatMap(admin -> ctx.getBot().getDiscordClients().next().flatMap(client -> client.getUserById(Snowflake.of(admin.getUserId()))))
+				.flatMap(admin -> ctx.getBot().getGateway().getUserById(Snowflake.of(admin.getUserId())))
 				.map(DiscordFormatter::formatUser)
 				.collectSortedList(String.CASE_INSENSITIVE_ORDER)
 				.map(adminList -> {

@@ -8,15 +8,22 @@ import java.util.HashSet;
 import java.util.Properties;
 import java.util.ServiceLoader;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.alex1304.ultimategdbot.api.command.CommandKernel;
+import com.github.alex1304.ultimategdbot.api.database.Database;
 import com.github.alex1304.ultimategdbot.api.util.PropertyReader;
 
 import discord4j.core.DiscordClient;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.object.data.stored.MessageBean;
+import discord4j.core.object.entity.Guild;
+import discord4j.core.object.entity.GuildEmoji;
+import discord4j.core.spec.MessageCreateSpec;
+import discord4j.gateway.GatewayObserver;
 import discord4j.rest.entity.data.ApplicationInfoData;
 import discord4j.rest.request.RouteMatcher;
 import discord4j.rest.response.ResponseFunction;
@@ -127,6 +134,53 @@ public class Bot {
 	public Mono<Long> getOwnerId() {
 		return ownerId;
 	}
+	
+	/**
+	 * Sends a message into the debug log channel.
+	 * 
+	 * @param message the message to send
+	 * @return a Mono emitting the message sent
+	 */
+	public Mono<Void> log(String message) {
+		return log(mcs -> mcs.setContent(message));
+	}
+
+	/**
+	 * Sends a message into the debug log channel.
+	 * 
+	 * @param spec the spec of the message to send
+	 * @return a Mono emitting the message sent
+	 */
+	public Mono<Void> log(Consumer<MessageCreateSpec> spec) {
+		var specInstance = new MessageCreateSpec();
+		spec.accept(specInstance);
+		return Mono.justOrEmpty(config.getDebugLogChannelId())
+				.map(discordClient::getChannelById)
+				.flatMap(c -> c.createMessage(specInstance.asRequest()))
+				.then();
+	}
+	
+	/**
+	 * Gets the String representation of an emoji installed on one of the emoji
+	 * servers. If the emoji is not found, the returned value is the given name
+	 * wrapped in colons.
+	 * 
+	 * @param emojiName the name of the emoji to look for
+	 * @return a Mono emitting the emoji code corresponding to the given name
+	 */
+	public Mono<String> getEmoji(String emojiName) {
+		var defaultVal = ":" + emojiName + ":";
+		if (gateway == null) {
+			return Mono.just(defaultVal);
+		}
+		return Flux.fromIterable(config.getEmojiGuildIds())
+				.flatMap(gateway::getGuildById)
+				.flatMap(Guild::getEmojis)
+				.filter(emoji -> emoji.getName().equalsIgnoreCase(emojiName))
+				.next()
+				.map(GuildEmoji::asFormat)
+				.defaultIfEmpty(defaultVal).onErrorReturn(defaultVal);
+	}
 
 	public static Bot buildFromProperties(Properties botProperties, Properties pluginProperties) {
 		requireNonNull(botProperties);
@@ -150,23 +204,33 @@ public class Bot {
 						.setMapping(new CaffeineStoreService(builder -> builder.maximumSize(50_000)), MessageBean.class)
 						.setFallback(new JdkStoreService()))
 				.setGatewayObserver((state, identifyOptions) -> {
-					// TODO
-					LOGGER.info("Gateway state changed: {}, {}", state, identifyOptions);
+					if (state == GatewayObserver.CONNECTED
+							|| state == GatewayObserver.DISCONNECTED
+							|| state == GatewayObserver.DISCONNECTED_RESUME
+							|| state == GatewayObserver.RETRY_FAILED
+							|| state == GatewayObserver.RETRY_RESUME_STARTED
+							|| state == GatewayObserver.RETRY_STARTED
+							|| state == GatewayObserver.RETRY_SUCCEEDED) {
+						log("Shard " + identifyOptions.getShardIndex() + ": " + state).subscribe();
+					}
 				})
 				.connect()
 				.block();
-
+		var databaseMappingResources = synchronizedSet(new HashSet<String>());
 		Flux.fromIterable(ServiceLoader.load(PluginBootstrap.class))
 				.flatMap(pluginBootstrap -> pluginBootstrap.setup(this)
 						.doOnError(e -> LOGGER.error("Failed to setup plugin " + pluginBootstrap.getClass().getName(), e))
 						.switchIfEmpty(Mono.fromRunnable(
 								() -> LOGGER.warn("Skipping plugin " + pluginBootstrap.getClass().getName() + ": setup has completed without data"))))
 				.doOnNext(plugins::add)
-				.doOnNext(plugin -> database.addAllMappingResources(plugin.getDatabaseMappingResources()))
+				.doOnNext(plugin -> databaseMappingResources.addAll(plugin.getDatabaseMappingResources()))
 				.doOnNext(plugin -> cmdKernel.addProvider(plugin.getCommandProvider()))
 				.doOnNext(plugin -> LOGGER.debug("Plugin {} is providing commands: {}", plugin.getName(), plugin.getCommandProvider()))
-				.then(Mono.fromRunnable(database::configure))
-				.and(Mono.fromRunnable(cmdKernel::start))
+				.then(Mono.fromRunnable(() -> {
+					database.configure(databaseMappingResources);
+					cmdKernel.start();
+				}))
+				.thenEmpty(Flux.fromIterable(plugins).flatMap(Plugin::runOnReady))
 				.then(gateway.onDisconnect())
 				.block();
 	}

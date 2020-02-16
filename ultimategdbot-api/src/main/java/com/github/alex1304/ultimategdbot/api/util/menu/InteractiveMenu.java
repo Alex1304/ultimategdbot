@@ -14,7 +14,7 @@ import java.util.function.IntFunction;
 import com.github.alex1304.ultimategdbot.api.command.ArgumentList;
 import com.github.alex1304.ultimategdbot.api.command.Context;
 import com.github.alex1304.ultimategdbot.api.util.InputTokenizer;
-import com.github.alex1304.ultimategdbot.api.util.UniversalMessageSpec;
+import com.github.alex1304.ultimategdbot.api.util.MessageSpecTemplate;
 
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.event.domain.message.ReactionAddEvent;
@@ -115,7 +115,7 @@ public class InteractiveMenu {
 	 * @return a new InteractiveMenu prefilled with menu items useful for
 	 *         pagination.
 	 */
-	public static InteractiveMenu createPaginated(AtomicInteger currentPage, PaginationControls controls, IntFunction<UniversalMessageSpec> paginator) {
+	public static InteractiveMenu createPaginated(AtomicInteger currentPage, PaginationControls controls, IntFunction<MessageSpecTemplate> paginator) {
 		requireNonNull(paginator);
 		return createAsyncPaginated(currentPage, controls, p -> Mono.just(paginator.apply(p)));
 	}
@@ -142,29 +142,29 @@ public class InteractiveMenu {
 	 * @return a new InteractiveMenu prefilled with menu items useful for
 	 *         pagination.
 	 */
-	public static InteractiveMenu createAsyncPaginated(AtomicInteger currentPage, PaginationControls controls, IntFunction<Mono<UniversalMessageSpec>> asyncPaginator) {
+	public static InteractiveMenu createAsyncPaginated(AtomicInteger currentPage, PaginationControls controls, IntFunction<Mono<MessageSpecTemplate>> asyncPaginator) {
 		requireNonNull(currentPage);
 		requireNonNull(controls);
 		requireNonNull(asyncPaginator);
 		var oldPage = new AtomicInteger();
-		return create(asyncPaginator.apply(currentPage.get()).map(UniversalMessageSpec::toMessageCreateSpec))
+		return create(asyncPaginator.apply(currentPage.get()).map(MessageSpecTemplate::toMessageCreateSpec))
 				.addReactionItem(controls.getPreviousEmoji(), interaction -> Mono.fromCallable(currentPage::decrementAndGet)
 						.flatMap(targetPage -> asyncPaginator.apply(targetPage)
-								.map(UniversalMessageSpec::toMessageEditSpec))
+								.map(MessageSpecTemplate::toMessageEditSpec))
 						.onErrorResume(PageNumberOutOfRangeException.class, e -> Mono
 								.just(currentPage.get() + e.getMaxPage() - e.getMinPage() + 1)
 								.doOnNext(currentPage::set)
 								.flatMap(targetPage -> asyncPaginator.apply(targetPage)
-										.map(UniversalMessageSpec::toMessageEditSpec)))
+										.map(MessageSpecTemplate::toMessageEditSpec)))
 						.flatMap(interaction.getMenuMessage()::edit)
 						.then())
 				.addReactionItem(controls.getNextEmoji(), interaction -> Mono.fromCallable(currentPage::incrementAndGet)
-						.flatMap(targetPage -> asyncPaginator.apply(targetPage).map(UniversalMessageSpec::toMessageEditSpec))
+						.flatMap(targetPage -> asyncPaginator.apply(targetPage).map(MessageSpecTemplate::toMessageEditSpec))
 						.onErrorResume(PageNumberOutOfRangeException.class, e -> Mono
 								.just(currentPage.get() - e.getMaxPage() + e.getMinPage() - 1)
 								.doOnNext(currentPage::set)
 								.flatMap(targetPage -> asyncPaginator.apply(targetPage)
-										.map(UniversalMessageSpec::toMessageEditSpec)))
+										.map(MessageSpecTemplate::toMessageEditSpec)))
 						.flatMap(interaction.getMenuMessage()::edit)
 						.then())
 				.addMessageItem("page", interaction -> Mono.fromCallable(() -> Integer.parseInt(interaction.getArgs().get(1)))
@@ -176,7 +176,7 @@ public class InteractiveMenu {
 							currentPage.set(targetPage);
 						})
 						.flatMap(targetPage -> asyncPaginator.apply(targetPage)
-								.map(UniversalMessageSpec::toMessageEditSpec)
+								.map(MessageSpecTemplate::toMessageEditSpec)
 								.flatMap(interaction.getMenuMessage()::edit))
 						.onErrorMap(PageNumberOutOfRangeException.class, e -> {
 							currentPage.set(oldPage.get());

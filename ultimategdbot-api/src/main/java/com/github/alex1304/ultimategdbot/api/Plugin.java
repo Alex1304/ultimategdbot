@@ -11,6 +11,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import com.github.alex1304.ultimategdbot.api.command.CommandProvider;
 import com.github.alex1304.ultimategdbot.api.database.GuildSettingsEntry;
@@ -28,13 +29,19 @@ public class Plugin {
 	private final Set<String> databaseMappingResources;
 	private final Map<String, GuildSettingsEntry<?, ?>> guildSettingsEntries;
 	private final CommandProvider commandProvider;
+	private final Supplier<Mono<Void>> onReady;
 	
 	private Plugin(String name, Set<String> databaseMappingResources, Map<String, GuildSettingsEntry<?, ?>> guildSettingsEntries,
-			CommandProvider commandProvider) {
+			CommandProvider commandProvider, Supplier<Mono<Void>> onReady) {
 		this.name = name;
 		this.databaseMappingResources = databaseMappingResources;
 		this.guildSettingsEntries = guildSettingsEntries;
 		this.commandProvider = commandProvider;
+		this.onReady = onReady;
+	}
+	
+	public Mono<Void> runOnReady() {
+		return onReady.get();
 	}
 
 	/**
@@ -117,6 +124,7 @@ public class Plugin {
 		private final Set<String> databaseMappingResources = new HashSet<>();
 		private final Map<String, GuildSettingsEntry<?, ?>> guildSettingsEntries = new LinkedHashMap<>();
 		private CommandProvider commandProvider = new CommandProvider();
+		private Supplier<Mono<Void>> onReady = () -> Mono.empty();
 		
 		private Builder(String name) {
 			this.name = requireNonNull(name);
@@ -162,13 +170,18 @@ public class Plugin {
 			return this;
 		}
 		
+		public Builder onReady(Supplier<Mono<Void>> onReady) {
+			this.onReady = requireNonNull(onReady);
+			return this;
+		}
+		
 		/**
 		 * Builds the plugin instance.
 		 * 
 		 * @return the plugin instance
 		 */
 		public Plugin build() {
-			return new Plugin(name, databaseMappingResources, guildSettingsEntries, commandProvider);
+			return new Plugin(name, databaseMappingResources, guildSettingsEntries, commandProvider, onReady);
 		}
 	}
 }

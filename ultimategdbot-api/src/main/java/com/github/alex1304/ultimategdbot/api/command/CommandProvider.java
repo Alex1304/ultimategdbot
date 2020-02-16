@@ -1,10 +1,11 @@
 package com.github.alex1304.ultimategdbot.api.command;
 
-import java.util.Collections;
+import static java.util.Collections.unmodifiableSet;
+import static java.util.Objects.requireNonNull;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -23,16 +24,8 @@ import reactor.core.publisher.Mono;
 public class CommandProvider {
 	
 	private CommandErrorHandler errorHandler = new CommandErrorHandler();
+	private PermissionChecker permissionChecker = new PermissionChecker();
 	private final Map<String, Command> commandMap = new HashMap<>();
-	
-	/**
-	 * Allows to supply a custom command handler. If this method is not called, it will use a default handler.
-	 * 
-	 * @param errorHandler the error handler to set
-	 */
-	public void setErrorHandler(CommandErrorHandler errorHandler) {
-		this.errorHandler = Objects.requireNonNull(errorHandler);
-	}
 	
 	/**
 	 * Adds a command to this provider.
@@ -40,6 +33,7 @@ public class CommandProvider {
 	 * @param command the command to add
 	 */
 	public void add(Command command) {
+		requireNonNull(command);
 		for (var alias : command.getAliases()) {
 			commandMap.put(alias, command);
 		}
@@ -62,6 +56,10 @@ public class CommandProvider {
 	 *         triggered, an empty Optional otherwise.
 	 */
 	public Mono<ExecutableCommand> provideFromEvent(Bot bot, String prefix, MessageCreateEvent event, MessageChannel channel) {
+		requireNonNull(bot, "bot cannot be null");
+		requireNonNull(prefix, "prefix cannot be null");
+		requireNonNull(event, "event cannot be null");
+		requireNonNull(channel, "channel cannot be null");
 		return bot.getGateway().getSelfId().map(Snowflake::asLong).flatMap(botId -> {
 			var prefixes = Set.of("<@" + botId + ">", "<@!" + botId + ">", prefix);
 			var content = event.getMessage().getContent().orElse("");
@@ -90,6 +88,17 @@ public class CommandProvider {
 	}
 	
 	/**
+	 * Gets a command instance corresponding to the given alias.
+	 *  
+	 * @param alias the alias of the command
+	 * @return the corresponding command instance, or null if not found
+	 */
+	public Command getCommandByAlias(String alias) {
+		requireNonNull(alias);
+		return commandMap.get(alias.toLowerCase());
+	}
+	
+	/**
 	 * Gets the error handler assigned to this provider.
 	 * 
 	 * @return the error handler
@@ -99,13 +108,30 @@ public class CommandProvider {
 	}
 	
 	/**
-	 * Gets a command instance corresponding to the given alias.
-	 *  
-	 * @param alias the alias of the command
-	 * @return the corresponding command instance, or null if not found
+	 * Sets a custom command handler. If this method is not called, a default handler will be used.
+	 * 
+	 * @param errorHandler the error handler to set
 	 */
-	public Command getCommandByAlias(String alias) {
-		return commandMap.get(alias.toLowerCase());
+	public void setErrorHandler(CommandErrorHandler errorHandler) {
+		this.errorHandler = requireNonNull(errorHandler);
+	}
+	
+	/**
+	 * Gets the permission checker assigned to this provider.
+	 * 
+	 * @return the permission checker
+	 */
+	public PermissionChecker getPermissionChecker() {
+		return permissionChecker;
+	}
+
+	/**
+	 * Sets a custom permission checker. If this method is not called, an empty permission checker will be used.
+	 * 
+	 * @param permissionChecker the permission checker to set
+	 */
+	public void setPermissionChecker(PermissionChecker permissionChecker) {
+		this.permissionChecker = requireNonNull(permissionChecker);
 	}
 	
 	/**
@@ -114,9 +140,9 @@ public class CommandProvider {
 	 * @return an unmodifiable Set containing all commands provided by this provider
 	 */
 	public Set<Command> getProvidedCommands() {
-		return Collections.unmodifiableSet(new HashSet<>(commandMap.values()));
+		return unmodifiableSet(new HashSet<>(commandMap.values()));
 	}
-	
+
 	@Override
 	public String toString() {
 		return "CommandProvider{commandMap=" + commandMap + ", errorHandler=" + errorHandler + "}";

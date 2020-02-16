@@ -2,7 +2,7 @@ package com.github.alex1304.ultimategdbot.core;
 
 import com.github.alex1304.ultimategdbot.api.command.CommandFailedException;
 import com.github.alex1304.ultimategdbot.api.command.Context;
-import com.github.alex1304.ultimategdbot.api.command.PermissionChecker;
+import com.github.alex1304.ultimategdbot.api.command.PermissionLevel;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandAction;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandDoc;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandSpec;
@@ -13,7 +13,7 @@ import reactor.core.publisher.Mono;
 @CommandSpec(
 		aliases = "system",
 		shortDescription = "Audit and take control of the usage of system resources.",
-		permLevel = PermissionChecker.BOT_ADMIN
+		requiredPermissionLevel = PermissionLevel.BOT_ADMIN
 )
 class SystemCommand {
 	

@@ -24,17 +24,17 @@ public class BotConfig {
 	private final String flagPrefix;
 	private final Optional<Snowflake> debugLogChannelId;
 	private final Set<Snowflake> emojiGuildIds;
-	private final boolean corePluginDisabled;
+	private final boolean coreCommandsDisabled;
 	private final Presence presence;
 	
 	public BotConfig(String token, String defaultPrefix, String flagPrefix, Optional<Snowflake> debugLogChannelId,
-			Set<Snowflake> emojiGuildIds, boolean corePluginDisabled, Presence presence) {
+			Set<Snowflake> emojiGuildIds, boolean coreCommandsDisabled, Presence presence) {
 		this.token = token;
 		this.defaultPrefix = defaultPrefix;
 		this.flagPrefix = flagPrefix;
 		this.debugLogChannelId = debugLogChannelId;
 		this.emojiGuildIds = emojiGuildIds;
-		this.corePluginDisabled = corePluginDisabled;
+		this.coreCommandsDisabled = coreCommandsDisabled;
 		this.presence = presence;
 	}
 
@@ -61,7 +61,7 @@ public class BotConfig {
 				.orElse(null);
 		return new BotConfig(propertyReader.read("token", true).orElseThrow(),
 				propertyReader.read("default_prefix", true).orElseThrow(),
-				propertyReader.read("flag_prefix", true).orElseThrow(),
+				propertyReader.read("flag_prefix", false).orElse("-"),
 				propertyReader.read("debug_log_channel_id", false).map(Snowflake::of),
 				propertyReader.readAsStream("emoji_guild_ids", ",").map(Snowflake::of).collect(toUnmodifiableSet()),
 				propertyReader.read("disable_core_plugin", false).map(Boolean::parseBoolean).orElse(false),
@@ -98,8 +98,8 @@ public class BotConfig {
 		return emojiGuildIds;
 	}
 
-	public boolean isCorePluginDisabled() {
-		return corePluginDisabled;
+	public boolean areCoreCommandsDisabled() {
+		return coreCommandsDisabled;
 	}
 
 	public Presence getPresence() {
@@ -108,7 +108,7 @@ public class BotConfig {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(corePluginDisabled, debugLogChannelId, defaultPrefix, emojiGuildIds, flagPrefix,
+		return Objects.hash(coreCommandsDisabled, debugLogChannelId, defaultPrefix, emojiGuildIds, flagPrefix,
 				presence, token);
 	}
 
@@ -119,7 +119,7 @@ public class BotConfig {
 		if (!(obj instanceof BotConfig))
 			return false;
 		BotConfig other = (BotConfig) obj;
-		return corePluginDisabled == other.corePluginDisabled
+		return coreCommandsDisabled == other.coreCommandsDisabled
 				&& Objects.equals(debugLogChannelId, other.debugLogChannelId)
 				&& Objects.equals(defaultPrefix, other.defaultPrefix)
 				&& Objects.equals(emojiGuildIds, other.emojiGuildIds)
@@ -132,7 +132,7 @@ public class BotConfig {
 	public String toString() {
 		return "BotConfig{token=<masked>, defaultPrefix=" + defaultPrefix + ", flagPrefix=" + flagPrefix
 				+ ", debugLogChannelId=" + debugLogChannelId + ", emojiGuildIds=" + emojiGuildIds
-				+ ", corePluginDisabled=" + corePluginDisabled + ", presence=" + presence
+				+ ", corePluginDisabled=" + coreCommandsDisabled + ", presence=" + presence
 				+ "}";
 	}
 

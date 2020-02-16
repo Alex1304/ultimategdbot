@@ -12,22 +12,22 @@ import discord4j.core.spec.MessageEditSpec;
  * Message specification that is compatible with both {@link MessageCreateSpec}
  * and {@link MessageEditSpec}.
  */
-public class UniversalMessageSpec {
+public class MessageSpecTemplate {
 	
 	private final String content;
 	private final Consumer<EmbedCreateSpec> embed;
 	
-	public UniversalMessageSpec(String content, Consumer<EmbedCreateSpec> embed) {
+	public MessageSpecTemplate(String content, Consumer<EmbedCreateSpec> embed) {
 		this.content = requireNonNull(content);
 		this.embed = requireNonNull(embed);
 	}
 	
-	public UniversalMessageSpec(String content) {
+	public MessageSpecTemplate(String content) {
 		this.content = requireNonNull(content);
 		this.embed = null;
 	}
 	
-	public UniversalMessageSpec(Consumer<EmbedCreateSpec> embed) {
+	public MessageSpecTemplate(Consumer<EmbedCreateSpec> embed) {
 		this.content = null;
 		this.embed = requireNonNull(embed);
 	}

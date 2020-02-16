@@ -1,9 +1,9 @@
-package com.github.alex1304.ultimategdbot.api;
+package com.github.alex1304.ultimategdbot.api.database;
+
+import static java.util.Objects.requireNonNull;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -29,13 +29,12 @@ public class Database {
 	private static final Logger LOGGER = LoggerFactory.getLogger(Database.class);
 	
 	private SessionFactory sessionFactory = null;
-	private final Set<String> resourceNames = new HashSet<>();
 	private final Scheduler databaseScheduler = Schedulers.newElastic("database-elastic");
 
 	/**
 	 * Initializes the database.
 	 */
-	public void configure() {
+	public void configure(Set<String> resourceNames) {
 		var config = new Configuration();
 		for (var resource : resourceNames) {
 			config.addResource(resource);
@@ -57,8 +56,8 @@ public class Database {
 	 * @return a Mono emitting the entity, if found
 	 */
 	public <T, K extends Serializable> Mono<T> findByID(Class<T> entityClass, K key) {
-		Objects.requireNonNull(entityClass);
-		Objects.requireNonNull(key);
+		requireNonNull(entityClass);
+		requireNonNull(key);
 		return Mono.fromCallable(() -> {
 			try (var s = newSession()) {
 				return s.get(entityClass, key);
@@ -77,9 +76,9 @@ public class Database {
 	 * @return a Flux emitting the results of the query
 	 */
 	public <T> Flux<T> query(Class<T> entityClass, String query, Object... params) {
-		Objects.requireNonNull(entityClass);
-		Objects.requireNonNull(query);
-		Objects.requireNonNull(params);
+		requireNonNull(entityClass);
+		requireNonNull(query);
+		requireNonNull(params);
 		return Mono.fromCallable(() -> {
 			var list = new ArrayList<T>();
 			try (var s = newSession()) {
@@ -204,10 +203,6 @@ public class Database {
 						this::rollbackAndClose,
 						this::rollbackAndClose)
 				.subscribeOn(databaseScheduler);
-	}
-
-	void addAllMappingResources(Set<String> resourceNames) {
-		this.resourceNames.addAll(Objects.requireNonNull(resourceNames));
 	}
 	
 	private Mono<Void> commitAndClose(Session session) {

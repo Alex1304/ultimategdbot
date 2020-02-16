@@ -60,8 +60,9 @@ public class GuildSettingsEntry<E extends GuildSettings, D> {
 			strValue = "None";
 		}
 		return stringToValue.apply(strValue, guildId)
+				.doOnNext(raw -> setRaw(s, raw, guildId))
 				.switchIfEmpty(Mono.fromRunnable(() -> setRaw(s, null, guildId)))
-				.flatMap(raw -> Mono.fromRunnable(() -> setRaw(s, raw, guildId)));
+				.then();
 	}
 	
 	private E findOrCreate(Session s, long guildId) {
@@ -71,8 +72,17 @@ public class GuildSettingsEntry<E extends GuildSettings, D> {
 				entity = entityClass.getConstructor().newInstance();
 				entity.setGuildId(guildId);
 			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-					| InvocationTargetException | NoSuchMethodException | SecurityException e) {
+					| NoSuchMethodException | SecurityException e) {
 				throw new RuntimeException("Unable to create entity using reflection", e);
+			} catch (InvocationTargetException e) {
+				var cause = e.getCause();
+				if (cause instanceof RuntimeException) {
+					throw (RuntimeException) cause;
+				}
+				if (cause instanceof Error) {
+					throw (Error) cause;
+				}
+				throw new RuntimeException(cause);
 			}
 		}
 		return entity;

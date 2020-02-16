@@ -20,8 +20,8 @@ class Main {
 		try {
 			var props = new Properties();
 			var pluginsProps = new Properties();
-			try (var propsInput = Files.newInputStream(PROPS_FILE);
-					var pluginsPropsInput = Files.newInputStream(PLUGINS_PROPS_FILE)) {
+			try (var propsInput = Files.newBufferedReader(PROPS_FILE);
+					var pluginsPropsInput = Files.newBufferedReader(PLUGINS_PROPS_FILE)) {
 				props.load(propsInput);
 				pluginsProps.load(pluginsPropsInput);
 			}

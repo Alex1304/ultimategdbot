@@ -24,6 +24,8 @@ import com.github.alex1304.ultimategdbot.api.command.CommandDocumentationEntry;
 import com.github.alex1304.ultimategdbot.api.command.CommandFailedException;
 import com.github.alex1304.ultimategdbot.api.command.Context;
 import com.github.alex1304.ultimategdbot.api.command.FlagInformation;
+import com.github.alex1304.ultimategdbot.api.command.PermissionLevel;
+import com.github.alex1304.ultimategdbot.api.command.Scope;
 import com.github.alex1304.ultimategdbot.api.command.annotated.paramconverter.ParamConversionException;
 import com.github.alex1304.ultimategdbot.api.util.Markdown;
 
@@ -43,15 +45,20 @@ public class AnnotatedCommand implements Command {
 	private final Function<Context, Mono<Void>> action;
 	private final Set<String> aliases;
 	private final CommandDocumentation doc;
-	private final Optional<String> requiredPermission;
+	private final String requiredPermission;
+	private final PermissionLevel requiredPermissionLevel;
+	private final Scope scope;
+
 
 	private AnnotatedCommand(Object obj, Function<Context, Mono<Void>> action, Set<String> aliases,
-			CommandDocumentation doc, Optional<String> requiredPermission) {
+			CommandDocumentation doc, String requiredPermission, PermissionLevel requiredPermissionLevel, Scope scope) {
 		this.obj = obj;
 		this.action = action;
 		this.aliases = aliases;
 		this.doc = doc;
 		this.requiredPermission = requiredPermission;
+		this.requiredPermissionLevel = requiredPermissionLevel;
+		this.scope = scope;
 	}
 
 	@Override
@@ -63,15 +70,25 @@ public class AnnotatedCommand implements Command {
 	public Set<String> getAliases() {
 		return aliases;
 	}
-
-	@Override
-	public Optional<String> getRequiredPermission() {
-		return requiredPermission;
-	}
 	
 	@Override
 	public CommandDocumentation getDocumentation() {
 		return doc;
+	}
+
+	@Override
+	public String getRequiredPermission() {
+		return requiredPermission;
+	}
+	
+	@Override
+	public PermissionLevel getRequiredPermissionLevel() {
+		return requiredPermissionLevel;
+	}
+
+	@Override
+	public Scope getScope() {
+		return scope;
 	}
 	
 	@Override
@@ -149,7 +166,9 @@ public class AnnotatedCommand implements Command {
 				},
 				Set.of(cmdSpecAnnot.aliases()),
 				buildDocumentation(cmdSpecAnnot.shortDescription(), mainMethod, subMethods),
-				Optional.of(cmdSpecAnnot.requiredPermission()).filter(perm -> !perm.isEmpty()));
+				cmdSpecAnnot.requiredPermission(),
+				cmdSpecAnnot.requiredPermissionLevel(),
+				cmdSpecAnnot.scope());
 	}
 
 	private static CommandSpec readCommandSpecAnnotation(Object obj) {

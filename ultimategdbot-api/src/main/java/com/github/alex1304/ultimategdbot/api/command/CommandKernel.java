@@ -1,4 +1,4 @@
-package com.github.alex1304.ultimategdbot.api;
+package com.github.alex1304.ultimategdbot.api.command;
 
 import static com.github.alex1304.ultimategdbot.api.util.BotUtils.logCommandError;
 import static java.util.Collections.synchronizedSet;
@@ -11,8 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.alex1304.ultimategdbot.api.command.CommandProvider;
-import com.github.alex1304.ultimategdbot.api.command.PermissionChecker;
+import com.github.alex1304.ultimategdbot.api.Bot;
 
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.entity.User;
@@ -47,6 +46,7 @@ public class CommandKernel {
 	 */
 	public void addProvider(CommandProvider provider) {
 		providers.add(requireNonNull(provider));
+		permissionChecker.registerAll(provider.getPermissionChecker());
 	}
 
 	/**
@@ -98,6 +98,22 @@ public class CommandKernel {
 	 */
 	public void start() {
 		bot.getGateway().on(MessageCreateEvent.class, this::processEvent).subscribe();
+	}
+	
+	/**
+	 * Gets a command instance corresponding to the given alias.
+	 *  
+	 * @param alias the alias of the command
+	 * @return the corresponding command instance, or null if not found
+	 */
+	public Command getCommandByAlias(String alias) {
+		for (var p : providers) {
+			var cmd = p.getCommandByAlias(alias);
+			if (cmd != null) {
+				return cmd;
+			}
+		}
+		return null;
 	}
 	
 	/**

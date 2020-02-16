@@ -20,6 +20,7 @@ import com.github.alex1304.ultimategdbot.api.command.Context;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandAction;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandDoc;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandSpec;
+import com.github.alex1304.ultimategdbot.api.util.menu.PaginationControls;
 
 import discord4j.core.object.entity.Message;
 import reactor.core.publisher.Flux;
@@ -51,7 +52,8 @@ class HelpCommand {
 						.sort(comparing(Plugin::getName))
 						.concatMap(plugin -> Flux.fromIterable(plugin.getCommandProvider().getProvidedCommands())
 								.filter(cmd -> cmd.getScope().isInScope(channel))
-								.filterWhen(cmd -> cmd.getPermissionLevel().isGranted(ctx))
+								.filterWhen(cmd -> ctx.getBot().getCommandKernel().getPermissionChecker().isGranted(cmd.getRequiredPermission(), ctx))
+								.filterWhen(cmd -> ctx.getBot().getCommandKernel().getPermissionChecker().isGranted(cmd.getRequiredPermissionLevel(), ctx))
 								.collectSortedList(comparing(HelpCommand::joinAliases))
 								.map(cmdList -> Tuples.of(plugin.getName(), cmdList)))
 						.doOnNext(consumer((pluginName, cmdList) -> {
@@ -66,7 +68,7 @@ class HelpCommand {
 									});
 							sb.append('\n');
 						})).then())
-				.then(Mono.defer(() -> sendPaginatedMessage(ctx, sb.toString(), ctx.getBot().getDefaultPaginationControls(), Message.MAX_CONTENT_LENGTH)));
+				.then(Mono.defer(() -> sendPaginatedMessage(ctx, sb.toString(), PaginationControls.getDefault(), Message.MAX_CONTENT_LENGTH)));
 	}
 	
 	private Mono<Void> displayCommandDocumentation(Context ctx, String commandName, String subcommand) {

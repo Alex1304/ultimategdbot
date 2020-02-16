@@ -1,4 +1,4 @@
-package com.github.alex1304.ultimategdbot.api;
+package com.github.alex1304.ultimategdbot.api.database;
 
 public class DatabaseException extends RuntimeException {
 
