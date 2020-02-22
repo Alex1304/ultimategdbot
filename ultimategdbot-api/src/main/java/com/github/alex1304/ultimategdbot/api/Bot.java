@@ -4,6 +4,7 @@ import static java.util.Collections.synchronizedSet;
 import static java.util.Collections.unmodifiableSet;
 import static java.util.Objects.requireNonNull;
 
+import java.time.Duration;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.ServiceLoader;
@@ -201,7 +202,7 @@ public class Bot {
 		gateway = discordClient.gateway()
 				.setInitialPresence(shard -> config.getPresence())
 				.setStoreService(MappingStoreService.create()
-						.setMapping(new CaffeineStoreService(builder -> builder.maximumSize(50_000)), MessageBean.class)
+						.setMapping(new CaffeineStoreService(builder -> builder.expireAfterWrite(Duration.ofDays(1))), MessageBean.class)
 						.setFallback(new JdkStoreService()))
 				.setGatewayObserver((state, identifyOptions) -> {
 					if (state == GatewayObserver.CONNECTED
