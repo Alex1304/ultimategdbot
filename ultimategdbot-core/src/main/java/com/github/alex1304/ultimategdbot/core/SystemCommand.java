@@ -13,7 +13,7 @@ import reactor.core.publisher.Mono;
 @CommandSpec(
 		aliases = "system",
 		shortDescription = "Audit and take control of the usage of system resources.",
-		requiredPermissionLevel = PermissionLevel.BOT_ADMIN
+		minimumPermissionLevel = PermissionLevel.BOT_ADMIN
 )
 class SystemCommand {
 	

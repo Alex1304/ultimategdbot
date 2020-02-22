@@ -27,9 +27,9 @@ import reactor.core.scheduler.Schedulers;
 public class Database {
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(Database.class);
+	private static final Scheduler DATABASE_SCHEDULER = Schedulers.elastic();
 	
 	private SessionFactory sessionFactory = null;
-	private final Scheduler databaseScheduler = Schedulers.newElastic("database-elastic");
 
 	/**
 	 * Initializes the database.
@@ -62,7 +62,7 @@ public class Database {
 			try (var s = newSession()) {
 				return s.get(entityClass, key);
 			}
-		}).subscribeOn(databaseScheduler)
+		}).subscribeOn(DATABASE_SCHEDULER)
 				.onErrorMap(DatabaseException::new);
 	}
 
@@ -89,7 +89,7 @@ public class Database {
 				list.addAll(q.getResultList());
 			}
 			return list;
-		}).subscribeOn(databaseScheduler)
+		}).subscribeOn(DATABASE_SCHEDULER)
 				.flatMapMany(Flux::fromIterable)
 				.onErrorMap(DatabaseException::new);
 	}
@@ -142,7 +142,7 @@ public class Database {
 				throw e;
 			}
 			return null;
-		}).subscribeOn(databaseScheduler)
+		}).subscribeOn(DATABASE_SCHEDULER)
 				.onErrorMap(DatabaseException::new);
 	}
 	
@@ -167,7 +167,6 @@ public class Database {
 				returnVal = txFunction.apply(s);
 				tx.commit();
 			} catch (RuntimeException e) {
-				e.printStackTrace();
 				if (tx != null && tx.isActive()) {
 					try {
 						tx.rollback();
@@ -179,7 +178,7 @@ public class Database {
 				throw e;
 			}
 			return returnVal;
-		}).subscribeOn(databaseScheduler)
+		}).subscribeOn(DATABASE_SCHEDULER)
 				.onErrorMap(DatabaseException::new);
 	}
 
@@ -200,9 +199,9 @@ public class Database {
 						Mono.fromCallable(this::newSession).doOnNext(Session::beginTransaction),
 						txAsyncFunction,
 						this::commitAndClose,
-						this::rollbackAndClose,
+						(s, e) -> this.rollbackAndClose(s),
 						this::rollbackAndClose)
-				.subscribeOn(databaseScheduler);
+				.subscribeOn(DATABASE_SCHEDULER);
 	}
 	
 	private Mono<Void> commitAndClose(Session session) {

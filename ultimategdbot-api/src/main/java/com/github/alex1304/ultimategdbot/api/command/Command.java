@@ -45,7 +45,7 @@ public interface Command {
 	 * 
 	 * @return the required permission level
 	 */
-	default PermissionLevel getRequiredPermissionLevel() {
+	default PermissionLevel getMinimumPermissionLevel() {
 		return PermissionLevel.PUBLIC;
 	}
 	

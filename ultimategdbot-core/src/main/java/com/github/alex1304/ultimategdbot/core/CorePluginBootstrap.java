@@ -43,7 +43,7 @@ public class CorePluginBootstrap implements PluginBootstrap {
 								.apply(v, guildId)
 								.doOnTerminate(() -> bot.getCommandKernel().setPrefixForGuild(guildId, v)),
 						DatabaseOutputFunction.stringValue()))
-				.onReady(() -> initBlacklist(bot));
+				.onReady(() -> initBlacklist(bot).and(initPrefixes(bot)));
 		return bot.getConfig().areCoreCommandsDisabled()
 				? Mono.just(pluginBuilder.build())
 				: readAboutText()
@@ -89,6 +89,12 @@ public class CorePluginBootstrap implements PluginBootstrap {
 		return bot.getDatabase().query(BlacklistedIds.class, "from BlacklistedIds")
 				.map(BlacklistedIds::getId)
 				.doOnNext(bot.getCommandKernel()::blacklist)
+				.then();
+	}
+	
+	private static Mono<Void> initPrefixes(Bot bot) {
+		return bot.getDatabase().query(GuildPrefixes.class, "from GuildPrefixes")
+				.doOnNext(guildPrefix -> bot.getCommandKernel().setPrefixForGuild(guildPrefix.getGuildId(), guildPrefix.getPrefix()))
 				.then();
 	}
 }

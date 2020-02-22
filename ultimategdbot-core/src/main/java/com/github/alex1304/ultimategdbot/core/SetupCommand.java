@@ -21,7 +21,7 @@ import reactor.util.function.Tuples;
 @CommandSpec(
 	aliases = { "setup", "settings", "configure", "config" },
 	shortDescription = "View and edit the bot configuration in this server.",
-	requiredPermissionLevel = PermissionLevel.GUILD_ADMIN,
+	minimumPermissionLevel = PermissionLevel.GUILD_ADMIN,
 	scope = Scope.GUILD_ONLY
 )
 class SetupCommand {

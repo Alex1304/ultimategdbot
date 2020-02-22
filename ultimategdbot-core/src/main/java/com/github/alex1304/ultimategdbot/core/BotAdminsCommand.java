@@ -16,7 +16,7 @@ import reactor.core.publisher.Mono;
 @CommandSpec(
 		aliases = "botadmins",
 		shortDescription = "Manage users who have bot admin privileges.",
-		requiredPermissionLevel = PermissionLevel.BOT_OWNER
+		minimumPermissionLevel = PermissionLevel.BOT_OWNER
 )
 class BotAdminsCommand {
 

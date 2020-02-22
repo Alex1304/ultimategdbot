@@ -81,7 +81,8 @@ public final class PermissionChecker {
 	/**
 	 * Checks whether the given permission is granted in the specified context. If
 	 * the permission has not been registered into this checker, false will be
-	 * emitted. If the permission isn't granted, it will check if at least one
+	 * emitted. If the given permission name is the empty string "", it will always
+	 * emit true. If the permission isn't granted, it will check if at least one
 	 * permission that is higher level is granted, but not the other ones on the
 	 * same level. If neither the given permission nor permissions that are higher
 	 * level than the given one are granted, false is emitted. Otherwise emits true.
@@ -94,6 +95,9 @@ public final class PermissionChecker {
 	public Mono<Boolean> isGranted(String name, Context ctx) {
 		requireNonNull(name, "name cannot be null");
 		requireNonNull(ctx, "ctx cannot be null");
+		if (name.isEmpty()) {
+			return Mono.just(true);
+		}
 		var perm = permissionsByName.get(name);
 		if (perm == null) {
 			return Mono.just(false);

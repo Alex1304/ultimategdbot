@@ -16,7 +16,7 @@ import com.github.alex1304.ultimategdbot.api.command.Scope;
 public @interface CommandSpec {
 	String[] aliases();
 	String shortDescription() default "";
-	PermissionLevel requiredPermissionLevel() default PermissionLevel.PUBLIC;
+	PermissionLevel minimumPermissionLevel() default PermissionLevel.PUBLIC;
 	String requiredPermission() default "";
 	Scope scope() default Scope.ANYWHERE;
 }

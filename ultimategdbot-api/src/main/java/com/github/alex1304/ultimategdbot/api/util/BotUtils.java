@@ -126,8 +126,8 @@ public class BotUtils {
 				.map(ctx.getBot().getGateway()::getChannelById)
 				.ofType(MessageChannel.class)
 				.flatMap(c -> c.createMessage(":no_entry_sign: **Something went wrong when executing a command.**\n"
-						+ "Trigger: " + ctx.getEvent().getMessage().getContent().orElse("") + '\n'
-						+ "Error: " + Markdown.code(e.getClass().getName() + (e.getMessage() == null ? "" : ": " + e.getMessage())) + '\n'));
+						+ "**Trigger:** " + ctx.getEvent().getMessage().getContent().orElse("") + '\n'
+						+ "**Error:** " + Markdown.code(e.getClass().getName() + (e.getMessage() == null ? "" : ": " + e.getMessage())) + '\n'));
 		var logInFile = Mono.fromRunnable(() -> logger.error("Something went wrong when executing a command. Context dump: "
 				+ ctx, e));
 		

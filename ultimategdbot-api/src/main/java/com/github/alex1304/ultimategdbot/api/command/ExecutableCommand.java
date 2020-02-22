@@ -35,20 +35,19 @@ public class ExecutableCommand {
 		if (!command.getScope().isInScope(context.getChannel())) {
 			return Mono.empty();
 		}
-		return checkPermission()
+		return errorHandler.apply(checkPermission()
 				.and(checkPermissionLevel())
-				.then(errorHandler.apply(command.run(context), context));
+				.then(command.run(context)), context);
 	}
 	
 	private Mono<?> checkPermission() {
 		return Mono.just(command.getRequiredPermission())
-				.filter(perm -> !perm.isEmpty())
 				.filterWhen(perm -> context.getBot().getCommandKernel().getPermissionChecker().isGranted(perm, context))
 				.switchIfEmpty(Mono.error(new PermissionDeniedException()));
 	}
 	
 	private Mono<?> checkPermissionLevel() {
-		return Mono.just(command.getRequiredPermissionLevel())
+		return Mono.just(command.getMinimumPermissionLevel())
 				.filterWhen(perm -> context.getBot().getCommandKernel().getPermissionChecker().isGranted(perm, context))
 				.switchIfEmpty(Mono.error(new PermissionDeniedException()));
 	}

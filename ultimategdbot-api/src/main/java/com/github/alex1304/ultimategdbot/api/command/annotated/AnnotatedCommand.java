@@ -82,7 +82,7 @@ public class AnnotatedCommand implements Command {
 	}
 	
 	@Override
-	public PermissionLevel getRequiredPermissionLevel() {
+	public PermissionLevel getMinimumPermissionLevel() {
 		return requiredPermissionLevel;
 	}
 
@@ -167,7 +167,7 @@ public class AnnotatedCommand implements Command {
 				Set.of(cmdSpecAnnot.aliases()),
 				buildDocumentation(cmdSpecAnnot.shortDescription(), mainMethod, subMethods),
 				cmdSpecAnnot.requiredPermission(),
-				cmdSpecAnnot.requiredPermissionLevel(),
+				cmdSpecAnnot.minimumPermissionLevel(),
 				cmdSpecAnnot.scope());
 	}
 

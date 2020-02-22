@@ -13,7 +13,7 @@ import reactor.core.publisher.Mono;
 @CommandSpec(
 		aliases = "blacklist",
 		shortDescription = "Restrict guilds, channels or users from using the bot.",
-		requiredPermissionLevel = PermissionLevel.BOT_ADMIN
+		minimumPermissionLevel = PermissionLevel.BOT_ADMIN
 )
 class BlacklistCommand {
 

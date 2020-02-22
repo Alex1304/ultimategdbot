@@ -14,7 +14,7 @@ import reactor.core.publisher.Mono;
 @CommandSpec(
 		aliases = "cacheinfo",
 		shortDescription = "Give statistics on the cache used to store Discord entities.",
-		requiredPermissionLevel = PermissionLevel.BOT_ADMIN
+		minimumPermissionLevel = PermissionLevel.BOT_ADMIN
 )
 class CacheInfoCommand {
 
@@ -44,16 +44,6 @@ class CacheInfoCommand {
 						sb.append("**").append(STORE_NAMES[i]).append("**: ").append(count).append("\n");
 						i++;
 					}
-					sb.append("\n**__Cache implementations:__**\n\n")
-						.append("**").append(STORE_NAMES[0]).append("**: `").append(stateView.getChannelStore()).append("`\n")
-						.append("**").append(STORE_NAMES[1]).append("**: `").append(stateView.getGuildEmojiStore()).append("`\n")
-						.append("**").append(STORE_NAMES[2]).append("**: `").append(stateView.getGuildStore()).append("`\n")
-						.append("**").append(STORE_NAMES[3]).append("**: `").append(stateView.getMessageStore()).append("`\n")
-						.append("**").append(STORE_NAMES[4]).append("**: `").append(stateView.getMemberStore()).append("`\n")
-						.append("**").append(STORE_NAMES[5]).append("**: `").append(stateView.getPresenceStore()).append("`\n")
-						.append("**").append(STORE_NAMES[6]).append("**: `").append(stateView.getRoleStore()).append("`\n")
-						.append("**").append(STORE_NAMES[7]).append("**: `").append(stateView.getUserStore()).append("`\n")
-						.append("**").append(STORE_NAMES[8]).append("**: `").append(stateView.getVoiceStateStore()).append("`\n");
 					return sb.toString();
 				})
 				.flatMap(ctx::reply)

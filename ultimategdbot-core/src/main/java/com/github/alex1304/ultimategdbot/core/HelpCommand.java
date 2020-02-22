@@ -53,7 +53,7 @@ class HelpCommand {
 						.concatMap(plugin -> Flux.fromIterable(plugin.getCommandProvider().getProvidedCommands())
 								.filter(cmd -> cmd.getScope().isInScope(channel))
 								.filterWhen(cmd -> ctx.getBot().getCommandKernel().getPermissionChecker().isGranted(cmd.getRequiredPermission(), ctx))
-								.filterWhen(cmd -> ctx.getBot().getCommandKernel().getPermissionChecker().isGranted(cmd.getRequiredPermissionLevel(), ctx))
+								.filterWhen(cmd -> ctx.getBot().getCommandKernel().getPermissionChecker().isGranted(cmd.getMinimumPermissionLevel(), ctx))
 								.collectSortedList(comparing(HelpCommand::joinAliases))
 								.map(cmdList -> Tuples.of(plugin.getName(), cmdList)))
 						.doOnNext(consumer((pluginName, cmdList) -> {
@@ -89,7 +89,7 @@ class HelpCommand {
 					return new CommandFailedException("Subcommand " + code(selectedSubcommand) + " for command " + code(commandName) + " not found.\n"
 							+ "Available subcommands:\n" + subcommands);
 				}))
-				.map(cmd -> formatDoc(cmd, ctx.getPrefixUsed(), commandName, selectedSubcommand))
+				.map(cmd -> formatDoc(cmd, ctx.getPrefixUsed(), ctx.getBot().getConfig().getFlagPrefix(), commandName, selectedSubcommand))
 				.flatMap(doc -> sendPaginatedMessage(ctx, doc));
 	}
 	
@@ -99,7 +99,7 @@ class HelpCommand {
 				.collect(Collectors.joining("|"));
 	}
 	
-	private static String formatDoc(Command cmd, String prefix, String selectedCommand, String selectedSubcommand) {
+	private static String formatDoc(Command cmd, String prefix, String flagPrefix, String selectedCommand, String selectedSubcommand) {
 		var entry = cmd.getDocumentation().getEntries().get(selectedSubcommand);
 		var sb = new StringBuilder(code(prefix + selectedCommand))
 				.append(" - ")
@@ -114,7 +114,7 @@ class HelpCommand {
 		if (!entry.getFlagInfo().isEmpty()) {
 			sb.append("\n").append(bold(underline("Flags"))).append("\n");
 			entry.getFlagInfo().forEach((name, info) -> {
-				sb.append(code("--" + name + (info.getValueFormat().isBlank() ? "" : "=<" + info.getValueFormat() + ">")))
+				sb.append(code(flagPrefix + name + (info.getValueFormat().isBlank() ? "" : "=<" + info.getValueFormat() + ">")))
 						.append(": ")
 						.append(info.getDescription())
 						.append("\n");
