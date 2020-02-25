@@ -4,8 +4,9 @@ import com.github.alex1304.ultimategdbot.api.command.CommandFailedException;
 import com.github.alex1304.ultimategdbot.api.command.Context;
 import com.github.alex1304.ultimategdbot.api.command.PermissionLevel;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandAction;
+import com.github.alex1304.ultimategdbot.api.command.annotated.CommandDescriptor;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandDoc;
-import com.github.alex1304.ultimategdbot.api.command.annotated.CommandSpec;
+import com.github.alex1304.ultimategdbot.api.command.annotated.CommandPermission;
 import com.github.alex1304.ultimategdbot.api.util.DiscordFormatter;
 import com.github.alex1304.ultimategdbot.core.database.BotAdmins;
 
@@ -13,11 +14,11 @@ import discord4j.core.object.entity.User;
 import discord4j.core.object.util.Snowflake;
 import reactor.core.publisher.Mono;
 
-@CommandSpec(
+@CommandDescriptor(
 		aliases = "botadmins",
-		shortDescription = "Manage users who have bot admin privileges.",
-		minimumPermissionLevel = PermissionLevel.BOT_OWNER
+		shortDescription = "Manage users who have bot admin privileges."
 )
+@CommandPermission(level = PermissionLevel.BOT_OWNER)
 class BotAdminsCommand {
 
 	@CommandAction

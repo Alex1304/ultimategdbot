@@ -24,6 +24,7 @@ import com.github.alex1304.ultimategdbot.api.command.CommandDocumentationEntry;
 import com.github.alex1304.ultimategdbot.api.command.CommandFailedException;
 import com.github.alex1304.ultimategdbot.api.command.Context;
 import com.github.alex1304.ultimategdbot.api.command.FlagInformation;
+import com.github.alex1304.ultimategdbot.api.command.PermissionDeniedException;
 import com.github.alex1304.ultimategdbot.api.command.PermissionLevel;
 import com.github.alex1304.ultimategdbot.api.command.Scope;
 import com.github.alex1304.ultimategdbot.api.command.annotated.paramconverter.ParamConversionException;
@@ -98,6 +99,7 @@ public class AnnotatedCommand implements Command {
 	
 	static AnnotatedCommand fromAnnotatedObject(Object obj, AnnotatedCommandProvider provider) {
 		var cmdSpecAnnot = readCommandSpecAnnotation(obj);
+		var cmdPermAnnot = obj.getClass().getAnnotation(CommandPermission.class);
 		Method mainMethod = null;
 		var subMethods = new HashMap<String, Method>();
 		for (var method : obj.getClass().getMethods()) {
@@ -136,6 +138,8 @@ public class AnnotatedCommand implements Command {
 							+ Markdown.code(ctx.getPrefixUsed() + "help " + args.get(0)) + " for more information.");
 					return Mono.justOrEmpty(matchingMethod)
 							.switchIfEmpty(Mono.error(invalidSyntax))
+							.filterWhen(method -> isSubcommandGranted(method, ctx))
+							.switchIfEmpty(Mono.error(new PermissionDeniedException()))
 							.flatMap(method -> {
 								LOGGER.debug("Matching method: {}#{}", method.getDeclaringClass().getName(), method.getName());
 								var parameters = Flux.fromArray(method.getParameters()).skip(1);
@@ -166,13 +170,25 @@ public class AnnotatedCommand implements Command {
 				},
 				Set.of(cmdSpecAnnot.aliases()),
 				buildDocumentation(cmdSpecAnnot.shortDescription(), mainMethod, subMethods),
-				cmdSpecAnnot.requiredPermission(),
-				cmdSpecAnnot.minimumPermissionLevel(),
+				cmdPermAnnot != null ? cmdPermAnnot.name() : "",
+				cmdPermAnnot != null ? cmdPermAnnot.level() : PermissionLevel.PUBLIC,
 				cmdSpecAnnot.scope());
 	}
 
-	private static CommandSpec readCommandSpecAnnotation(Object obj) {
-		var cmdSpecAnnot = obj.getClass().getAnnotation(CommandSpec.class);
+	private static Mono<Boolean> isSubcommandGranted(Method method, Context ctx) {
+		var methodPermAnnot = method.getAnnotation(CommandPermission.class);
+		if (methodPermAnnot == null) {
+			return Mono.just(true);
+		}
+		return Mono.zip(
+						ctx.getBot().getCommandKernel().getPermissionChecker().isGranted(methodPermAnnot.name(), ctx),
+						ctx.getBot().getCommandKernel().getPermissionChecker().isGranted(methodPermAnnot.level(), ctx))
+				.map(function(Boolean::logicalAnd));
+				
+	}
+
+	private static CommandDescriptor readCommandSpecAnnotation(Object obj) {
+		var cmdSpecAnnot = obj.getClass().getAnnotation(CommandDescriptor.class);
 		if (cmdSpecAnnot == null) {
 			throw new InvalidAnnotatedObjectException("@CommandSpec annotation is missing");
 		}

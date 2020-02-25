@@ -4,17 +4,18 @@ import com.github.alex1304.ultimategdbot.api.command.CommandFailedException;
 import com.github.alex1304.ultimategdbot.api.command.Context;
 import com.github.alex1304.ultimategdbot.api.command.PermissionLevel;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandAction;
+import com.github.alex1304.ultimategdbot.api.command.annotated.CommandDescriptor;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandDoc;
-import com.github.alex1304.ultimategdbot.api.command.annotated.CommandSpec;
+import com.github.alex1304.ultimategdbot.api.command.annotated.CommandPermission;
 import com.github.alex1304.ultimategdbot.api.util.SystemUnit;
 
 import reactor.core.publisher.Mono;
 
-@CommandSpec(
+@CommandDescriptor(
 		aliases = "system",
-		shortDescription = "Audit and take control of the usage of system resources.",
-		minimumPermissionLevel = PermissionLevel.BOT_ADMIN
+		shortDescription = "Audit and take control of the usage of system resources."
 )
+@CommandPermission(level = PermissionLevel.BOT_OWNER)
 class SystemCommand {
 	
 	@CommandAction("memory")

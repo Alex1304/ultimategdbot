@@ -5,6 +5,7 @@ import static java.util.Collections.synchronizedSet;
 import static java.util.Objects.requireNonNull;
 
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -104,16 +105,16 @@ public class CommandKernel {
 	 * Gets a command instance corresponding to the given alias.
 	 *  
 	 * @param alias the alias of the command
-	 * @return the corresponding command instance, or null if not found
+	 * @return the corresponding command instance, if present
 	 */
-	public Command getCommandByAlias(String alias) {
+	public Optional<Command> getCommandByAlias(String alias) {
 		for (var p : providers) {
 			var cmd = p.getCommandByAlias(alias);
-			if (cmd != null) {
+			if (cmd.isPresent()) {
 				return cmd;
 			}
 		}
-		return null;
+		return Optional.empty();
 	}
 	
 	/**

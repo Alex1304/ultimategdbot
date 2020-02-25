@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import com.github.alex1304.ultimategdbot.api.command.annotated.AnnotatedCommandProvider;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandAction;
-import com.github.alex1304.ultimategdbot.api.command.annotated.CommandSpec;
+import com.github.alex1304.ultimategdbot.api.command.annotated.CommandDescriptor;
 import com.github.alex1304.ultimategdbot.api.command.annotated.InvalidAnnotatedObjectException;
 
 import reactor.core.publisher.Mono;
@@ -75,7 +75,7 @@ public class AnnotatedCommandProviderTest {
 
 }
 
-@CommandSpec(aliases="test")
+@CommandDescriptor(aliases="test")
 class TestCommand {
 	
 	@CommandAction
@@ -84,7 +84,7 @@ class TestCommand {
 	}
 }
 
-@CommandSpec(aliases="test")
+@CommandDescriptor(aliases="test")
 class TestCommandOneParam {
 	
 	@CommandAction
@@ -93,7 +93,7 @@ class TestCommandOneParam {
 	}
 }
 
-@CommandSpec(aliases="test")
+@CommandDescriptor(aliases="test")
 class TestCommandTwoParams {
 	
 	@CommandAction
@@ -102,7 +102,7 @@ class TestCommandTwoParams {
 	}
 }
 
-@CommandSpec(aliases="test")
+@CommandDescriptor(aliases="test")
 class TestCommandWithSubcommand {
 	
 	@CommandAction
@@ -116,7 +116,7 @@ class TestCommandWithSubcommand {
 	}
 }
 
-@CommandSpec(aliases="test")
+@CommandDescriptor(aliases="test")
 class TestCommandOneOrTwoParams {
 	
 	@CommandAction
@@ -125,7 +125,7 @@ class TestCommandOneOrTwoParams {
 	}
 }
 
-@CommandSpec(aliases="test")
+@CommandDescriptor(aliases="test")
 class TestCommandPrimitiveParam {
 	
 	@CommandAction
@@ -142,7 +142,7 @@ class TestCommandNoSpec {
 	}
 }
 
-@CommandSpec(aliases = {})
+@CommandDescriptor(aliases = {})
 class TestCommandNoAlias {
 	
 	@CommandAction
@@ -151,7 +151,7 @@ class TestCommandNoAlias {
 	}
 }
 
-@CommandSpec(aliases="test")
+@CommandDescriptor(aliases="test")
 class TestCommandNoAction {
 	
 	public Mono<Void> test(Context ctx) {
@@ -159,7 +159,7 @@ class TestCommandNoAction {
 	}
 }
 
-@CommandSpec(aliases="test")
+@CommandDescriptor(aliases="test")
 class TestCommandDuplicateActions {
 	
 	@CommandAction
@@ -173,7 +173,7 @@ class TestCommandDuplicateActions {
 	}
 }
 
-@CommandSpec(aliases="test")
+@CommandDescriptor(aliases="test")
 class TestCommandDuplicateSubcommands {
 	
 	@CommandAction
@@ -192,7 +192,7 @@ class TestCommandDuplicateSubcommands {
 	}
 }
 
-@CommandSpec(aliases="test")
+@CommandDescriptor(aliases="test")
 class TestCommandMissingContext {
 	
 	@CommandAction
@@ -201,7 +201,7 @@ class TestCommandMissingContext {
 	}
 }
 
-@CommandSpec(aliases="test")
+@CommandDescriptor(aliases="test")
 class TestCommandInvalidReturnType {
 	
 	@CommandAction

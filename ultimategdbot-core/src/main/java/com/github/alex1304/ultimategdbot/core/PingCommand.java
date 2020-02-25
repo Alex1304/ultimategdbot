@@ -3,11 +3,11 @@ package com.github.alex1304.ultimategdbot.core;
 import com.github.alex1304.ultimategdbot.api.command.Context;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandAction;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandDoc;
-import com.github.alex1304.ultimategdbot.api.command.annotated.CommandSpec;
+import com.github.alex1304.ultimategdbot.api.command.annotated.CommandDescriptor;
 
 import reactor.core.publisher.Mono;
 
-@CommandSpec(
+@CommandDescriptor(
 		aliases = "ping",
 		shortDescription = "Pings the bot to check if it is alive."
 )

@@ -69,15 +69,15 @@ public class CorePluginBootstrap implements PluginBootstrap {
 		cmdProvider.addAnnotated(new CacheInfoCommand());
 		// Register permissions
 		var permissionChecker = new PermissionChecker();
-		permissionChecker.register(PermissionLevel.BOT_OWNER, null, ctx -> ctx.getBot().getOwnerId()
+		permissionChecker.register(PermissionLevel.BOT_OWNER, ctx -> ctx.getBot().getOwnerId()
 				.map(id -> id.longValue() == ctx.getAuthor().getId().asLong()));
-		permissionChecker.register(PermissionLevel.BOT_ADMIN, null, ctx -> ctx.getBot().getDatabase()
+		permissionChecker.register(PermissionLevel.BOT_ADMIN, ctx -> ctx.getBot().getDatabase()
 				.findByID(BotAdmins.class, ctx.getAuthor().getId().asLong())
 				.hasElement());
-		permissionChecker.register(PermissionLevel.GUILD_OWNER, null, ctx -> ctx.getEvent().getGuild()
+		permissionChecker.register(PermissionLevel.GUILD_OWNER, ctx -> ctx.getEvent().getGuild()
 				.map(Guild::getOwnerId)
 				.map(ctx.getAuthor().getId()::equals));
-		permissionChecker.register(PermissionLevel.GUILD_ADMIN, null, ctx -> ctx.getEvent().getMessage().getChannel()
+		permissionChecker.register(PermissionLevel.GUILD_ADMIN, ctx -> ctx.getEvent().getMessage().getChannel()
 				.ofType(GuildChannel.class)
 				.flatMap(c -> c.getEffectivePermissions(ctx.getAuthor().getId())
 				.map(ps -> ps.contains(Permission.ADMINISTRATOR))));
@@ -93,7 +93,7 @@ public class CorePluginBootstrap implements PluginBootstrap {
 	}
 	
 	private static Mono<Void> initPrefixes(Bot bot) {
-		return bot.getDatabase().query(GuildPrefixes.class, "from GuildPrefixes")
+		return bot.getDatabase().query(GuildPrefixes.class, "from GuildPrefixes where prefix != ?0 and prefix != ?1", "", bot.getConfig().getDefaultPrefix())
 				.doOnNext(guildPrefix -> bot.getCommandKernel().setPrefixForGuild(guildPrefix.getGuildId(), guildPrefix.getPrefix()))
 				.then();
 	}

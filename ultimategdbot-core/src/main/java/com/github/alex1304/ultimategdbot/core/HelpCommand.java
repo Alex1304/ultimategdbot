@@ -8,8 +8,8 @@ import static com.github.alex1304.ultimategdbot.api.util.Markdown.underline;
 import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.joining;
 import static reactor.function.TupleUtils.consumer;
+import static reactor.function.TupleUtils.function;
 
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -19,7 +19,7 @@ import com.github.alex1304.ultimategdbot.api.command.CommandFailedException;
 import com.github.alex1304.ultimategdbot.api.command.Context;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandAction;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandDoc;
-import com.github.alex1304.ultimategdbot.api.command.annotated.CommandSpec;
+import com.github.alex1304.ultimategdbot.api.command.annotated.CommandDescriptor;
 import com.github.alex1304.ultimategdbot.api.util.menu.PaginationControls;
 
 import discord4j.core.object.entity.Message;
@@ -28,7 +28,7 @@ import reactor.core.publisher.Mono;
 import reactor.util.annotation.Nullable;
 import reactor.util.function.Tuples;
 
-@CommandSpec(
+@CommandDescriptor(
 		aliases = { "help", "manual" },
 		shortDescription = "Provides documentation for all commands."
 )
@@ -44,7 +44,7 @@ class HelpCommand {
 		return command == null ? displayCommandList(ctx) : displayCommandDocumentation(ctx, command.toLowerCase(), subcommand);
 	}
 
-	private Mono<Void> displayCommandList(Context ctx) {
+	private static Mono<Void> displayCommandList(Context ctx) {
 		var sb = new StringBuilder("Here is the list of commands you can use in this channel. "
 				+ "Use " + code(ctx.getPrefixUsed() + "help <command>") + " to view the detailed documentation of a specific command.\n\n");
 		return ctx.getEvent().getMessage().getChannel()
@@ -71,26 +71,33 @@ class HelpCommand {
 				.then(Mono.defer(() -> sendPaginatedMessage(ctx, sb.toString(), PaginationControls.getDefault(), Message.MAX_CONTENT_LENGTH)));
 	}
 	
-	private Mono<Void> displayCommandDocumentation(Context ctx, String commandName, String subcommand) {
+	private static Mono<Void> displayCommandDocumentation(Context ctx, String commandName, String subcommand) {
 		var selectedSubcommand = subcommand == null ? "" : subcommand.toLowerCase();
 		var command = new AtomicReference<Command>();
-		return Mono.justOrEmpty(Optional.ofNullable(ctx.getBot().getCommandKernel().getCommandByAlias(commandName)))
+		return Mono.justOrEmpty(ctx.getBot().getCommandKernel().getCommandByAlias(commandName))
 				.switchIfEmpty(Mono.error(new CommandFailedException("Command " + code(commandName) + " not found.")))
 				.doOnNext(command::set)
-				.filter(cmd -> cmd.getDocumentation().getEntries().containsKey(selectedSubcommand))
-				.switchIfEmpty(Mono.error(() -> {
-					var subcommands = command.get().getDocumentation().getEntries().keySet().stream()
+				.flatMap(cmd -> findAvailableSubcommands(cmd, ctx).collectList().map(subcommands -> Tuples.of(subcommands, cmd)))
+				.flatMap(function((subcommands, cmd) -> {
+					var formattedSubcommands = subcommands.stream()
 							.map(subcmd -> code(ctx.getPrefixUsed() + "help " + commandName + (subcmd.isEmpty() ? "" : " " + subcmd)))
 							.collect(joining("\n"));
-					if (selectedSubcommand.isEmpty()) {
-						return new CommandFailedException("Nothing found for the command " + code(commandName) + " alone.\n"
-								+ "Try one of the available subcommands:\n" + subcommands);
+					if (!selectedSubcommand.isEmpty()) {
+						if (subcommands.contains(selectedSubcommand)) {
+							return Mono.just(cmd);
+						}
+						return Mono.error(new CommandFailedException("Subcommand " + code(selectedSubcommand) + " for command " + code(commandName) + " not found.\n"
+								+ "Available subcommands:\n" + formattedSubcommands));
 					}
-					return new CommandFailedException("Subcommand " + code(selectedSubcommand) + " for command " + code(commandName) + " not found.\n"
-							+ "Available subcommands:\n" + subcommands);
+					return Mono.error(new CommandFailedException("Nothing found for the command " + code(commandName) + " alone.\n"
+								+ "Try one of the available subcommands:\n" + formattedSubcommands));
 				}))
 				.map(cmd -> formatDoc(cmd, ctx.getPrefixUsed(), ctx.getBot().getConfig().getFlagPrefix(), commandName, selectedSubcommand))
 				.flatMap(doc -> sendPaginatedMessage(ctx, doc));
+	}
+	
+	private static Flux<String> findAvailableSubcommands(Command cmd, Context ctx) {
+		return Flux.fromIterable(cmd.getDocumentation().getEntries().keySet());
 	}
 	
 	private static String joinAliases(Command cmd) {

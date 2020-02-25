@@ -7,15 +7,16 @@ import com.github.alex1304.ultimategdbot.api.command.Context;
 import com.github.alex1304.ultimategdbot.api.command.PermissionLevel;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandAction;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandDoc;
-import com.github.alex1304.ultimategdbot.api.command.annotated.CommandSpec;
+import com.github.alex1304.ultimategdbot.api.command.annotated.CommandPermission;
+import com.github.alex1304.ultimategdbot.api.command.annotated.CommandDescriptor;
 
 import reactor.core.publisher.Mono;
 
-@CommandSpec(
+@CommandDescriptor(
 		aliases = "cacheinfo",
-		shortDescription = "Give statistics on the cache used to store Discord entities.",
-		minimumPermissionLevel = PermissionLevel.BOT_ADMIN
+		shortDescription = "Give statistics on the cache used to store Discord entities."
 )
+@CommandPermission(level = PermissionLevel.BOT_OWNER)
 class CacheInfoCommand {
 
 	private static final String[] STORE_NAMES = { "Channels", "Emojis", "Guilds", "Messages", "Members", "Presences",

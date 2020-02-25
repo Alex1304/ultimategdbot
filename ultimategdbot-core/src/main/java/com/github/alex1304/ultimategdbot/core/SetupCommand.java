@@ -9,7 +9,8 @@ import com.github.alex1304.ultimategdbot.api.command.PermissionLevel;
 import com.github.alex1304.ultimategdbot.api.command.Scope;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandAction;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandDoc;
-import com.github.alex1304.ultimategdbot.api.command.annotated.CommandSpec;
+import com.github.alex1304.ultimategdbot.api.command.annotated.CommandPermission;
+import com.github.alex1304.ultimategdbot.api.command.annotated.CommandDescriptor;
 
 import discord4j.core.object.util.Snowflake;
 import reactor.core.publisher.Flux;
@@ -18,12 +19,12 @@ import reactor.function.TupleUtils;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
-@CommandSpec(
+@CommandDescriptor(
 	aliases = { "setup", "settings", "configure", "config" },
 	shortDescription = "View and edit the bot configuration in this server.",
-	minimumPermissionLevel = PermissionLevel.GUILD_ADMIN,
 	scope = Scope.GUILD_ONLY
 )
+@CommandPermission(level = PermissionLevel.GUILD_ADMIN)
 class SetupCommand {
 
 	@CommandAction

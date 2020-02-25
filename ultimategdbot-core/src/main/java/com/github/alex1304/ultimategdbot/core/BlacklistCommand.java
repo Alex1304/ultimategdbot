@@ -5,16 +5,17 @@ import com.github.alex1304.ultimategdbot.api.command.Context;
 import com.github.alex1304.ultimategdbot.api.command.PermissionLevel;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandAction;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandDoc;
-import com.github.alex1304.ultimategdbot.api.command.annotated.CommandSpec;
+import com.github.alex1304.ultimategdbot.api.command.annotated.CommandPermission;
+import com.github.alex1304.ultimategdbot.api.command.annotated.CommandDescriptor;
 import com.github.alex1304.ultimategdbot.core.database.BlacklistedIds;
 
 import reactor.core.publisher.Mono;
 
-@CommandSpec(
+@CommandDescriptor(
 		aliases = "blacklist",
-		shortDescription = "Restrict guilds, channels or users from using the bot.",
-		minimumPermissionLevel = PermissionLevel.BOT_ADMIN
+		shortDescription = "Restrict guilds, channels or users from using the bot."
 )
+@CommandPermission(level = PermissionLevel.BOT_OWNER)
 class BlacklistCommand {
 
 	@CommandAction("add")

@@ -91,11 +91,11 @@ public class CommandProvider {
 	 * Gets a command instance corresponding to the given alias.
 	 *  
 	 * @param alias the alias of the command
-	 * @return the corresponding command instance, or null if not found
+	 * @return the corresponding command instance, if present
 	 */
-	public Command getCommandByAlias(String alias) {
+	public Optional<Command> getCommandByAlias(String alias) {
 		requireNonNull(alias);
-		return commandMap.get(alias.toLowerCase());
+		return Optional.ofNullable(commandMap.get(alias.toLowerCase()));
 	}
 	
 	/**

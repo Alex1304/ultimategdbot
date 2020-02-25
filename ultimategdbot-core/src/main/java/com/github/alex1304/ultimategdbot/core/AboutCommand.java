@@ -9,7 +9,7 @@ import java.util.HashMap;
 import com.github.alex1304.ultimategdbot.api.command.Context;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandAction;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandDoc;
-import com.github.alex1304.ultimategdbot.api.command.annotated.CommandSpec;
+import com.github.alex1304.ultimategdbot.api.command.annotated.CommandDescriptor;
 import com.github.alex1304.ultimategdbot.api.util.DiscordFormatter;
 
 import discord4j.core.object.util.Snowflake;
@@ -19,7 +19,7 @@ import reactor.core.scheduler.Schedulers;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
-@CommandSpec(
+@CommandDescriptor(
 		aliases = "about",
 		shortDescription = "Shows information about the bot itself."
 )
