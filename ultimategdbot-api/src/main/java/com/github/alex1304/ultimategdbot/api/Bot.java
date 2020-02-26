@@ -140,7 +140,7 @@ public class Bot {
 	 * Sends a message into the debug log channel.
 	 * 
 	 * @param message the message to send
-	 * @return a Mono emitting the message sent
+	 * @return a Mono completing when the log message is sent
 	 */
 	public Mono<Void> log(String message) {
 		return log(mcs -> mcs.setContent(message));
@@ -150,7 +150,7 @@ public class Bot {
 	 * Sends a message into the debug log channel.
 	 * 
 	 * @param spec the spec of the message to send
-	 * @return a Mono emitting the message sent
+	 * @return a Mono completing when the log message is sent
 	 */
 	public Mono<Void> log(Consumer<MessageCreateSpec> spec) {
 		var specInstance = new MessageCreateSpec();
@@ -158,6 +158,7 @@ public class Bot {
 		return Mono.justOrEmpty(config.getDebugLogChannelId())
 				.map(discordClient::getChannelById)
 				.flatMap(c -> c.createMessage(specInstance.asRequest()))
+				.onErrorResume(e -> Mono.fromRunnable(() -> LOGGER.warn("Failed to send a message to log channel", e)))
 				.then();
 	}
 	

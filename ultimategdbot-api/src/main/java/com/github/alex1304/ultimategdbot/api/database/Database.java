@@ -33,6 +33,9 @@ public class Database {
 
 	/**
 	 * Initializes the database.
+	 * 
+	 * @param resourceNames the name of the mapping resources to include in the
+	 *                      configuration
 	 */
 	public void configure(Set<String> resourceNames) {
 		var config = new Configuration();
