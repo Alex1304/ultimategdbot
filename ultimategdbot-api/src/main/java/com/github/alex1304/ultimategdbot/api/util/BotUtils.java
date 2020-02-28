@@ -119,15 +119,11 @@ public class BotUtils {
 
 	
 	public static Mono<Void> logCommandError(Logger logger, Context ctx, Throwable e) {
-		var replyToUser = ctx.getChannel()
-				.createMessage(":no_entry_sign: Something went wrong. A crash report "
+		var replyToUser = ctx.reply(":no_entry_sign: Something went wrong. A crash report "
 						+ "has been sent to the developer. Sorry for the inconvenience.");
-		var logInDebugChannel = Mono.justOrEmpty(ctx.getBot().getConfig().getDebugLogChannelId())
-				.map(ctx.getBot().getGateway()::getChannelById)
-				.ofType(MessageChannel.class)
-				.flatMap(c -> c.createMessage(":no_entry_sign: **Something went wrong when executing a command.**\n"
+		var logInDebugChannel = ctx.getBot().log(":no_entry_sign: **Something went wrong when executing a command.**\n"
 						+ "**Trigger:** " + ctx.getEvent().getMessage().getContent().orElse("") + '\n'
-						+ "**Error:** " + Markdown.code(e.getClass().getName() + (e.getMessage() == null ? "" : ": " + e.getMessage())) + '\n'));
+						+ "**Error:** " + Markdown.code(e.getClass().getName() + (e.getMessage() == null ? "" : ": " + e.getMessage())) + '\n');
 		var logInFile = Mono.fromRunnable(() -> logger.error("Something went wrong when executing a command. Context dump: "
 				+ ctx, e));
 		
