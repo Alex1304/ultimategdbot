@@ -98,12 +98,8 @@ public class CommandKernel {
 	 * Starts listening to message create events.
 	 */
 	public void start() {
-		LOGGER.info("Command kernel started");
 		bot.getGateway().on(MessageCreateEvent.class, this::processEvent)
-				.doFinally(signal -> {
-					LOGGER.warn("Command kernel terminated with signal " + signal);
-					start();
-				})
+				.log(CommandKernel.class.getName())
 				.subscribe();
 	}
 	

@@ -15,7 +15,6 @@ import com.github.alex1304.ultimategdbot.api.util.menu.PageNumberOutOfRangeExcep
 import com.github.alex1304.ultimategdbot.api.util.menu.PaginationControls;
 
 import discord4j.core.object.entity.Message;
-import discord4j.core.object.entity.channel.MessageChannel;
 import reactor.core.publisher.Mono;
 
 /**

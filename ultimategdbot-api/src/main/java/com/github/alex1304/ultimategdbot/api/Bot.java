@@ -20,6 +20,7 @@ import com.github.alex1304.ultimategdbot.api.util.PropertyReader;
 
 import discord4j.core.DiscordClient;
 import discord4j.core.GatewayDiscordClient;
+import discord4j.core.event.DefaultEventDispatcher;
 import discord4j.core.object.data.stored.MessageBean;
 import discord4j.core.object.entity.Guild;
 import discord4j.core.object.entity.GuildEmoji;
@@ -32,8 +33,11 @@ import discord4j.rest.route.Routes;
 import discord4j.store.api.mapping.MappingStoreService;
 import discord4j.store.caffeine.CaffeineStoreService;
 import discord4j.store.jdk.JdkStoreService;
+import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 /**
  * Represents the bot itself.
@@ -205,6 +209,7 @@ public class Bot {
 				.setStoreService(MappingStoreService.create()
 						.setMapping(new CaffeineStoreService(builder -> builder.expireAfterWrite(Duration.ofDays(1))), MessageBean.class)
 						.setFallback(new JdkStoreService()))
+				.setEventDispatcher(new DefaultEventDispatcher(EmitterProcessor.create(false), FluxSink.OverflowStrategy.BUFFER, Schedulers.boundedElastic()))
 				.setGatewayObserver((state, identifyOptions) -> {
 					if (state == GatewayObserver.CONNECTED
 							|| state == GatewayObserver.DISCONNECTED
