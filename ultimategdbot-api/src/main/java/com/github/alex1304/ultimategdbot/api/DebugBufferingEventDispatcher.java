@@ -17,21 +17,23 @@ import discord4j.core.event.domain.Event;
 import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
+import reactor.core.publisher.UnicastProcessor;
 import reactor.core.scheduler.Scheduler;
-import reactor.util.concurrent.Queues;
 
 public class DebugBufferingEventDispatcher implements EventDispatcher {
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(DebugBufferingEventDispatcher.class);
-	private static final Duration TIMEOUT = Duration.ofSeconds(5);
+	private static final Duration TIMEOUT = Duration.ofSeconds(10);
 
-	private final EmitterProcessor<EventWithTime> processor;
+	private final UnicastProcessor<EventWithTime> processor;
+	private final EmitterProcessor<EventWithTime> processorOut;
 	private final FluxSink<EventWithTime> sink;
 	private final Scheduler scheduler;
 	
 
 	public DebugBufferingEventDispatcher(Scheduler scheduler) {
-		this.processor = EmitterProcessor.create(Queues.SMALL_BUFFER_SIZE, false);
+		this.processor = UnicastProcessor.create();
+		this.processorOut = processor.subscribeWith(EmitterProcessor.create(false));
 		this.sink = processor.sink(FluxSink.OverflowStrategy.BUFFER);
 		this.scheduler = requireNonNull(scheduler);
 	}
@@ -39,7 +41,7 @@ public class DebugBufferingEventDispatcher implements EventDispatcher {
 	@Override
 	public <T extends Event> Flux<T> on(Class<T> eventClass) {
 		var subscription = new AtomicReference<Subscription>();
-		return processor.publishOn(scheduler)
+		return processorOut.publishOn(scheduler)
 				.filter(eventWithTime -> {
 					var elapsed = Duration.ofNanos(scheduler.now(TimeUnit.NANOSECONDS) - eventWithTime.publishTimeNanos);
 					if (!elapsed.minus(TIMEOUT).isNegative()) {
@@ -48,7 +50,7 @@ public class DebugBufferingEventDispatcher implements EventDispatcher {
 										? eventWithTime.event.toString()
 										: eventWithTime.event.getClass().getSimpleName(),
 								BotUtils.formatDuration(elapsed),
-								processor.getPending());
+								processor.size());
 						return false;
 					}
 					return true;
