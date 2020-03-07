@@ -33,7 +33,7 @@ public class DebugBufferingEventDispatcher implements EventDispatcher {
 
 	public DebugBufferingEventDispatcher(Scheduler scheduler) {
 		this.processor = UnicastProcessor.create();
-		this.processorOut = processor.subscribeWith(EmitterProcessor.create());
+		this.processorOut = processor.subscribeWith(EmitterProcessor.create(false));
 		this.sink = processor.sink(FluxSink.OverflowStrategy.BUFFER);
 		this.scheduler = requireNonNull(scheduler);
 	}
