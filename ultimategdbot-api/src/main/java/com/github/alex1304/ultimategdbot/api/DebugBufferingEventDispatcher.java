@@ -2,12 +2,15 @@ package com.github.alex1304.ultimategdbot.api;
 
 import static java.util.Objects.requireNonNull;
 
-import java.util.concurrent.ConcurrentHashMap;
+import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.reactivestreams.Subscription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.github.alex1304.ultimategdbot.api.util.BotUtils;
 
 import discord4j.core.event.EventDispatcher;
 import discord4j.core.event.domain.Event;
@@ -20,11 +23,12 @@ import reactor.util.concurrent.Queues;
 public class DebugBufferingEventDispatcher implements EventDispatcher {
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(DebugBufferingEventDispatcher.class);
+	private static final Duration TIMEOUT = Duration.ofSeconds(5);
 
-	private final EmitterProcessor<Event> processor;
-	private final FluxSink<Event> sink;
+	private final EmitterProcessor<EventWithTime> processor;
+	private final FluxSink<EventWithTime> sink;
 	private final Scheduler scheduler;
-	private final ConcurrentHashMap<Class<? extends Event>, Integer> subscribedEventTypes = new ConcurrentHashMap<>();
+	
 
 	public DebugBufferingEventDispatcher(Scheduler scheduler) {
 		this.processor = EmitterProcessor.create(Queues.SMALL_BUFFER_SIZE, false);
@@ -36,35 +40,40 @@ public class DebugBufferingEventDispatcher implements EventDispatcher {
 	public <T extends Event> Flux<T> on(Class<T> eventClass) {
 		var subscription = new AtomicReference<Subscription>();
 		return processor.publishOn(scheduler)
+				.filter(eventWithTime -> {
+					var elapsed = Duration.ofNanos(scheduler.now(TimeUnit.NANOSECONDS) - eventWithTime.publishTimeNanos);
+					if (!elapsed.minus(TIMEOUT).isNegative()) {
+						LOGGER.warn("Ignoring {}, took too long to be consumed ({}). Total events in queue: {}",
+								LOGGER.isTraceEnabled()
+										? eventWithTime.event.toString()
+										: eventWithTime.event.getClass().getSimpleName(),
+								BotUtils.formatDuration(elapsed),
+								processor.getPending());
+						return false;
+					}
+					return true;
+				})
+				.map(EventWithTime::getEvent)
 				.ofType(eventClass)
 				.doOnSubscribe(sub -> {
-                    subscription.set(sub);
-                    if (LOGGER.isDebugEnabled()) {
-                        LOGGER.debug("Subscription {} to {} created", Integer.toHexString(sub.hashCode()),
-                                eventClass.getSimpleName());
-                    }
-                    subscribedEventTypes.merge(eventClass, 1, Integer::sum);
+					subscription.set(sub);
+					if (LOGGER.isDebugEnabled()) {
+						LOGGER.debug("Subscription {} to {} created", Integer.toHexString(sub.hashCode()),
+								eventClass.getSimpleName());
+					}
                 })
                 .doFinally(signal -> {
-                    if (LOGGER.isDebugEnabled()) {
-                        LOGGER.debug("Subscription {} to {} disposed due to {}",
-                                Integer.toHexString(subscription.get().hashCode()), eventClass.getSimpleName(), signal);
-                    }
-                    subscribedEventTypes.merge(eventClass, 1, this::subtractOrRemove);
+					var sub = subscription.get();
+					if (sub != null && LOGGER.isDebugEnabled()) {
+						LOGGER.debug("Subscription {} to {} disposed due to {}", Integer.toHexString(sub.hashCode()),
+								eventClass.getSimpleName(), signal);
+					}
                 });
 	}
 
 	@Override
 	public void publish(Event event) {
-		sink.next(event);
-		if (subscribedEventTypes.getOrDefault(event.getClass(), 0) > 0) {
-			LOGGER.debug("Published event {}", event);
-			var pending = processor.getPending();
-			LOGGER.debug("There {} now {} pending event{} in queue",
-					pending,
-					pending > 1 ? "are": "is",
-					pending > 1 ? "s" : "");
-		}
+		sink.next(new EventWithTime(event, scheduler.now(TimeUnit.NANOSECONDS)));
 	}
 
 	@Override
@@ -72,10 +81,17 @@ public class DebugBufferingEventDispatcher implements EventDispatcher {
 		sink.complete();
 	}
 	
-	private Integer subtractOrRemove(Integer oldValue, Integer increment) {
-		if (oldValue <= increment) {
-			return null;
+	private static class EventWithTime {
+		private final Event event;
+		private final long publishTimeNanos;
+		
+		private EventWithTime(Event event, long publishTimeNanos) {
+			this.event = event;
+			this.publishTimeNanos = publishTimeNanos;
 		}
-		return oldValue - increment;
+
+		private Event getEvent() {
+			return event;
+		}
 	}
 }
