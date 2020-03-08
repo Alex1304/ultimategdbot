@@ -43,6 +43,9 @@ public class DebugBufferingEventDispatcher implements EventDispatcher {
 		var subscription = new AtomicReference<Subscription>();
 		return processorOut.publishOn(scheduler)
 				.filter(eventWithTime -> {
+					if (eventWithTime.event.getClass() != eventClass) {
+						return false;
+					} 
 					var elapsed = Duration.ofNanos(scheduler.now(TimeUnit.NANOSECONDS) - eventWithTime.publishTimeNanos);
 					if (!elapsed.minus(TIMEOUT).isNegative()) {
 						LOGGER.warn("Ignoring {}, took too long to be consumed ({}). Total events in queue: {}",
