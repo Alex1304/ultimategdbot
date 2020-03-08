@@ -1,6 +1,7 @@
 package com.github.alex1304.ultimategdbot.api.util.menu;
 
 import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNullElse;
 
 import java.time.Duration;
 import java.util.Collections;
@@ -30,6 +31,7 @@ import discord4j.rest.http.client.ClientException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoProcessor;
+import reactor.util.annotation.Nullable;
 
 /**
  * Utility to create interactive menus in Discord. An interactive menu first
@@ -87,7 +89,7 @@ public class InteractiveMenu {
 	
 	/**
 	 * Creates a new empty InteractiveMenu with a given message that will serve as
-	 * menu prompt. The menu message may be supplied from an asynchronous source. 
+	 * menu prompt. The menu message may be supplied from an asynchronous source.
 	 * 
 	 * @param specMono the Mono emitting the spec to build the menu message
 	 * @return a new InteractiveMenu
@@ -101,23 +103,26 @@ public class InteractiveMenu {
 	 * Creates a new InteractiveMenu prefilled with menu items useful for
 	 * pagination.
 	 * 
-	 * @param currentPage an AtomicInteger that stores the current page number
-	 * @param controls    the emojis to use for reaction-based navigation controls
-	 * @param paginator   a Function that generates the message to display according
-	 *                    to the current page number. If the page number is out of
-	 *                    range, the function may throw a
-	 *                    {@link PageNumberOutOfRangeException} which is handled by
-	 *                    default to cover cases where the user inputs an invalid
-	 *                    page number. Note that if the paginator function throws
-	 *                    {@link PageNumberOutOfRangeException} with min/max values
-	 *                    that aren't the same depending on the current page number,
-	 *                    the behavior of the InteractiveMenu will be undefined.
+	 * @param currentPageRef an AtomicInteger that stores the current page number,
+	 *                       may be null if you don't need it
+	 * @param controls       the emojis to use for reaction-based navigation
+	 *                       controls
+	 * @param paginator      a Function that generates the message to display
+	 *                       according to the current page number. If the page
+	 *                       number is out of range, the function may throw a
+	 *                       {@link PageNumberOutOfRangeException} which is handled
+	 *                       by default to cover cases where the user inputs an
+	 *                       invalid page number. Note that if the paginator
+	 *                       function throws {@link PageNumberOutOfRangeException}
+	 *                       with min/max values that aren't the same depending on
+	 *                       the current page number, the behavior of the
+	 *                       InteractiveMenu will be undefined.
 	 * @return a new InteractiveMenu prefilled with menu items useful for
 	 *         pagination.
 	 */
-	public static InteractiveMenu createPaginated(AtomicInteger currentPage, PaginationControls controls, IntFunction<MessageSpecTemplate> paginator) {
+	public static InteractiveMenu createPaginated(@Nullable AtomicInteger currentPageRef, PaginationControls controls, IntFunction<MessageSpecTemplate> paginator) {
 		requireNonNull(paginator);
-		return createAsyncPaginated(currentPage, controls, p -> Mono.just(paginator.apply(p)));
+		return createAsyncPaginated(currentPageRef, controls, p -> Mono.just(paginator.apply(p)));
 	}
 
 	/**
@@ -126,8 +131,10 @@ public class InteractiveMenu {
 	 * {@link #createPaginated(AtomicInteger, PaginationControls, IntFunction)},
 	 * this method support asynchronous paginator functions.
 	 * 
-	 * @param currentPage    an AtomicInteger that stores the current page number
-	 * @param controls    the emojis to use for reaction-based navigation controls
+	 * @param currentPageRef an AtomicInteger that stores the current page number,
+	 *                       may be null if you don't need it
+	 * @param controls       the emojis to use for reaction-based navigation
+	 *                       controls
 	 * @param asyncPaginator a Function that asynchronously generates the message to
 	 *                       display according to the current page number. If the
 	 *                       page number is out of range, the Mono returned by this
@@ -142,10 +149,10 @@ public class InteractiveMenu {
 	 * @return a new InteractiveMenu prefilled with menu items useful for
 	 *         pagination.
 	 */
-	public static InteractiveMenu createAsyncPaginated(AtomicInteger currentPage, PaginationControls controls, IntFunction<Mono<MessageSpecTemplate>> asyncPaginator) {
-		requireNonNull(currentPage);
+	public static InteractiveMenu createAsyncPaginated(@Nullable AtomicInteger currentPageRef, PaginationControls controls, IntFunction<Mono<MessageSpecTemplate>> asyncPaginator) {
 		requireNonNull(controls);
 		requireNonNull(asyncPaginator);
+		var currentPage = requireNonNullElse(currentPageRef, new AtomicInteger());
 		var oldPage = new AtomicInteger();
 		return create(asyncPaginator.apply(currentPage.get()).map(MessageSpecTemplate::toMessageCreateSpec))
 				.addReactionItem(controls.getPreviousEmoji(), interaction -> Mono.fromCallable(currentPage::decrementAndGet)

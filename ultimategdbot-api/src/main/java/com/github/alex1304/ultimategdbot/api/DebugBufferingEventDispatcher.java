@@ -25,16 +25,16 @@ public class DebugBufferingEventDispatcher implements EventDispatcher {
 	private static final Logger LOGGER = LoggerFactory.getLogger(DebugBufferingEventDispatcher.class);
 	private static final Duration TIMEOUT = Duration.ofSeconds(10);
 
-	private final UnicastProcessor<EventWithTime> processor;
+	private final UnicastProcessor<EventWithTime> processorIn;
 	private final EmitterProcessor<EventWithTime> processorOut;
 	private final FluxSink<EventWithTime> sink;
 	private final Scheduler scheduler;
 	
 
 	public DebugBufferingEventDispatcher(Scheduler scheduler) {
-		this.processor = UnicastProcessor.create();
-		this.processorOut = processor.subscribeWith(EmitterProcessor.create(false));
-		this.sink = processor.sink(FluxSink.OverflowStrategy.BUFFER);
+		this.processorIn = UnicastProcessor.create();
+		this.processorOut = processorIn.subscribeWith(EmitterProcessor.create(false));
+		this.sink = processorIn.sink(FluxSink.OverflowStrategy.BUFFER);
 		this.scheduler = requireNonNull(scheduler);
 	}
 
@@ -50,7 +50,7 @@ public class DebugBufferingEventDispatcher implements EventDispatcher {
 										? eventWithTime.event.toString()
 										: eventWithTime.event.getClass().getSimpleName(),
 								BotUtils.formatDuration(elapsed),
-								processor.size());
+								processorIn.size());
 						return false;
 					}
 					return true;
@@ -81,6 +81,7 @@ public class DebugBufferingEventDispatcher implements EventDispatcher {
 	@Override
 	public void shutdown() {
 		sink.complete();
+		processorOut.onComplete();
 	}
 	
 	private static class EventWithTime {

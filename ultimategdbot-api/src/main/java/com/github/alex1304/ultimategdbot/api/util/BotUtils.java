@@ -4,7 +4,6 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -99,11 +98,12 @@ public class BotUtils {
 			return ctx.reply(text).then();
 		}
 		var parts = splitMessage(text, pageLength);
-		return InteractiveMenu.createPaginated(new AtomicInteger(), controls, page -> {
+		return InteractiveMenu.createPaginated(null, controls, page -> {
 					PageNumberOutOfRangeException.check(page, 0, parts.size() - 1);
 					return new MessageSpecTemplate(parts.get(page), embed -> embed.addField("Page " + (page + 1) + "/" + parts.size(),
 							"To go to a specific page, type `page <number>`, e.g `page 3`", true));
 				})
+				.withTimeoutSeconds(ctx.getBot().getConfig().getInteractiveMenuTimeoutSeconds())
 				.open(ctx);
 	}
 	
@@ -112,10 +112,8 @@ public class BotUtils {
 	}
 	
 	public static Mono<Void> sendPaginatedMessage(Context ctx, String text) {
-		return sendPaginatedMessage(ctx, text, PaginationControls.getDefault(), Message.MAX_CONTENT_LENGTH - 10);
+		return sendPaginatedMessage(ctx, text, ctx.getBot().getConfig().getPaginationControls(), Message.MAX_CONTENT_LENGTH - 10);
 	}
-	
-
 	
 	public static Mono<Void> logCommandError(Logger logger, Context ctx, Throwable e) {
 		var replyToUser = ctx.reply(":no_entry_sign: Something went wrong. A crash report "

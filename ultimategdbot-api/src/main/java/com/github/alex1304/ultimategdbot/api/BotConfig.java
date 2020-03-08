@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.alex1304.ultimategdbot.api.util.PropertyReader;
+import com.github.alex1304.ultimategdbot.api.util.menu.PaginationControls;
 
 import discord4j.core.object.presence.Activity;
 import discord4j.core.object.presence.Presence;
@@ -26,9 +27,12 @@ public class BotConfig {
 	private final Set<Snowflake> emojiGuildIds;
 	private final boolean coreCommandsDisabled;
 	private final Presence presence;
+	private final PaginationControls paginationControls;
+	private final int interactiveMenuTimeoutSeconds;
 	
 	public BotConfig(String token, String defaultPrefix, String flagPrefix, Optional<Snowflake> debugLogChannelId,
-			Set<Snowflake> emojiGuildIds, boolean coreCommandsDisabled, Presence presence) {
+			Set<Snowflake> emojiGuildIds, boolean coreCommandsDisabled, Presence presence, PaginationControls paginationControls,
+			int interactiveMenuTimeoutSeconds) {
 		this.token = token;
 		this.defaultPrefix = defaultPrefix;
 		this.flagPrefix = flagPrefix;
@@ -36,6 +40,8 @@ public class BotConfig {
 		this.emojiGuildIds = emojiGuildIds;
 		this.coreCommandsDisabled = coreCommandsDisabled;
 		this.presence = presence;
+		this.paginationControls = paginationControls;
+		this.interactiveMenuTimeoutSeconds = interactiveMenuTimeoutSeconds;
 	}
 
 	public static BotConfig fromProperties(Properties properties) {
@@ -75,7 +81,12 @@ public class BotConfig {
 							LOGGER.warn("presence_status: Expected one of 'online', 'idle', 'dnd', 'invisible'. Defaulting to 'online'.");
 							return Presence.online(activity);
 					}
-				}).orElse(Presence.online(activity)));
+				}).orElse(Presence.online(activity)),
+				new PaginationControls(
+						propertyReader.read("interactive_menu.controls.previous", false).orElse(PaginationControls.DEFAULT_PREVIOUS_EMOJI),
+						propertyReader.read("interactive_menu.controls.next", false).orElse(PaginationControls.DEFAULT_NEXT_EMOJI),
+						propertyReader.read("interactive_menu.controls.close", false).orElse(PaginationControls.DEFAULT_CLOSE_EMOJI)),
+				propertyReader.read("interactive_menu.timeout_seconds", false).map(Integer::parseInt).orElse(600));
 	}
 
 	public String getToken() {
@@ -104,6 +115,14 @@ public class BotConfig {
 
 	public Presence getPresence() {
 		return presence;
+	}
+
+	public PaginationControls getPaginationControls() {
+		return paginationControls;
+	}
+
+	public int getInteractiveMenuTimeoutSeconds() {
+		return interactiveMenuTimeoutSeconds;
 	}
 
 	@Override
@@ -135,6 +154,4 @@ public class BotConfig {
 				+ ", corePluginDisabled=" + coreCommandsDisabled + ", presence=" + presence
 				+ "}";
 	}
-
-	
 }

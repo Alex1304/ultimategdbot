@@ -3,6 +3,10 @@ package com.github.alex1304.ultimategdbot.api.util.menu;
 import static java.util.Objects.requireNonNull;
 
 public class PaginationControls {
+	
+	public static final String DEFAULT_PREVIOUS_EMOJI = "◀️";
+	public static final String DEFAULT_NEXT_EMOJI = "▶️";
+	public static final String DEFAULT_CLOSE_EMOJI = "🚫";
 
 	private final String previousEmoji;
 	private final String nextEmoji;
@@ -27,6 +31,6 @@ public class PaginationControls {
 	}
 
 	public static PaginationControls getDefault() {
-		return new PaginationControls("◀️", "▶️", "🚫");
+		return new PaginationControls(DEFAULT_PREVIOUS_EMOJI, DEFAULT_NEXT_EMOJI, DEFAULT_CLOSE_EMOJI);
 	}
 }
