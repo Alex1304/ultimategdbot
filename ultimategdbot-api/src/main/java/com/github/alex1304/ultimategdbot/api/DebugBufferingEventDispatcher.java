@@ -2,15 +2,14 @@ package com.github.alex1304.ultimategdbot.api;
 
 import static java.util.Objects.requireNonNull;
 
-import java.time.Duration;
-import java.util.concurrent.TimeUnit;
+import java.util.Collections;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.reactivestreams.Subscription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.github.alex1304.ultimategdbot.api.util.BotUtils;
 
 import discord4j.core.event.EventDispatcher;
 import discord4j.core.event.domain.Event;
@@ -23,12 +22,13 @@ import reactor.core.scheduler.Scheduler;
 public class DebugBufferingEventDispatcher implements EventDispatcher {
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(DebugBufferingEventDispatcher.class);
-	private static final Duration TIMEOUT = Duration.ofSeconds(10);
 
-	private final UnicastProcessor<EventWithTime> processorIn;
-	private final EmitterProcessor<EventWithTime> processorOut;
-	private final FluxSink<EventWithTime> sink;
+	private final UnicastProcessor<Event> processorIn;
+	private final EmitterProcessor<Event> processorOut;
+	private final FluxSink<Event> sink;
 	private final Scheduler scheduler;
+	private final ConcurrentHashMap<Class<? extends Event>, Integer> activeSubscriptions = new ConcurrentHashMap<>();
+	private final ConcurrentHashMap<Class<? extends Event>, Integer> processedEvents = new ConcurrentHashMap<>();
 	
 
 	public DebugBufferingEventDispatcher(Scheduler scheduler) {
@@ -42,23 +42,6 @@ public class DebugBufferingEventDispatcher implements EventDispatcher {
 	public <T extends Event> Flux<T> on(Class<T> eventClass) {
 		var subscription = new AtomicReference<Subscription>();
 		return processorOut.publishOn(scheduler)
-				.filter(eventWithTime -> {
-					if (eventWithTime.event.getClass() != eventClass) {
-						return false;
-					} 
-					var elapsed = Duration.ofNanos(scheduler.now(TimeUnit.NANOSECONDS) - eventWithTime.publishTimeNanos);
-					if (!elapsed.minus(TIMEOUT).isNegative()) {
-						LOGGER.warn("Ignoring {}, took too long to be consumed ({}). Total events in queue: {}",
-								LOGGER.isTraceEnabled()
-										? eventWithTime.event.toString()
-										: eventWithTime.event.getClass().getSimpleName(),
-								BotUtils.formatDuration(elapsed),
-								processorIn.size());
-						return false;
-					}
-					return true;
-				})
-				.map(EventWithTime::getEvent)
 				.ofType(eventClass)
 				.doOnSubscribe(sub -> {
 					subscription.set(sub);
@@ -66,19 +49,22 @@ public class DebugBufferingEventDispatcher implements EventDispatcher {
 						LOGGER.debug("Subscription {} to {} created", Integer.toHexString(sub.hashCode()),
 								eventClass.getSimpleName());
 					}
+					activeSubscriptions.merge(eventClass, 1, Integer::sum);
                 })
+				.doOnNext(event -> processedEvents.merge(eventClass, 1, Integer::sum))
                 .doFinally(signal -> {
 					var sub = subscription.get();
 					if (sub != null && LOGGER.isDebugEnabled()) {
 						LOGGER.debug("Subscription {} to {} disposed due to {}", Integer.toHexString(sub.hashCode()),
 								eventClass.getSimpleName(), signal);
 					}
+					activeSubscriptions.merge(eventClass, 1, this::subtractOrRemove);
                 });
 	}
 
 	@Override
 	public void publish(Event event) {
-		sink.next(new EventWithTime(event, scheduler.now(TimeUnit.NANOSECONDS)));
+		sink.next(event);
 	}
 
 	@Override
@@ -87,17 +73,22 @@ public class DebugBufferingEventDispatcher implements EventDispatcher {
 		processorOut.onComplete();
 	}
 	
-	private static class EventWithTime {
-		private final Event event;
-		private final long publishTimeNanos;
-		
-		private EventWithTime(Event event, long publishTimeNanos) {
-			this.event = event;
-			this.publishTimeNanos = publishTimeNanos;
+	public int getEventQueueSize() {
+		return processorIn.size();
+	}
+	
+	public Map<Class<? extends Event>, Integer> getActiveSubscriptionsView() {
+		return Collections.unmodifiableMap(activeSubscriptions);
+	}
+	
+	public Map<Class<? extends Event>, Integer> getProcessedEventsView() {
+		return Collections.unmodifiableMap(processedEvents);
+	}
+	
+	private Integer subtractOrRemove(Integer oldValue, Integer increment) {
+		if (oldValue <= increment) {
+			return null;
 		}
-
-		private Event getEvent() {
-			return event;
-		}
+		return oldValue - increment;
 	}
 }

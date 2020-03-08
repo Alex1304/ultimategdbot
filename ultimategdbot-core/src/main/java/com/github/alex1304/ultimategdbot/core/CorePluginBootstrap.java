@@ -62,11 +62,11 @@ public class CorePluginBootstrap implements PluginBootstrap {
 		cmdProvider.addAnnotated(new HelpCommand());
 		cmdProvider.addAnnotated(new PingCommand());
 		cmdProvider.addAnnotated(new SetupCommand());
-		cmdProvider.addAnnotated(new SystemCommand());
+		cmdProvider.addAnnotated(new LogoutCommand());
 		cmdProvider.addAnnotated(new AboutCommand(PLUGIN_NAME, aboutText));
 		cmdProvider.addAnnotated(new BotAdminsCommand());
 		cmdProvider.addAnnotated(new BlacklistCommand());
-		cmdProvider.addAnnotated(new CacheInfoCommand());
+		cmdProvider.addAnnotated(new RuntimeCommand());
 		// Register permissions
 		var permissionChecker = new PermissionChecker();
 		permissionChecker.register(PermissionLevel.BOT_OWNER, ctx -> ctx.getBot().getOwnerId()

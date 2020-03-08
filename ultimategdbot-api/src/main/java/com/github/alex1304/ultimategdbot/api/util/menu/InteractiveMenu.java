@@ -4,7 +4,6 @@ import static java.util.Objects.requireNonNull;
 import static java.util.Objects.requireNonNullElse;
 
 import java.time.Duration;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -41,26 +40,16 @@ import reactor.util.annotation.Nullable;
 public class InteractiveMenu {
 	
 	private final Mono<Consumer<MessageCreateSpec>> specMono;
-	private final Map<String, Function<MessageMenuInteraction, Mono<Void>>> messageItems;
-	private final Map<String, Function<ReactionMenuInteraction, Mono<Void>>> reactionItems;
-	private final boolean deleteMenuOnClose;
-	private final boolean deleteMenuOnTimeout;
-	private final boolean closeAfterMessage;
-	private final boolean closeAfterReaction;
-	private final int timeoutSeconds;
+	private final Map<String, Function<MessageMenuInteraction, Mono<Void>>> messageItems = new LinkedHashMap<>();
+	private final Map<String, Function<ReactionMenuInteraction, Mono<Void>>> reactionItems = new LinkedHashMap<>();
+	private boolean deleteMenuOnClose;
+	private boolean deleteMenuOnTimeout;
+	private boolean closeAfterMessage = true;
+	private boolean closeAfterReaction = true;
+	private int timeoutSeconds = -1;
 
-	private InteractiveMenu(Mono<Consumer<MessageCreateSpec>> specMono,
-			Map<String, Function<MessageMenuInteraction, Mono<Void>>> messageItems,
-			Map<String, Function<ReactionMenuInteraction, Mono<Void>>> reactionItems, boolean deleteMenuOnClose,
-			boolean deleteMenuOnTimeout, boolean closeAfterMessage, boolean closeAfterReaction, int timeoutSeconds) {
+	private InteractiveMenu(Mono<Consumer<MessageCreateSpec>> specMono) {
 		this.specMono = specMono;
-		this.messageItems = messageItems;
-		this.reactionItems = reactionItems;
-		this.deleteMenuOnClose = deleteMenuOnClose;
-		this.deleteMenuOnTimeout = deleteMenuOnTimeout;
-		this.closeAfterMessage = closeAfterMessage;
-		this.closeAfterReaction = closeAfterReaction;
-		this.timeoutSeconds = timeoutSeconds;
 	}
 	
 	/**
@@ -96,7 +85,7 @@ public class InteractiveMenu {
 	 */
 	public static InteractiveMenu create(Mono<Consumer<MessageCreateSpec>> specMono) {
 		requireNonNull(specMono);
-		return new InteractiveMenu(specMono, Map.of(), Map.of(), false, false, true, true, 0);
+		return new InteractiveMenu(specMono);
 	}
 
 	/**
@@ -196,47 +185,93 @@ public class InteractiveMenu {
 				.closeAfterReaction(false);
 	}
 
+	/**
+	 * Adds an item to this menu that is triggered when replying with a specific message.
+	 * 
+	 * @param message the text the message must start with in order to trigger this
+	 *                item
+	 * @param action  the action associated to this item
+	 * @return this menu
+	 */
 	public InteractiveMenu addMessageItem(String message, Function<MessageMenuInteraction, Mono<Void>> action) {
 		requireNonNull(message);
 		requireNonNull(action);
-		var newMessageItems = new LinkedHashMap<>(messageItems);
-		newMessageItems.put(message, action);
-		return new InteractiveMenu(specMono, Collections.unmodifiableMap(newMessageItems), reactionItems, deleteMenuOnClose,
-				deleteMenuOnTimeout, closeAfterMessage, closeAfterReaction, timeoutSeconds);
+		messageItems.put(message, action);
+		return this;
 	}
 
+	/**
+	 * Adds an item to this menu that is triggered when adding or removing a
+	 * reaction to the menu message.
+	 * 
+	 * @param emojiName the name of the reaction emoji identifying this item. It can
+	 *                  be a Unicode emoji character, or the name of one of the
+	 *                  emojis in the emoji servers configured on the bot
+	 * @param action    the action associated to this item
+	 * @return this menu
+	 */
 	public InteractiveMenu addReactionItem(String emojiName, Function<ReactionMenuInteraction, Mono<Void>> action) {
 		requireNonNull(emojiName);
 		requireNonNull(action);
-		var newReactionItems = new LinkedHashMap<>(reactionItems);
-		newReactionItems.put(emojiName, action);
-		return new InteractiveMenu(specMono, messageItems, Collections.unmodifiableMap(newReactionItems), deleteMenuOnClose,
-				deleteMenuOnTimeout, closeAfterMessage, closeAfterReaction, timeoutSeconds);
+		reactionItems.put(emojiName, action);
+		return this;
 	}
 	
+	/**
+	 * Sets whether to delete the menu message when the menu is closed by user.
+	 * 
+	 * @param deleteMenuOnClose a boolean
+	 * @return this menu
+	 */
 	public InteractiveMenu deleteMenuOnClose(boolean deleteMenuOnClose) {
-		return new InteractiveMenu(specMono, messageItems, reactionItems, deleteMenuOnClose, deleteMenuOnTimeout,
-				closeAfterMessage, closeAfterReaction, timeoutSeconds);
+		this.deleteMenuOnClose = deleteMenuOnClose;
+		return this;
 	}
 	
+	/**
+	 * Sets whether to delete the menu message when the menu is closed automatically
+	 * by timeout
+	 * 
+	 * @param deleteMenuOnTimeout a boolean
+	 * @return this menu
+	 */
 	public InteractiveMenu deleteMenuOnTimeout(boolean deleteMenuOnTimeout) {
-		return new InteractiveMenu(specMono, messageItems, reactionItems, deleteMenuOnClose, deleteMenuOnTimeout,
-				closeAfterMessage, closeAfterReaction, timeoutSeconds);
+		this.deleteMenuOnTimeout = deleteMenuOnTimeout;
+		return this;
 	}
 	
+	/**
+	 * Sets whether to close this menu after a message item is triggered.
+	 * 
+	 * @param closeAfterMessage a boolean
+	 * @return this menu
+	 */
 	public InteractiveMenu closeAfterMessage(boolean closeAfterMessage) {
-		return new InteractiveMenu(specMono, messageItems, reactionItems, deleteMenuOnClose, deleteMenuOnTimeout,
-				closeAfterMessage, closeAfterReaction, timeoutSeconds);
+		this.closeAfterMessage = closeAfterMessage;
+		return this;
 	}
 	
+	/**
+	 * Sets whether to close this menu after a reaction item is triggered.
+	 * 
+	 * @param closeAfterReaction a boolean
+	 * @return this menu
+	 */
 	public InteractiveMenu closeAfterReaction(boolean closeAfterReaction) {
-		return new InteractiveMenu(specMono, messageItems, reactionItems, deleteMenuOnClose, deleteMenuOnTimeout,
-				closeAfterMessage, closeAfterReaction, timeoutSeconds);
+		this.closeAfterReaction = closeAfterReaction;
+		return this;
 	}
 	
+	/**
+	 * Sets a timeout in seconds after which the menu automatically closes. The
+	 * timeout starts when the menu opens, and is not reset by user interaction.
+	 * 
+	 * @param timeoutSeconds the timeout in seconds
+	 * @return this menu
+	 */
 	public InteractiveMenu withTimeoutSeconds(int timeoutSeconds) {
-		return new InteractiveMenu(specMono, messageItems, reactionItems, deleteMenuOnClose, deleteMenuOnTimeout,
-				closeAfterMessage, closeAfterReaction, timeoutSeconds);
+		this.timeoutSeconds = timeoutSeconds;
+		return this;
 	}
 	
 	/**
@@ -252,6 +287,9 @@ public class InteractiveMenu {
 	 */
 	public Mono<Void> open(Context ctx) {
 		requireNonNull(ctx);
+		if (timeoutSeconds < 0) {
+			timeoutSeconds = ctx.getBot().getConfig().getInteractiveMenuTimeoutSeconds();
+		}
 		var closeNotifier = MonoProcessor.<Void>create();
 		return specMono.flatMap(ctx::reply)
 				.flatMap(menuMessage -> addReactionsToMenu(ctx, menuMessage))
@@ -272,8 +310,8 @@ public class InteractiveMenu {
 									if (action == null) {
 										return Mono.empty();
 									}
-									var replyCtx = new MessageMenuInteraction(menuMessage, closeNotifier, event, new ArgumentList(args), flags);
-									return action.apply(replyCtx).thenReturn(0);
+									var interaction = new MessageMenuInteraction(menuMessage, closeNotifier, event, new ArgumentList(args), flags);
+									return action.apply(interaction).thenReturn(0);
 								})
 								.takeUntil(__ -> closeAfterMessage)
 								.onErrorResume(UnexpectedReplyException.class, e -> ctx.reply(":no_entry_sign: " + e.getMessage()).then(Mono.error(e)))
@@ -297,8 +335,9 @@ public class InteractiveMenu {
 								.takeUntil(__ -> closeAfterReaction)
 								.then())
 						.then(handleTermination(menuMessage, deleteMenuOnClose));
-					return timeoutSeconds == 0 ? menuMono : menuMono.timeout(Duration.ofSeconds(timeoutSeconds),
-							handleTermination(menuMessage, deleteMenuOnTimeout));
+					return timeoutSeconds == 0
+							? menuMono
+							: menuMono.timeout(Duration.ofSeconds(timeoutSeconds), handleTermination(menuMessage, deleteMenuOnTimeout));
 				});
 	}
 	

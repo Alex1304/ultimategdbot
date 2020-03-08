@@ -236,6 +236,7 @@ public class Bot {
 				}))
 				.thenEmpty(Flux.fromIterable(plugins).flatMap(Plugin::runOnReady))
 				.then(gateway.onDisconnect())
+				.then(Mono.delay(Duration.ofSeconds(10)))
 				.block();
 	}
 }

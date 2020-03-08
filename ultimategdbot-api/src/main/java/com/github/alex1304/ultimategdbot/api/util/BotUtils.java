@@ -103,7 +103,6 @@ public class BotUtils {
 					return new MessageSpecTemplate(parts.get(page), embed -> embed.addField("Page " + (page + 1) + "/" + parts.size(),
 							"To go to a specific page, type `page <number>`, e.g `page 3`", true));
 				})
-				.withTimeoutSeconds(ctx.getBot().getConfig().getInteractiveMenuTimeoutSeconds())
 				.open(ctx);
 	}
 	
@@ -117,10 +116,11 @@ public class BotUtils {
 	
 	public static Mono<Void> logCommandError(Logger logger, Context ctx, Throwable e) {
 		var replyToUser = ctx.reply(":no_entry_sign: Something went wrong. A crash report "
-						+ "has been sent to the developer. Sorry for the inconvenience.");
+				+ "has been sent to the developer. Sorry for the inconvenience.");
 		var logInDebugChannel = ctx.getBot().log(":no_entry_sign: **Something went wrong when executing a command.**\n"
-						+ "**Trigger:** " + ctx.getEvent().getMessage().getContent().orElse("") + '\n'
-						+ "**Error:** " + Markdown.code(e.getClass().getName() + (e.getMessage() == null ? "" : ": " + e.getMessage())) + '\n');
+				+ "**Author:** " + DiscordFormatter.formatUser(ctx.getAuthor()) + '\n'
+				+ "**Trigger:** " + ctx.getEvent().getMessage().getContent().orElse("") + '\n'
+				+ "**Error:** " + Markdown.code(e.getClass().getName() + (e.getMessage() == null ? "" : ": " + e.getMessage())) + '\n');
 		var logInFile = Mono.fromRunnable(() -> logger.error("Something went wrong when executing a command. Context dump: "
 				+ ctx, e));
 		
