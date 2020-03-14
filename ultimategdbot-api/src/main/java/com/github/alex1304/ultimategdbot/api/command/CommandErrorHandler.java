@@ -5,8 +5,8 @@ import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import reactor.util.Logger;
+import reactor.util.Loggers;
 
 import com.github.alex1304.ultimategdbot.api.database.DatabaseException;
 import com.github.alex1304.ultimategdbot.api.util.BotUtils;
@@ -19,7 +19,7 @@ import reactor.core.publisher.Mono;
  * Provides a convenient way to add error handlers for bot commands.
  */
 public class CommandErrorHandler {
-	private static final Logger LOGGER = LoggerFactory.getLogger(CommandErrorHandler.class);
+	private static final Logger LOGGER = Loggers.getLogger(CommandErrorHandler.class);
 	
 	private final Map<Class<? extends Throwable>, BiFunction<Throwable, Context, Mono<Void>>> handlers = new LinkedHashMap<>();
 	

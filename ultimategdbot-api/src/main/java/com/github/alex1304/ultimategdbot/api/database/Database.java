@@ -13,8 +13,8 @@ import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.hibernate.cfg.Configuration;
 import org.reactivestreams.Publisher;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import reactor.util.Logger;
+import reactor.util.Loggers;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -26,7 +26,7 @@ import reactor.core.scheduler.Schedulers;
  */
 public class Database {
 	
-	private static final Logger LOGGER = LoggerFactory.getLogger(Database.class);
+	private static final Logger LOGGER = Loggers.getLogger(Database.class);
 	private static final Scheduler DATABASE_SCHEDULER = Schedulers.elastic();
 	
 	private SessionFactory sessionFactory = null;

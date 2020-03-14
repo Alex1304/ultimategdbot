@@ -7,8 +7,8 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import reactor.util.Logger;
+import reactor.util.Loggers;
 
 import com.github.alex1304.ultimategdbot.api.util.PropertyReader;
 import com.github.alex1304.ultimategdbot.api.util.menu.PaginationControls;
@@ -18,7 +18,7 @@ import discord4j.core.object.presence.Presence;
 import discord4j.core.object.util.Snowflake;
 
 public class BotConfig {
-	private static final Logger LOGGER = LoggerFactory.getLogger("ultimategdbot.config");
+	private static final Logger LOGGER = Loggers.getLogger("ultimategdbot.config");
 	
 	private final String token;
 	private final String defaultPrefix;

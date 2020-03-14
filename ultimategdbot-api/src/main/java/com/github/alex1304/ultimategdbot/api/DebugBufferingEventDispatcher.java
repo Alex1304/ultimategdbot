@@ -8,8 +8,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.reactivestreams.Subscription;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import reactor.util.Logger;
+import reactor.util.Loggers;
 
 import discord4j.core.event.EventDispatcher;
 import discord4j.core.event.domain.Event;
@@ -21,7 +21,7 @@ import reactor.core.scheduler.Scheduler;
 
 public class DebugBufferingEventDispatcher implements EventDispatcher {
 	
-	private static final Logger LOGGER = LoggerFactory.getLogger(DebugBufferingEventDispatcher.class);
+	private static final Logger LOGGER = Loggers.getLogger(DebugBufferingEventDispatcher.class);
 
 	private final UnicastProcessor<Event> processorIn;
 	private final EmitterProcessor<Event> processorOut;

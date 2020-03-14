@@ -15,8 +15,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import reactor.util.Logger;
+import reactor.util.Loggers;
 
 import com.github.alex1304.ultimategdbot.api.command.Command;
 import com.github.alex1304.ultimategdbot.api.command.CommandDocumentation;
@@ -40,7 +40,7 @@ import reactor.util.function.Tuples;
  */
 public class AnnotatedCommand implements Command {
 	
-	private static final Logger LOGGER = LoggerFactory.getLogger(AnnotatedCommand.class);
+	private static final Logger LOGGER = Loggers.getLogger(AnnotatedCommand.class);
 	
 	private final Object obj;
 	private final Function<Context, Mono<Void>> action;

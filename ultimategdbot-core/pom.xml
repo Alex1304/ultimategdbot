@@ -56,9 +56,9 @@
 						</goals>
 						<configuration>
 							<target>
-								<property name="final.name" value="${project.basedir}/../distribution/ultimategdbot" />
-								<property name="archive.includes" value="ultimategdbot.jar config-example/* config/.gitkeep plugins/.gitkeep LICENSE" />
-								<zip basedir="${project.build.directory}/../.." destfile="${final.name}.zip" includes="${archive.includes}" />
+								<zip basedir="${project.build.directory}/../../distribution"
+										destfile="ultimategdbot.zip"
+										includes="ultimategdbot.jar config-example/* config/.gitkeep plugins/.gitkeep LICENSE" />
 							</target>
 						</configuration>
 					</execution>

@@ -5,14 +5,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Properties;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import reactor.util.Logger;
+import reactor.util.Loggers;
 
 import com.github.alex1304.ultimategdbot.api.Bot;
 
 class Main {
 	
-	private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
+	private static final Logger LOGGER = Loggers.getLogger(Main.class);
 	public static final Path PROPS_FILE = Paths.get(".", "config", "bot.properties");
 	public static final Path PLUGINS_PROPS_FILE = Paths.get(".", "config", "plugins.properties");
 

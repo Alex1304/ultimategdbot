@@ -11,8 +11,8 @@ import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.function.Consumer;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import reactor.util.Logger;
+import reactor.util.Loggers;
 
 import com.github.alex1304.ultimategdbot.api.command.CommandKernel;
 import com.github.alex1304.ultimategdbot.api.database.Database;
@@ -40,7 +40,7 @@ import reactor.core.scheduler.Schedulers;
  * Represents the bot itself.
  */
 public class Bot {
-	private static final Logger LOGGER = LoggerFactory.getLogger(Bot.class);
+	private static final Logger LOGGER = Loggers.getLogger(Bot.class);
 	
 	private final BotConfig config;
 	private final DiscordClient discordClient;

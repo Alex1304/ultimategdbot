@@ -9,8 +9,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import reactor.util.Logger;
+import reactor.util.Loggers;
 
 import com.github.alex1304.ultimategdbot.api.Bot;
 
@@ -28,7 +28,7 @@ import reactor.util.annotation.Nullable;
  * the proper command providers to trigger the execution of commands.
  */
 public class CommandKernel {
-	private static final Logger LOGGER = LoggerFactory.getLogger(CommandKernel.class);
+	private static final Logger LOGGER = Loggers.getLogger(CommandKernel.class);
 
 	private final Bot bot;
 	private final Set<CommandProvider> providers = synchronizedSet(new HashSet<>());
