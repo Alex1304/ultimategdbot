@@ -47,6 +47,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-antrun-plugin</artifactId>
+				<version>1.8</version><!--$NO-MVN-MAN-VER$ -->
 				<executions>
 					<execution>
 						<id>antrun-archive</id>
@@ -56,8 +57,8 @@
 						</goals>
 						<configuration>
 							<target>
-								<zip basedir="${project.build.directory}/../../distribution"
-										destfile="ultimategdbot.zip"
+								<zip basedir="${project.build.directory}/../.."
+										destfile="../distribution/ultimategdbot.zip"
 										includes="ultimategdbot.jar config-example/* config/.gitkeep plugins/.gitkeep LICENSE" />
 							</target>
 						</configuration>

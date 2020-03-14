@@ -1,20 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configuration scan="true" scanPeriod="30 seconds">
+<configuration scan="true" scanPeriod="10 seconds">
 	<turboFilter class="discord4j.core.logback.GatewayEventFilter">
         <Include>READY,RESUME</Include>
     </turboFilter>
 	<!-- You can configure per-logger level at this point -->
 	<!-- This set of preconfigured loggers is good if you want to have a DEBUG 
 		level as baseline -->
-	<logger name="discord4j.gateway.zip" level="INFO" />
-	<logger name="discord4j.dispatch" level="INFO" />
-	<logger name="discord4j.events" level="INFO" />
-	<logger name="discord4j.rest.http.client.DiscordWebClient" level="INFO" />
+	<logger name="reactor.netty.http.client.HttpClientConnect" level="ERROR" />
 	<logger name="reactor" level="INFO" />
-	<logger name="org.hibernate" level="INFO" />
-	<logger name="org.hibernate.cfg.Environment" level="WARN" />
 	<logger name="io.netty" level="INFO" />
-	<logger name="ultimategdbot.globalratelimiter" level="INFO" />
+	<logger name="org.hibernate" level="INFO" />
+	<logger name="jdash" level="INFO" />
+	<logger name="com.github.alex1304.jdashevents" level="WARN" />
+
 
 	<!-- Display the logs in your console with the following format -->
 	<!-- You can learn more about this here: https://logback.qos.ch/manual/layouts.html#ClassicPatternLayout -->
