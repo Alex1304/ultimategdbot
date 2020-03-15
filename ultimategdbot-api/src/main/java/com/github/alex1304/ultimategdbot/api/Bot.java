@@ -204,7 +204,13 @@ public class Bot {
 		gateway = discordClient.gateway()
 				.setInitialPresence(shard -> config.getPresence())
 				.setStoreService(MappingStoreService.create()
-						.setMapping(new CaffeineStoreService(builder -> builder.expireAfterWrite(Duration.ofDays(1))), MessageBean.class)
+						.setMapping(new CaffeineStoreService(builder -> {
+							var maxSize = config.getMessageCacheMaxSize();
+							if (maxSize >= 1) {
+								builder.maximumSize(maxSize);
+							}
+							return builder;
+						}), MessageBean.class)
 						.setFallback(new JdkStoreService()))
 				.setEventDispatcher(new DebugBufferingEventDispatcher(Schedulers.boundedElastic()))
 				.setGatewayObserver((state, identifyOptions) -> {

@@ -29,10 +29,11 @@ public class BotConfig {
 	private final Presence presence;
 	private final PaginationControls paginationControls;
 	private final int interactiveMenuTimeoutSeconds;
+	private final int messageCacheMaxSize;
 	
 	public BotConfig(String token, String defaultPrefix, String flagPrefix, Optional<Snowflake> debugLogChannelId,
 			Set<Snowflake> emojiGuildIds, boolean coreCommandsDisabled, Presence presence, PaginationControls paginationControls,
-			int interactiveMenuTimeoutSeconds) {
+			int interactiveMenuTimeoutSeconds, int messageCacheMaxSize) {
 		this.token = token;
 		this.defaultPrefix = defaultPrefix;
 		this.flagPrefix = flagPrefix;
@@ -42,6 +43,7 @@ public class BotConfig {
 		this.presence = presence;
 		this.paginationControls = paginationControls;
 		this.interactiveMenuTimeoutSeconds = interactiveMenuTimeoutSeconds;
+		this.messageCacheMaxSize = messageCacheMaxSize;
 	}
 
 	public static BotConfig fromProperties(Properties properties) {
@@ -86,7 +88,8 @@ public class BotConfig {
 						propertyReader.read("interactive_menu.controls.previous", false).orElse(PaginationControls.DEFAULT_PREVIOUS_EMOJI),
 						propertyReader.read("interactive_menu.controls.next", false).orElse(PaginationControls.DEFAULT_NEXT_EMOJI),
 						propertyReader.read("interactive_menu.controls.close", false).orElse(PaginationControls.DEFAULT_CLOSE_EMOJI)),
-				propertyReader.read("interactive_menu.timeout_seconds", false).map(Integer::parseInt).orElse(600));
+				propertyReader.read("interactive_menu.timeout_seconds", false).map(Integer::parseInt).orElse(600),
+				propertyReader.read("message_cache_max_size", false).map(Integer::parseInt).orElse(2048));
 	}
 
 	public String getToken() {
@@ -123,6 +126,10 @@ public class BotConfig {
 
 	public int getInteractiveMenuTimeoutSeconds() {
 		return interactiveMenuTimeoutSeconds;
+	}
+
+	public int getMessageCacheMaxSize() {
+		return messageCacheMaxSize;
 	}
 
 	@Override
