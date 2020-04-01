@@ -6,10 +6,8 @@ import discord4j.core.object.entity.Guild;
 import discord4j.core.object.entity.Role;
 import discord4j.core.object.entity.User;
 import discord4j.core.object.entity.channel.GuildChannel;
-import discord4j.core.object.util.Snowflake;
+import discord4j.rest.util.Snowflake;
 import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple2;
-import reactor.util.function.Tuples;
 
 /**
  * Contains utility methods to parse a user input into a Discord entity.
@@ -34,11 +32,9 @@ public class DiscordParser {
 						.map(Snowflake::of))
 				.onErrorResume(e -> Mono.just(str.substring(3, str.length() - 1))
 						.map(Snowflake::of))
-				.flatMap(bot.getGateway()::getUserById)
+				.flatMap(userId -> bot.getGateway().getUser(userId).single())
 				.onErrorResume(e -> bot.getGateway().getUsers()
-						.map(user -> Tuples.of(user, DiscordFormatter.formatUser(user)))
-						.filter(u -> u.getT2().startsWith(str))
-						.map(Tuple2::getT1)
+						.filter(user -> DiscordFormatter.formatUser(user).startsWith(str))
 						.next()
 						.single())
 				.onErrorMap(e -> new IllegalArgumentException("Cannot find user '" + str + "'."));
@@ -58,9 +54,9 @@ public class DiscordParser {
 				.map(Snowflake::of)
 				.onErrorResume(e -> Mono.just(str.substring(3, str.length() - 1))
 						.map(Snowflake::of))
-				.flatMap(roleId -> bot.getGateway().getRoleById(guildId, roleId))
+				.flatMap(roleId -> bot.getGateway().getRole(guildId, roleId).single())
 				.onErrorResume(e -> bot.getGateway()
-						.getGuildById(guildId)
+						.getGuild(guildId)
 						.flatMapMany(Guild::getRoles)
 						.filter(r -> r.getName().toLowerCase().startsWith(str.toLowerCase()))
 						.next()
@@ -82,9 +78,9 @@ public class DiscordParser {
 				.map(Snowflake::of)
 				.onErrorResume(e -> Mono.just(str.substring(2, str.length() - 1))
 						.map(Snowflake::of))
-				.flatMap(bot.getGateway()::getChannelById)
+				.flatMap(channelId -> bot.getGateway().getChannel(channelId).single())
 				.ofType(GuildChannel.class)
-				.onErrorResume(e -> bot.getGateway().getGuildById(guildId)
+				.onErrorResume(e -> bot.getGateway().getGuild(guildId)
 						.flatMapMany(Guild::getChannels)
 						.filter(r -> r.getName().toLowerCase().startsWith(str.toLowerCase()))
 						.next()

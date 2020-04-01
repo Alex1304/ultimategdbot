@@ -7,15 +7,15 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 
-import reactor.util.Logger;
-import reactor.util.Loggers;
-
 import com.github.alex1304.ultimategdbot.api.util.PropertyReader;
 import com.github.alex1304.ultimategdbot.api.util.menu.PaginationControls;
 
 import discord4j.core.object.presence.Activity;
 import discord4j.core.object.presence.Presence;
-import discord4j.core.object.util.Snowflake;
+import discord4j.discordjson.json.gateway.StatusUpdate;
+import discord4j.rest.util.Snowflake;
+import reactor.util.Logger;
+import reactor.util.Loggers;
 
 public class BotConfig {
 	private static final Logger LOGGER = Loggers.getLogger("ultimategdbot.config");
@@ -26,13 +26,13 @@ public class BotConfig {
 	private final Optional<Snowflake> debugLogChannelId;
 	private final Set<Snowflake> emojiGuildIds;
 	private final boolean coreCommandsDisabled;
-	private final Presence presence;
+	private final StatusUpdate status;
 	private final PaginationControls paginationControls;
 	private final int interactiveMenuTimeoutSeconds;
 	private final int messageCacheMaxSize;
 	
 	public BotConfig(String token, String defaultPrefix, String flagPrefix, Optional<Snowflake> debugLogChannelId,
-			Set<Snowflake> emojiGuildIds, boolean coreCommandsDisabled, Presence presence, PaginationControls paginationControls,
+			Set<Snowflake> emojiGuildIds, boolean coreCommandsDisabled, StatusUpdate status, PaginationControls paginationControls,
 			int interactiveMenuTimeoutSeconds, int messageCacheMaxSize) {
 		this.token = token;
 		this.defaultPrefix = defaultPrefix;
@@ -40,7 +40,7 @@ public class BotConfig {
 		this.debugLogChannelId = debugLogChannelId;
 		this.emojiGuildIds = emojiGuildIds;
 		this.coreCommandsDisabled = coreCommandsDisabled;
-		this.presence = presence;
+		this.status = status;
 		this.paginationControls = paginationControls;
 		this.interactiveMenuTimeoutSeconds = interactiveMenuTimeoutSeconds;
 		this.messageCacheMaxSize = messageCacheMaxSize;
@@ -116,8 +116,8 @@ public class BotConfig {
 		return coreCommandsDisabled;
 	}
 
-	public Presence getPresence() {
-		return presence;
+	public StatusUpdate getStatus() {
+		return status;
 	}
 
 	public PaginationControls getPaginationControls() {
@@ -135,7 +135,7 @@ public class BotConfig {
 	@Override
 	public int hashCode() {
 		return Objects.hash(coreCommandsDisabled, debugLogChannelId, defaultPrefix, emojiGuildIds, flagPrefix,
-				presence, token);
+				status, token);
 	}
 
 	@Override
@@ -150,7 +150,7 @@ public class BotConfig {
 				&& Objects.equals(defaultPrefix, other.defaultPrefix)
 				&& Objects.equals(emojiGuildIds, other.emojiGuildIds)
 				&& Objects.equals(flagPrefix, other.flagPrefix)
-				&& Objects.equals(presence, other.presence)
+				&& Objects.equals(status, other.status)
 				&& Objects.equals(token, other.token);
 	}
 
@@ -158,7 +158,7 @@ public class BotConfig {
 	public String toString() {
 		return "BotConfig{token=<masked>, defaultPrefix=" + defaultPrefix + ", flagPrefix=" + flagPrefix
 				+ ", debugLogChannelId=" + debugLogChannelId + ", emojiGuildIds=" + emojiGuildIds
-				+ ", corePluginDisabled=" + coreCommandsDisabled + ", presence=" + presence
+				+ ", corePluginDisabled=" + coreCommandsDisabled + ", presence=" + status
 				+ "}";
 	}
 }

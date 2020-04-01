@@ -11,30 +11,30 @@ import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.function.Consumer;
 
-import reactor.util.Logger;
-import reactor.util.Loggers;
-
 import com.github.alex1304.ultimategdbot.api.command.CommandKernel;
 import com.github.alex1304.ultimategdbot.api.database.Database;
 import com.github.alex1304.ultimategdbot.api.util.PropertyReader;
 
 import discord4j.core.DiscordClient;
 import discord4j.core.GatewayDiscordClient;
-import discord4j.core.object.data.stored.MessageBean;
 import discord4j.core.object.entity.Guild;
 import discord4j.core.object.entity.GuildEmoji;
 import discord4j.core.spec.MessageCreateSpec;
-import discord4j.gateway.GatewayObserver;
-import discord4j.rest.entity.data.ApplicationInfoData;
+import discord4j.discordjson.json.ApplicationInfoData;
+import discord4j.discordjson.json.MessageData;
+import discord4j.discordjson.json.UserData;
 import discord4j.rest.request.RouteMatcher;
 import discord4j.rest.response.ResponseFunction;
 import discord4j.rest.route.Routes;
+import discord4j.rest.util.Snowflake;
 import discord4j.store.api.mapping.MappingStoreService;
 import discord4j.store.caffeine.CaffeineStoreService;
 import discord4j.store.jdk.JdkStoreService;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
+import reactor.util.Logger;
+import reactor.util.Loggers;
 
 /**
  * Represents the bot itself.
@@ -43,20 +43,23 @@ public class Bot {
 	private static final Logger LOGGER = Loggers.getLogger(Bot.class);
 	
 	private final BotConfig config;
-	private final DiscordClient discordClient;
-	private GatewayDiscordClient gateway;
+	private final DiscordClient rest;
 	private final Database database = new Database();
 	private final CommandKernel cmdKernel = new CommandKernel(this);
 	private final PropertyReader pluginProperties;
 	private final Set<Plugin> plugins = synchronizedSet(new HashSet<>());
-	private final Mono<Long> ownerId;
+	private final Mono<Snowflake> ownerId;
+	
+	private volatile GatewayDiscordClient gateway;
 
-	private Bot(BotConfig config, DiscordClient discordClient, PropertyReader pluginProperties) {
+	private Bot(BotConfig config, DiscordClient rest, PropertyReader pluginProperties) {
 		this.config = config;
-		this.discordClient = discordClient;
+		this.rest = rest;
 		this.pluginProperties = pluginProperties;
-		this.ownerId = discordClient.getApplicationInfo()
-				.map(ApplicationInfoData::getOwnerId)
+		this.ownerId = rest.getApplicationInfo()
+				.map(ApplicationInfoData::owner)
+				.map(UserData::id)
+				.map(Snowflake::of)
 				.cache();
 	}
 	
@@ -88,12 +91,12 @@ public class Bot {
 	}
 
 	/**
-	 * Gets the Discord client of the bot.
+	 * Gets the REST client of the bot.
 	 * 
 	 * @return the Discord client
 	 */
-	public DiscordClient getDiscordClient() {
-		return discordClient;
+	public DiscordClient getRest() {
+		return rest;
 	}
 
 	/**
@@ -133,7 +136,7 @@ public class Bot {
 	 * 
 	 * @return a Mono emitting the ID of the bot owner
 	 */
-	public Mono<Long> getOwnerId() {
+	public Mono<Snowflake> getOwnerId() {
 		return ownerId;
 	}
 	
@@ -157,7 +160,7 @@ public class Bot {
 		var specInstance = new MessageCreateSpec();
 		spec.accept(specInstance);
 		return Mono.justOrEmpty(config.getDebugLogChannelId())
-				.map(discordClient::getChannelById)
+				.map(rest::getChannelById)
 				.flatMap(c -> c.createMessage(specInstance.asRequest()))
 				.onErrorResume(e -> Mono.fromRunnable(() -> LOGGER.warn("Failed to send a message to log channel", e)))
 				.then();
@@ -177,7 +180,7 @@ public class Bot {
 			return Mono.just(defaultVal);
 		}
 		return Flux.fromIterable(config.getEmojiGuildIds())
-				.flatMap(gateway::getGuildById)
+				.flatMap(gateway::getGuild)
 				.flatMap(Guild::getEmojis)
 				.filter(emoji -> emoji.getName().equalsIgnoreCase(emojiName))
 				.next()
@@ -195,14 +198,15 @@ public class Bot {
 		var discordClient = DiscordClient.builder(config.getToken())
 				.onClientResponse(ResponseFunction.emptyIfNotFound())
 				.onClientResponse(ResponseFunction.emptyOnErrorStatus(RouteMatcher.route(Routes.REACTION_CREATE), 400))
+				.onClientResponse(request -> response -> response.timeout(Duration.ofSeconds(1)))
 				.build();
 		
 		return new Bot(config, discordClient, new PropertyReader(pluginProperties));
 	}
 
 	public void start() {
-		gateway = discordClient.gateway()
-				.setInitialPresence(shard -> config.getPresence())
+		gateway = rest.gateway()
+				.setInitialStatus(shard -> config.getStatus())
 				.setStoreService(MappingStoreService.create()
 						.setMapping(new CaffeineStoreService(builder -> {
 							var maxSize = config.getMessageCacheMaxSize();
@@ -210,28 +214,19 @@ public class Bot {
 								builder.maximumSize(maxSize);
 							}
 							return builder;
-						}), MessageBean.class)
+						}), MessageData.class)
 						.setFallback(new JdkStoreService()))
 				.setEventDispatcher(new DebugBufferingEventDispatcher(Schedulers.boundedElastic()))
-				.setGatewayObserver((state, identifyOptions) -> {
-					if (state == GatewayObserver.CONNECTED
-							|| state == GatewayObserver.DISCONNECTED
-							|| state == GatewayObserver.DISCONNECTED_RESUME
-							|| state == GatewayObserver.RETRY_FAILED
-							|| state == GatewayObserver.RETRY_RESUME_STARTED
-							|| state == GatewayObserver.RETRY_STARTED
-							|| state == GatewayObserver.RETRY_SUCCEEDED) {
-						log("Shard " + identifyOptions.getShardIndex() + ": " + state).subscribe();
-					}
-				})
+				.setAwaitConnections(false)
 				.connect()
+				.single()
 				.block();
+		
 		var databaseMappingResources = synchronizedSet(new HashSet<String>());
 		Flux.fromIterable(ServiceLoader.load(PluginBootstrap.class))
 				.flatMap(pluginBootstrap -> pluginBootstrap.setup(this)
-						.doOnError(e -> LOGGER.error("Failed to setup plugin " + pluginBootstrap.getClass().getName(), e))
-						.switchIfEmpty(Mono.fromRunnable(
-								() -> LOGGER.warn("Skipping plugin " + pluginBootstrap.getClass().getName() + ": setup has completed without data"))))
+						.single()
+						.doOnError(e -> LOGGER.error("Failed to setup plugin " + pluginBootstrap.getClass().getName(), e)))
 				.doOnNext(plugins::add)
 				.doOnNext(plugin -> databaseMappingResources.addAll(plugin.getDatabaseMappingResources()))
 				.doOnNext(plugin -> cmdKernel.addProvider(plugin.getCommandProvider()))

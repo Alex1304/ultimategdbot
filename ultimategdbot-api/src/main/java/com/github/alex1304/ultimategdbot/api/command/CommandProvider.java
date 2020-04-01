@@ -14,7 +14,7 @@ import com.github.alex1304.ultimategdbot.api.util.InputTokenizer;
 
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.entity.channel.MessageChannel;
-import discord4j.core.object.util.Snowflake;
+import discord4j.rest.util.Snowflake;
 import reactor.core.publisher.Mono;
 
 /**
@@ -62,7 +62,7 @@ public class CommandProvider {
 		requireNonNull(channel, "channel cannot be null");
 		return bot.getGateway().getSelfId().map(Snowflake::asLong).flatMap(botId -> {
 			var prefixes = Set.of("<@" + botId + ">", "<@!" + botId + ">", prefix);
-			var content = event.getMessage().getContent().orElse("");
+			var content = event.getMessage().getContent();
 			String prefixUsed = null;
 			for (var p : prefixes) {
 				if (content.toLowerCase().startsWith(p.toLowerCase())) {

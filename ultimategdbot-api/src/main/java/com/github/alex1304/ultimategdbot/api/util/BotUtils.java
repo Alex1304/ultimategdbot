@@ -119,7 +119,7 @@ public class BotUtils {
 				+ "has been sent to the developer. Sorry for the inconvenience.");
 		var logInDebugChannel = ctx.getBot().log(":no_entry_sign: **Something went wrong when executing a command.**\n"
 				+ "**Author:** " + DiscordFormatter.formatUser(ctx.getAuthor()) + '\n'
-				+ "**Trigger:** " + ctx.getEvent().getMessage().getContent().orElse("") + '\n'
+				+ "**Trigger:** " + ctx.getEvent().getMessage().getContent() + '\n'
 				+ "**Error:** " + Markdown.code(e.getClass().getName() + (e.getMessage() == null ? "" : ": " + e.getMessage())) + '\n');
 		var logInFile = Mono.fromRunnable(() -> logger.error("Something went wrong when executing a command. Context dump: "
 				+ ctx, e));

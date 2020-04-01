@@ -20,7 +20,7 @@ import com.github.alex1304.ultimategdbot.core.database.GuildPrefixes;
 
 import discord4j.core.object.entity.Guild;
 import discord4j.core.object.entity.channel.GuildChannel;
-import discord4j.core.object.util.Permission;
+import discord4j.rest.util.Permission;
 import reactor.core.publisher.Mono;
 
 public class CorePluginBootstrap implements PluginBootstrap {
@@ -70,7 +70,7 @@ public class CorePluginBootstrap implements PluginBootstrap {
 		// Register permissions
 		var permissionChecker = new PermissionChecker();
 		permissionChecker.register(PermissionLevel.BOT_OWNER, ctx -> ctx.getBot().getOwnerId()
-				.map(id -> id.longValue() == ctx.getAuthor().getId().asLong()));
+				.map(ctx.getAuthor().getId()::equals));
 		permissionChecker.register(PermissionLevel.BOT_ADMIN, ctx -> ctx.getBot().getDatabase()
 				.findByID(BotAdmins.class, ctx.getAuthor().getId().asLong())
 				.hasElement());

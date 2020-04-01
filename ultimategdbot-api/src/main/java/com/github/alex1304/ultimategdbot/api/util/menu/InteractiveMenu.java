@@ -294,13 +294,14 @@ public class InteractiveMenu {
 		return specMono.flatMap(ctx::reply)
 				.flatMap(menuMessage -> addReactionsToMenu(ctx, menuMessage))
 				.flatMap(menuMessage -> {
+					@SuppressWarnings("deprecation")
 					var menuMono = Mono.first(
 						closeNotifier,
 						ctx.getBot().getGateway().on(MessageCreateEvent.class)
 								.filter(event -> event.getMessage().getAuthor().equals(ctx.getEvent().getMessage().getAuthor())
 										&& event.getMessage().getChannelId().equals(ctx.getEvent().getMessage().getChannelId()))
 								.flatMap(event -> {
-									var tokens = InputTokenizer.tokenize(ctx.getBot().getConfig().getFlagPrefix(), event.getMessage().getContent().orElse(""));
+									var tokens = InputTokenizer.tokenize(ctx.getBot().getConfig().getFlagPrefix(), event.getMessage().getContent());
 									var args = tokens.getT2();
 									var flags = tokens.getT1();
 									if (args.isEmpty()) {
@@ -351,7 +352,7 @@ public class InteractiveMenu {
 	private Mono<Message> addReactionsToMenu(Context ctx, Message menuMessage) {
 		return Flux.fromIterable(reactionItems.keySet())
 				.flatMap(emojiName -> Flux.fromIterable(ctx.getBot().getConfig().getEmojiGuildIds())
-						.flatMap(ctx.getBot().getGateway()::getGuildById)
+						.flatMap(ctx.getBot().getGateway()::getGuild)
 						.flatMap(Guild::getEmojis)
 						.filter(emoji -> emoji.getName().equalsIgnoreCase(emojiName))
 						.next()

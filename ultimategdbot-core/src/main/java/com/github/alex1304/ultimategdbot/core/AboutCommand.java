@@ -12,7 +12,6 @@ import com.github.alex1304.ultimategdbot.api.command.annotated.CommandDoc;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandDescriptor;
 import com.github.alex1304.ultimategdbot.api.util.DiscordFormatter;
 
-import discord4j.core.object.util.Snowflake;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -40,9 +39,9 @@ class AboutCommand {
 			+ "its development.")
 	public Mono<Void> run(Context ctx) {
 		return Mono.zip(
-				ctx.getBot().getOwnerId().map(Snowflake::of).flatMap(ctx.getBot().getGateway()::getUserById),
+				ctx.getBot().getOwnerId().flatMap(ctx.getBot().getGateway()::getUser),
 				ctx.getBot().getGateway().getSelf(),
-				ctx.getBot().getGateway().getGuilds().count(),
+				ctx.getBot().getGateway().getGuildsFromStore().count(),
 				ctx.getBot().getGateway().getUsers().count(),
 				Flux.fromIterable(ctx.getBot().getPlugins())
 						.flatMap(p -> p.getGitProperties()
@@ -73,7 +72,7 @@ class AboutCommand {
 					vars.forEach((k, v) -> result[0] = result[0].replaceAll("\\{\\{ *" + k + " *\\}\\}", String.valueOf(v)));
 					return ctx.reply(result[0]);
 				}))
-				.subscribeOn(Schedulers.elastic())
+				.subscribeOn(Schedulers.boundedElastic())
 				.then();
 	}
 }
