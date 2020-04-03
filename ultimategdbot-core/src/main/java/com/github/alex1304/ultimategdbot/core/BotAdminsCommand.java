@@ -25,7 +25,7 @@ class BotAdminsCommand {
 	@CommandDoc("Lists all users that have admin privileges on the bot.")
 	public Mono<Void> run(Context ctx) {
 		return ctx.getBot().getDatabase().query(BotAdmins.class, "from BotAdmins")
-				.flatMap(admin -> ctx.getBot().getGateway().getUser(Snowflake.of(admin.getUserId())))
+				.flatMap(admin -> ctx.getBot().getGateway().getUserById(Snowflake.of(admin.getUserId())))
 				.map(DiscordFormatter::formatUser)
 				.collectSortedList(String.CASE_INSENSITIVE_ORDER)
 				.map(adminList -> {

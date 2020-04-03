@@ -352,7 +352,7 @@ public class InteractiveMenu {
 	private Mono<Message> addReactionsToMenu(Context ctx, Message menuMessage) {
 		return Flux.fromIterable(reactionItems.keySet())
 				.flatMap(emojiName -> Flux.fromIterable(ctx.getBot().getConfig().getEmojiGuildIds())
-						.flatMap(ctx.getBot().getGateway()::getGuild)
+						.flatMap(ctx.getBot().getGateway()::getGuildById)
 						.flatMap(Guild::getEmojis)
 						.filter(emoji -> emoji.getName().equalsIgnoreCase(emojiName))
 						.next()

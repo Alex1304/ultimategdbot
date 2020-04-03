@@ -39,9 +39,9 @@ class AboutCommand {
 			+ "its development.")
 	public Mono<Void> run(Context ctx) {
 		return Mono.zip(
-				ctx.getBot().getOwnerId().flatMap(ctx.getBot().getGateway()::getUser),
+				ctx.getBot().getOwnerId().flatMap(ctx.getBot().getGateway()::getUserById),
 				ctx.getBot().getGateway().getSelf(),
-				ctx.getBot().getGateway().getGuildsFromStore().count(),
+				ctx.getBot().getGateway().getGuilds().count(),
 				ctx.getBot().getGateway().getUsers().count(),
 				Flux.fromIterable(ctx.getBot().getPlugins())
 						.flatMap(p -> p.getGitProperties()

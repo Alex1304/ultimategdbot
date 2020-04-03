@@ -180,7 +180,7 @@ public class Bot {
 			return Mono.just(defaultVal);
 		}
 		return Flux.fromIterable(config.getEmojiGuildIds())
-				.flatMap(gateway::getGuild)
+				.flatMap(gateway::getGuildById)
 				.flatMap(Guild::getEmojis)
 				.filter(emoji -> emoji.getName().equalsIgnoreCase(emojiName))
 				.next()
@@ -198,7 +198,7 @@ public class Bot {
 		var discordClient = DiscordClient.builder(config.getToken())
 				.onClientResponse(ResponseFunction.emptyIfNotFound())
 				.onClientResponse(ResponseFunction.emptyOnErrorStatus(RouteMatcher.route(Routes.REACTION_CREATE), 400))
-				.onClientResponse(request -> response -> response.timeout(Duration.ofSeconds(1)))
+				.onClientResponse(request -> response -> response.timeout(Duration.ofSeconds(10)))
 				.build();
 		
 		return new Bot(config, discordClient, new PropertyReader(pluginProperties));
