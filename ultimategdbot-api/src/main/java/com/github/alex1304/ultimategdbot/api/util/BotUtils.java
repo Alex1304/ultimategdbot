@@ -118,7 +118,7 @@ public class BotUtils {
 		var replyToUser = ctx.reply(":no_entry_sign: Something went wrong. A crash report "
 				+ "has been sent to the developer. Sorry for the inconvenience.");
 		var logInDebugChannel = ctx.bot().log(":no_entry_sign: **Something went wrong when executing a command.**\n"
-				+ "**Author:** " + DiscordFormatter.formatUser(ctx.author()) + '\n'
+				+ "**Author:** " + ctx.author().getTag() + '\n'
 				+ "**Trigger:** " + ctx.event().getMessage().getContent() + '\n'
 				+ "**Error:** " + Markdown.code(e.getClass().getName() + (e.getMessage() == null ? "" : ": " + e.getMessage())) + '\n');
 		var logInFile = Mono.fromRunnable(() -> logger.error("Something went wrong when executing a command. Context dump: "

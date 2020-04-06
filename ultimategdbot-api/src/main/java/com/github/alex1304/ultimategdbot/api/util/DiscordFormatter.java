@@ -1,7 +1,6 @@
 package com.github.alex1304.ultimategdbot.api.util;
 
 import discord4j.core.object.entity.Role;
-import discord4j.core.object.entity.User;
 import discord4j.core.object.entity.channel.GuildChannel;
 import discord4j.core.object.entity.channel.TextChannel;
 
@@ -11,16 +10,6 @@ import discord4j.core.object.entity.channel.TextChannel;
 public class DiscordFormatter {
 
 	private DiscordFormatter() {
-	}
-	
-	/**
-	 * Formats a user to the following format: username#discriminator
-	 * 
-	 * @param user the user to format
-	 * @return the formatted user
-	 */
-	public static String formatUser(User user) {
-		return user.getUsername() + "#" + user.getDiscriminator();
 	}
 
 	/**

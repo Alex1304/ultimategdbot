@@ -92,7 +92,7 @@ public interface PropertyReader {
 	 * ["bar", "test", "demon", "hamburger"]
 	 * </pre>
 	 * 
-	 * @param name      the name of the configuration entry in the properties file
+	 * @param key       the configuration key
 	 * @param separator the character (or sequence of characters) that separates the
 	 *                  elements in the raw string. Note that this is actually a
 	 *                  regex as this parameter is directly passed to the
@@ -100,7 +100,7 @@ public interface PropertyReader {
 	 *                  characters like $ or | should be properly escaped
 	 * @return a Stream containing all elements
 	 */
-	Stream<String> readAsStream(String name, String separator);
+	Stream<String> readAsStream(String key, String separator);
 
 	/**
 	 * Creates a new {@link PropertyReader} reading properties from the given

@@ -108,7 +108,7 @@ public interface DatabaseOutputFunction<D> extends BiFunction<D, Long, Mono<Stri
 	 *         user found.
 	 */
 	public static DatabaseOutputFunction<Long> fromUserId(Bot bot) {
-		return fromUserId(bot, DiscordFormatter::formatUser);
+		return fromUserId(bot, User::getTag);
 	}
 	
 	/**

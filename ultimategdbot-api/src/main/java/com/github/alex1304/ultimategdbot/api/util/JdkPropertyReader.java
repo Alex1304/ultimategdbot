@@ -21,7 +21,7 @@ class JdkPropertyReader implements PropertyReader {
 	
 	@Override
 	public <T> T readAs(String key, Function<? super String, ? extends T> mapper) {
-		return Optional.ofNullable(key).map(mapper).orElseThrow();
+		return Optional.ofNullable(props.getProperty(key)).map(mapper).orElseThrow();
 	}
 
 	@Override
@@ -30,7 +30,12 @@ class JdkPropertyReader implements PropertyReader {
 	}
 
 	@Override
-	public Stream<String> readAsStream(String name, String separator) {
-		return Optional.ofNullable(props.getProperty(name)).stream().flatMap(value -> Arrays.stream(value.split(separator)));
+	public Stream<String> readAsStream(String key, String separator) {
+		return Optional.ofNullable(props.getProperty(key)).stream().flatMap(value -> Arrays.stream(value.split(separator)));
+	}
+
+	@Override
+	public String toString() {
+		return "JdkPropertyReader{props=" + props + "}";
 	}
 }

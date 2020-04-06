@@ -34,7 +34,7 @@ public class DiscordParser {
 						.map(Snowflake::of))
 				.flatMap(userId -> bot.gateway().getUserById(userId).single())
 				.onErrorResume(e -> bot.gateway().getUsers()
-						.filter(user -> DiscordFormatter.formatUser(user).startsWith(str))
+						.filter(user -> user.getTag().startsWith(str))
 						.next()
 						.single())
 				.onErrorMap(e -> new IllegalArgumentException("Cannot find user '" + str + "'."));

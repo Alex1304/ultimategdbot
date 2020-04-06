@@ -9,7 +9,6 @@ import com.github.alex1304.ultimategdbot.api.command.annotated.CommandAction;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandDescriptor;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandDoc;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandPermission;
-import com.github.alex1304.ultimategdbot.api.util.DiscordFormatter;
 import com.github.alex1304.ultimategdbot.core.database.BotAdmins;
 
 import discord4j.core.object.entity.User;
@@ -30,7 +29,7 @@ class BotAdminsCommand {
 				.flatMap(admin -> ctx.bot().gateway()
 						.withRetrievalStrategy(STORE_FALLBACK_REST)
 						.getUserById(Snowflake.of(admin.getUserId())))
-				.map(DiscordFormatter::formatUser)
+				.map(User::getTag)
 				.collectSortedList(String.CASE_INSENSITIVE_ORDER)
 				.map(adminList -> {
 					var sb = new StringBuilder("__**Bot administrator list:**__\n\n");
@@ -52,9 +51,9 @@ class BotAdminsCommand {
 				.then(Mono.just(new BotAdmins())
 						.doOnNext(newAdmin -> newAdmin.setUserId(user.getId().asLong()))
 						.flatMap(ctx.bot().database()::save))
-				.then(ctx.reply("**" + DiscordFormatter.formatUser(user) + "** is now a bot administrator!"))
+				.then(ctx.reply("**" + user.getTag() + "** is now a bot administrator!"))
 				.then(ctx.bot().log("Bot administrator added: **" 
-						+ DiscordFormatter.formatUser(user) + "** (" + user.getId().asString() + ")"))
+						+ user.getTag() + "** (" + user.getId().asString() + ")"))
 				.then();
 	}
 	
@@ -64,9 +63,9 @@ class BotAdminsCommand {
 		return ctx.bot().database().findByID(BotAdmins.class, user.getId().asLong())
 				.switchIfEmpty(Mono.error(new CommandFailedException("This user is already not an admin.")))
 				.flatMap(ctx.bot().database()::delete)
-				.then(ctx.reply("**" + DiscordFormatter.formatUser(user) + "** is no longer a bot administrator!"))
+				.then(ctx.reply("**" + user.getTag() + "** is no longer a bot administrator!"))
 				.then(ctx.bot().log("Bot administrator removed: **" 
-						+ DiscordFormatter.formatUser(user) + "** (" + user.getId().asString() + ")"))
+						+ user.getTag() + "** (" + user.getId().asString() + ")"))
 				.then();
 	}
 }

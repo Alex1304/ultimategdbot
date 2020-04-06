@@ -8,9 +8,8 @@ import java.util.HashMap;
 
 import com.github.alex1304.ultimategdbot.api.command.Context;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandAction;
-import com.github.alex1304.ultimategdbot.api.command.annotated.CommandDoc;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandDescriptor;
-import com.github.alex1304.ultimategdbot.api.util.DiscordFormatter;
+import com.github.alex1304.ultimategdbot.api.command.annotated.CommandDoc;
 
 import discord4j.common.GitProperties;
 import reactor.core.publisher.Flux;
@@ -67,7 +66,7 @@ class AboutCommand {
 					});
 					var vars = new HashMap<String, String>();
 					vars.put("bot_name", self.getUsername());
-					vars.put("bot_owner", DiscordFormatter.formatUser(botOwner));
+					vars.put("bot_owner", botOwner.getTag());
 					vars.put("server_count", "" + guildCount);
 					vars.put("user_count", "" + userCount);
 					vars.put("version_info", versionInfoBuilder.toString());
