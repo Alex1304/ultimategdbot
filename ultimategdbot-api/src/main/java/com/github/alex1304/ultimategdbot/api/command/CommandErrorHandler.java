@@ -62,7 +62,7 @@ public class CommandErrorHandler {
 				ctx.reply(":no_entry_sign: You are not granted the privileges to run this command.").then());
 		addHandler(ClientException.class, (e, ctx) -> {
 			LOGGER.debug("Discord ClientException thrown when using a command. User input: "
-					+ ctx.getEvent().getMessage().getContent() + ", Error:", e);
+					+ ctx.event().getMessage().getContent() + ", Error:", e);
 			var responseOptional = e.getErrorResponse();
 			var message = responseOptional.map(response -> {
 				var sb = new StringBuilder();

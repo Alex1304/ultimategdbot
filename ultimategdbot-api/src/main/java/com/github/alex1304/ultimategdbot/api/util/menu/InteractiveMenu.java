@@ -46,7 +46,7 @@ public class InteractiveMenu {
 	private boolean deleteMenuOnTimeout;
 	private boolean closeAfterMessage = true;
 	private boolean closeAfterReaction = true;
-	private int timeoutSeconds = -1;
+	private Duration timeout = null;
 
 	private InteractiveMenu(Mono<Consumer<MessageCreateSpec>> specMono) {
 		this.specMono = specMono;
@@ -263,14 +263,14 @@ public class InteractiveMenu {
 	}
 	
 	/**
-	 * Sets a timeout in seconds after which the menu automatically closes. The
-	 * timeout starts when the menu opens, and is not reset by user interaction.
+	 * Sets a timeou after which the menu automatically closes. The timeout starts
+	 * when the menu opens, and is not reset by user interaction.
 	 * 
-	 * @param timeoutSeconds the timeout in seconds
+	 * @param timeout the timeout
 	 * @return this menu
 	 */
-	public InteractiveMenu withTimeoutSeconds(int timeoutSeconds) {
-		this.timeoutSeconds = timeoutSeconds;
+	public InteractiveMenu withTimeout(Duration timeout) {
+		this.timeout = timeout;
 		return this;
 	}
 	
@@ -287,21 +287,21 @@ public class InteractiveMenu {
 	 */
 	public Mono<Void> open(Context ctx) {
 		requireNonNull(ctx);
-		if (timeoutSeconds < 0) {
-			timeoutSeconds = ctx.getBot().getConfig().getInteractiveMenuTimeoutSeconds();
+		if (timeout == null) {
+			timeout = ctx.bot().config().getInteractiveMenuTimeout();
 		}
 		var closeNotifier = MonoProcessor.<Void>create();
 		return specMono.flatMap(ctx::reply)
 				.flatMap(menuMessage -> addReactionsToMenu(ctx, menuMessage))
 				.flatMap(menuMessage -> {
-					@SuppressWarnings("deprecation")
+					@SuppressWarnings("deprecation") // TODO Migrate retry
 					var menuMono = Mono.first(
 						closeNotifier,
-						ctx.getBot().getGateway().on(MessageCreateEvent.class)
-								.filter(event -> event.getMessage().getAuthor().equals(ctx.getEvent().getMessage().getAuthor())
-										&& event.getMessage().getChannelId().equals(ctx.getEvent().getMessage().getChannelId()))
+						ctx.bot().gateway().on(MessageCreateEvent.class)
+								.filter(event -> event.getMessage().getAuthor().equals(ctx.event().getMessage().getAuthor())
+										&& event.getMessage().getChannelId().equals(ctx.event().getMessage().getChannelId()))
 								.flatMap(event -> {
-									var tokens = InputTokenizer.tokenize(ctx.getBot().getConfig().getFlagPrefix(), event.getMessage().getContent());
+									var tokens = InputTokenizer.tokenize(ctx.bot().config().getFlagPrefix(), event.getMessage().getContent());
 									var args = tokens.getT2();
 									var flags = tokens.getT1();
 									if (args.isEmpty()) {
@@ -318,10 +318,10 @@ public class InteractiveMenu {
 								.onErrorResume(UnexpectedReplyException.class, e -> ctx.reply(":no_entry_sign: " + e.getMessage()).then(Mono.error(e)))
 								.retry(UnexpectedReplyException.class::isInstance)
 								.then(),
-						Flux.merge(ctx.getBot().getGateway().on(ReactionAddEvent.class), ctx.getBot().getGateway().on(ReactionRemoveEvent.class))
+						Flux.merge(ctx.bot().gateway().on(ReactionAddEvent.class), ctx.bot().gateway().on(ReactionRemoveEvent.class))
 								.map(ReactionToggleEvent::new)
 								.filter(event -> event.getMessageId().equals(menuMessage.getId())
-										&& event.getUserId().equals(ctx.getEvent().getMessage().getAuthor().map(User::getId).orElse(null)))
+										&& event.getUserId().equals(ctx.event().getMessage().getAuthor().map(User::getId).orElse(null)))
 								.flatMap(event -> {
 									var emojiName = event.getEmoji().asCustomEmoji().map(Custom::getName)
 											.or(() -> event.getEmoji().asUnicodeEmoji().map(Unicode::getRaw))
@@ -336,9 +336,9 @@ public class InteractiveMenu {
 								.takeUntil(__ -> closeAfterReaction)
 								.then())
 						.then(handleTermination(menuMessage, deleteMenuOnClose));
-					return timeoutSeconds == 0
+					return timeout.isZero()
 							? menuMono
-							: menuMono.timeout(Duration.ofSeconds(timeoutSeconds), handleTermination(menuMessage, deleteMenuOnTimeout));
+							: menuMono.timeout(timeout, handleTermination(menuMessage, deleteMenuOnTimeout));
 				});
 	}
 	
@@ -351,8 +351,8 @@ public class InteractiveMenu {
 	
 	private Mono<Message> addReactionsToMenu(Context ctx, Message menuMessage) {
 		return Flux.fromIterable(reactionItems.keySet())
-				.flatMap(emojiName -> Flux.fromIterable(ctx.getBot().getConfig().getEmojiGuildIds())
-						.flatMap(ctx.getBot().getGateway()::getGuildById)
+				.flatMap(emojiName -> Flux.fromIterable(ctx.bot().config().getEmojiGuildIds())
+						.flatMap(ctx.bot().gateway()::getGuildById)
 						.flatMap(Guild::getEmojis)
 						.filter(emoji -> emoji.getName().equalsIgnoreCase(emojiName))
 						.next()

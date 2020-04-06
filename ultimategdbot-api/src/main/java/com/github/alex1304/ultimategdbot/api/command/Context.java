@@ -1,7 +1,8 @@
 package com.github.alex1304.ultimategdbot.api.command;
 
+import static java.util.Objects.requireNonNull;
+
 import java.util.List;
-import java.util.Objects;
 import java.util.function.Consumer;
 
 import com.github.alex1304.ultimategdbot.api.Bot;
@@ -26,14 +27,14 @@ public class Context {
 	private final MessageChannel channel;
 
 	public Context(Command command, MessageCreateEvent event, List<String> args, FlagSet flags, Bot bot, String prefixUsed, MessageChannel channel) {
-		this.command = Objects.requireNonNull(command);
-		this.event = Objects.requireNonNull(event);
-		this.args = new ArgumentList(Objects.requireNonNull(args));
-		this.bot = Objects.requireNonNull(bot);
-		this.prefixUsed = Objects.requireNonNull(prefixUsed);
-		this.flags = Objects.requireNonNull(flags);
+		this.command = requireNonNull(command);
+		this.event = requireNonNull(event);
+		this.args = new ArgumentList(requireNonNull(args));
+		this.bot = requireNonNull(bot);
+		this.prefixUsed = requireNonNull(prefixUsed);
+		this.flags = requireNonNull(flags);
 		this.author = event.getMessage().getAuthor().orElseThrow();
-		this.channel = Objects.requireNonNull(channel);
+		this.channel = requireNonNull(channel);
 	}
 	
 	/**
@@ -41,7 +42,7 @@ public class Context {
 	 * 
 	 * @return the original command
 	 */
-	public Command getCommand() {
+	public Command command() {
 		return command;
 	}
 
@@ -50,7 +51,7 @@ public class Context {
 	 *
 	 * @return the event
 	 */
-	public MessageCreateEvent getEvent() {
+	public MessageCreateEvent event() {
 		return event;
 	}
 
@@ -59,11 +60,11 @@ public class Context {
 	 *
 	 * @return the args
 	 */
-	public ArgumentList getArgs() {
+	public ArgumentList args() {
 		return args;
 	}
 	
-	public FlagSet getFlags() {
+	public FlagSet flags() {
 		return flags;
 	}
 
@@ -72,7 +73,7 @@ public class Context {
 	 * 
 	 * @return the bot
 	 */
-	public Bot getBot() {
+	public Bot bot() {
 		return bot;
 	}
 
@@ -116,19 +117,19 @@ public class Context {
 	 * 
 	 * @return the prefix used
 	 */
-	public String getPrefixUsed() {
+	public String prefixUsed() {
 		return prefixUsed;
 	}
 	
 	/**
 	 * Gets the author of the message that created this context. It is a convenient way to do
 	 * <pre>
-	 * getEvent().getMessage().getAuthor().orElseThrow();
+	 * event().getMessage().getAuthor().orElseThrow();
 	 * </pre>
 	 * 
 	 * @return the author
 	 */
-	public User getAuthor() {
+	public User author() {
 		return author;
 	}
 	
@@ -139,7 +140,7 @@ public class Context {
 	 * 
 	 * @return the author
 	 */
-	public MessageChannel getChannel() {
+	public MessageChannel channel() {
 		return channel;
 	}
 

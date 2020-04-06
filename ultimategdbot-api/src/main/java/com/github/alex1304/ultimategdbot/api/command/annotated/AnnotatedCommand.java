@@ -127,7 +127,7 @@ public class AnnotatedCommand implements Command {
 		var mainMethodOptional = Optional.ofNullable(mainMethod); 
 		return new AnnotatedCommand(obj,
 				ctx -> {
-					var args = ctx.getArgs();
+					var args = ctx.args();
 					var firstArgIndex = new AtomicInteger(2);
 					var matchingMethod = Optional.ofNullable(args.tokenCount() > 1 ? subMethods.get(args.get(1)) : null)
 							.or(() -> {
@@ -135,7 +135,7 @@ public class AnnotatedCommand implements Command {
 								return mainMethodOptional;
 							});
 					var invalidSyntax = new CommandFailedException("Invalid syntax. See "
-							+ Markdown.code(ctx.getPrefixUsed() + "help " + args.get(0)) + " for more information.");
+							+ Markdown.code(ctx.prefixUsed() + "help " + args.get(0)) + " for more information.");
 					return Mono.justOrEmpty(matchingMethod)
 							.switchIfEmpty(Mono.error(invalidSyntax))
 							.filterWhen(method -> isSubcommandGranted(method, ctx))
@@ -181,8 +181,8 @@ public class AnnotatedCommand implements Command {
 			return Mono.just(true);
 		}
 		return Mono.zip(
-						ctx.getBot().getCommandKernel().getPermissionChecker().isGranted(methodPermAnnot.name(), ctx),
-						ctx.getBot().getCommandKernel().getPermissionChecker().isGranted(methodPermAnnot.level(), ctx))
+						ctx.bot().commandKernel().getPermissionChecker().isGranted(methodPermAnnot.name(), ctx),
+						ctx.bot().commandKernel().getPermissionChecker().isGranted(methodPermAnnot.level(), ctx))
 				.map(function(Boolean::logicalAnd));
 				
 	}

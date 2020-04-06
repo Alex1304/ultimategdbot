@@ -1,17 +1,17 @@
 package com.github.alex1304.ultimategdbot.core;
 
-import static discord4j.core.retriever.EntityRetrievalStrategy.REST;
-import static discord4j.core.retriever.EntityRetrievalStrategy.STORE_FALLBACK_REST;
+import static reactor.function.TupleUtils.function;
 
-import java.util.stream.Collectors;
+import java.time.Duration;
 
 import com.github.alex1304.ultimategdbot.api.command.Context;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandAction;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandDescriptor;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandDoc;
+import com.github.alex1304.ultimategdbot.api.util.BotUtils;
 
-import discord4j.core.object.entity.Role;
-import discord4j.rest.util.Snowflake;
+import discord4j.core.event.domain.message.MessageCreateEvent;
+import discord4j.gateway.GatewayClient;
 import reactor.core.publisher.Mono;
 
 @CommandDescriptor(
@@ -19,17 +19,26 @@ import reactor.core.publisher.Mono;
 		shortDescription = "Pings the bot to check if it is alive."
 )
 class PingCommand {
+	
+	private static final String PONG = "Pong! :ping_pong:";
 
 	@CommandAction
 	@CommandDoc("This command simply replies with 'Pong!'. If it replies successfully, congrats, "
 			+ "the bot works for you!")
 	public Mono<Void> run(Context ctx) {
-		return ctx.getBot().getGateway()
-		        .withRetrievalStrategy(STORE_FALLBACK_REST)
-		        .getGuildById(Snowflake.of(361255823357509645L))
-		        .flatMapMany(guild -> guild.getRoles(REST))
-		        .collectList()
-		        .flatMap(roleList -> ctx.reply(roleList.stream().map(Role::getName).collect(Collectors.joining("\n"))))
-		        .then();
+		return ctx.reply(PONG)
+				.elapsed()
+				.flatMap(function((apiLatency, message) -> message.edit(
+						spec -> spec.setContent(computeLatency(ctx.event(), apiLatency)))))
+				.then();
+	}
+	
+	private static String computeLatency(MessageCreateEvent event, long apiLatency) {
+		return PONG + "\nDiscord API latency: " + BotUtils.formatDuration(Duration.ofMillis(apiLatency)) + "\n"
+				+ "Discord Gateway latency: " + event.getClient()
+						.getGatewayClient(event.getShardInfo().getIndex())
+						.map(GatewayClient::getResponseTime)
+						.map(BotUtils::formatDuration)
+						.orElse("Unknown");
 	}
 }

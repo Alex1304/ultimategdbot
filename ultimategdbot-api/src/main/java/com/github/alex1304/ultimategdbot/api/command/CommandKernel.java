@@ -70,7 +70,7 @@ public class CommandKernel {
 		if (event.getMessage().getAuthor().map(User::isBot).orElse(true)) {
 			return Mono.empty();
 		}
-		var prefix = guildId.map(Snowflake::asLong).map(prefixByGuild::get).orElse(bot.getConfig().getDefaultPrefix());
+		var prefix = guildId.map(Snowflake::asLong).map(prefixByGuild::get).orElse(bot.config().getCommandPrefix());
 		return Flux.fromIterable(providers)
 				.flatMap(provider -> event.getMessage().getChannel()
 						.flatMap(channel -> provider.provideFromEvent(bot, prefix, event, channel)))
@@ -98,7 +98,7 @@ public class CommandKernel {
 	 * Starts listening to message create events.
 	 */
 	public void start() {
-		bot.getGateway().on(MessageCreateEvent.class, this::processEvent)
+		bot.gateway().on(MessageCreateEvent.class, this::processEvent)
 				.log(CommandKernel.class.getName())
 				.subscribe();
 	}

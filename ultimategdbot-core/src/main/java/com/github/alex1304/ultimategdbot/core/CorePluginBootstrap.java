@@ -14,6 +14,7 @@ import com.github.alex1304.ultimategdbot.api.command.annotated.AnnotatedCommandP
 import com.github.alex1304.ultimategdbot.api.database.GuildSettingsEntry;
 import com.github.alex1304.ultimategdbot.api.util.DatabaseInputFunction;
 import com.github.alex1304.ultimategdbot.api.util.DatabaseOutputFunction;
+import com.github.alex1304.ultimategdbot.api.util.PropertyReader;
 import com.github.alex1304.ultimategdbot.core.database.BlacklistedIds;
 import com.github.alex1304.ultimategdbot.core.database.BotAdmins;
 import com.github.alex1304.ultimategdbot.core.database.GuildPrefixes;
@@ -22,13 +23,14 @@ import discord4j.core.object.entity.Guild;
 import discord4j.core.object.entity.channel.GuildChannel;
 import discord4j.rest.util.Permission;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 public class CorePluginBootstrap implements PluginBootstrap {
 	
 	private static final String PLUGIN_NAME = "Core";
 
 	@Override
-	public Mono<Plugin> setup(Bot bot) {
+	public Mono<Plugin> setup(Bot bot, PropertyReader pluginProperties) {
 		var pluginBuilder = Plugin.builder(PLUGIN_NAME)
 				.addDatabaseMappingRessources(
 						"/BlacklistedIds.hbm.xml",
@@ -41,19 +43,18 @@ public class CorePluginBootstrap implements PluginBootstrap {
 						(v, guildId) -> DatabaseInputFunction.asIs()
 								.withInputCheck(x -> !x.isBlank(), "Cannot be blank")
 								.apply(v, guildId)
-								.doOnTerminate(() -> bot.getCommandKernel().setPrefixForGuild(guildId, v)),
+								.doOnTerminate(() -> bot.commandKernel().setPrefixForGuild(guildId, v)),
 						DatabaseOutputFunction.stringValue()))
 				.onReady(() -> initBlacklist(bot).and(initPrefixes(bot)));
-		return bot.getConfig().areCoreCommandsDisabled()
-				? Mono.just(pluginBuilder.build())
-				: readAboutText()
+		return readAboutText()
 						.map(CorePluginBootstrap::initCommandProvider)
 						.map(pluginBuilder::setCommandProvider)
 						.map(Builder::build);
 	}
 	
 	private static Mono<String> readAboutText() {
-		return Mono.fromCallable(() -> String.join("\n", Files.readAllLines(Paths.get(".", "config", "about.txt"))));
+		return Mono.fromCallable(() -> String.join("\n", Files.readAllLines(Paths.get(".", "config", "about.txt"))))
+				.subscribeOn(Schedulers.boundedElastic());
 	}
 	
 	private static CommandProvider initCommandProvider(String aboutText) {
@@ -69,32 +70,37 @@ public class CorePluginBootstrap implements PluginBootstrap {
 		cmdProvider.addAnnotated(new RuntimeCommand());
 		// Register permissions
 		var permissionChecker = new PermissionChecker();
-		permissionChecker.register(PermissionLevel.BOT_OWNER, ctx -> ctx.getBot().getOwnerId()
-				.map(ctx.getAuthor().getId()::equals));
-		permissionChecker.register(PermissionLevel.BOT_ADMIN, ctx -> ctx.getBot().getDatabase()
-				.findByID(BotAdmins.class, ctx.getAuthor().getId().asLong())
+		permissionChecker.register(PermissionLevel.BOT_OWNER, ctx -> ctx.bot().owner()
+				.map(ctx.author()::equals));
+		permissionChecker.register(PermissionLevel.BOT_ADMIN, ctx -> ctx.bot().database()
+				.findByID(BotAdmins.class, ctx.author().getId().asLong())
 				.hasElement());
-		permissionChecker.register(PermissionLevel.GUILD_OWNER, ctx -> ctx.getEvent().getGuild()
+		permissionChecker.register(PermissionLevel.GUILD_OWNER, ctx -> ctx.event().getGuild()
 				.map(Guild::getOwnerId)
-				.map(ctx.getAuthor().getId()::equals));
-		permissionChecker.register(PermissionLevel.GUILD_ADMIN, ctx -> ctx.getEvent().getMessage().getChannel()
+				.map(ctx.author().getId()::equals));
+		permissionChecker.register(PermissionLevel.GUILD_ADMIN, ctx -> ctx.event().getMessage().getChannel()
 				.ofType(GuildChannel.class)
-				.flatMap(c -> c.getEffectivePermissions(ctx.getAuthor().getId())
+				.flatMap(c -> c.getEffectivePermissions(ctx.author().getId())
 				.map(ps -> ps.contains(Permission.ADMINISTRATOR))));
 		cmdProvider.setPermissionChecker(permissionChecker);
 		return cmdProvider;
 	}
 	
 	private static Mono<Void> initBlacklist(Bot bot) {
-		return bot.getDatabase().query(BlacklistedIds.class, "from BlacklistedIds")
+		return bot.database().query(BlacklistedIds.class, "from BlacklistedIds")
 				.map(BlacklistedIds::getId)
-				.doOnNext(bot.getCommandKernel()::blacklist)
+				.doOnNext(bot.commandKernel()::blacklist)
 				.then();
 	}
 	
 	private static Mono<Void> initPrefixes(Bot bot) {
-		return bot.getDatabase().query(GuildPrefixes.class, "from GuildPrefixes where prefix != ?0 and prefix != ?1", "", bot.getConfig().getDefaultPrefix())
-				.doOnNext(guildPrefix -> bot.getCommandKernel().setPrefixForGuild(guildPrefix.getGuildId(), guildPrefix.getPrefix()))
+		return bot.database().query(GuildPrefixes.class, "from GuildPrefixes where prefix != ?0 and prefix != ?1", "", bot.config().getCommandPrefix())
+				.doOnNext(guildPrefix -> bot.commandKernel().setPrefixForGuild(guildPrefix.getGuildId(), guildPrefix.getPrefix()))
 				.then();
+	}
+
+	@Override
+	public Mono<PropertyReader> initPluginProperties() {
+		return Mono.empty();
 	}
 }

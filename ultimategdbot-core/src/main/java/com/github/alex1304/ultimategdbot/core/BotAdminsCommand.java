@@ -1,5 +1,7 @@
 package com.github.alex1304.ultimategdbot.core;
 
+import static discord4j.core.retriever.EntityRetrievalStrategy.STORE_FALLBACK_REST;
+
 import com.github.alex1304.ultimategdbot.api.command.CommandFailedException;
 import com.github.alex1304.ultimategdbot.api.command.Context;
 import com.github.alex1304.ultimategdbot.api.command.PermissionLevel;
@@ -24,8 +26,10 @@ class BotAdminsCommand {
 	@CommandAction
 	@CommandDoc("Lists all users that have admin privileges on the bot.")
 	public Mono<Void> run(Context ctx) {
-		return ctx.getBot().getDatabase().query(BotAdmins.class, "from BotAdmins")
-				.flatMap(admin -> ctx.getBot().getGateway().getUserById(Snowflake.of(admin.getUserId())))
+		return ctx.bot().database().query(BotAdmins.class, "from BotAdmins")
+				.flatMap(admin -> ctx.bot().gateway()
+						.withRetrievalStrategy(STORE_FALLBACK_REST)
+						.getUserById(Snowflake.of(admin.getUserId())))
 				.map(DiscordFormatter::formatUser)
 				.collectSortedList(String.CASE_INSENSITIVE_ORDER)
 				.map(adminList -> {
@@ -43,13 +47,13 @@ class BotAdminsCommand {
 	@CommandAction("grant")
 	@CommandDoc("Grants bot admin access to a user.")
 	public Mono<Void> runGrant(Context ctx, User user) {
-		return ctx.getBot().getDatabase().findByID(BotAdmins.class, user.getId().asLong())
+		return ctx.bot().database().findByID(BotAdmins.class, user.getId().asLong())
 				.flatMap(__ -> Mono.error(new CommandFailedException("This user is already an admin.")))
 				.then(Mono.just(new BotAdmins())
 						.doOnNext(newAdmin -> newAdmin.setUserId(user.getId().asLong()))
-						.flatMap(ctx.getBot().getDatabase()::save))
+						.flatMap(ctx.bot().database()::save))
 				.then(ctx.reply("**" + DiscordFormatter.formatUser(user) + "** is now a bot administrator!"))
-				.then(ctx.getBot().log("Bot administrator added: **" 
+				.then(ctx.bot().log("Bot administrator added: **" 
 						+ DiscordFormatter.formatUser(user) + "** (" + user.getId().asString() + ")"))
 				.then();
 	}
@@ -57,11 +61,11 @@ class BotAdminsCommand {
 	@CommandAction("revoke")
 	@CommandDoc("Revokes bot admin access from a user.")
 	public Mono<Void> runRevoke(Context ctx, User user) {
-		return ctx.getBot().getDatabase().findByID(BotAdmins.class, user.getId().asLong())
+		return ctx.bot().database().findByID(BotAdmins.class, user.getId().asLong())
 				.switchIfEmpty(Mono.error(new CommandFailedException("This user is already not an admin.")))
-				.flatMap(ctx.getBot().getDatabase()::delete)
+				.flatMap(ctx.bot().database()::delete)
 				.then(ctx.reply("**" + DiscordFormatter.formatUser(user) + "** is no longer a bot administrator!"))
-				.then(ctx.getBot().log("Bot administrator removed: **" 
+				.then(ctx.bot().log("Bot administrator removed: **" 
 						+ DiscordFormatter.formatUser(user) + "** (" + user.getId().asString() + ")"))
 				.then();
 	}

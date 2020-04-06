@@ -62,7 +62,7 @@ public interface DatabaseOutputFunction<D> extends BiFunction<D, Long, Mono<Stri
 	 *         role found.
 	 */
 	public static DatabaseOutputFunction<Long> fromRoleId(Bot bot, Function<? super Role, String> roleToString) {
-		return (roleId, guildId) -> bot.getGateway()
+		return (roleId, guildId) -> bot.gateway()
 				.getRoleById(Snowflake.of(guildId), Snowflake.of(roleId))
 				.map(roleToString::apply)
 				.onErrorResume(e -> Mono.empty());
@@ -92,7 +92,7 @@ public interface DatabaseOutputFunction<D> extends BiFunction<D, Long, Mono<Stri
 	 *         user found.
 	 */
 	public static DatabaseOutputFunction<Long> fromUserId(Bot bot, Function<? super User, String> userToString) {
-		return (userId, guildId) -> bot.getGateway()
+		return (userId, guildId) -> bot.gateway()
 				.getUserById(Snowflake.of(userId))
 				.map(userToString)
 				.onErrorResume(e -> Mono.empty());
@@ -122,7 +122,7 @@ public interface DatabaseOutputFunction<D> extends BiFunction<D, Long, Mono<Stri
 	 *         channel found.
 	 */
 	public static DatabaseOutputFunction<Long> fromChannelId(Bot bot, Function<? super GuildChannel, String> channelToString) {
-		return (channelId, guildId) -> bot.getGateway()
+		return (channelId, guildId) -> bot.gateway()
 				.getChannelById(Snowflake.of(channelId))
 				.ofType(GuildChannel.class)
 				.map(channelToString::apply)

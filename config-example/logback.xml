@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration scan="true" scanPeriod="10 seconds">
-	<turboFilter class="discord4j.core.logback.GatewayEventFilter">
-        <Include>READY,RESUME</Include>
+	<turboFilter class="com.github.alex1304.ultimategdbot.core.GatewayEventFilter">
+		<Logger>discord4j.gateway.protocol.receiver</Logger>
+        <Include>READY</Include>
+        <Include>RESUME</Include>
     </turboFilter>
 	<!-- You can configure per-logger level at this point -->
 	<!-- This set of preconfigured loggers is good if you want to have a DEBUG 

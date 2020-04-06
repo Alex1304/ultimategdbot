@@ -32,11 +32,11 @@ class SetupCommand {
 			+ "Each entry has a unique name with a value associated to it. You can edit an entry using the `set` subcommand.")
 	public Mono<Void> run(Context ctx) {
 		var sb = new StringBuffer("Here you can configure the bot for this server. "
-				+ "You can update a field by doing `" + ctx.getPrefixUsed() + "setup set <field> <value>`. "
+				+ "You can update a field by doing `" + ctx.prefixUsed() + "setup set <field> <value>`. "
 				+ "Use `None` as value to reset a field.\n\n");
-		var guildId = ctx.getEvent().getGuildId().map(Snowflake::asLong).orElse(0L);
-		return ctx.getBot().getDatabase()
-				.performTransactionWhen(session -> Flux.fromIterable(ctx.getBot().getPlugins())
+		var guildId = ctx.event().getGuildId().map(Snowflake::asLong).orElse(0L);
+		return ctx.bot().database()
+				.performTransactionWhen(session -> Flux.fromIterable(ctx.bot().plugins())
 						.sort(Comparator.comparing(Plugin::getName))
 						.concatMap(plugin -> Flux.fromIterable(plugin.getGuildConfigurationEntries().entrySet())
 								.flatMap(entry -> entry.getValue().getAsString(session, guildId)
@@ -68,14 +68,14 @@ class SetupCommand {
 			+ "the command will give you an error message with details. Otherwise, the new value will be saved and will respond "
 			+ "with a success message.")
 	public Mono<Void> runSet(Context ctx, String key, String value) {
-		var guildId = ctx.getEvent().getGuildId().map(Snowflake::asLong).orElse(0L);
-		return Flux.fromIterable(ctx.getBot().getPlugins())
+		var guildId = ctx.event().getGuildId().map(Snowflake::asLong).orElse(0L);
+		return Flux.fromIterable(ctx.bot().plugins())
 				.map(Plugin::getGuildConfigurationEntries)
 				.filter(map -> map.containsKey(key))
 				.switchIfEmpty(Mono.error(new CommandFailedException("There is no configuration entry with key `" + key + "`.")))
 				.next()
 				.map(map -> map.get(key))
-				.flatMapMany(entry -> ctx.getBot().getDatabase().performTransactionWhen(session -> entry.setFromString(session, value, guildId)))
+				.flatMapMany(entry -> ctx.bot().database().performTransactionWhen(session -> entry.setFromString(session, value, guildId)))
 				.onErrorMap(IllegalArgumentException.class, e -> new CommandFailedException("Cannot assign this value as `" + key + "`: " + e.getMessage()))
 				.then(ctx.reply(":white_check_mark: Settings updated!"))
 				.then();

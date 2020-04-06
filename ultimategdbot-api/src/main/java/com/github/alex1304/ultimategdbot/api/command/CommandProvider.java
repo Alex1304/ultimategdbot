@@ -60,7 +60,7 @@ public class CommandProvider {
 		requireNonNull(prefix, "prefix cannot be null");
 		requireNonNull(event, "event cannot be null");
 		requireNonNull(channel, "channel cannot be null");
-		return bot.getGateway().getSelfId().map(Snowflake::asLong).flatMap(botId -> {
+		return bot.gateway().getSelfId().map(Snowflake::asLong).flatMap(botId -> {
 			var prefixes = Set.of("<@" + botId + ">", "<@!" + botId + ">", prefix);
 			var content = event.getMessage().getContent();
 			String prefixUsed = null;
@@ -74,7 +74,7 @@ public class CommandProvider {
 			if (prefixUsed == null) {
 				return Mono.empty();
 			}
-			var parsed = InputTokenizer.tokenize(bot.getConfig().getFlagPrefix(), content);
+			var parsed = InputTokenizer.tokenize(bot.config().getFlagPrefix(), content);
 			var flags = parsed.getT1();
 			var args = parsed.getT2();
 			if (args.isEmpty()) {

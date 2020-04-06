@@ -12,6 +12,7 @@ import com.github.alex1304.ultimategdbot.api.command.annotated.CommandDoc;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandDescriptor;
 import com.github.alex1304.ultimategdbot.api.util.DiscordFormatter;
 
+import discord4j.common.GitProperties;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -39,11 +40,11 @@ class AboutCommand {
 			+ "its development.")
 	public Mono<Void> run(Context ctx) {
 		return Mono.zip(
-				ctx.getBot().getOwnerId().flatMap(ctx.getBot().getGateway()::getUserById),
-				ctx.getBot().getGateway().getSelf(),
-				ctx.getBot().getGateway().getGuilds().count(),
-				ctx.getBot().getGateway().getUsers().count(),
-				Flux.fromIterable(ctx.getBot().getPlugins())
+				ctx.bot().owner(),
+				ctx.bot().gateway().getSelf(),
+				ctx.bot().gateway().getGuilds().count(),
+				ctx.bot().gateway().getUsers().count(),
+				Flux.fromIterable(ctx.bot().plugins())
 						.flatMap(p -> p.getGitProperties()
 								.map(g -> g.getProperty("git.build.version", "*unknown*"))
 								.defaultIfEmpty("*unknown*")
@@ -54,6 +55,8 @@ class AboutCommand {
 							.append("UltimateGDBot API version:** ");
 					var nativeGitProps = pluginMap.get(corePluginName);
 					versionInfoBuilder.append(nativeGitProps).append("\n");
+					versionInfoBuilder.append("**Discord4J version:** ")
+							.append(GitProperties.APPLICATION_VERSION);
 					pluginMap.forEach((k, v) -> {
 						if (k.equals(corePluginName)) return;
 						versionInfoBuilder.append("**")

@@ -32,7 +32,7 @@ public class ExecutableCommand {
 	 *         command will be forwarded through this Mono.
 	 */
 	public Mono<Void> execute() {
-		if (!command.getScope().isInScope(context.getChannel())) {
+		if (!command.getScope().isInScope(context.channel())) {
 			return Mono.empty();
 		}
 		return errorHandler.apply(checkPermission()
@@ -42,13 +42,13 @@ public class ExecutableCommand {
 	
 	private Mono<?> checkPermission() {
 		return Mono.just(command.getRequiredPermission())
-				.filterWhen(perm -> context.getBot().getCommandKernel().getPermissionChecker().isGranted(perm, context))
+				.filterWhen(perm -> context.bot().commandKernel().getPermissionChecker().isGranted(perm, context))
 				.switchIfEmpty(Mono.error(new PermissionDeniedException()));
 	}
 	
 	private Mono<?> checkPermissionLevel() {
 		return Mono.just(command.getMinimumPermissionLevel())
-				.filterWhen(perm -> context.getBot().getCommandKernel().getPermissionChecker().isGranted(perm, context))
+				.filterWhen(perm -> context.bot().commandKernel().getPermissionChecker().isGranted(perm, context))
 				.switchIfEmpty(Mono.error(new PermissionDeniedException()));
 	}
 	

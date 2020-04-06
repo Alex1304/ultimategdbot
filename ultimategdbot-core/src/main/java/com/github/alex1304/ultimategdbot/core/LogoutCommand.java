@@ -18,6 +18,6 @@ class LogoutCommand {
 	@CommandAction
 	public Mono<Void> run(Context ctx) {
 		return ctx.reply("Disconnecting...")
-				.then(ctx.getBot().getGateway().logout());
+				.then(ctx.bot().gateway().logout());
 	}
 }

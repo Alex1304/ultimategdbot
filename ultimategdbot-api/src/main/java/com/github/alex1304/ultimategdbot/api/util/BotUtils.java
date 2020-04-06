@@ -111,15 +111,15 @@ public class BotUtils {
 	}
 	
 	public static Mono<Void> sendPaginatedMessage(Context ctx, String text) {
-		return sendPaginatedMessage(ctx, text, ctx.getBot().getConfig().getPaginationControls(), Message.MAX_CONTENT_LENGTH - 10);
+		return sendPaginatedMessage(ctx, text, ctx.bot().config().getPaginationControls(), Message.MAX_CONTENT_LENGTH - 10);
 	}
 	
 	public static Mono<Void> logCommandError(Logger logger, Context ctx, Throwable e) {
 		var replyToUser = ctx.reply(":no_entry_sign: Something went wrong. A crash report "
 				+ "has been sent to the developer. Sorry for the inconvenience.");
-		var logInDebugChannel = ctx.getBot().log(":no_entry_sign: **Something went wrong when executing a command.**\n"
-				+ "**Author:** " + DiscordFormatter.formatUser(ctx.getAuthor()) + '\n'
-				+ "**Trigger:** " + ctx.getEvent().getMessage().getContent() + '\n'
+		var logInDebugChannel = ctx.bot().log(":no_entry_sign: **Something went wrong when executing a command.**\n"
+				+ "**Author:** " + DiscordFormatter.formatUser(ctx.author()) + '\n'
+				+ "**Trigger:** " + ctx.event().getMessage().getContent() + '\n'
 				+ "**Error:** " + Markdown.code(e.getClass().getName() + (e.getMessage() == null ? "" : ": " + e.getMessage())) + '\n');
 		var logInFile = Mono.fromRunnable(() -> logger.error("Something went wrong when executing a command. Context dump: "
 				+ ctx, e));

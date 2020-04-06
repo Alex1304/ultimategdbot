@@ -46,14 +46,14 @@ class HelpCommand {
 
 	private static Mono<Void> displayCommandList(Context ctx) {
 		var sb = new StringBuilder("Here is the list of commands you can use in this channel. "
-				+ "Use " + code(ctx.getPrefixUsed() + "help <command>") + " to view the detailed documentation of a specific command.\n\n");
-		return ctx.getEvent().getMessage().getChannel()
-				.flatMap(channel -> Flux.fromIterable(ctx.getBot().getPlugins())
+				+ "Use " + code(ctx.prefixUsed() + "help <command>") + " to view the detailed documentation of a specific command.\n\n");
+		return ctx.event().getMessage().getChannel()
+				.flatMap(channel -> Flux.fromIterable(ctx.bot().plugins())
 						.sort(comparing(Plugin::getName))
 						.concatMap(plugin -> Flux.fromIterable(plugin.getCommandProvider().getProvidedCommands())
 								.filter(cmd -> cmd.getScope().isInScope(channel))
-								.filterWhen(cmd -> ctx.getBot().getCommandKernel().getPermissionChecker().isGranted(cmd.getRequiredPermission(), ctx))
-								.filterWhen(cmd -> ctx.getBot().getCommandKernel().getPermissionChecker().isGranted(cmd.getMinimumPermissionLevel(), ctx))
+								.filterWhen(cmd -> ctx.bot().commandKernel().getPermissionChecker().isGranted(cmd.getRequiredPermission(), ctx))
+								.filterWhen(cmd -> ctx.bot().commandKernel().getPermissionChecker().isGranted(cmd.getMinimumPermissionLevel(), ctx))
 								.collectSortedList(comparing(HelpCommand::joinAliases))
 								.map(cmdList -> Tuples.of(plugin.getName(), cmdList)))
 						.doOnNext(consumer((pluginName, cmdList) -> {
@@ -61,7 +61,7 @@ class HelpCommand {
 							cmdList.stream()
 									.filter(cmd -> !cmd.getDocumentation().isHidden())
 									.forEach(cmd -> {
-										sb.append(code(ctx.getPrefixUsed() + joinAliases(cmd)));
+										sb.append(code(ctx.prefixUsed() + joinAliases(cmd)));
 										sb.append(" - ");
 										sb.append(cmd.getDocumentation().getShortDescription());
 										sb.append('\n');
@@ -74,13 +74,13 @@ class HelpCommand {
 	private static Mono<Void> displayCommandDocumentation(Context ctx, String commandName, String subcommand) {
 		var selectedSubcommand = subcommand == null ? "" : subcommand.toLowerCase();
 		var command = new AtomicReference<Command>();
-		return Mono.justOrEmpty(ctx.getBot().getCommandKernel().getCommandByAlias(commandName))
+		return Mono.justOrEmpty(ctx.bot().commandKernel().getCommandByAlias(commandName))
 				.switchIfEmpty(Mono.error(new CommandFailedException("Command " + code(commandName) + " not found.")))
 				.doOnNext(command::set)
 				.flatMap(cmd -> findAvailableSubcommands(cmd, ctx).collectList().map(subcommands -> Tuples.of(subcommands, cmd)))
 				.flatMap(function((subcommands, cmd) -> {
 					var formattedSubcommands = subcommands.stream()
-							.map(subcmd -> code(ctx.getPrefixUsed() + "help " + commandName + (subcmd.isEmpty() ? "" : " " + subcmd)))
+							.map(subcmd -> code(ctx.prefixUsed() + "help " + commandName + (subcmd.isEmpty() ? "" : " " + subcmd)))
 							.collect(joining("\n"));
 					if (!selectedSubcommand.isEmpty()) {
 						if (subcommands.contains(selectedSubcommand)) {
@@ -92,7 +92,7 @@ class HelpCommand {
 					return Mono.error(new CommandFailedException("Nothing found for the command " + code(commandName) + " alone.\n"
 								+ "Try one of the available subcommands:\n" + formattedSubcommands));
 				}))
-				.map(cmd -> formatDoc(cmd, ctx.getPrefixUsed(), ctx.getBot().getConfig().getFlagPrefix(), commandName, selectedSubcommand))
+				.map(cmd -> formatDoc(cmd, ctx.prefixUsed(), ctx.bot().config().getFlagPrefix(), commandName, selectedSubcommand))
 				.flatMap(doc -> sendPaginatedMessage(ctx, doc));
 	}
 	

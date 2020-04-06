@@ -10,7 +10,7 @@ public class UserConverter implements ParamConverter<User> {
 
 	@Override
 	public Mono<User> convert(Context ctx, String input) {
-		return DiscordParser.parseUser(ctx.getBot(), input);
+		return DiscordParser.parseUser(ctx.bot(), input);
 	}
 
 	@Override

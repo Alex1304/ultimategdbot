@@ -10,8 +10,8 @@ public class RoleConverter implements ParamConverter<Role> {
 
 	@Override
 	public Mono<Role> convert(Context ctx, String input) {
-		return Mono.justOrEmpty(ctx.getEvent().getGuildId())
-				.flatMap(guildId -> DiscordParser.parseRole(ctx.getBot(), guildId, input))
+		return Mono.justOrEmpty(ctx.event().getGuildId())
+				.flatMap(guildId -> DiscordParser.parseRole(ctx.bot(), guildId, input))
 				.switchIfEmpty(Mono.error(new RuntimeException("Cannot find roles outside of a guild.")));
 	}
 

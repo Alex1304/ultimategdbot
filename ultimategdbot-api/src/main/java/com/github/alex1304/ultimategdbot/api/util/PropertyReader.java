@@ -1,37 +1,75 @@
 package com.github.alex1304.ultimategdbot.api.util;
 
-import java.util.Arrays;
-import java.util.Objects;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
+
 /**
- * Allows to read values from properties files
+ * Allows to read values from an abstracted source of properties.
  */
-public class PropertyReader {
-	private final Properties props;
-	
-	public PropertyReader(Properties props) {
-		this.props = Objects.requireNonNull(props);
-	}
+public interface PropertyReader {
 	
 	/**
-	 * Reads a value associated witht the given key.
-	 * 
-	 * @param key      the configuration key
-	 * @param required whether the property is required to be present
-	 * @return the value associated to the key, if present
-	 * @throws IllegalArgumentException if required is true and the property is
-	 *                                  missing
+	 * A {@link PropertyReader} that doesn't contain any property.
 	 */
-	public Optional<String> read(String key, boolean required) {
-		var value = props.getProperty(key);
-		if (required && value == null) {
-			throw new IllegalArgumentException("Missing property: " + key);
+	static final PropertyReader EMPTY = new PropertyReader() {
+		@Override
+		public String read(String key) {
+			throw new NoSuchElementException();
 		}
-		return Optional.ofNullable(value);
-	}
+		
+		@Override
+		public <T> T readAs(String key, Function<? super String, ? extends T> mapper) {
+			throw new NoSuchElementException();
+		}
+		
+		@Override
+		public Optional<String> readOptional(String key) {
+			return Optional.empty();
+		}
+		
+		@Override
+		public Stream<String> readAsStream(String name, String separator) {
+			return Stream.empty();
+		}
+	};
+
+	/**
+	 * Reads a value associated with the given key. If no value is present,
+	 * {@link NoSuchElementException} is thrown.
+	 * 
+	 * @param key the configuration key
+	 * @return the value associated with the key,
+	 * @throws NoSuchElementException if no value is present
+	 */
+	String read(String key);
+
+	/**
+	 * Reads the value associated with the given key and maps it to an object via
+	 * the given function. If no value is present, {@link NoSuchElementException} is
+	 * thrown.
+	 * 
+	 * @param <T>    the type of object to map the value to
+	 * @param key    the configuration key
+	 * @param mapper the function that maps the read value into an object
+	 * @return the object produced from the read value
+	 */
+	<T> T readAs(String key, Function<? super String, ? extends T> mapper);
+
+	/**
+	 * Reads a value associated with the given key, if present.
+	 * 
+	 * @param key the configuration key
+	 * @return the value associated with the key, if present
+	 */
+	Optional<String> readOptional(String key);
 
 	/**
 	 * Reads the value as a stream of values, each element being separated with a
@@ -62,7 +100,34 @@ public class PropertyReader {
 	 *                  characters like $ or | should be properly escaped
 	 * @return a Stream containing all elements
 	 */
-	public Stream<String> readAsStream(String name, String separator) {
-		return Optional.ofNullable(props.getProperty(name)).stream().flatMap(value -> Arrays.stream(value.split(separator)));
+	Stream<String> readAsStream(String name, String separator);
+
+	/**
+	 * Creates a new {@link PropertyReader} reading properties from the given
+	 * {@link Properties} object.
+	 * 
+	 * @param props the {@link Properties} object to read
+	 * @return a new {@link PropertyReader}
+	 */
+	static PropertyReader fromProperties(Properties props) {
+		return new JdkPropertyReader(props);
+	}
+	
+	/**
+	 * Reads the properties from a Java properties file located at the given
+	 * {@link Path}.
+	 * 
+	 * @param path the path where the properties file is located
+	 * @return a Mono emitting a PropertyReader backed by the properties read from
+	 *         file
+	 */
+	static Mono<PropertyReader> fromPropertiesFile(Path path) {
+		return Mono.fromCallable(() -> {
+			try (var input = Files.newBufferedReader(path)) {
+				var props = new Properties();
+				props.load(input);
+				return PropertyReader.fromProperties(props);
+			}
+		}).subscribeOn(Schedulers.boundedElastic());
 	}
 }

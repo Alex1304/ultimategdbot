@@ -24,27 +24,27 @@ class BlacklistCommand {
 			+ "the command in is blacklisted, the command will be ignored without any side effect. This command "
 			+ "is useful to handle cases of abuse.")
 	public Mono<Void> runAdd(Context ctx, long id) {
-		return ctx.getBot().getDatabase().findByID(BlacklistedIds.class, id)
+		return ctx.bot().database().findByID(BlacklistedIds.class, id)
 				.flatMap(__ -> Mono.error(new CommandFailedException("This ID is already blacklisted")))
 				.then(Mono.fromCallable(() -> {
 							var b = new BlacklistedIds();
 							b.setId(id);
 							return b;
-						}).flatMap(ctx.getBot().getDatabase()::save))
-				.then(Mono.fromRunnable(() -> ctx.getBot().getCommandKernel().blacklist(id)))
+						}).flatMap(ctx.bot().database()::save))
+				.then(Mono.fromRunnable(() -> ctx.bot().commandKernel().blacklist(id)))
 				.then(ctx.reply("**" + id + "** is now blacklisted!")
-						.and(ctx.getBot().log("ID added to blacklist: " + id)));
+						.and(ctx.bot().log("ID added to blacklist: " + id)));
 	}
 
 	@CommandAction("remove")
 	@CommandDoc("Removes an ID from the blacklist. Once an ID is removed from the blacklist, the user/channel/guild "
 			+ "in question will be able to run bot commands again normally.")
 	public Mono<Void> runRemove(Context ctx, long id) {
-		return ctx.getBot().getDatabase().findByID(BlacklistedIds.class, id)
+		return ctx.bot().database().findByID(BlacklistedIds.class, id)
 				.switchIfEmpty(Mono.error(new CommandFailedException("This ID is already not blacklisted")))
-				.flatMap(ctx.getBot().getDatabase()::delete)
-				.then(Mono.fromRunnable(() -> ctx.getBot().getCommandKernel().unblacklist(id)))
+				.flatMap(ctx.bot().database()::delete)
+				.then(Mono.fromRunnable(() -> ctx.bot().commandKernel().unblacklist(id)))
 				.then(ctx.reply("**" + id + "** is no longer blacklisted!")
-						.and(ctx.getBot().log("ID removed from blacklist: " + id)));
+						.and(ctx.bot().log("ID removed from blacklist: " + id)));
 	}
 }
