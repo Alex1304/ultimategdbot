@@ -71,7 +71,7 @@ class Main {
 						case "dnd": return activity != null ? Presence.doNotDisturb(activity) : Presence.doNotDisturb();
 						case "invisible": return Presence.invisible();
 						default:
-							LOGGER.warn("presence_status: Expected one of 'online', 'idle', 'dnd', 'invisible'. Defaulting to 'online'.");
+							LOGGER.warn("status: Expected one of 'online', 'idle', 'dnd', 'invisible'. Defaulting to 'online'.");
 							return activity != null ? Presence.online(activity) : Presence.online();
 					}
 				}).orElse(activity != null ? Presence.online(activity) : Presence.online()))
