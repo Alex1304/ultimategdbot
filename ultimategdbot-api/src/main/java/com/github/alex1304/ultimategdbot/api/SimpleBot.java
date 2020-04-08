@@ -25,6 +25,7 @@ import discord4j.discordjson.json.MessageData;
 import discord4j.discordjson.json.UserData;
 import discord4j.discordjson.possible.Possible;
 import discord4j.gateway.GatewayObserver;
+import discord4j.rest.request.RequestQueueFactory;
 import discord4j.rest.request.RouteMatcher;
 import discord4j.rest.response.ResponseFunction;
 import discord4j.rest.route.Routes;
@@ -32,7 +33,9 @@ import discord4j.rest.util.Snowflake;
 import discord4j.store.api.mapping.MappingStoreService;
 import discord4j.store.caffeine.CaffeineStoreService;
 import discord4j.store.jdk.JdkStoreService;
+import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
 import reactor.util.Logger;
 import reactor.util.Loggers;
@@ -187,7 +190,7 @@ public class SimpleBot implements Bot {
 		var discordClient = DiscordClient.builder(config.getToken())
 				.onClientResponse(ResponseFunction.emptyIfNotFound())
 				.onClientResponse(ResponseFunction.emptyOnErrorStatus(RouteMatcher.route(Routes.REACTION_CREATE), 400))
-				.onClientResponse(request -> response -> response.timeout(config.getRestTimeout()))
+//				.onClientResponse(request -> response -> response.timeout(config.getRestTimeout()))
 //				.setRequestQueueFactory(RequestQueueFactory.backedByProcessor(
 //						() -> EmitterProcessor.create(config.getRestBufferSize(), false), FluxSink.OverflowStrategy.LATEST))
 				.build();
