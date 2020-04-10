@@ -5,6 +5,7 @@ import static java.util.stream.Collectors.toMap;
 import static reactor.function.TupleUtils.function;
 
 import java.util.HashMap;
+import java.util.Properties;
 
 import com.github.alex1304.ultimategdbot.api.command.Context;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandAction;
@@ -24,6 +25,8 @@ import reactor.util.function.Tuples;
 )
 class AboutCommand {
 
+	private static final Mono<Properties> D4J_PROPS = Mono.fromCallable(GitProperties::getProperties).cache();
+
 	private final String corePluginName;
 	private final String aboutText;
 	
@@ -39,6 +42,7 @@ class AboutCommand {
 			+ "its development.")
 	public Mono<Void> run(Context ctx) {
 		return Mono.zip(
+				D4J_PROPS,
 				ctx.bot().owner(),
 				ctx.bot().gateway().getSelf(),
 				ctx.bot().gateway().getGuilds().count(),
@@ -49,13 +53,14 @@ class AboutCommand {
 								.defaultIfEmpty("*unknown*")
 								.map(v -> Tuples.of(p.getName(), v)))
 						.collect(toMap(Tuple2::getT1, Tuple2::getT2)))
-				.flatMap(function((botOwner, self, guildCount, userCount, pluginMap) -> {
+				.flatMap(function((d4jProps, botOwner, self, guildCount, userCount, pluginMap) -> {
 					var versionInfoBuilder = new StringBuilder("**")
 							.append("UltimateGDBot API version:** ");
 					var nativeGitProps = pluginMap.get(corePluginName);
 					versionInfoBuilder.append(nativeGitProps).append("\n");
 					versionInfoBuilder.append("**Discord4J version:** ")
-							.append(GitProperties.APPLICATION_VERSION);
+							.append(d4jProps.getProperty(GitProperties.APPLICATION_VERSION))
+							.append("\n");
 					pluginMap.forEach((k, v) -> {
 						if (k.equals(corePluginName)) return;
 						versionInfoBuilder.append("**")
