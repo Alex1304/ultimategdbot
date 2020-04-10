@@ -44,6 +44,11 @@
 			<version>2.4.0-b180830.0438</version>
 		</dependency>
 		<dependency>
+	        <groupId>com.google.code.findbugs</groupId>
+	        <artifactId>annotations</artifactId>
+	        <version>3.0.1u2</version>
+	    </dependency>
+		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter</artifactId>
 			<version>5.4.2</version>

@@ -101,7 +101,7 @@ public interface DatabaseOutputFunction<D> extends BiFunction<D, Long, Mono<Stri
 	/**
 	 * Reads the database value as a user ID, attempts to convert it to a user and
 	 * gives a string representation of this user provided by
-	 * {@link DiscordFormatter#formatUser(User)}.
+	 * {@link User#getTag()}.
 	 * 
 	 * @param bot the bot instance to use in order to fetch users
 	 * @return a database output function giving a string representation for the
