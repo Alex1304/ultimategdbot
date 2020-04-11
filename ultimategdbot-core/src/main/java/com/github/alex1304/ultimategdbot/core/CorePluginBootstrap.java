@@ -45,7 +45,7 @@ public class CorePluginBootstrap implements PluginBootstrap {
 								.apply(v, guildId)
 								.doOnTerminate(() -> bot.commandKernel().setPrefixForGuild(guildId, v)),
 						DatabaseOutputFunction.stringValue()))
-				.onReady(() -> initBlacklist(bot).and(initPrefixes(bot)));
+				.onReady(() -> initBlacklist(bot).and(initPrefixes(bot).and(initMemoryStats())));
 		return readAboutText()
 						.map(CorePluginBootstrap::initCommandProvider)
 						.map(pluginBuilder::setCommandProvider)
@@ -97,6 +97,10 @@ public class CorePluginBootstrap implements PluginBootstrap {
 		return bot.database().query(GuildPrefixes.class, "from GuildPrefixes where prefix != ?0 and prefix != ?1", "", bot.config().getCommandPrefix())
 				.doOnNext(guildPrefix -> bot.commandKernel().setPrefixForGuild(guildPrefix.getGuildId(), guildPrefix.getPrefix()))
 				.then();
+	}
+	
+	private static Mono<Void> initMemoryStats() {
+		return Mono.fromRunnable(MemoryStats::start);
 	}
 
 	@Override
