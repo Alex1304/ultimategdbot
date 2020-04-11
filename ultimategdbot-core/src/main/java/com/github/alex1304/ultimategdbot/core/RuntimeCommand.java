@@ -52,17 +52,24 @@ class RuntimeCommand {
 	}
 	
 	private Mono<EmbedField> memory(Context ctx) {
-		System.gc();
-		var total = Runtime.getRuntime().totalMemory();
-		var free = Runtime.getRuntime().freeMemory();
-		var max = Runtime.getRuntime().maxMemory();
-		var sb = new StringBuilder();
-		sb.append("Maximum system RAM available: " + SystemUnit.format(max) + "\n");
-		sb.append("Current JVM size: " + SystemUnit.format(total)
-				+ " (" + String.format("%.2f", total * 100 / (double) max) + "%)\n");
-		sb.append("Memory effectively used by the bot: " + SystemUnit.format(total - free)
-				+ " (" + String.format("%.2f", (total - free) * 100 / (double) max) + "%)\n");
-		return Mono.just(new EmbedField("Memory usage", sb.toString()));
+		return MemoryStats.getStats()
+				.map(memStats -> {
+					var total = memStats.totalMemory;
+					var max = memStats.maxMemory;
+					var used = memStats.usedMemory;
+					var sb = new StringBuilder();
+					sb.append("Maximum system RAM available: ").append(SystemUnit.format(max)).append("\n");
+					sb.append("Current JVM size: " + SystemUnit.format(total))
+							.append(" (").append(String.format("%.2f", total * 100 / (double) max)).append("%)\n");
+					sb.append("Last Garbage Collector run: ")
+							.append(memStats.elapsedSinceLastGC()
+									.map(t -> BotUtils.formatDuration(t) + " ago")
+									.orElse("Never"))
+							.append("\n");
+					sb.append("Effective RAM usage after last GC run: ").append(SystemUnit.format(used))
+							.append(" (").append(String.format("%.2f", used * 100 / (double) max)).append("%)\n");
+					return new EmbedField("Memory usage", sb.toString());
+				});
 	}
 	
 	private Mono<EmbedField> shardInfo(Context ctx) {
