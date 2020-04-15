@@ -1,8 +1,8 @@
 package com.github.alex1304.ultimategdbot.core.database;
 
-import com.github.alex1304.ultimategdbot.api.database.GuildSettings;
+import com.github.alex1304.ultimategdbot.api.guildconfig.GuildConfigDao;
 
-public class GuildPrefixes implements GuildSettings {
+public class GuildPrefixes implements GuildConfigDao {
 	
 	private Long guildId;
 	private String prefix;

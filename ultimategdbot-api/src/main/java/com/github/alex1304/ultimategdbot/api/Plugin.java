@@ -1,21 +1,14 @@
 package com.github.alex1304.ultimategdbot.api;
 
-import static java.util.Collections.unmodifiableMap;
-import static java.util.Collections.unmodifiableSet;
 import static java.util.Objects.requireNonNull;
 
-import java.io.IOException;
-import java.util.Arrays;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.function.Supplier;
 
 import com.github.alex1304.ultimategdbot.api.command.CommandProvider;
-import com.github.alex1304.ultimategdbot.api.database.GuildSettingsEntry;
-import com.github.alex1304.ultimategdbot.api.util.BotUtils;
+import com.github.alex1304.ultimategdbot.api.guildconfig.GuildConfigDao;
 
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -26,21 +19,24 @@ import reactor.core.scheduler.Schedulers;
 public class Plugin {
 	
 	private final String name;
-	private final Set<String> databaseMappingResources;
-	private final Map<String, GuildSettingsEntry<?, ?>> guildSettingsEntries;
+	private final Set<Class<? extends GuildConfigDao<?>>> guildSettingsExtensions;
 	private final CommandProvider commandProvider;
-	private final Supplier<Mono<Void>> onReady;
+	private final Supplier<? extends Mono<Void>> onReady;
 	
-	private Plugin(String name, Set<String> databaseMappingResources, Map<String, GuildSettingsEntry<?, ?>> guildSettingsEntries,
-			CommandProvider commandProvider, Supplier<Mono<Void>> onReady) {
+	private Plugin(String name, Set<Class<? extends GuildConfigDao<?>>> guildSettingsExtensions,
+			CommandProvider commandProvider, Supplier<? extends Mono<Void>> onReady) {
 		this.name = name;
-		this.databaseMappingResources = databaseMappingResources;
-		this.guildSettingsEntries = guildSettingsEntries;
+		this.guildSettingsExtensions = guildSettingsExtensions;
 		this.commandProvider = commandProvider;
 		this.onReady = onReady;
 	}
 	
-	public Mono<Void> runOnReady() {
+	/**
+	 * Gets a Mono that should be subscribed to when the bot is ready.
+	 * 
+	 * @return a Mono
+	 */
+	public Mono<Void> onReady() {
 		return onReady.get();
 	}
 
@@ -54,26 +50,15 @@ public class Plugin {
 	}
 
 	/**
-	 * Gets a set of resource names that corresponds to database mapping files.
-	 * Mapping files usually end with *.hbm.xml and should be located at the root of
-	 * the {@code src/main/resources} directory of the plugin
+	 * Gets the classes of database extensions useful to retrieve settings for a
+	 * guild.
 	 * 
-	 * @return a set containing the name of all mapping files used in the plugin.
+	 * @return a Set containing the classes of the guild settings extensions
 	 */
-	public Set<String> getDatabaseMappingResources() {
-		return unmodifiableSet(databaseMappingResources);
+	public Set<Class<? extends GuildConfigDao<?>>> getGuildSettingsExtensions() {
+		return guildSettingsExtensions;
 	}
 
-	/**
-	 * Gets a map of configuration entries for guilds. Anything added here will be
-	 * listed when using the setup command.
-	 * 
-	 * @return the guild configuration entries
-	 */
-	public Map<String, GuildSettingsEntry<?, ?>> getGuildConfigurationEntries() {
-		return unmodifiableMap(guildSettingsEntries);
-	}
-	
 	/**
 	 * Gets the command provider for this plugin.
 	 * 
@@ -96,16 +81,14 @@ public class Plugin {
 	public Mono<Properties> getGitProperties() {
 		return Mono.fromCallable(() -> {
 			var props = new Properties();
-			try (var stream = BotUtils.class
+			try (var stream = Plugin.class
 					.getResourceAsStream("/gitprops/" + getName().toLowerCase().replace(' ', '_') + ".git.properties")) {
 				if (stream != null) {
 					props.load(stream);
 				}
-			} catch (IOException e) {
-				
 			}
 			return props;
-		}).subscribeOn(Schedulers.elastic());
+		}).subscribeOn(Schedulers.boundedElastic());
 	}
 	
 	/**
@@ -121,41 +104,23 @@ public class Plugin {
 	public static class Builder {
 		
 		private final String name;
-		private final Set<String> databaseMappingResources = new HashSet<>();
-		private final Map<String, GuildSettingsEntry<?, ?>> guildSettingsEntries = new LinkedHashMap<>();
+		private final Set<Class<? extends GuildConfigDao<?>>> guildSettingsExtensions = new HashSet<>();
 		private CommandProvider commandProvider = new CommandProvider();
-		private Supplier<Mono<Void>> onReady = () -> Mono.empty();
+		private Supplier<? extends Mono<Void>> onReady = () -> Mono.empty();
 		
 		private Builder(String name) {
 			this.name = requireNonNull(name);
 		}
 		
 		/**
-		 * Adds one or more resource paths where database mapping files are located.
+		 * Adds a database extension class useful to retrieve settings for a guild.
 		 * 
-		 * @param resource the first resource
-		 * @param more     other resources
+		 * @param extensionClass the class of the extension
 		 * @return this builder
 		 */
-		public Builder addDatabaseMappingRessources(String resource, String... more) {
-			requireNonNull(resource);
-			requireNonNull(more);
-			databaseMappingResources.add(resource);
-			databaseMappingResources.addAll(Arrays.asList(more));
-			return this;
-		}
-		
-		/**
-		 * Adds a new entry to guild settings.
-		 * 
-		 * @param key   the key of the entry
-		 * @param entry the entry itself
-		 * @return this builder
-		 */
-		public Builder addGuildSettingsEntry(String key, GuildSettingsEntry<?, ?> entry) {
-			requireNonNull(key);
-			requireNonNull(entry);
-			guildSettingsEntries.put(key, entry);
+		public Builder addGuildSettingsExtension(Class<? extends GuildConfigDao<?>> extensionClass) {
+			requireNonNull(extensionClass);
+			guildSettingsExtensions.add(extensionClass);
 			return this;
 		}
 		
@@ -170,7 +135,14 @@ public class Plugin {
 			return this;
 		}
 		
-		public Builder onReady(Supplier<Mono<Void>> onReady) {
+		/**
+		 * Sets a callback to invoke when the bot is ready. The Mono generated by the
+		 * supplier is subscribed to when the bot is ready.
+		 * 
+		 * @param onReady the callback to run on ready
+		 * @return this builder
+		 */
+		public Builder onReady(Supplier<? extends Mono<Void>> onReady) {
 			this.onReady = requireNonNull(onReady);
 			return this;
 		}
@@ -181,7 +153,7 @@ public class Plugin {
 		 * @return the plugin instance
 		 */
 		public Plugin build() {
-			return new Plugin(name, databaseMappingResources, guildSettingsEntries, commandProvider, onReady);
+			return new Plugin(name, guildSettingsExtensions, commandProvider, onReady);
 		}
 	}
 }

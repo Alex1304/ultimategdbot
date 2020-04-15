@@ -1,0 +1,156 @@
+package com.github.alex1304.ultimategdbot.api.guildconfig;
+
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
+
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import com.github.alex1304.ultimategdbot.api.Bot;
+import discord4j.rest.util.Snowflake;
+import reactor.core.publisher.Mono;
+
+class GuildConfiguratorTest {
+	
+	private TestBean bean1, bean2;
+	private GuildConfigurator<TestBean> configurator1, configurator2;
+	
+	@BeforeEach
+	void setUp() throws Exception {
+		bean1 = new TestBean(Snowflake.of(123), 40L, "toto");
+		bean2 = new TestBean(Snowflake.of(1), null, null);
+		configurator1 = bean1.configurator(null);
+		configurator2 = bean2.configurator(null);
+	}
+
+	@Test
+	void testGetEntries() {
+		var entries = configurator1.getConfigEntries();
+		var keys = entries.stream().map(ConfigEntry::getKey).collect(Collectors.toSet());
+		assertEquals(Set.of("mylong", "mystring"), keys);
+		
+		assertDoesNotThrow(() -> configurator1.getConfigEntry("mylong"));
+		assertDoesNotThrow(() -> configurator1.getConfigEntry("mystring"));
+		assertThrows(IllegalArgumentException.class, () -> configurator1.getConfigEntry("myglasses"));
+	}
+	
+	@Test
+	void testManipulateValue() {
+		var entry1 = configurator1.getConfigEntry("mylong");
+		var entry2 = configurator2.getConfigEntry("mylong");
+		
+		var value1 = entry1.getValue().block();
+		var value2 = entry2.getValue().block();
+		
+		assertEquals(40L, value1);
+		assertNull(value2);
+		
+		entry1.accept(new ConfigEntryVisitor<TestBean, Void>() {
+
+			@Override
+			public Mono<Void> visit(IntegerConfigEntry<TestBean> entry) {
+				return fail();
+			}
+
+			@Override
+			public Mono<Void> visit(LongConfigEntry<TestBean> entry) {
+				return entry.setValue(100L);
+			}
+
+			@Override
+			public Mono<Void> visit(BooleanConfigEntry<TestBean> entry) {
+				return fail();
+			}
+
+			@Override
+			public Mono<Void> visit(StringConfigEntry<TestBean> entry) {
+				return fail();
+			}
+
+			@Override
+			public Mono<Void> visit(GuildChannelConfigEntry<TestBean> entry) {
+				return fail();
+			}
+
+			@Override
+			public Mono<Void> visit(GuildRoleConfigEntry<TestBean> entry) {
+				return fail();
+			}
+
+			@Override
+			public Mono<Void> visit(GuildMemberConfigEntry<TestBean> entry) {
+				return fail();
+			}
+		}).block();
+		
+		var newBean = configurator1.getData();
+		assertEquals(100L, newBean.getMyLong());
+	}
+
+	public static class TestBean implements GuildConfigData<TestBean> {
+		
+		private Snowflake guildId;
+		private Long myLong;
+		private String myString;
+		
+		public TestBean() {
+		}
+
+		public TestBean(Snowflake guildId, Long myLong, String myString) {
+			this.guildId = guildId;
+			this.myLong = myLong;
+			this.myString = myString;
+		}
+
+		@Override
+		public Snowflake getGuildId() {
+			return guildId;
+		}
+		
+		public void setGuildId(Snowflake guildId) {
+			this.guildId = guildId;
+		}
+		
+		public Long getMyLong() {
+			return myLong;
+		}
+		
+		public TestBean setMyLong(Long myLong) {
+			this.myLong = myLong;
+			return this;
+		}
+		
+		public String getMyString() {
+			return myString;
+		}
+		
+		public TestBean setMyString(String myString) {
+			this.myString = myString;
+			return this;
+		}
+		
+		@Override
+		public GuildConfigurator<TestBean> configurator(Bot bot) {
+			return GuildConfigurator.builder(this)
+					.addEntry(LongConfigEntry.<TestBean>builder("mylong")
+							.setDescription("A description")
+							.setValueGetter(bean -> Mono.justOrEmpty(bean.getMyLong()))
+							.setValueSetter(TestBean::setMyLong)
+							.setValidator(Validator.allowingAll()))
+					.addEntry(StringConfigEntry.<TestBean>builder("mystring")
+							.setDescription("Another description")
+							.setValueGetter(bean -> Mono.justOrEmpty(bean.getMyString()))
+							.setValueSetter(TestBean::setMyString)
+							.setValidator(Validator.allowingIf(
+									str -> str.startsWith("a"),
+									"value must start with 'a'")))
+					.build();
+		}
+	}
+}

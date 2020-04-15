@@ -2,241 +2,244 @@ package com.github.alex1304.ultimategdbot.api.database;
 
 import static java.util.Objects.requireNonNull;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Set;
+import java.sql.Types;
+import java.util.Map;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
-import org.hibernate.Session;
-import org.hibernate.SessionFactory;
-import org.hibernate.Transaction;
-import org.hibernate.cfg.Configuration;
+import org.jdbi.v3.core.Handle;
+import org.jdbi.v3.core.HandleCallback;
+import org.jdbi.v3.core.HandleConsumer;
+import org.jdbi.v3.core.Jdbi;
+import org.jdbi.v3.core.argument.AbstractArgumentFactory;
+import org.jdbi.v3.core.argument.Argument;
+import org.jdbi.v3.core.config.ConfigRegistry;
+import org.jdbi.v3.core.extension.ExtensionCallback;
+import org.jdbi.v3.core.extension.ExtensionConsumer;
+import org.jdbi.v3.core.mapper.MapMapper;
+import org.jdbi.v3.core.transaction.SerializableTransactionRunner;
+import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 import org.reactivestreams.Publisher;
-import reactor.util.Logger;
-import reactor.util.Loggers;
 
+import discord4j.rest.util.Snowflake;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 
 /**
- * Manages interactions with the database.
+ * Database backed by <a href="https://jdbi.org">JDBI</a> with reactive capabilities.
+ * 
  */
-public class Database {
+public final class Database {
 	
-	private static final Logger LOGGER = Loggers.getLogger(Database.class);
-	private static final Scheduler DATABASE_SCHEDULER = Schedulers.elastic();
+	private final Jdbi jdbi;
 	
-	private SessionFactory sessionFactory = null;
-
-	/**
-	 * Initializes the database.
-	 * 
-	 * @param resourceNames the name of the mapping resources to include in the
-	 *                      configuration
-	 */
-	public void configure(Set<String> resourceNames) {
-		var config = new Configuration();
-		for (var resource : resourceNames) {
-			config.addResource(resource);
-		}
-		if (sessionFactory != null) {
-			sessionFactory.close();
-		}
-		sessionFactory = config.buildSessionFactory();
-		LOGGER.info("Database ready!");
+	private Database(Jdbi jdbi) {
+		this.jdbi = jdbi;
 	}
-
+	
 	/**
-	 * Allows to find a database entity by its ID.
+	 * Creates a new database backed by the given {@link Jdbi} instance.
 	 * 
-	 * @param entityClass class of the entity
-	 * @param key         the ID
-	 * @param             <T> The entity type
-	 * @param             <K> the ID type
-	 * @return a Mono emitting the entity, if found
+	 * <p>
+	 * The given JDBI instance will be enriched as follows:
+	 * <ul>
+	 * <li>{@link SqlObjectPlugin} will be installed</li>
+	 * <li>Column and argument mappers will ba added for the {@link Snowflake} type</li>
+	 * <li>{@link MapMapper} will be registered as row mapper</li>
+	 * <li>{@link SerializableTransactionRunner} will be set as transaction handler</li>
+	 * </ul>
+	 * </p>
+	 * 
+	 * <p>
+	 * It will automatically install the {@link SqlObjectPlugin}, and register
+	 * column mappers and arguments for the {@link Snowflake} type. It will also
+	 * enable support automatic retrying of failed serializable transactions.
+	 * </p>
+	 * 
+	 * @param jdbi the {@link Jdbi} instance backing the database
+	 * @return a new {@link Database}
 	 */
-	public <T, K extends Serializable> Mono<T> findByID(Class<T> entityClass, K key) {
-		requireNonNull(entityClass);
-		requireNonNull(key);
-		return Mono.fromCallable(() -> {
-			try (var s = newSession()) {
-				return s.get(entityClass, key);
+	public static Database create(Jdbi jdbi) {
+		requireNonNull(jdbi, "jdbi");
+		jdbi.installPlugin(new SqlObjectPlugin());
+		jdbi.registerColumnMapper(Snowflake.class, (rs, col, ctx) -> Snowflake.of(rs.getLong(col)));
+		jdbi.registerRowMapper(new MapMapper());
+		jdbi.registerArgument(new AbstractArgumentFactory<Snowflake>(Types.BIGINT) {
+			@Override
+			protected Argument build(Snowflake value, ConfigRegistry config) {
+				return (pos, statement, ctx) -> statement.setLong(pos, value.asLong());
 			}
-		}).subscribeOn(DATABASE_SCHEDULER)
-				.onErrorMap(DatabaseException::new);
+		});
+		jdbi.setTransactionHandler(new SerializableTransactionRunner());
+		return new Database(jdbi);
 	}
 
 	/**
-	 * Makes a simple query to the database.
+	 * Allows to access the backing {@link Jdbi} instance to enrich its
+	 * configuration, such as registering mappers.
+	 * Note that {@link SqlObjectPlugin} is already installed by default.
 	 * 
-	 * @param entityClass the entity type to fetch
-	 * @param query       the HQL query
-	 * @param params      the query params
-	 * @param             <T> the entity type
-	 * @return a Flux emitting the results of the query
+	 * <p>
+	 * This method <b>MUST NOT</b> attempt to open any connection to the database.
+	 * Database operations should be made using the other methods of this
+	 * {@link Database} class.
+	 * </p>
+	 * 
+	 * @param jdbiConsumer the consumer that mutates the backing {@link Jdbi}
+	 *                     instance
 	 */
-	public <T> Flux<T> query(Class<T> entityClass, String query, Object... params) {
-		requireNonNull(entityClass);
-		requireNonNull(query);
-		requireNonNull(params);
-		return Mono.fromCallable(() -> {
-			var list = new ArrayList<T>();
-			try (var s = newSession()) {
-				var q = s.createQuery(query, entityClass);
-				for (int i = 0; i < params.length; i++) {
-					q.setParameter(i, params[i]);
-				}
-				list.addAll(q.getResultList());
-			}
-			return list;
-		}).subscribeOn(DATABASE_SCHEDULER)
-				.flatMapMany(Flux::fromIterable)
-				.onErrorMap(DatabaseException::new);
+	public void configureJdbi(Consumer<Jdbi> jdbiConsumer) {
+		requireNonNull(jdbiConsumer, "jdbiConsumer");
+		jdbiConsumer.accept(jdbi);
+	}
+	
+	/**
+	 * Acquires a {@link Handle} to perform actions on the database. When the
+	 * consumer returns, the handle is closed and the returned {@link Mono}
+	 * completes. The task is executed on {@link Schedulers#boundedElastic()} as
+	 * database interactions are likely to perform blocking I/O operations.
+	 * 
+	 * <p>
+	 * This is suited for when the database operations don't need to return a
+	 * result. If you need to return a result, use
+	 * {@link #withHandle(HandleCallback)} instead.
+	 * </p>
+	 * 
+	 * @param handleConsumer a {@link Consumer} using the handle
+	 * @return a Mono that completes when the consumer returns. If an error is
+	 *         received, the {@link Mono} will emit {@link DatabaseException} with
+	 *         the underlying JDBI exception as the cause
+	 */
+	public Mono<Void> useHandle(HandleConsumer<?> handleConsumer) {
+		requireNonNull(handleConsumer, "handleConsumer");
+		return withHandle(handleConsumer.asCallback());
 	}
 
 	/**
-	 * Saves an object in database
+	 * Acquires a {@link Handle} to perform actions on the database. When the
+	 * callback returns, the handle is closed and the returned {@link Mono}
+	 * completes. The task is executed on {@link Schedulers#boundedElastic()} as
+	 * database interactions are likely to perform blocking I/O operations.
 	 * 
-	 * @param obj the object to save
-	 * @return a Mono that completes when it has saved
+	 * <p>
+	 * This is suited for when the database operations need to return a result. If
+	 * you don't need to return a result, use {@link #useHandle(HandleConsumer)}
+	 * instead.
+	 * </p>
+	 * 
+	 * @param <T>            the type of the desired return value
+	 * @param handleCallback a {@link Consumer} using the handle
+	 * @return a Mono that completes when the consumer returns. If an error is
+	 *         received, the {@link Mono} will emit {@link DatabaseException} with
+	 *         the underlying JDBI exception as the cause
 	 */
-	public Mono<Void> save(Object obj) {
-		return performEmptyTransaction(session -> session.saveOrUpdate(obj));
+	public <T> Mono<T> withHandle(HandleCallback<T, ?> handleCallback) {
+		requireNonNull(handleCallback, "handleCallback");
+		return Mono.fromCallable(() -> jdbi.withHandle(handleCallback))
+				.transform(Database::transform);
+	}
+	
+	/**
+	 * Performs a database transaction. When the consumer returns, the trasnaction
+	 * is committed and the returned {@link Mono} completes. The task is executed on
+	 * {@link Schedulers#boundedElastic()} as database interactions are likely to
+	 * perform blocking I/O operations.
+	 * 
+	 * <p>
+	 * This is suited for when the database operations don't need to return a
+	 * result. If you need to return a result, use
+	 * {@link #withHandle(HandleCallback)} instead.
+	 * </p>
+	 * 
+	 * @param txConsumer a {@link Consumer} using the transaction
+	 * @return a Mono that completes when the consumer returns. If an error is
+	 *         received, the {@link Mono} will emit {@link DatabaseException} with
+	 *         the underlying JDBI exception as the cause
+	 */
+	public Mono<Void> useTransaction(HandleConsumer<?> txConsumer) {
+		requireNonNull(txConsumer, "txConsumer");
+		return inTransaction(txConsumer.asCallback());
 	}
 
 	/**
-	 * Deletes an object from database
+	 * Performs a database transaction. When the callback returns, the transaction
+	 * is committed and the returned {@link Mono} completes. The task is executed on
+	 * {@link Schedulers#boundedElastic()} as database interactions are likely to
+	 * perform blocking I/O operations.
 	 * 
-	 * @param obj the object to save
-	 * @return a Mono that completes when it has deleted
+	 * <p>
+	 * This is suited for when the database operations need to return a result. If
+	 * you don't need to return a result, use {@link #useHandle(HandleConsumer)}
+	 * instead.
+	 * </p>
+	 * 
+	 * @param <T>        the type of the desired return value
+	 * @param txCallback a {@link Consumer} using the transaction
+	 * @return a Mono that completes when the consumer returns. If an error is
+	 *         received, the {@link Mono} will emit {@link DatabaseException} with
+	 *         the underlying JDBI exception as the cause
 	 */
-	public Mono<Void> delete(Object obj) {
-		return performEmptyTransaction(session -> session.delete(obj));
+	public <T> Mono<T> inTransaction(HandleCallback<T, ?> txCallback) {
+		requireNonNull(txCallback, "txCallback");
+		return Mono.fromCallable(() -> jdbi.inTransaction(txCallback))
+				.transform(Database::transform);
 	}
-
+	
 	/**
-	 * Allows to perform more complex actions with the database, by having full
-	 * control on the current transaction. This method does not return a value. If
-	 * you need to perform a transaction that returns a value upon completion, the
-	 * variant {@link #performTransaction(Function)} is preferred.
+	 * Uses a JDBI Extension. When the consumer returns, any acquired connections
+	 * are closed and the returned {@link Mono} completes. The task is executed on
+	 * {@link Schedulers#boundedElastic()} as database interactions are likely to
+	 * perform blocking I/O operations.
 	 * 
-	 * @param txConsumer the transaction consuming a Session object
-	 * @return a Mono completing when the transaction terminates successfully
+	 * <p>
+	 * This is suited for when the use of the extension doesn't need to return a
+	 * result. If you need to return a result, use
+	 * {@link #withExtension(Class, ExtensionCallback)} instead.
+	 * </p>
+	 * 
+	 * @param extensionType     the type of extension to use
+	 * @param extensionConsumer the consumer that uses the extension
+	 * @return a Mono that completes when the consumer returns. If an error is
+	 *         received, the {@link Mono} will emit {@link DatabaseException} with
+	 *         the underlying JDBI exception as the cause
 	 */
-	public Mono<Void> performEmptyTransaction(Consumer<Session> txConsumer) {
+	public <E> Mono<Void> useExtension(Class<E> extensionType, ExtensionConsumer<E, ?> extensionConsumer) {
+		requireNonNull(extensionType, "extensionType");
+		requireNonNull(extensionConsumer, "extensionConsumer");
 		return Mono.<Void>fromCallable(() -> {
-			Transaction tx = null;
-			try (var s = newSession()) {
-				tx = s.beginTransaction();
-				txConsumer.accept(s);
-				tx.commit();
-			} catch (RuntimeException e) {
-				if (tx != null && tx.isActive()) {
-					try {
-						tx.rollback();
-					} catch (RuntimeException e0) {
-						e.addSuppressed(e0);
-						throw e;
-					}
-				}
-				throw e;
-			}
+			jdbi.useExtension(extensionType, extensionConsumer);
 			return null;
-		}).subscribeOn(DATABASE_SCHEDULER)
-				.onErrorMap(DatabaseException::new);
-	}
-	
-	/**
-	 * Allows to perform more complex actions with the database, by having full
-	 * control on the current transaction. This method can return a value upon
-	 * completion. If you don't need a return value for the transaction, the variant
-	 * {@link #performEmptyTransaction(Consumer)} is preferred.
-	 * 
-	 * @param            <V> the type of the returned value
-	 * @param txFunction the transaction accepting a Session object and returning a
-	 *                   value
-	 * @return a Mono completing when the transaction terminates successfully and
-	 *         emitting a value.
-	 */
-	public <V> Mono<V> performTransaction(Function<Session, V> txFunction) {
-		return Mono.fromCallable(() -> {
-			V returnVal;
-			Transaction tx = null;
-			try (var s = newSession()) {
-				tx = s.beginTransaction();
-				returnVal = txFunction.apply(s);
-				tx.commit();
-			} catch (RuntimeException e) {
-				if (tx != null && tx.isActive()) {
-					try {
-						tx.rollback();
-					} catch (RuntimeException e0) {
-						e.addSuppressed(e0);
-						throw e;
-					}
-				}
-				throw e;
-			}
-			return returnVal;
-		}).subscribeOn(DATABASE_SCHEDULER)
-				.onErrorMap(DatabaseException::new);
+		}).transform(Database::transform);
 	}
 
 	/**
-	 * Allows to manipulate a Session in an asynchronous context. The session
-	 * provides a Publisher which completion indicates that the transaction can be
-	 * committed and the session closed.
+	 * Uses a JDBI Extension. When the callback returns, any acquired connections
+	 * are closed and the returned {@link Mono} completes. The task is executed on
+	 * {@link Schedulers#boundedElastic()} as database interactions are likely to
+	 * perform blocking I/O operations.
 	 * 
-	 * @param                 <V> the type of value that the transaction may produce
-	 * @param txAsyncFunction a function that manipulates a Session and returns a
-	 *                        Publisher completing when the transaction is ready to
-	 *                        be committed
-	 * @return a Flux completing when the transaction terminates successfully and
-	 *         may emit values that constitute the result of the transaction
+	 * <p>
+	 * This is suited for when the use of the extension needs to return a result. If
+	 * you don't need to return a result, use
+	 * {@link #useExtension(Class, ExtensionConsumer)} instead.
+	 * </p>
+	 * 
+	 * @param extensionType     the type of extension to use
+	 * @param extensionCallback the callback that uses the extension
+	 * @return a Mono that completes when the callback returns. If an error is
+	 *         received, the {@link Mono} will emit {@link DatabaseException} with
+	 *         the underlying JDBI exception as the cause
 	 */
-	public <V> Flux<V> performTransactionWhen(Function<Session, Publisher<V>> txAsyncFunction) {
-		return Flux.usingWhen(
-						Mono.fromCallable(this::newSession).doOnNext(Session::beginTransaction),
-						txAsyncFunction,
-						this::commitAndClose,
-						(s, e) -> this.rollbackAndClose(s),
-						this::rollbackAndClose)
-				.subscribeOn(DATABASE_SCHEDULER);
+	public <T, E> Mono<T> withExtension(Class<E> extensionType, ExtensionCallback<T, E, ?> extensionCallback) {
+		requireNonNull(extensionType, "extensionType");
+		requireNonNull(extensionCallback, "extensionCallback");
+		return Mono.fromCallable(() -> jdbi.withExtension(extensionType, extensionCallback))
+				.transform(Database::transform);
 	}
 	
-	private Mono<Void> commitAndClose(Session session) {
-		return Mono.<Void>fromRunnable(() -> {
-			var tx = session.getTransaction();
-			if (tx != null && tx.isActive()) {
-				try {
-					tx.commit();
-				} finally {
-					session.close();
-				}
-			}
-		}).onErrorMap(DatabaseException::new);
-	}
-	
-	private Mono<Void> rollbackAndClose(Session session) {
-		return Mono.<Void>fromRunnable(() -> {
-			var tx = session.getTransaction();
-			if (tx != null && tx.isActive()) {
-				try {
-					tx.rollback();
-				} finally {
-					session.close();
-				}
-			}
-		}).onErrorMap(DatabaseException::new);
-	}
-
-	private Session newSession() {
-		if (sessionFactory == null || sessionFactory.isClosed())
-			throw new IllegalStateException("Database not configured");
-
-		return sessionFactory.openSession();
+	private static <T> Publisher<T> transform(Publisher<T> publisher) {
+		return Flux.from(publisher)
+				.subscribeOn(Schedulers.boundedElastic())
+				.onErrorMap(DatabaseException::new);
 	}
 }
