@@ -6,17 +6,17 @@ import java.util.function.Function;
 import reactor.core.publisher.Mono;
 import reactor.util.annotation.Nullable;
 
-abstract class AbstractConfigEntry<G extends GuildConfigData<G>, T> implements ConfigEntry<G, T> {
-	
-	private final GuildConfigurator<G> configurator;
+abstract class AbstractConfigEntry<T> implements ConfigEntry<T> {
+
+	private final GuildConfigurator<?> configurator;
 	private final String key;
 	private final String description;
-	private final Function<? super G, ? extends Mono<T>> valueGetter;
-	private final BiFunction<? super G, ? super T, ? extends G> valueSetter;
+	private final Function<Object, ? extends Mono<T>> valueGetter;
+	private final BiFunction<Object, ? super T, Object> valueSetter;
 	private final Validator<T> validator;
 	
-	AbstractConfigEntry(GuildConfigurator<G> configurator, String key, String description, Function<? super G, ? extends Mono<T>> valueGetter,
-			BiFunction<? super G, ? super T, ? extends G> valueSetter, Validator<T> validator) {
+	AbstractConfigEntry(GuildConfigurator<?> configurator, String key, String description, Function<Object, ? extends Mono<T>> valueGetter,
+			BiFunction<Object, ? super T, Object> valueSetter, Validator<T> validator) {
 		this.configurator = configurator;
 		this.key = key;
 		this.description = description;
@@ -34,15 +34,29 @@ abstract class AbstractConfigEntry<G extends GuildConfigData<G>, T> implements C
 	public String getDescription() {
 		return description;
 	}
+	
+	@Override
+	public boolean isReadOnly() {
+		return valueSetter == null;
+	}
 
 	@Override
 	public Mono<T> getValue() {
-		return valueGetter.apply(configurator.getData());
+		return configurator.getValueFromData(valueGetter);
 	}
 
 	@Override
 	public Mono<Void> setValue(@Nullable T newValue) {
-		return validator.apply(newValue).flatMap(validatedValue -> Mono.fromRunnable(
-				() -> configurator.updateData(data -> valueSetter.apply(data, validatedValue))));
+		if (valueSetter == null) {
+			return Mono.error(new ReadOnlyConfigEntryException(key));
+		}
+		return validator.apply(newValue)
+				.doOnNext(validatedValue -> configurator.setValueToData(valueSetter, validatedValue))
+				.then();
+	}
+	
+	interface Constructor<T> {
+		ConfigEntry<T> newInstance(GuildConfigurator<?> configurator, String key, String description, Function<Object, ? extends Mono<T>> valueGetter,
+				BiFunction<Object, ? super T, Object> valueSetter, Validator<T> validator);
 	}
 }

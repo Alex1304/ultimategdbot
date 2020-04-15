@@ -9,9 +9,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.function.UnaryOperator;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
-public class GuildConfigurator<G extends GuildConfigData<G>> {
+import reactor.core.publisher.Mono;
+
+public class GuildConfigurator<D extends GuildConfigData<D>> {
 	
 	static final VarHandle GUILD_CONFIG_DATA_REF;
 	
@@ -25,11 +28,11 @@ public class GuildConfigurator<G extends GuildConfigData<G>> {
 		}
 	}
 
-	private final Map<String, ConfigEntry<G, ?>> configEntries;
+	private final Map<String, ConfigEntry<?>> configEntries;
 
-	private volatile G guildConfigData;
+	private volatile D guildConfigData;
 	
-	private GuildConfigurator(G guildConfigData, Map<String, ConfigEntry<G, ?>> configEntries) {
+	private GuildConfigurator(D guildConfigData, Map<String, ConfigEntry<?>> configEntries) {
 		this.guildConfigData = guildConfigData;
 		this.configEntries = configEntries;
 	}
@@ -38,7 +41,7 @@ public class GuildConfigurator<G extends GuildConfigData<G>> {
 	 * Gets a collection of configuration entries containied in this 
 	 * @return
 	 */
-	public Collection<ConfigEntry<G, ?>> getConfigEntries() {
+	public Collection<ConfigEntry<?>> getConfigEntries() {
 		return Collections.unmodifiableCollection(configEntries.values());
 	}
 	
@@ -49,7 +52,7 @@ public class GuildConfigurator<G extends GuildConfigData<G>> {
 	 * @return the entry
 	 * @throws IllegalArgumentException if the key does not match any entry
 	 */
-	public ConfigEntry<G, ?> getConfigEntry(String key) {
+	public ConfigEntry<?> getConfigEntry(String key) {
 		var entry = configEntries.get(key);
 		if (entry == null) {
 			throw new IllegalArgumentException("Configuration entry with key \"" + key + "\" not found");
@@ -58,45 +61,49 @@ public class GuildConfigurator<G extends GuildConfigData<G>> {
 	}
 	
 	/**
-	 * Gets the {@link GuildConfigData} instance containing all data that has been
-	 * configured through this configurator.
+	 * Gets the {@link GuildConfigData} instance reflecting all modifications
+	 * performed through the entries of this configurator.
 	 * 
-	 * @return 
+	 * @return the updated data object
 	 */
-	public G getData() {
+	public D getData() {
 		return guildConfigData;
 	}
 	
-	void updateData(UnaryOperator<G> updateFunc) {
+	<T> Mono<T> getValueFromData(Function<Object, ? extends Mono<T>> valueGetter) {
+		return valueGetter.apply(guildConfigData);
+	}
+	
+	<T> void setValueToData(BiFunction<Object, ? super T, Object> valueSetter, T newValue) {
 		for (;;) {
 			var oldData = guildConfigData;
-			var newData = updateFunc.apply(oldData);
+			var newData = valueSetter.apply(oldData, newValue);
 			if (GUILD_CONFIG_DATA_REF.compareAndSet(this, oldData, newData)) {
 				return;
 			}
 		}
 	}
 
-	public static <G extends GuildConfigData<G>> Builder<G> builder(G guildConfigData) {
+	public static <D extends GuildConfigData<D>> Builder<D> builder(D guildConfigData) {
 		return new Builder<>(guildConfigData);
 	}
 
-	public static class Builder<G extends GuildConfigData<G>> {
+	public static class Builder<D extends GuildConfigData<D>> {
 		
-		private final G guildConfigData;
-		private final List<ConfigEntryBuilder<G, ?>> addedEntries = new ArrayList<>();
+		private final D guildConfigData;
+		private final List<ConfigEntryBuilder<D, ?>> addedEntries = new ArrayList<>();
 		
-		private Builder(G guildConfigData) {
+		private Builder(D guildConfigData) {
 			this.guildConfigData = guildConfigData;
 		}
 		
-		public <T> Builder<G> addEntry(ConfigEntryBuilder<G, ?> configEntryBuilder) {
+		public Builder<D> addEntry(ConfigEntryBuilder<D, ?> configEntryBuilder) {
 			addedEntries.add(configEntryBuilder);
 			return this;
 		}
 		
-		public GuildConfigurator<G> build() {
-			var configEntries = new TreeMap<String, ConfigEntry<G, ?>>();
+		public GuildConfigurator<D> build() {
+			var configEntries = new TreeMap<String, ConfigEntry<?>>();
 			var configurator = new GuildConfigurator<>(guildConfigData, configEntries);
 			addedEntries.forEach(added -> {
 				var configEntry = added.build(configurator);

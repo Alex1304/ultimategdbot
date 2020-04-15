@@ -14,6 +14,7 @@ import reactor.core.publisher.Mono;
  * 
  * @param <T> the type of value to validate
  */
+@FunctionalInterface
 public interface Validator<T> extends Function<T, Mono<T>> {
 	
 	/**
@@ -50,7 +51,7 @@ public interface Validator<T> extends Function<T, Mono<T>> {
 	 * @return a validator
 	 */
 	public static <T> Validator<T> allowingAll() {
-		return Mono::just;
+		return Mono::justOrEmpty;
 	}
 	
 	/**
@@ -133,7 +134,7 @@ public interface Validator<T> extends Function<T, Mono<T>> {
 	}
 	
 	/**
-	 * Create a validator that denies null values.
+	 * Creates a validator that denies null values.
 	 * 
 	 * @param <T>            the type of value to validate
 	 * @param failureMessage the message to forward to the user if the validation
@@ -146,7 +147,7 @@ public interface Validator<T> extends Function<T, Mono<T>> {
 	}
 	
 	/**
-	 * Create a validator that only allows null values.
+	 * Creates a validator that only allows null values.
 	 * 
 	 * @param <T>            the type of value to validate
 	 * @param failureMessage the message to forward to the user if the validation

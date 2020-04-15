@@ -6,28 +6,28 @@ import java.util.function.Function;
 import discord4j.core.object.entity.Role;
 import reactor.core.publisher.Mono;
 
-public class GuildRoleConfigEntry<G extends GuildConfigData<G>> extends AbstractConfigEntry<G, Role> {
+public class GuildRoleConfigEntry extends AbstractConfigEntry<Role> {
 
-	GuildRoleConfigEntry(GuildConfigurator<G> configurator, String key, String description,
-			Function<? super G, ? extends Mono<Role>> valueGetter,
-			BiFunction<? super G, ? super Role, ? extends G> valueSetter, Validator<Role> validator) {
+	GuildRoleConfigEntry(GuildConfigurator<?> configurator, String key, String description,
+			Function<Object, ? extends Mono<Role>> valueGetter, BiFunction<Object, ? super Role, Object> valueSetter,
+			Validator<Role> validator) {
 		super(configurator, key, description, valueGetter, valueSetter, validator);
 	}
 
 	@Override
-	public <R> Mono<R> accept(ConfigEntryVisitor<G, R> visitor) {
+	public <R> Mono<R> accept(ConfigEntryVisitor<R> visitor) {
 		return visitor.visit(this);
 	}
 	
 	/**
 	 * Creates a builder for this ConfigEntry implementation.
 	 * 
-	 * @param <G> the implementation type of {@link GuildConfigData} this entry
+	 * @param <D> the implementation type of {@link GuildConfigData} this entry
 	 *            affects
 	 * @param key the unique key identifying the built entry
 	 * @return a new builder
 	 */
-	public static <G extends GuildConfigData<G>> ConfigEntryBuilder<G, Role> builder(String key) {
+	public static <D extends GuildConfigData<D>> ConfigEntryBuilder<D, Role> builder(String key) {
 		return new ConfigEntryBuilder<>(GuildRoleConfigEntry::new, key);
 	}
 }
