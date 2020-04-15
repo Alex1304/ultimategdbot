@@ -11,7 +11,7 @@ import com.github.alex1304.ultimategdbot.api.command.CommandProvider;
 import com.github.alex1304.ultimategdbot.api.command.PermissionChecker;
 import com.github.alex1304.ultimategdbot.api.command.PermissionLevel;
 import com.github.alex1304.ultimategdbot.api.command.annotated.AnnotatedCommandProvider;
-import com.github.alex1304.ultimategdbot.api.database.GuildSettingsEntry;
+import com.github.alex1304.ultimategdbot.api.guildconfig.GuildSettingsEntry;
 import com.github.alex1304.ultimategdbot.api.util.DatabaseInputFunction;
 import com.github.alex1304.ultimategdbot.api.util.DatabaseOutputFunction;
 import com.github.alex1304.ultimategdbot.api.util.PropertyReader;

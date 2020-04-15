@@ -10,6 +10,7 @@ import java.util.Set;
 
 import com.github.alex1304.ultimategdbot.api.command.CommandKernel;
 import com.github.alex1304.ultimategdbot.api.database.Database;
+import com.github.alex1304.ultimategdbot.api.guildconfig.GuildConfigDao;
 import com.github.alex1304.ultimategdbot.api.util.PropertyReader;
 
 import discord4j.core.DiscordClient;
@@ -46,16 +47,17 @@ public class SimpleBot implements Bot {
 	private static final Logger LOGGER = Loggers.getLogger(SimpleBot.class);
 	
 	private final BotConfig config;
+	private final Database database;
 	private final DiscordClient discordClient;
-	private final Database database = new Database();
 	private final CommandKernel cmdKernel = new CommandKernel(this);
 	private final Set<Plugin> plugins = synchronizedSet(new HashSet<>());
 	private final Mono<Snowflake> ownerId;
 	
 	private volatile GatewayDiscordClient gateway;
 
-	private SimpleBot(BotConfig config, DiscordClient discordClient) {
+	private SimpleBot(BotConfig config, Database database, DiscordClient discordClient) {
 		this.config = config;
+		this.database = database;
 		this.discordClient = discordClient;
 		this.ownerId = discordClient.getApplicationInfo()
 				.map(ApplicationInfoData::owner)
@@ -155,7 +157,7 @@ public class SimpleBot implements Bot {
 				.single()
 				.block();
 		
-		var databaseMappingResources = synchronizedSet(new HashSet<String>());
+		var guildSettingsExtensions = synchronizedSet(new HashSet<Class<? extends GuildConfigDao<?>>>());
 		Flux.fromIterable(ServiceLoader.load(PluginBootstrap.class))
 				.flatMap(pluginBootstrap -> pluginBootstrap.initPluginProperties()
 						.defaultIfEmpty(PropertyReader.EMPTY)
@@ -163,14 +165,13 @@ public class SimpleBot implements Bot {
 						.single()
 						.doOnError(e -> LOGGER.error("Failed to setup plugin " + pluginBootstrap.getClass().getName(), e)))
 				.doOnNext(plugins::add)
-				.doOnNext(plugin -> databaseMappingResources.addAll(plugin.getDatabaseMappingResources()))
+				.doOnNext(plugin -> guildSettingsExtensions.addAll(plugin.getGuildSettingsExtensions()))
 				.doOnNext(plugin -> cmdKernel.addProvider(plugin.getCommandProvider()))
 				.doOnNext(plugin -> LOGGER.debug("Plugin {} is providing commands: {}", plugin.getName(), plugin.getCommandProvider()))
 				.then(Mono.fromRunnable(() -> {
-					database.configure(databaseMappingResources);
 					cmdKernel.start();
 				}))
-				.thenEmpty(Flux.fromIterable(plugins).flatMap(Plugin::runOnReady))
+				.thenEmpty(Flux.fromIterable(plugins).flatMap(Plugin::onReady))
 				.then(gateway.onDisconnect())
 				.block();
 	}
@@ -181,8 +182,9 @@ public class SimpleBot implements Bot {
 	 * @param config the bot config
 	 * @return a new {@link SimpleBot}
 	 */
-	public static SimpleBot create(BotConfig config) {
+	public static SimpleBot create(BotConfig config, Database database) {
 		requireNonNull(config);
+		requireNonNull(database);
 		
 		var discordClient = DiscordClient.builder(config.getToken())
 				.onClientResponse(ResponseFunction.emptyIfNotFound())
@@ -193,6 +195,6 @@ public class SimpleBot implements Bot {
 				.setGlobalRateLimiter(NewBucketGlobalRateLimiter.create())
 				.build();
 		
-		return new SimpleBot(config, discordClient);
+		return new SimpleBot(config, database, discordClient);
 	}
 }
