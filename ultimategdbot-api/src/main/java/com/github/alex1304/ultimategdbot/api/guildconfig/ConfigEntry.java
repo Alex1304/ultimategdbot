@@ -6,10 +6,9 @@ import reactor.util.annotation.Nullable;
 /**
  * Represents a guild configuration entry.
  * 
- * @param <G> the implementation type of {@link GuildConfigData} this entry affects
- * @param <T> the type of the config value
+ * @param <T> the type of value supported by this entry
  */
-public interface ConfigEntry<G extends GuildConfigData<G>, T> {
+public interface ConfigEntry<T> {
 	/**
 	 * Gets the unique key of this entry.
 	 * 
@@ -23,6 +22,15 @@ public interface ConfigEntry<G extends GuildConfigData<G>, T> {
 	 * @return the description
 	 */
 	String getDescription();
+	
+	/**
+	 * Tells whether this entry is read-only. If this method returns true, any call
+	 * to {@link #setValue(Object)} will result in a Mono emitting
+	 * {@link ReadOnlyConfigEntryException}.
+	 * 
+	 * @return true if read-only
+	 */
+	boolean isReadOnly();
 
 	/**
 	 * Gets the current value of this entry.
@@ -50,5 +58,5 @@ public interface ConfigEntry<G extends GuildConfigData<G>, T> {
 	 * @param visitor the visitor to accept
 	 * @return a Mono emitting the result of the visit
 	 */
-	<R> Mono<R> accept(ConfigEntryVisitor<G, R> visitor);
+	<R> Mono<R> accept(ConfigEntryVisitor<R> visitor);
 }

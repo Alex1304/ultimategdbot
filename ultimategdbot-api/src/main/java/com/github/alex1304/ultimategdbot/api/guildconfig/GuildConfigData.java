@@ -7,9 +7,9 @@ import discord4j.rest.util.Snowflake;
 /**
  * Database entity representing settings for a guild.
  */
-public interface GuildConfigData<G extends GuildConfigData<G>> {
+public interface GuildConfigData<D extends GuildConfigData<D>> {
 
 	Snowflake getGuildId();
 	
-	GuildConfigurator<G> configurator(Bot bot);
+	GuildConfigurator<D> configurator(Bot bot);
 }

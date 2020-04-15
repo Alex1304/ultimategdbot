@@ -2,8 +2,10 @@ package com.github.alex1304.ultimategdbot.api.guildconfig;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.Set;
@@ -33,7 +35,7 @@ class GuildConfiguratorTest {
 	void testGetEntries() {
 		var entries = configurator1.getConfigEntries();
 		var keys = entries.stream().map(ConfigEntry::getKey).collect(Collectors.toSet());
-		assertEquals(Set.of("mylong", "mystring"), keys);
+		assertEquals(Set.of("mylong", "mystring", "readonly"), keys);
 		
 		assertDoesNotThrow(() -> configurator1.getConfigEntry("mylong"));
 		assertDoesNotThrow(() -> configurator1.getConfigEntry("mystring"));
@@ -42,8 +44,11 @@ class GuildConfiguratorTest {
 	
 	@Test
 	void testManipulateValue() {
+		// Testing getters in normal conditions
+		
 		var entry1 = configurator1.getConfigEntry("mylong");
-		var entry2 = configurator2.getConfigEntry("mylong");
+		var entry2 = configurator2.getConfigEntry("mystring");
+		var entry3 = configurator1.getConfigEntry("readonly");
 		
 		var value1 = entry1.getValue().block();
 		var value2 = entry2.getValue().block();
@@ -51,46 +56,58 @@ class GuildConfiguratorTest {
 		assertEquals(40L, value1);
 		assertNull(value2);
 		
-		entry1.accept(new ConfigEntryVisitor<TestBean, Void>() {
-
-			@Override
-			public Mono<Void> visit(IntegerConfigEntry<TestBean> entry) {
-				return fail();
-			}
-
-			@Override
-			public Mono<Void> visit(LongConfigEntry<TestBean> entry) {
-				return entry.setValue(100L);
-			}
-
-			@Override
-			public Mono<Void> visit(BooleanConfigEntry<TestBean> entry) {
-				return fail();
-			}
-
-			@Override
-			public Mono<Void> visit(StringConfigEntry<TestBean> entry) {
-				return fail();
-			}
-
-			@Override
-			public Mono<Void> visit(GuildChannelConfigEntry<TestBean> entry) {
-				return fail();
-			}
-
-			@Override
-			public Mono<Void> visit(GuildRoleConfigEntry<TestBean> entry) {
-				return fail();
-			}
-
-			@Override
-			public Mono<Void> visit(GuildMemberConfigEntry<TestBean> entry) {
-				return fail();
-			}
-		}).block();
+		// Testing setters in normal conditions
+		
+		assertDoesNotThrow(() -> {
+			entry1.accept(new TestVisitor<Void>() {
+				@Override
+				public Mono<Void> visit(LongConfigEntry entry) {
+					return entry.setValue(100L);
+				}
+			}).block();
+		});
+		
+		// Testing read-only state
+		
+		assertFalse(entry1.isReadOnly());
+		assertFalse(entry2.isReadOnly());
+		assertTrue(entry3.isReadOnly());
+		
+		assertThrows(ReadOnlyConfigEntryException.class, () -> {
+			entry3.accept(new TestVisitor<Void>() {
+				@Override
+				public Mono<Void> visit(LongConfigEntry entry) {
+					return entry.setValue(100L);
+				}
+			}).block();
+		});
+		
+		// Testing validator
+		
+		assertDoesNotThrow(() -> {
+			entry2.accept(new TestVisitor<Void>() {
+				@Override
+				public Mono<Void> visit(StringConfigEntry entry) {
+					return entry.setValue("alice");
+				}
+			}).block();
+		});
+		
+		assertThrows(ValidationException.class, () -> {
+			entry2.accept(new TestVisitor<Void>() {
+				@Override
+				public Mono<Void> visit(StringConfigEntry entry) {
+					return entry.setValue("bob");
+				}
+			}).block();
+		});
+		
+		// Testing values have been set successfully
 		
 		var newBean = configurator1.getData();
+		var newBean2 = configurator2.getData();
 		assertEquals(100L, newBean.getMyLong());
+		assertEquals("alice", newBean2.getMyString());
 	}
 
 	public static class TestBean implements GuildConfigData<TestBean> {
@@ -150,7 +167,45 @@ class GuildConfiguratorTest {
 							.setValidator(Validator.allowingIf(
 									str -> str.startsWith("a"),
 									"value must start with 'a'")))
+					.addEntry(LongConfigEntry.builder("readonly"))
 					.build();
 		}
+	}
+}
+
+interface TestVisitor<R> extends ConfigEntryVisitor<R> {
+	@Override
+	default Mono<R> visit(IntegerConfigEntry entry) {
+		return fail();
+	}
+
+	@Override
+	default Mono<R> visit(LongConfigEntry entry) {
+		return fail();
+	}
+
+	@Override
+	default Mono<R> visit(BooleanConfigEntry entry) {
+		return fail();
+	}
+
+	@Override
+	default Mono<R> visit(StringConfigEntry entry) {
+		return fail();
+	}
+
+	@Override
+	default Mono<R> visit(GuildChannelConfigEntry entry) {
+		return fail();
+	}
+
+	@Override
+	default Mono<R> visit(GuildRoleConfigEntry entry) {
+		return fail();
+	}
+
+	@Override
+	default Mono<R> visit(GuildMemberConfigEntry entry) {
+		return fail();
 	}
 }

@@ -5,28 +5,28 @@ import java.util.function.Function;
 
 import reactor.core.publisher.Mono;
 
-public class StringConfigEntry<G extends GuildConfigData<G>> extends AbstractConfigEntry<G, String> {
-	
-	StringConfigEntry(GuildConfigurator<G> configurator, String key, String description,
-			Function<? super G, ? extends Mono<String>> valueGetter,
-			BiFunction<? super G, ? super String, ? extends G> valueSetter, Validator<String> validator) {
+public class StringConfigEntry extends AbstractConfigEntry<String> {
+
+	StringConfigEntry(GuildConfigurator<?> configurator, String key, String description,
+			Function<Object, ? extends Mono<String>> valueGetter,
+			BiFunction<Object, ? super String, Object> valueSetter, Validator<String> validator) {
 		super(configurator, key, description, valueGetter, valueSetter, validator);
 	}
 
 	@Override
-	public <R> Mono<R> accept(ConfigEntryVisitor<G, R> visitor) {
+	public <R> Mono<R> accept(ConfigEntryVisitor<R> visitor) {
 		return visitor.visit(this);
 	}
 	
 	/**
 	 * Creates a builder for this ConfigEntry implementation.
 	 * 
-	 * @param <G> the implementation type of {@link GuildConfigData} this entry
+	 * @param <D> the implementation type of {@link GuildConfigData} this entry
 	 *            affects
 	 * @param key the unique key identifying the built entry
 	 * @return a new builder
 	 */
-	public static <G extends GuildConfigData<G>> ConfigEntryBuilder<G, String> builder(String key) {
+	public static <D extends GuildConfigData<D>> ConfigEntryBuilder<D, String> builder(String key) {
 		return new ConfigEntryBuilder<>(StringConfigEntry::new, key);
 	}
 }

@@ -5,16 +5,16 @@ import reactor.core.publisher.Mono;
 /**
  * Visitor that visits concrete types of {@link ConfigEntry}.
  * 
- * @param <G> Generic type G of {@link ConfigEntry}
+ * @param <D> Generic type D of {@link ConfigEntry}
  * @param <R> the return value type of the visitors
  */
-public interface ConfigEntryVisitor<G extends GuildConfigData<G>, R> {
+public interface ConfigEntryVisitor<R> {
 	
-	Mono<R> visit(IntegerConfigEntry<G> entry);
-	Mono<R> visit(LongConfigEntry<G> entry);
-	Mono<R> visit(BooleanConfigEntry<G> entry);
-	Mono<R> visit(StringConfigEntry<G> entry);
-	Mono<R> visit(GuildChannelConfigEntry<G> entry);
-	Mono<R> visit(GuildRoleConfigEntry<G> entry);
-	Mono<R> visit(GuildMemberConfigEntry<G> entry);
+	Mono<R> visit(IntegerConfigEntry entry);
+	Mono<R> visit(LongConfigEntry entry);
+	Mono<R> visit(BooleanConfigEntry entry);
+	Mono<R> visit(StringConfigEntry entry);
+	Mono<R> visit(GuildChannelConfigEntry entry);
+	Mono<R> visit(GuildRoleConfigEntry entry);
+	Mono<R> visit(GuildMemberConfigEntry entry);
 }
