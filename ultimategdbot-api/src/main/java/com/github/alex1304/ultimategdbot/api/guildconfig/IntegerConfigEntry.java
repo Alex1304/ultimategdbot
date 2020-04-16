@@ -1,16 +1,18 @@
 package com.github.alex1304.ultimategdbot.api.guildconfig;
 
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import reactor.core.publisher.Mono;
 
 public class IntegerConfigEntry extends AbstractConfigEntry<Integer> {
-	
+
 	IntegerConfigEntry(GuildConfigurator<?> configurator, String key, String description,
 			Function<Object, ? extends Mono<Integer>> valueGetter,
-			BiFunction<Object, ? super Integer, Object> valueSetter, Validator<Integer> validator) {
-		super(configurator, key, description, valueGetter, valueSetter, validator);
+			BiFunction<Object, ? super Integer, Object> valueSetter, Validator<Integer> validator,
+			Consumer<? super Integer> valueObserver) {
+		super(configurator, key, description, valueGetter, valueSetter, validator, valueObserver);
 	}
 
 	@Override

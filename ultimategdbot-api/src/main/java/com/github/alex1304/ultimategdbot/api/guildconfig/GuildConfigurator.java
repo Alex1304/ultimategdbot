@@ -10,10 +10,25 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import reactor.core.publisher.Mono;
+import reactor.util.annotation.Nullable;
 
+/**
+ * Allows to view and edit configuration for a guild. This high-level class is
+ * backed by a lower-level database entity, and the configuration entries
+ * represent an abstracted way to view or edit a specific field of that entity.
+ * 
+ * <p>
+ * This class is thread-safe: getting the data after having modified it via the
+ * different entries will always give the most up-to-date result, even if data
+ * is being modified by concurrent threads.
+ * </p>
+ * 
+ * @param <D> the type of database entity backing this configurator
+ */
 public class GuildConfigurator<D extends GuildConfigData<D>> {
 	
 	static final VarHandle GUILD_CONFIG_DATA_REF;
@@ -74,11 +89,15 @@ public class GuildConfigurator<D extends GuildConfigData<D>> {
 		return valueGetter.apply(guildConfigData);
 	}
 	
-	<T> void setValueToData(BiFunction<Object, ? super T, Object> valueSetter, T newValue) {
+	<T> void setValueToData(BiFunction<Object, ? super T, Object> valueSetter, T newValue,
+			@Nullable Consumer<? super T> valueObserver) {
 		for (;;) {
 			var oldData = guildConfigData;
 			var newData = valueSetter.apply(oldData, newValue);
 			if (GUILD_CONFIG_DATA_REF.compareAndSet(this, oldData, newData)) {
+				if (valueObserver != null) {
+					valueObserver.accept(newValue);
+				}
 				return;
 			}
 		}

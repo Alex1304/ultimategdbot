@@ -4,9 +4,13 @@ import reactor.core.publisher.Mono;
 import reactor.util.annotation.Nullable;
 
 /**
- * Represents a guild configuration entry.
+ * Represents a guild configuration entry. An entry is uniquely identified by a
+ * key, and may have a user-friendly description. An entry also supports reading
+ * and writing values in the field represented by this entry. Mutations
+ * performed via an entry are reflected to its parent {@link GuildConfigurator},
+ * and are expected to be thread-safe.
  * 
- * @param <T> the type of value supported by this entry
+ * @param <T> the type of value this entry can read and write
  */
 public interface ConfigEntry<T> {
 	/**

@@ -1,4 +1,4 @@
-package com.github.alex1304.ultimategdbot.core;
+package com.github.alex1304.ultimategdbot.logback;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;

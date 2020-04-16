@@ -157,7 +157,7 @@ public class SimpleBot implements Bot {
 				.single()
 				.block();
 		
-		var guildSettingsExtensions = synchronizedSet(new HashSet<Class<? extends GuildConfigDao<?>>>());
+		var guildConfigExtensions = synchronizedSet(new HashSet<Class<? extends GuildConfigDao<?>>>());
 		Flux.fromIterable(ServiceLoader.load(PluginBootstrap.class))
 				.flatMap(pluginBootstrap -> pluginBootstrap.initPluginProperties()
 						.defaultIfEmpty(PropertyReader.EMPTY)
@@ -165,7 +165,7 @@ public class SimpleBot implements Bot {
 						.single()
 						.doOnError(e -> LOGGER.error("Failed to setup plugin " + pluginBootstrap.getClass().getName(), e)))
 				.doOnNext(plugins::add)
-				.doOnNext(plugin -> guildSettingsExtensions.addAll(plugin.getGuildSettingsExtensions()))
+				.doOnNext(plugin -> guildConfigExtensions.addAll(plugin.getGuildConfigExtensions()))
 				.doOnNext(plugin -> cmdKernel.addProvider(plugin.getCommandProvider()))
 				.doOnNext(plugin -> LOGGER.debug("Plugin {} is providing commands: {}", plugin.getName(), plugin.getCommandProvider()))
 				.then(Mono.fromRunnable(() -> {

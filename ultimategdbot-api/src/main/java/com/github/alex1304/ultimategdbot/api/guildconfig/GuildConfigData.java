@@ -9,7 +9,7 @@ import discord4j.rest.util.Snowflake;
  */
 public interface GuildConfigData<D extends GuildConfigData<D>> {
 
-	Snowflake getGuildId();
+	Snowflake guildId();
 	
 	GuildConfigurator<D> configurator(Bot bot);
 }

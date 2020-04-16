@@ -19,14 +19,14 @@ import reactor.core.scheduler.Schedulers;
 public class Plugin {
 	
 	private final String name;
-	private final Set<Class<? extends GuildConfigDao<?>>> guildSettingsExtensions;
+	private final Set<Class<? extends GuildConfigDao<?>>> guildConfigExtensions;
 	private final CommandProvider commandProvider;
 	private final Supplier<? extends Mono<Void>> onReady;
 	
-	private Plugin(String name, Set<Class<? extends GuildConfigDao<?>>> guildSettingsExtensions,
+	private Plugin(String name, Set<Class<? extends GuildConfigDao<?>>> guildConfigExtensions,
 			CommandProvider commandProvider, Supplier<? extends Mono<Void>> onReady) {
 		this.name = name;
-		this.guildSettingsExtensions = guildSettingsExtensions;
+		this.guildConfigExtensions = guildConfigExtensions;
 		this.commandProvider = commandProvider;
 		this.onReady = onReady;
 	}
@@ -50,13 +50,13 @@ public class Plugin {
 	}
 
 	/**
-	 * Gets the classes of database extensions useful to retrieve settings for a
-	 * guild.
+	 * Gets the classes of database extensions useful to retrieve configuration for
+	 * a guild.
 	 * 
-	 * @return a Set containing the classes of the guild settings extensions
+	 * @return a Set containing the classes of the guild configuration extensions
 	 */
-	public Set<Class<? extends GuildConfigDao<?>>> getGuildSettingsExtensions() {
-		return guildSettingsExtensions;
+	public Set<Class<? extends GuildConfigDao<?>>> getGuildConfigExtensions() {
+		return guildConfigExtensions;
 	}
 
 	/**
@@ -104,7 +104,7 @@ public class Plugin {
 	public static class Builder {
 		
 		private final String name;
-		private final Set<Class<? extends GuildConfigDao<?>>> guildSettingsExtensions = new HashSet<>();
+		private final Set<Class<? extends GuildConfigDao<?>>> guildConfigExtensions = new HashSet<>();
 		private CommandProvider commandProvider = new CommandProvider();
 		private Supplier<? extends Mono<Void>> onReady = () -> Mono.empty();
 		
@@ -113,14 +113,14 @@ public class Plugin {
 		}
 		
 		/**
-		 * Adds a database extension class useful to retrieve settings for a guild.
+		 * Adds a database extension class useful to retrieve configuration for a guild.
 		 * 
 		 * @param extensionClass the class of the extension
 		 * @return this builder
 		 */
-		public Builder addGuildSettingsExtension(Class<? extends GuildConfigDao<?>> extensionClass) {
+		public Builder addGuildConfigExtension(Class<? extends GuildConfigDao<?>> extensionClass) {
 			requireNonNull(extensionClass);
-			guildSettingsExtensions.add(extensionClass);
+			guildConfigExtensions.add(extensionClass);
 			return this;
 		}
 		
@@ -153,7 +153,7 @@ public class Plugin {
 		 * @return the plugin instance
 		 */
 		public Plugin build() {
-			return new Plugin(name, guildSettingsExtensions, commandProvider, onReady);
+			return new Plugin(name, guildConfigExtensions, commandProvider, onReady);
 		}
 	}
 }
