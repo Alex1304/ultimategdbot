@@ -1,4 +1,4 @@
-package com.github.alex1304.ultimategdbot.core;
+package com.github.alex1304.ultimategdbot;
 
 import static java.util.stream.Collectors.toUnmodifiableSet;
 
@@ -8,10 +8,15 @@ import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.Properties;
 
+import org.jdbi.v3.core.Jdbi;
+
 import com.github.alex1304.ultimategdbot.api.BotConfig;
 import com.github.alex1304.ultimategdbot.api.SimpleBot;
+import com.github.alex1304.ultimategdbot.api.database.Database;
 import com.github.alex1304.ultimategdbot.api.util.PropertyReader;
 import com.github.alex1304.ultimategdbot.api.util.menu.PaginationControls;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 
 import discord4j.core.object.presence.Activity;
 import discord4j.core.object.presence.Presence;
@@ -19,18 +24,24 @@ import discord4j.rest.util.Snowflake;
 import reactor.util.Logger;
 import reactor.util.Loggers;
 
-class Main {
+class TestBot {
 	
-	private static final Logger LOGGER = Loggers.getLogger(Main.class);
-	public static final Path PROPS_FILE = Paths.get(".", "config", "bot.properties");
+	private static final Logger LOGGER = Loggers.getLogger(TestBot.class);
+	public static final Path BOT_PROPS_FILE = Paths.get(".", "config", "bot.properties");
+	public static final Path HIKARI_PROPS_FILE = Paths.get(".", "config", "hikari.properties");
 
 	public static void main(String[] args) {
 		try {
-			var props = new Properties();
-			try (var propsInput = Files.newBufferedReader(PROPS_FILE)) {
-				props.load(propsInput);
+			var botProps = new Properties();
+			var hikariProps = new Properties();
+			try (var botPropsInput = Files.newBufferedReader(BOT_PROPS_FILE);
+				 var hikariPropsInput = Files.newBufferedReader(HIKARI_PROPS_FILE)) {
+				botProps.load(botPropsInput);
+				hikariProps.load(hikariPropsInput);
 			}
-			var bot = SimpleBot.create(fromProperties(props));
+			HikariConfig hikariCfg = new HikariConfig(hikariProps);
+			var db = Database.create(Jdbi.create(new HikariDataSource(hikariCfg)));
+			var bot = SimpleBot.create(fromProperties(botProps), db);
 			bot.start();
 		} catch (Throwable e) {
 			LOGGER.error("The bot could not be started. Make sure that all configuration files are present and have a valid content", e);

@@ -3,7 +3,6 @@ package com.github.alex1304.ultimategdbot.api.database;
 import static java.util.Objects.requireNonNull;
 
 import java.sql.Types;
-import java.util.Map;
 import java.util.function.Consumer;
 
 import org.jdbi.v3.core.Handle;

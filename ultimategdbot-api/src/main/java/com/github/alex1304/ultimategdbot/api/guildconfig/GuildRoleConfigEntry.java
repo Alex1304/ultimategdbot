@@ -1,6 +1,7 @@
 package com.github.alex1304.ultimategdbot.api.guildconfig;
 
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import discord4j.core.object.entity.Role;
@@ -10,8 +11,8 @@ public class GuildRoleConfigEntry extends AbstractConfigEntry<Role> {
 
 	GuildRoleConfigEntry(GuildConfigurator<?> configurator, String key, String description,
 			Function<Object, ? extends Mono<Role>> valueGetter, BiFunction<Object, ? super Role, Object> valueSetter,
-			Validator<Role> validator) {
-		super(configurator, key, description, valueGetter, valueSetter, validator);
+			Validator<Role> validator, Consumer<? super Role> valueObserver) {
+		super(configurator, key, description, valueGetter, valueSetter, validator, valueObserver);
 	}
 
 	@Override

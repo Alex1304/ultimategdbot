@@ -126,7 +126,7 @@ class GuildConfiguratorTest {
 		}
 
 		@Override
-		public Snowflake getGuildId() {
+		public Snowflake guildId() {
 			return guildId;
 		}
 		

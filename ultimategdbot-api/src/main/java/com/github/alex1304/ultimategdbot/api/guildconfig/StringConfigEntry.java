@@ -1,6 +1,7 @@
 package com.github.alex1304.ultimategdbot.api.guildconfig;
 
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import reactor.core.publisher.Mono;
@@ -9,15 +10,16 @@ public class StringConfigEntry extends AbstractConfigEntry<String> {
 
 	StringConfigEntry(GuildConfigurator<?> configurator, String key, String description,
 			Function<Object, ? extends Mono<String>> valueGetter,
-			BiFunction<Object, ? super String, Object> valueSetter, Validator<String> validator) {
-		super(configurator, key, description, valueGetter, valueSetter, validator);
+			BiFunction<Object, ? super String, Object> valueSetter, Validator<String> validator,
+			Consumer<? super String> valueObserver) {
+		super(configurator, key, description, valueGetter, valueSetter, validator, valueObserver);
 	}
 
 	@Override
 	public <R> Mono<R> accept(ConfigEntryVisitor<R> visitor) {
 		return visitor.visit(this);
 	}
-	
+
 	/**
 	 * Creates a builder for this ConfigEntry implementation.
 	 * 

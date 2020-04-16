@@ -7,21 +7,19 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.transaction.Transaction;
 
-import discord4j.rest.util.Snowflake;
-
 /**
  * Generic DAO to retrieve configuration for a guild.
  *
- * @param <T> the type of object storing the configuration for a guild
+ * @param <D> the type of object storing the configuration for a guild
  */
-public interface GuildConfigDao<T extends GuildConfigData<T>> {
+public interface GuildConfigDao<D extends GuildConfigData<D>> {
 	/**
 	 * Creates new, empty configuration data for this guild.
 	 * 
 	 * @param guildId the ID of the guild
 	 */
 	@SqlUpdate
-	void create(Snowflake guildId);
+	void create(long guildId);
 	
 	/**
 	 * Resets settings for this guild.
@@ -29,7 +27,7 @@ public interface GuildConfigDao<T extends GuildConfigData<T>> {
 	 * @param guildId the ID of the guild
 	 */
 	@SqlUpdate
-	void reset(Snowflake guildId);
+	void reset(long guildId);
 	
 	/**
 	 * Updates the settings for a certain guild.
@@ -37,7 +35,7 @@ public interface GuildConfigDao<T extends GuildConfigData<T>> {
 	 * @param settings the settings for a guild
 	 */
 	@SqlUpdate
-	void update(T settings);
+	void update(D data);
 	
 	/**
 	 * Retrieves the settings for a particular guild, if present.
@@ -46,7 +44,7 @@ public interface GuildConfigDao<T extends GuildConfigData<T>> {
 	 * @return the settings for that guild, if present
 	 */
 	@SqlQuery
-	Optional<T> get(Snowflake guildId);
+	Optional<D> get(long guildId);
 	
 	/**
 	 * Retrieves the settings for a particular guild. If not present, empty settings
@@ -56,7 +54,7 @@ public interface GuildConfigDao<T extends GuildConfigData<T>> {
 	 * @return the settings for that guild
 	 */
 	@Transaction(TransactionIsolationLevel.SERIALIZABLE)
-	default T getOrCreate(Snowflake guildId) {
+	default D getOrCreate(long guildId) {
 		return get(guildId).orElseGet(() -> {
 			create(guildId);
 			return get(guildId).orElseThrow();
