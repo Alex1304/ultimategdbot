@@ -1,9 +1,50 @@
 package com.github.alex1304.ultimategdbot.core;
 
+import static java.util.function.Predicate.not;
+import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toUnmodifiableList;
+
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+
+import com.github.alex1304.ultimategdbot.api.Bot;
+import com.github.alex1304.ultimategdbot.api.command.CommandFailedException;
+import com.github.alex1304.ultimategdbot.api.command.Context;
 import com.github.alex1304.ultimategdbot.api.command.PermissionLevel;
 import com.github.alex1304.ultimategdbot.api.command.Scope;
+import com.github.alex1304.ultimategdbot.api.command.annotated.CommandAction;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandDescriptor;
+import com.github.alex1304.ultimategdbot.api.command.annotated.CommandDoc;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandPermission;
+import com.github.alex1304.ultimategdbot.api.guildconfig.BooleanConfigEntry;
+import com.github.alex1304.ultimategdbot.api.guildconfig.ConfigEntry;
+import com.github.alex1304.ultimategdbot.api.guildconfig.ConfigEntryVisitor;
+import com.github.alex1304.ultimategdbot.api.guildconfig.GuildChannelConfigEntry;
+import com.github.alex1304.ultimategdbot.api.guildconfig.GuildConfigurator;
+import com.github.alex1304.ultimategdbot.api.guildconfig.GuildMemberConfigEntry;
+import com.github.alex1304.ultimategdbot.api.guildconfig.GuildRoleConfigEntry;
+import com.github.alex1304.ultimategdbot.api.guildconfig.IntegerConfigEntry;
+import com.github.alex1304.ultimategdbot.api.guildconfig.LongConfigEntry;
+import com.github.alex1304.ultimategdbot.api.guildconfig.StringConfigEntry;
+import com.github.alex1304.ultimategdbot.api.guildconfig.ValidationException;
+import com.github.alex1304.ultimategdbot.api.util.DiscordFormatter;
+import com.github.alex1304.ultimategdbot.api.util.DiscordParser;
+import com.github.alex1304.ultimategdbot.api.util.Markdown;
+import com.github.alex1304.ultimategdbot.api.util.menu.InteractiveMenu;
+import com.github.alex1304.ultimategdbot.api.util.menu.MessageMenuInteraction;
+import com.github.alex1304.ultimategdbot.api.util.menu.ReactionMenuInteraction;
+import com.github.alex1304.ultimategdbot.api.util.menu.UnexpectedReplyException;
+
+import discord4j.core.object.entity.Message;
+import discord4j.core.object.entity.User;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.function.TupleUtils;
+import reactor.util.function.Tuples;
 
 @CommandDescriptor(
 	aliases = { "setup", "settings", "configure", "config" },
@@ -13,57 +54,291 @@ import com.github.alex1304.ultimategdbot.api.command.annotated.CommandPermission
 @CommandPermission(level = PermissionLevel.GUILD_ADMIN)
 class SetupCommand {
 
-//	@CommandAction
-//	@CommandDoc("Lists all configuration entries available in the bot, listed in alphabetical order and grouped by plugins. "
-//			+ "Each entry has a unique name with a value associated to it. You can edit an entry using the `set` subcommand.")
-//	public Mono<Void> run(Context ctx) {
-//		var sb = new StringBuffer("Here you can configure the bot for this server. "
-//				+ "You can update a field by doing `" + ctx.prefixUsed() + "setup set <field> <value>`. "
-//				+ "Use `None` as value to reset a field.\n\n");
-//		var guildId = ctx.event().getGuildId().map(Snowflake::asLong).orElse(0L);
-//		return ctx.bot().database()
-//				.performTransactionWhen(session -> Flux.fromIterable(ctx.bot().plugins())
-//						.sort(Comparator.comparing(Plugin::getName))
-//						.concatMap(plugin -> Flux.fromIterable(plugin.getGuildConfigurationEntries().entrySet())
-//								.flatMap(entry -> entry.getValue().getAsString(session, guildId)
-//										.map(str -> Tuples.of(entry.getKey(), str)))
-//								.collectSortedList(Comparator.comparing(Tuple2::getT1))
-//								.doOnNext(list -> {
-//									sb.append("**__").append(plugin.getName()).append("__**\n");
-//									if (list.isEmpty()) {
-//										sb.append("_(Nothing to configure here)_\n");
-//										return;
-//									}
-//									list.forEach(TupleUtils.consumer((key, value) -> {
-//										sb.append('`');
-//										sb.append(key);
-//										sb.append("`: ");
-//										sb.append(value);
-//										sb.append('\n');
-//									}));
-//									sb.append('\n');
-//								}))
-//						.then())
-//				.then(Mono.defer(() -> ctx.reply(sb.toString())))
-//				.then();
-//	}
-//	
-//	@CommandAction("set")
-//	@CommandDoc("Sets a new value to a configuration entry. The `key` corresponds to the name of the entry you want to edit, "
-//			+ "and `value` corresponds to the new value you want to assign to the said key. If you input an invalid value, "
-//			+ "the command will give you an error message with details. Otherwise, the new value will be saved and will respond "
-//			+ "with a success message.")
-//	public Mono<Void> runSet(Context ctx, String key, String value) {
-//		var guildId = ctx.event().getGuildId().map(Snowflake::asLong).orElse(0L);
-//		return Flux.fromIterable(ctx.bot().plugins())
-//				.map(Plugin::getGuildConfigurationEntries)
-//				.filter(map -> map.containsKey(key))
-//				.switchIfEmpty(Mono.error(new CommandFailedException("There is no configuration entry with key `" + key + "`.")))
-//				.next()
-//				.map(map -> map.get(key))
-//				.flatMapMany(entry -> ctx.bot().database().performTransactionWhen(session -> entry.setFromString(session, value, guildId)))
-//				.onErrorMap(IllegalArgumentException.class, e -> new CommandFailedException("Cannot assign this value as `" + key + "`: " + e.getMessage()))
-//				.then(ctx.reply(":white_check_mark: Settings updated!"))
-//				.then();
-//	}
+	@CommandAction
+	@CommandDoc("Lists all configuration entries available in the bot, listed in alphabetical order and grouped by plugins. "
+			+ "Each entry has a unique name with a value associated to it. You can edit an entry using the `set` subcommand.")
+	public Mono<Void> run(Context ctx) {
+		return ctx.bot().configureGuild(ctx.event().getGuildId().orElseThrow())
+				.collectList()
+				.flatMap(configurators -> {
+					var formattedConfigs = new ArrayList<Mono<String>>();
+					var formattedValuePerEntry = new HashMap<ConfigEntry<?>, String>();
+					formattedConfigs.add(Mono.just(Markdown.underline(Markdown.bold("Configurable features"))));
+					for (var configurator : configurators) {
+						var formattedEntries = new ArrayList<Mono<String>>();
+						formattedEntries.add(Mono.just(Markdown.underline(configurator.getName())));
+						for (var entry : configurator.getConfigEntries()) {
+							formattedEntries.add(entry.accept(new DisplayVisitor())
+									.defaultIfEmpty("none")
+									.doOnNext(displayValue -> formattedValuePerEntry.put(entry, displayValue))
+									.map(displayValue -> entry.getDisplayName() + ": " + displayValue)
+									.map(Markdown::quote));
+						}
+						formattedConfigs.add(Flux.concat(formattedEntries)
+								.collect(joining("\n")));
+					}
+					formattedConfigs.add(Mono.just("React with 📝 to edit the configuration."));
+					return Flux.concat(formattedConfigs)
+							.collect(joining("\n\n"))
+							.map(content -> Tuples.of(configurators, content, formattedValuePerEntry));
+				})
+				.flatMap(TupleUtils.function((configurators, content, formattedValuePerEntry) -> InteractiveMenu
+						.createPaginated(ctx.bot().config().getPaginationControls(), content, 800)
+						.addReactionItem("📝", editInteraction -> {
+							editInteraction.closeMenu();
+							return handleEditInteraction(ctx, editInteraction, configurators, formattedValuePerEntry);
+						})
+						.deleteMenuOnClose(true)
+						.open(ctx)));
+	}
+	
+	private static Mono<Void> handleEditInteraction(Context ctx, ReactionMenuInteraction editInteraction,
+			List<GuildConfigurator<?>> configurators, Map<ConfigEntry<?>, String> formattedValuePerEntry) {
+		var sb = new StringBuilder(Markdown.bold("Enter the number corresponding to the feature you want to setup:") + "\n\n");
+		var i = 1;
+		for (var configurator : configurators) {
+			sb.append(Markdown.code(i + ""))
+					.append(": ")
+					.append(Markdown.bold(configurator.getName()))
+					.append(" - ")
+					.append(configurator.getDescription());
+			i++;
+		}
+		return InteractiveMenu.createPaginated(ctx.bot().config().getPaginationControls(), sb.toString(), 800)
+				.addMessageItem("", selectInteraction -> {
+					int selected;
+					try {
+						selected = Integer.parseInt(selectInteraction.getArgs().get(0));
+					} catch (NumberFormatException e) {
+						return Mono.error(new UnexpectedReplyException("Invalid input"));
+					}
+					if (selected < 1 || selected > configurators.size()) {
+						return Mono.error(new UnexpectedReplyException("Feature with number " + selected + " is not listed"));
+					}
+					selectInteraction.closeMenu();
+					var configurator = configurators.get(selected - 1);
+					return handleSelectedFeatureInteraction(ctx, selectInteraction, configurator, formattedValuePerEntry);
+				})
+				.deleteMenuOnClose(true)
+				.deleteMenuOnTimeout(true)
+				.open(ctx);
+	}
+	
+	private static Mono<Void> handleSelectedFeatureInteraction(Context ctx, MessageMenuInteraction selectInteraction,
+			GuildConfigurator<?> configurator, Map<ConfigEntry<?>, String> formattedValuePerEntry) {
+		var entries = configurator.getConfigEntries().stream()
+				.filter(not(ConfigEntry::isReadOnly))
+				.collect(toUnmodifiableList());
+		if (entries.isEmpty()) {
+			return Mono.error(new CommandFailedException("Nothing to configure for this feature"));
+		}
+		var entryQueue = new ArrayDeque<>(entries);
+		var firstEntry = entryQueue.element();
+		var valueOfFirstEntry = formattedValuePerEntry.get(firstEntry);
+		return firstEntry.accept(new PromptVisitor(configurator, valueOfFirstEntry))
+				.<InteractiveMenu>map(InteractiveMenu::create)
+				.flatMap(menu -> menu
+						.addReactionItem("⏭️", interaction -> goToNextEntry(ctx, entryQueue, formattedValuePerEntry,
+								configurator, interaction.getMenuMessage(), interaction::closeMenu))
+						.addMessageItem("", interaction -> {
+							var action = interaction.getArgs().get(0);
+							var input = interaction.getArgs().getAllAfter(1);
+							if (!action.equalsIgnoreCase("reset") && input.isEmpty()) {
+								return Mono.error(new UnexpectedReplyException("Please provide a new value"));
+							}
+							var currentEntry = entryQueue.element();
+							var editEntry = action.equalsIgnoreCase("reset")
+									? currentEntry.setValue(null)
+									: currentEntry.accept(new EditVisitor(ctx.bot(), input))
+											.onErrorMap(ValidationException.class,
+													e -> new UnexpectedReplyException("The value you provided violates the "
+															+ "following constraint: " + e.getMessage()));
+							return editEntry.then(goToNextEntry(ctx, entryQueue, formattedValuePerEntry, configurator,
+									interaction.getMenuMessage(), interaction::closeMenu));
+						})
+						.deleteMenuOnClose(true)
+						.deleteMenuOnTimeout(true)
+						.closeAfterMessage(false)
+						.closeAfterReaction(false)
+						.open(ctx));
+	}
+
+	private static Mono<Void> goToNextEntry(Context ctx, Queue<ConfigEntry<?>> entryQueue,
+			Map<ConfigEntry<?>, String> formattedValuePerEntry, GuildConfigurator<?> configurator, Message menuMessage,
+			Runnable menuCloser) {
+		var currentEntry = entryQueue.element();
+		var valueOfCurrentEntry = formattedValuePerEntry.get(currentEntry);
+		var goToNextEntry = Mono.fromCallable(entryQueue::element)
+				.flatMap(nextEntry -> nextEntry.accept(new PromptVisitor(configurator, valueOfCurrentEntry))
+						.flatMap(prompt -> menuMessage.edit(spec -> spec.setContent(prompt))))
+				.then();
+		return Mono.fromRunnable(entryQueue::remove)
+				.then(Mono.defer(() -> entryQueue.isEmpty()
+						? configurator.saveConfig(ctx.bot().database())
+								.then(ctx.reply(":white_check_mark: Configuration done!")
+										.and(Mono.fromRunnable(menuCloser)))
+						: goToNextEntry));
+	}
+	
+	private static class DisplayVisitor implements ConfigEntryVisitor<String> {
+
+		@Override
+		public Mono<String> visit(IntegerConfigEntry entry) {
+			return entry.getValue().map(Object::toString);
+		}
+	
+		@Override
+		public Mono<String> visit(LongConfigEntry entry) {
+			return entry.getValue().map(Object::toString);
+		}
+	
+		@Override
+		public Mono<String> visit(BooleanConfigEntry entry) {
+			return entry.getValue().map(bool -> bool ? "Yes" : "No");
+		}
+	
+		@Override
+		public Mono<String> visit(StringConfigEntry entry) {
+			return entry.getValue();
+		}
+	
+		@Override
+		public Mono<String> visit(GuildChannelConfigEntry entry) {
+			return entry.getValue().map(DiscordFormatter::formatGuildChannel);
+		}
+	
+		@Override
+		public Mono<String> visit(GuildRoleConfigEntry entry) {
+			return entry.getValue().map(DiscordFormatter::formatRole);
+		}
+	
+		@Override
+		public Mono<String> visit(GuildMemberConfigEntry entry) {
+			return entry.getValue().map(User::getTag);
+		}	
+	}
+	
+	private static class PromptVisitor implements ConfigEntryVisitor<String> {
+		
+		private final GuildConfigurator<?> configurator;
+		private final String currentValue;
+		
+		private PromptVisitor(GuildConfigurator<?> configurator, String currentValue) {
+			this.configurator = configurator;
+			this.currentValue = currentValue;
+		}
+
+		@Override
+		public Mono<String> visit(IntegerConfigEntry entry) {
+			return Mono.just(promptSet(entry, "a numeric value"));
+		}
+
+		@Override
+		public Mono<String> visit(LongConfigEntry entry) {
+			return Mono.just(promptSet(entry, "a numeric value"));
+		}
+
+		@Override
+		public Mono<String> visit(BooleanConfigEntry entry) {
+			return Mono.just(promptSet(entry, "Yes or No"));
+		}
+
+		@Override
+		public Mono<String> visit(StringConfigEntry entry) {
+			return Mono.just(promptSet(entry, null));
+		}
+
+		@Override
+		public Mono<String> visit(GuildChannelConfigEntry entry) {
+			return Mono.just(promptSet(entry, "a Discord channel, either by ID, by name or by tag"));
+		}
+
+		@Override
+		public Mono<String> visit(GuildRoleConfigEntry entry) {
+			return Mono.just(promptSet(entry, "a Discord role, either by ID, by name or by tag"));
+		}
+
+		@Override
+		public Mono<String> visit(GuildMemberConfigEntry entry) {
+			return Mono.just(promptSet(entry, "a Discord user present in this server, either by ID, by name or by tag"));
+		}
+		
+		private String promptSet(ConfigEntry<?> entry, String expecting) {
+			return Markdown.underline("Configuring " + Markdown.bold(entry.getDisplayName()) + " in feature "
+					+ Markdown.bold(configurator.getName())) + "\n\n"
+					+ "Current value: " + currentValue + "\n\n"
+					+ "Set " + entry.getPrompt() + " by typing `set <new value>` "
+					+ (expecting == null ? "" : "(expecting " + expecting + ")") + ".\n"
+					+ "Reset the field by typing `reset`.\n"
+					+ "React with ⏭️ to skip this configuration entry.";
+		}
+	}
+	
+	private static class EditVisitor implements ConfigEntryVisitor<Void> {
+		
+		private final Bot bot;
+		private final String input;
+		
+		private EditVisitor(Bot bot, String input) {
+			this.bot = bot;
+			this.input = input;
+		}
+
+		@Override
+		public Mono<Void> visit(IntegerConfigEntry entry) {
+			int value;
+			try {
+				value = Integer.parseInt(input);
+			} catch (NumberFormatException e) {
+				return Mono.error(new UnexpectedReplyException("Invalid input"));
+			}
+			return entry.setValue(value);
+		}
+
+		@Override
+		public Mono<Void> visit(LongConfigEntry entry) {
+			long value;
+			try {
+				value = Long.parseLong(input);
+			} catch (NumberFormatException e) {
+				return Mono.error(new UnexpectedReplyException("Invalid input"));
+			}
+			return entry.setValue(value);
+		}
+
+		@Override
+		public Mono<Void> visit(BooleanConfigEntry entry) {
+			if (!input.equalsIgnoreCase("yes") && !input.equalsIgnoreCase("no")) {
+				return Mono.error(new UnexpectedReplyException("Expected either Yes or No"));
+			}
+			return entry.setValue(input.equalsIgnoreCase("yes"));
+		}
+
+		@Override
+		public Mono<Void> visit(StringConfigEntry entry) {
+			return entry.setValue(input);
+		}
+
+		@Override
+		public Mono<Void> visit(GuildChannelConfigEntry entry) {
+			return DiscordParser.parseGuildChannel(bot, entry.getGuildId(), input)
+					.flatMap(entry::setValue)
+					.onErrorMap(IllegalArgumentException.class, e -> new UnexpectedReplyException(e.getMessage()));
+		}
+
+		@Override
+		public Mono<Void> visit(GuildRoleConfigEntry entry) {
+			return DiscordParser.parseRole(bot, entry.getGuildId(), input)
+					.flatMap(entry::setValue)
+					.onErrorMap(IllegalArgumentException.class, e -> new UnexpectedReplyException(e.getMessage()));
+		}
+
+		@Override
+		public Mono<Void> visit(GuildMemberConfigEntry entry) {
+			return DiscordParser.parseUser(bot, input)
+					.flatMap(user -> user.asMember(entry.getGuildId()))
+					.flatMap(entry::setValue)
+					.onErrorMap(IllegalArgumentException.class, e -> new UnexpectedReplyException(e.getMessage()));
+		}
+	}
 }

@@ -1,31 +1,41 @@
 package com.github.alex1304.ultimategdbot.api.guildconfig;
 
 import java.util.function.BiFunction;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
+import discord4j.rest.util.Snowflake;
 import reactor.core.publisher.Mono;
 import reactor.util.annotation.Nullable;
 
 abstract class AbstractConfigEntry<T> implements ConfigEntry<T> {
 
 	private final GuildConfigurator<?> configurator;
+	private final String displayName;
 	private final String key;
-	private final String description;
+	private final String prompt;
 	private final Function<Object, ? extends Mono<T>> valueGetter;
 	private final BiFunction<Object, ? super T, Object> valueSetter;
 	private final Validator<T> validator;
-	private final Consumer<? super T> valueObserver;
 	
-	AbstractConfigEntry(GuildConfigurator<?> configurator, String key, String description, Function<Object, ? extends Mono<T>> valueGetter,
-			BiFunction<Object, ? super T, Object> valueSetter, Validator<T> validator, Consumer<? super T> valueObserver) {
+	AbstractConfigEntry(GuildConfigurator<?> configurator, String displayName, String key, String prompt, Function<Object, ? extends Mono<T>> valueGetter,
+			BiFunction<Object, ? super T, Object> valueSetter, Validator<T> validator) {
 		this.configurator = configurator;
+		this.displayName = displayName;
 		this.key = key;
-		this.description = description;
+		this.prompt = prompt;
 		this.valueGetter = valueGetter;
 		this.valueSetter = valueSetter;
 		this.validator = validator;
-		this.valueObserver = valueObserver;
+	}
+	
+	@Override
+	public Snowflake getGuildId() {
+		return configurator.getGuildId();
+	}
+	
+	@Override
+	public String getDisplayName() {
+		return displayName;
 	}
 
 	@Override
@@ -34,8 +44,8 @@ abstract class AbstractConfigEntry<T> implements ConfigEntry<T> {
 	}
 
 	@Override
-	public String getDescription() {
-		return description;
+	public String getPrompt() {
+		return prompt;
 	}
 	
 	@Override
@@ -54,12 +64,13 @@ abstract class AbstractConfigEntry<T> implements ConfigEntry<T> {
 			return Mono.error(new ReadOnlyConfigEntryException(key));
 		}
 		return validator.apply(newValue)
-				.doOnNext(validatedValue -> configurator.setValueToData(valueSetter, validatedValue, valueObserver))
+				.doOnNext(validatedValue -> configurator.setValueToData(valueSetter, validatedValue))
+				.switchIfEmpty(Mono.fromRunnable(() -> configurator.setValueToData(valueSetter, null)))
 				.then();
 	}
 	
 	interface Constructor<T> {
-		ConfigEntry<T> newInstance(GuildConfigurator<?> configurator, String key, String description, Function<Object, ? extends Mono<T>> valueGetter,
-				BiFunction<Object, ? super T, Object> valueSetter, Validator<T> validator, Consumer<? super T> valueObserver);
+		ConfigEntry<T> newInstance(GuildConfigurator<?> configurator, String displayName, String key, String description, Function<Object, ? extends Mono<T>> valueGetter,
+				BiFunction<Object, ? super T, Object> valueSetter, Validator<T> validator);
 	}
 }

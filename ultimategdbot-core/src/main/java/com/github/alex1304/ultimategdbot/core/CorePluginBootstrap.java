@@ -35,6 +35,7 @@ public class CorePluginBootstrap implements PluginBootstrap {
 		bot.database().configureJdbi(jdbi -> {
 			jdbi.getConfig(JdbiImmutables.class).registerImmutable(GuildPrefixData.class);
 		});
+		bot.registerGuildConfigExtension(GuildPrefixDao.class);
 		var pluginBuilder = Plugin.builder(PLUGIN_NAME)
 				.onReady(() -> initBlacklist(bot)
 						.and(initPrefixes(bot))
@@ -55,7 +56,7 @@ public class CorePluginBootstrap implements PluginBootstrap {
 		var cmdProvider = new AnnotatedCommandProvider();
 		cmdProvider.addAnnotated(new HelpCommand());
 		cmdProvider.addAnnotated(new PingCommand());
-//		cmdProvider.addAnnotated(new SetupCommand());
+		cmdProvider.addAnnotated(new SetupCommand());
 		cmdProvider.addAnnotated(new LogoutCommand());
 		cmdProvider.addAnnotated(new AboutCommand(PLUGIN_NAME, aboutText));
 		cmdProvider.addAnnotated(new BotAdminsCommand());

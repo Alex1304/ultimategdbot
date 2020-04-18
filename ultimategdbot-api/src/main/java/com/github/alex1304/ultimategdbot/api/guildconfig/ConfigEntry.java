@@ -1,5 +1,6 @@
 package com.github.alex1304.ultimategdbot.api.guildconfig;
 
+import discord4j.rest.util.Snowflake;
 import reactor.core.publisher.Mono;
 import reactor.util.annotation.Nullable;
 
@@ -13,6 +14,21 @@ import reactor.util.annotation.Nullable;
  * @param <T> the type of value this entry can read and write
  */
 public interface ConfigEntry<T> {
+	
+	/**
+	 * Gets the ID of the guild this config entry is attached to.
+	 * 
+	 * @return the guild ID
+	 */
+	Snowflake getGuildId();
+	
+	/**
+	 * Gets the display name of this entry.
+	 * 
+	 * @return the name
+	 */
+	String getDisplayName();
+	
 	/**
 	 * Gets the unique key of this entry.
 	 * 
@@ -21,11 +37,12 @@ public interface ConfigEntry<T> {
 	String getKey();
 
 	/**
-	 * Gets a user-friendly description of this entry.
+	 * Gets the prompt message to display to the user in order to set a new value to
+	 * this entry.
 	 * 
-	 * @return the description
+	 * @return the prompt message
 	 */
-	String getDescription();
+	String getPrompt();
 	
 	/**
 	 * Tells whether this entry is read-only. If this method returns true, any call

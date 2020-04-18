@@ -18,30 +18,42 @@ import reactor.util.annotation.Nullable;
  */
 public class ConfigEntryBuilder<D extends GuildConfigData<D>, T> {
 	
-	private static final String DEFAULT_DESCRIPTION = "";
-	
 	private final AbstractConfigEntry.Constructor<T> constructor;
 	private final String key;
-	private String description = "";
+	private String displayName;
+	private String prompt;
 	private Function<? super D, ? extends Mono<T>> valueGetter = this::defaultGetter;
 	private BiFunction<? super D, ? super T, ? extends D> valueSetter;
 	private Validator<T> validator = Validator.allowingAll();
-	private Consumer<? super T> valueObserver;
 	
 	ConfigEntryBuilder(AbstractConfigEntry.Constructor<T> constructor, String key) {
 		this.constructor = constructor;
 		this.key = requireNonNull(key);
+		this.displayName = key;
+		this.prompt = defaultPrompt();
 	}
 
 	/**
-	 * Specifies a user-friendly description for this entry. If not set or is set to
-	 * <code>null</code>, an empty string will be used as description.
+	 * Specifies a user-friendly name for this entry. If not set or is set to
+	 * <code>null</code>, the display name will be the same as the key.
 	 * 
-	 * @param description the description to set
+	 * @param displayName the display name to set
 	 * @return this builder
 	 */
-	public ConfigEntryBuilder<D, T> setDescription(@Nullable String description) {
-		this.description = requireNonNullElse(description, DEFAULT_DESCRIPTION);
+	public ConfigEntryBuilder<D, T> setDisplayName(@Nullable String displayName) {
+		this.displayName = requireNonNullElse(displayName, key);
+		return this;
+	}
+
+	/**
+	 * Specifies a user-friendly prompt for this entry. If not set or is set to
+	 * <code>null</code>, an empty string will be used as prompt.
+	 * 
+	 * @param prompt the prompt to set
+	 * @return this builder
+	 */
+	public ConfigEntryBuilder<D, T> setPrompt(@Nullable String prompt) {
+		this.prompt = requireNonNullElse(prompt, defaultPrompt());
 		return this;
 	}
 
@@ -67,7 +79,7 @@ public class ConfigEntryBuilder<D extends GuildConfigData<D>, T> {
 	 * other than setting the value. Since configurators and entries are thread-safe
 	 * and atomically set new values in a lock-free way, the setter is prone to be
 	 * called more than once at each value update. If you want to add a side-effect
-	 * when a new value is set, see {@link #setValueObserver(Consumer)}.
+	 * when a new value is set, see {@link #onValueSaved(Consumer)}.
 	 * 
 	 * <p>
 	 * If nothing is set or is set to <code>null</code>, the entry will be marked as
@@ -97,22 +109,14 @@ public class ConfigEntryBuilder<D extends GuildConfigData<D>, T> {
 		return this;
 	}
 	
-	/**
-	 * Specifies a callback to invoke when a new value for this entry is set.
-	 * 
-	 * @param valueObserver a {@link Consumer} accepting the value set
-	 * @return this builder
-	 */
-	public ConfigEntryBuilder<D, T> setValueObserver(Consumer<? super T> valueObserver) {
-		this.valueObserver = requireNonNull(valueObserver);
-		return this;
-	}
-	
 	@SuppressWarnings("unchecked")
 	ConfigEntry<T> build(GuildConfigurator<D> configurator) {
-		return constructor.newInstance(configurator, key, description, o -> valueGetter.apply((D) o),
-				valueSetter == null ? null : (o, v) -> valueSetter.apply((D) o, v), validator,
-				valueObserver);
+		return constructor.newInstance(configurator, displayName, key, prompt, o -> valueGetter.apply((D) o),
+				valueSetter == null ? null : (o, v) -> valueSetter.apply((D) o, v), validator);
+	}
+	
+	private String defaultPrompt() {
+		return "new value for " + displayName;
 	}
 	
 	private Mono<T> defaultGetter(Object data) {

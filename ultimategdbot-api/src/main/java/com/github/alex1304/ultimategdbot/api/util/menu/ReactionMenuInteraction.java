@@ -7,7 +7,8 @@ public class ReactionMenuInteraction extends MenuInteraction {
 	
 	private final ReactionToggleEvent event;
 
-	ReactionMenuInteraction(Message menuMessage, MonoProcessor<Void> closeNotifier, ReactionToggleEvent event) {
+	ReactionMenuInteraction(Message menuMessage, MonoProcessor<Void> closeNotifier,
+			ReactionToggleEvent event) {
 		super(menuMessage, closeNotifier);
 		this.event = event;
 	}

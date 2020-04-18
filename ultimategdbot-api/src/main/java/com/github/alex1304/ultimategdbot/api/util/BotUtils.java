@@ -98,7 +98,7 @@ public class BotUtils {
 			return ctx.reply(text).then();
 		}
 		var parts = splitMessage(text, pageLength);
-		return InteractiveMenu.createPaginated(null, controls, page -> {
+		return InteractiveMenu.createPaginated(controls, page -> {
 					PageNumberOutOfRangeException.check(page, 0, parts.size() - 1);
 					return new MessageSpecTemplate(parts.get(page), embed -> embed.addField("Page " + (page + 1) + "/" + parts.size(),
 							"To go to a specific page, type `page <number>`, e.g `page 3`", true));

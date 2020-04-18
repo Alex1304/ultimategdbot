@@ -13,7 +13,8 @@ public class MessageMenuInteraction extends MenuInteraction {
 	private final ArgumentList args;
 	private final FlagSet flags;
 
-	MessageMenuInteraction(Message menuMessage, MonoProcessor<Void> closeNotifier, MessageCreateEvent event, ArgumentList args, FlagSet flags) {
+	MessageMenuInteraction(Message menuMessage, MonoProcessor<Void> closeNotifier,
+			MessageCreateEvent event, ArgumentList args, FlagSet flags) {
 		super(menuMessage, closeNotifier);
 		this.event = event;
 		this.args = args;
