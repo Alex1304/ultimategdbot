@@ -6,11 +6,11 @@ import java.util.function.Function;
 import reactor.core.publisher.Mono;
 
 public class IntegerConfigEntry extends AbstractConfigEntry<Integer> {
-
-	IntegerConfigEntry(GuildConfigurator<?> configurator, String displayName, String key, String prompt,
+	
+	IntegerConfigEntry(GuildConfigurator<?> configurator, String displayName, String key,
 			Function<Object, ? extends Mono<Integer>> valueGetter,
 			BiFunction<Object, ? super Integer, Object> valueSetter, Validator<Integer> validator) {
-		super(configurator, displayName, key, prompt, valueGetter, valueSetter, validator);
+		super(configurator, displayName, key, valueGetter, valueSetter, validator);
 	}
 
 	@Override

@@ -124,9 +124,28 @@ public class GuildConfigurator<D extends GuildConfigData<D>> {
 	public Mono<Void> saveConfig(Database database) {
 		var data = guildConfigData; // volatile read
 		return database.useExtension(daoType, dao -> dao.update(data))
-				.then(onSave == null
-						? Mono.empty()
-						: Mono.fromRunnable(() -> onSave.accept(data)));
+				.doOnSuccess(__ -> {
+					if (onSave != null) {
+						onSave.accept(data);
+					}
+				});
+	}
+	
+	/**
+	 * Resets the configuration to its default value and saves the data with the
+	 * default values in the given database.
+	 * 
+	 * @param database the database where to save the reset data
+	 * @return a Mono emitting the data after reset
+	 */
+	public Mono<D> resetConfig(Database database) {
+		return database.withExtension(daoType, dao -> dao.resetAndGet(guildConfigData.guildId().asLong()))
+				.single()
+				.doOnNext(resetData -> {
+					if (onSave != null) {
+						onSave.accept(resetData);
+					}
+				});
 	}
 	
 	/**

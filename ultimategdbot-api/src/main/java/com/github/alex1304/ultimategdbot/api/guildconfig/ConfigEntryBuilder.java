@@ -21,7 +21,6 @@ public class ConfigEntryBuilder<D extends GuildConfigData<D>, T> {
 	private final AbstractConfigEntry.Constructor<T> constructor;
 	private final String key;
 	private String displayName;
-	private String prompt;
 	private Function<? super D, ? extends Mono<T>> valueGetter = this::defaultGetter;
 	private BiFunction<? super D, ? super T, ? extends D> valueSetter;
 	private Validator<T> validator = Validator.allowingAll();
@@ -30,7 +29,6 @@ public class ConfigEntryBuilder<D extends GuildConfigData<D>, T> {
 		this.constructor = constructor;
 		this.key = requireNonNull(key);
 		this.displayName = key;
-		this.prompt = defaultPrompt();
 	}
 
 	/**
@@ -42,18 +40,6 @@ public class ConfigEntryBuilder<D extends GuildConfigData<D>, T> {
 	 */
 	public ConfigEntryBuilder<D, T> setDisplayName(@Nullable String displayName) {
 		this.displayName = requireNonNullElse(displayName, key);
-		return this;
-	}
-
-	/**
-	 * Specifies a user-friendly prompt for this entry. If not set or is set to
-	 * <code>null</code>, an empty string will be used as prompt.
-	 * 
-	 * @param prompt the prompt to set
-	 * @return this builder
-	 */
-	public ConfigEntryBuilder<D, T> setPrompt(@Nullable String prompt) {
-		this.prompt = requireNonNullElse(prompt, defaultPrompt());
 		return this;
 	}
 
@@ -111,12 +97,8 @@ public class ConfigEntryBuilder<D extends GuildConfigData<D>, T> {
 	
 	@SuppressWarnings("unchecked")
 	ConfigEntry<T> build(GuildConfigurator<D> configurator) {
-		return constructor.newInstance(configurator, displayName, key, prompt, o -> valueGetter.apply((D) o),
+		return constructor.newInstance(configurator, displayName, key, o -> valueGetter.apply((D) o),
 				valueSetter == null ? null : (o, v) -> valueSetter.apply((D) o, v), validator);
-	}
-	
-	private String defaultPrompt() {
-		return "new value for " + displayName;
 	}
 	
 	private Mono<T> defaultGetter(Object data) {

@@ -12,17 +12,15 @@ abstract class AbstractConfigEntry<T> implements ConfigEntry<T> {
 	private final GuildConfigurator<?> configurator;
 	private final String displayName;
 	private final String key;
-	private final String prompt;
 	private final Function<Object, ? extends Mono<T>> valueGetter;
 	private final BiFunction<Object, ? super T, Object> valueSetter;
 	private final Validator<T> validator;
 	
-	AbstractConfigEntry(GuildConfigurator<?> configurator, String displayName, String key, String prompt, Function<Object, ? extends Mono<T>> valueGetter,
+	AbstractConfigEntry(GuildConfigurator<?> configurator, String displayName, String key, Function<Object, ? extends Mono<T>> valueGetter,
 			BiFunction<Object, ? super T, Object> valueSetter, Validator<T> validator) {
 		this.configurator = configurator;
 		this.displayName = displayName;
 		this.key = key;
-		this.prompt = prompt;
 		this.valueGetter = valueGetter;
 		this.valueSetter = valueSetter;
 		this.validator = validator;
@@ -41,11 +39,6 @@ abstract class AbstractConfigEntry<T> implements ConfigEntry<T> {
 	@Override
 	public String getKey() {
 		return key;
-	}
-
-	@Override
-	public String getPrompt() {
-		return prompt;
 	}
 	
 	@Override
@@ -70,7 +63,8 @@ abstract class AbstractConfigEntry<T> implements ConfigEntry<T> {
 	}
 	
 	interface Constructor<T> {
-		ConfigEntry<T> newInstance(GuildConfigurator<?> configurator, String displayName, String key, String description, Function<Object, ? extends Mono<T>> valueGetter,
-				BiFunction<Object, ? super T, Object> valueSetter, Validator<T> validator);
+		ConfigEntry<T> newInstance(GuildConfigurator<?> configurator, String displayName, String key,
+				Function<Object, ? extends Mono<T>> valueGetter, BiFunction<Object, ? super T, Object> valueSetter,
+				Validator<T> validator);
 	}
 }

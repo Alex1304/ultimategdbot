@@ -6,11 +6,11 @@ import java.util.function.Function;
 import reactor.core.publisher.Mono;
 
 public class LongConfigEntry extends AbstractConfigEntry<Long> {
-
-	LongConfigEntry(GuildConfigurator<?> configurator, String displayName, String key, String prompt,
+	
+	LongConfigEntry(GuildConfigurator<?> configurator, String displayName, String key,
 			Function<Object, ? extends Mono<Long>> valueGetter, BiFunction<Object, ? super Long, Object> valueSetter,
 			Validator<Long> validator) {
-		super(configurator, displayName, key, prompt, valueGetter, valueSetter, validator);
+		super(configurator, displayName, key, valueGetter, valueSetter, validator);
 	}
 
 	@Override

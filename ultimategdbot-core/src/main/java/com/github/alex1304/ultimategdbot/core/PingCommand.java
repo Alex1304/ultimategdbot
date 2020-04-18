@@ -23,8 +23,8 @@ class PingCommand {
 	private static final String PONG = "Pong! :ping_pong:";
 
 	@CommandAction
-	@CommandDoc("This command simply replies with 'Pong!'. If it replies successfully, congrats, "
-			+ "the bot works for you!")
+	@CommandDoc("This command simply replies with 'Pong!' and gives latency information. If it replies "
+			+ "successfully, congrats, the bot works for you!")
 	public Mono<Void> run(Context ctx) {
 		return ctx.reply(PONG)
 				.elapsed()

@@ -323,15 +323,14 @@ public class InteractiveMenu {
 		if (timeout == null) {
 			timeout = ctx.bot().config().getInteractiveMenuTimeout();
 		}
-		var closeNotifier = MonoProcessor.<Void>create();
-		var onInteraction = ReplayProcessor.cacheLastOrDefault(0);
+		var closeNotifier = MonoProcessor.<MenuTermination>create();
+		var onInteraction = ReplayProcessor.cacheLastOrDefault(0); // Signals onNext each time user interacts with the menu
 		var onInteractionSink = onInteraction.sink(FluxSink.OverflowStrategy.LATEST);
 		return specMono.<Message>flatMap(ctx::reply)
 				.flatMap(menuMessage -> addReactionsToMenu(ctx, menuMessage))
 				.flatMap(menuMessage -> {
-					var closedByUser = closeNotifier.then(handleTermination(menuMessage, deleteMenuOnClose));
 					var messageInteractionHandler = ctx.bot().gateway().on(MessageCreateEvent.class)
-							.takeUntilOther(closedByUser)
+							.takeUntilOther(closeNotifier)
 							.filter(event -> event.getMessage().getAuthor().equals(ctx.event().getMessage().getAuthor())
 									&& event.getMessage().getChannelId().equals(ctx.event().getMessage().getChannelId()))
 							.flatMap(event -> {
@@ -354,11 +353,11 @@ public class InteractiveMenu {
 							.takeUntil(__ -> closeAfterMessage)
 							.onErrorResume(UnexpectedReplyException.class, e -> ctx.reply(":no_entry_sign: " + e.getMessage()).then(Mono.error(e)))
 							.retryWhen(Retry.indefinitely().filter(UnexpectedReplyException.class::isInstance))
-							.then(Mono.fromRunnable(closeNotifier::onComplete));
+							.then(Mono.fromRunnable(() -> closeNotifier.onNext(MenuTermination.CLOSED_BY_USER)));
 					var reactionInteractionHandler = Flux.merge(
 									ctx.bot().gateway().on(ReactionAddEvent.class),
 									ctx.bot().gateway().on(ReactionRemoveEvent.class))
-							.takeUntilOther(closedByUser)
+							.takeUntilOther(closeNotifier)
 							.map(ReactionToggleEvent::new)
 							.filter(event -> event.getMessageId().equals(menuMessage.getId())
 									&& event.getUserId().equals(ctx.event().getMessage().getAuthor().map(User::getId).orElse(null)))
@@ -374,12 +373,20 @@ public class InteractiveMenu {
 								return action.apply(interaction).doOnSubscribe(__ -> onInteractionSink.next(0)).thenReturn(0);
 							})
 							.takeUntil(__ -> closeAfterReaction)
-							.then(Mono.fromRunnable(closeNotifier::onComplete));
+							.then(Mono.fromRunnable(() -> closeNotifier.onNext(MenuTermination.CLOSED_BY_USER)));
 					var menuMono = Mono.when(messageInteractionHandler, reactionInteractionHandler);
-					return Mono.first(menuMono, timeout.isZero()
+					var timeoutNotifier = timeout.isZero()
 							? Mono.never()
-							: onInteraction.timeout(timeout, handleTermination(menuMessage, deleteMenuOnTimeout).then(Mono.empty()))
-									.then());
+							: onInteraction.timeout(timeout, Flux.empty())
+									.then(Mono.fromRunnable(() -> closeNotifier.onNext(MenuTermination.TIMEOUT)));
+					return Mono.when(menuMono, timeoutNotifier.takeUntilOther(closeNotifier))
+							.then(closeNotifier.flatMap(termination -> {
+								switch (termination) {
+									case TIMEOUT:        return handleTermination(menuMessage, deleteMenuOnTimeout);
+									case CLOSED_BY_USER: return handleTermination(menuMessage, deleteMenuOnClose);
+									default:             return Mono.error(new AssertionError());
+								}
+							}));
 				});
 	}
 	
@@ -407,5 +414,9 @@ public class InteractiveMenu {
 						+ "Interactive menus using reactions (such as navigation controls or confirmation dialogs) may be unusable.").then())
 				.then()
 				.thenReturn(menuMessage);
+	}
+	
+	static enum MenuTermination {
+		TIMEOUT, CLOSED_BY_USER;
 	}
 }
