@@ -11,6 +11,7 @@ import java.util.Set;
 import com.github.alex1304.ultimategdbot.api.command.CommandKernel;
 import com.github.alex1304.ultimategdbot.api.database.Database;
 import com.github.alex1304.ultimategdbot.api.guildconfig.GuildConfigDao;
+import com.github.alex1304.ultimategdbot.api.guildconfig.GuildConfigurator;
 import com.github.alex1304.ultimategdbot.api.util.PropertyReader;
 
 import discord4j.core.DiscordClient;
@@ -44,6 +45,7 @@ import reactor.util.concurrent.Queues;
  * settings.
  */
 public class SimpleBot implements Bot {
+	
 	private static final Logger LOGGER = Loggers.getLogger(SimpleBot.class);
 	
 	private final BotConfig config;
@@ -52,7 +54,8 @@ public class SimpleBot implements Bot {
 	private final CommandKernel cmdKernel = new CommandKernel(this);
 	private final Set<Plugin> plugins = synchronizedSet(new HashSet<>());
 	private final Mono<Snowflake> ownerId;
-	
+	private final Set<Class<? extends GuildConfigDao<?>>> guildConfigExtensions = synchronizedSet(new HashSet<>());
+
 	private volatile GatewayDiscordClient gateway;
 
 	private SimpleBot(BotConfig config, Database database, DiscordClient discordClient) {
@@ -123,6 +126,18 @@ public class SimpleBot implements Bot {
 				.next()
 				.map(GuildEmoji::asFormat)
 				.defaultIfEmpty(defaultVal).onErrorReturn(defaultVal);
+	}
+	
+	@Override
+	public Flux<GuildConfigurator<?>> configureGuild(Snowflake guildId) {
+		return Flux.fromIterable(guildConfigExtensions)
+				.flatMap(extension -> database.withExtension(extension, dao -> dao.getOrCreate(guildId.asLong()))
+						.map(data -> data.configurator(this)));
+	}
+	
+	@Override
+	public void registerGuildConfigExtension(Class<? extends GuildConfigDao<?>> extension) {
+		guildConfigExtensions.add(extension);
 	}
 
 	@Override

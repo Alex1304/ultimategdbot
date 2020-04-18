@@ -1,18 +1,17 @@
 package com.github.alex1304.ultimategdbot.api.util.menu;
 
 import static java.util.Objects.requireNonNull;
-import static java.util.Objects.requireNonNullElse;
 
 import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.IntFunction;
 
 import com.github.alex1304.ultimategdbot.api.command.ArgumentList;
 import com.github.alex1304.ultimategdbot.api.command.Context;
+import com.github.alex1304.ultimategdbot.api.util.BotUtils;
 import com.github.alex1304.ultimategdbot.api.util.InputTokenizer;
 import com.github.alex1304.ultimategdbot.api.util.MessageSpecTemplate;
 
@@ -28,9 +27,11 @@ import discord4j.core.object.reaction.ReactionEmoji.Unicode;
 import discord4j.core.spec.MessageCreateSpec;
 import discord4j.rest.http.client.ClientException;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoProcessor;
-import reactor.util.annotation.Nullable;
+import reactor.core.publisher.ReplayProcessor;
+import reactor.util.retry.Retry;
 
 /**
  * Utility to create interactive menus in Discord. An interactive menu first
@@ -87,41 +88,69 @@ public class InteractiveMenu {
 		requireNonNull(specMono);
 		return new InteractiveMenu(specMono);
 	}
-
+	
 	/**
-	 * Creates a new InteractiveMenu prefilled with menu items useful for
-	 * pagination.
+	 * Creates a new {@link InteractiveMenu} splitting the given text into several
+	 * pages, returning a paginated {@link InteractiveMenu} if it contains 2 pages
+	 * or more.
 	 * 
-	 * @param currentPageRef an AtomicInteger that stores the current page number,
-	 *                       may be null if you don't need it
-	 * @param controls       the emojis to use for reaction-based navigation
-	 *                       controls
-	 * @param paginator      a Function that generates the message to display
-	 *                       according to the current page number. If the page
-	 *                       number is out of range, the function may throw a
-	 *                       {@link PageNumberOutOfRangeException} which is handled
-	 *                       by default to cover cases where the user inputs an
-	 *                       invalid page number. Note that if the paginator
-	 *                       function throws {@link PageNumberOutOfRangeException}
-	 *                       with min/max values that aren't the same depending on
-	 *                       the current page number, the behavior of the
-	 *                       InteractiveMenu will be undefined.
-	 * @return a new InteractiveMenu prefilled with menu items useful for
-	 *         pagination.
+	 * <p>
+	 * If the whole text fits in one page (that is, if
+	 * <code>text.length() <= pageLength</code>), it will create a simple
+	 * {@link InteractiveMenu} with no pagination items.
+	 * </p>
+	 * 
+	 * <p>
+	 * Pages will always be made so it doesn't cut at the middle of a line, and will
+	 * properly close codeblock markdowns, as specified in
+	 * {@link BotUtils#splitMessage(String, int)}
+	 * </p>
+	 * 
+	 * @param controls   the emojis to use for reaction-based navigation controls
+	 * @param text       the text to paginate
+	 * @param pageLength the max characters per page
+	 * @return a new {@link InteractiveMenu}
 	 */
-	public static InteractiveMenu createPaginated(@Nullable AtomicInteger currentPageRef, PaginationControls controls, IntFunction<MessageSpecTemplate> paginator) {
-		requireNonNull(paginator);
-		return createAsyncPaginated(currentPageRef, controls, p -> Mono.just(paginator.apply(p)));
+	public static InteractiveMenu createPaginated(PaginationControls controls, String text, int pageLength) {
+		if (text.length() <= pageLength) {
+			return create(text).closeAfterMessage(false).closeAfterReaction(false);
+		}
+		var parts = BotUtils.splitMessage(text, pageLength);
+		return createPaginated(controls, page -> {
+			PageNumberOutOfRangeException.check(page, 0, parts.size() - 1);
+			return new MessageSpecTemplate(parts.get(page), embed -> embed.addField("Page " + (page + 1) + "/" + parts.size(),
+					"To go to a specific page, type `page <number>`, e.g `page 3`", true));
+		});
 	}
 
 	/**
-	 * Creates a new InteractiveMenu prefilled with menu items useful for
-	 * pagination. Unlike
-	 * {@link #createPaginated(AtomicInteger, PaginationControls, IntFunction)},
+	 * Creates a new {@link InteractiveMenu} prefilled with menu items useful for
+	 * pagination.
+	 * 
+	 * @param controls  the emojis to use for reaction-based navigation controls
+	 * @param paginator a Function that generates the message to display according
+	 *                  to the current page number. If the page number is out of
+	 *                  range, the function may throw a
+	 *                  {@link PageNumberOutOfRangeException} which is handled by
+	 *                  default to cover cases where the user inputs an invalid page
+	 *                  number. Note that if the paginator function throws
+	 *                  {@link PageNumberOutOfRangeException} with min/max values
+	 *                  that aren't the same depending on the current page number,
+	 *                  the behavior of the InteractiveMenu will be undefined.
+	 * @return a new InteractiveMenu prefilled with menu items useful for
+	 *         pagination.
+	 */
+	public static InteractiveMenu createPaginated(PaginationControls controls,
+			IntFunction<MessageSpecTemplate> paginator) {
+		requireNonNull(paginator);
+		return createAsyncPaginated(controls, p -> Mono.just(paginator.apply(p)));
+	}
+
+	/**
+	 * Creates a new {@link InteractiveMenu} prefilled with menu items useful for
+	 * pagination. Unlike {@link #createPaginated(PaginationControls, IntFunction)},
 	 * this method support asynchronous paginator functions.
 	 * 
-	 * @param currentPageRef an AtomicInteger that stores the current page number,
-	 *                       may be null if you don't need it
 	 * @param controls       the emojis to use for reaction-based navigation
 	 *                       controls
 	 * @param asyncPaginator a Function that asynchronously generates the message to
@@ -138,27 +167,28 @@ public class InteractiveMenu {
 	 * @return a new InteractiveMenu prefilled with menu items useful for
 	 *         pagination.
 	 */
-	public static InteractiveMenu createAsyncPaginated(@Nullable AtomicInteger currentPageRef, PaginationControls controls, IntFunction<Mono<MessageSpecTemplate>> asyncPaginator) {
+	public static InteractiveMenu createAsyncPaginated(PaginationControls controls,
+			IntFunction<Mono<MessageSpecTemplate>> asyncPaginator) {
 		requireNonNull(controls);
 		requireNonNull(asyncPaginator);
-		var currentPage = requireNonNullElse(currentPageRef, new AtomicInteger());
-		var oldPage = new AtomicInteger();
-		return create(asyncPaginator.apply(currentPage.get()).map(MessageSpecTemplate::toMessageCreateSpec))
-				.addReactionItem(controls.getPreviousEmoji(), interaction -> Mono.fromCallable(currentPage::decrementAndGet)
+		return create(asyncPaginator.apply(0).map(MessageSpecTemplate::toMessageCreateSpec))
+				.addReactionItem(controls.getPreviousEmoji(), interaction -> Mono.fromCallable(
+								() -> interaction.update("currentPage", x -> x - 1, 1))
 						.flatMap(targetPage -> asyncPaginator.apply(targetPage)
 								.map(MessageSpecTemplate::toMessageEditSpec))
-						.onErrorResume(PageNumberOutOfRangeException.class, e -> Mono
-								.just(currentPage.get() + e.getMaxPage() - e.getMinPage() + 1)
-								.doOnNext(currentPage::set)
+						.onErrorResume(PageNumberOutOfRangeException.class, e -> Mono.fromCallable(
+										 () -> interaction.update("currentPage",
+												 x -> x + e.getMaxPage() - e.getMinPage() + 1, 1))
 								.flatMap(targetPage -> asyncPaginator.apply(targetPage)
 										.map(MessageSpecTemplate::toMessageEditSpec)))
 						.flatMap(interaction.getMenuMessage()::edit)
 						.then())
-				.addReactionItem(controls.getNextEmoji(), interaction -> Mono.fromCallable(currentPage::incrementAndGet)
+				.addReactionItem(controls.getNextEmoji(), interaction -> Mono.fromCallable(
+								() -> interaction.update("currentPage", x -> x + 1, 1))
 						.flatMap(targetPage -> asyncPaginator.apply(targetPage).map(MessageSpecTemplate::toMessageEditSpec))
-						.onErrorResume(PageNumberOutOfRangeException.class, e -> Mono
-								.just(currentPage.get() - e.getMaxPage() + e.getMinPage() - 1)
-								.doOnNext(currentPage::set)
+						.onErrorResume(PageNumberOutOfRangeException.class, e -> Mono.fromCallable(
+										 () -> interaction.update("currentPage",
+												 x -> x - e.getMaxPage() + e.getMinPage() - 1, 1))
 								.flatMap(targetPage -> asyncPaginator.apply(targetPage)
 										.map(MessageSpecTemplate::toMessageEditSpec)))
 						.flatMap(interaction.getMenuMessage()::edit)
@@ -168,14 +198,14 @@ public class InteractiveMenu {
 						.onErrorMap(NumberFormatException.class, e -> new UnexpectedReplyException("Invalid page number."))
 						.map(p -> p - 1)
 						.doOnNext(targetPage -> {
-							oldPage.set(currentPage.get());
-							currentPage.set(targetPage);
+							interaction.set("oldPage", interaction.get("currentPage"));
+							interaction.set("currentPage", targetPage);
 						})
 						.flatMap(targetPage -> asyncPaginator.apply(targetPage)
 								.map(MessageSpecTemplate::toMessageEditSpec)
 								.flatMap(interaction.getMenuMessage()::edit))
 						.onErrorMap(PageNumberOutOfRangeException.class, e -> {
-							currentPage.set(oldPage.get());
+							interaction.set("currentPage", interaction.get("oldPage"));
 							return new UnexpectedReplyException("Page number must be between "
 									+ (e.getMinPage() + 1) + " and " + (e.getMaxPage() + 1) + ".");
 						})
@@ -287,58 +317,69 @@ public class InteractiveMenu {
 	 */
 	public Mono<Void> open(Context ctx) {
 		requireNonNull(ctx);
+		if (messageItems.isEmpty() && reactionItems.isEmpty()) {
+			return specMono.flatMap(ctx::reply).then();
+		}
 		if (timeout == null) {
 			timeout = ctx.bot().config().getInteractiveMenuTimeout();
 		}
 		var closeNotifier = MonoProcessor.<Void>create();
-		return specMono.flatMap(ctx::reply)
+		var onInteraction = ReplayProcessor.cacheLastOrDefault(0);
+		var onInteractionSink = onInteraction.sink(FluxSink.OverflowStrategy.LATEST);
+		return specMono.<Message>flatMap(ctx::reply)
 				.flatMap(menuMessage -> addReactionsToMenu(ctx, menuMessage))
 				.flatMap(menuMessage -> {
-					@SuppressWarnings("deprecation") // TODO Migrate retry
-					var menuMono = Mono.first(
-						closeNotifier,
-						ctx.bot().gateway().on(MessageCreateEvent.class)
-								.filter(event -> event.getMessage().getAuthor().equals(ctx.event().getMessage().getAuthor())
-										&& event.getMessage().getChannelId().equals(ctx.event().getMessage().getChannelId()))
-								.flatMap(event -> {
-									var tokens = InputTokenizer.tokenize(ctx.bot().config().getFlagPrefix(), event.getMessage().getContent());
-									var args = tokens.getT2();
-									var flags = tokens.getT1();
-									if (args.isEmpty()) {
-										return Mono.empty();
-									}
-									var action = messageItems.get(args.get(0));
+					var closedByUser = closeNotifier.then(handleTermination(menuMessage, deleteMenuOnClose));
+					var messageInteractionHandler = ctx.bot().gateway().on(MessageCreateEvent.class)
+							.takeUntilOther(closedByUser)
+							.filter(event -> event.getMessage().getAuthor().equals(ctx.event().getMessage().getAuthor())
+									&& event.getMessage().getChannelId().equals(ctx.event().getMessage().getChannelId()))
+							.flatMap(event -> {
+								var tokens = InputTokenizer.tokenize(ctx.bot().config().getFlagPrefix(), event.getMessage().getContent());
+								var args = tokens.getT2();
+								var flags = tokens.getT1();
+								if (args.isEmpty()) {
+									return Mono.empty();
+								}
+								var action = messageItems.get(args.get(0));
+								if (action == null) {
+									action = messageItems.get("");
 									if (action == null) {
 										return Mono.empty();
 									}
-									var interaction = new MessageMenuInteraction(menuMessage, closeNotifier, event, new ArgumentList(args), flags);
-									return action.apply(interaction).thenReturn(0);
-								})
-								.takeUntil(__ -> closeAfterMessage)
-								.onErrorResume(UnexpectedReplyException.class, e -> ctx.reply(":no_entry_sign: " + e.getMessage()).then(Mono.error(e)))
-								.retry(UnexpectedReplyException.class::isInstance)
-								.then(),
-						Flux.merge(ctx.bot().gateway().on(ReactionAddEvent.class), ctx.bot().gateway().on(ReactionRemoveEvent.class))
-								.map(ReactionToggleEvent::new)
-								.filter(event -> event.getMessageId().equals(menuMessage.getId())
-										&& event.getUserId().equals(ctx.event().getMessage().getAuthor().map(User::getId).orElse(null)))
-								.flatMap(event -> {
-									var emojiName = event.getEmoji().asCustomEmoji().map(Custom::getName)
-											.or(() -> event.getEmoji().asUnicodeEmoji().map(Unicode::getRaw))
-											.orElseThrow();
-									var action = reactionItems.get(emojiName);
-									if (action == null) {
-										return Mono.empty();
-									}
-									var reactionCtx = new ReactionMenuInteraction(menuMessage, closeNotifier, event);
-									return action.apply(reactionCtx).thenReturn(0);
-								})
-								.takeUntil(__ -> closeAfterReaction)
-								.then())
-						.then(handleTermination(menuMessage, deleteMenuOnClose));
-					return timeout.isZero()
-							? menuMono
-							: menuMono.timeout(timeout, handleTermination(menuMessage, deleteMenuOnTimeout));
+								}
+								var interaction = new MessageMenuInteraction(menuMessage, closeNotifier, event, new ArgumentList(args), flags);
+								return action.apply(interaction).doOnSubscribe(__ -> onInteractionSink.next(0)).thenReturn(0);
+							})
+							.takeUntil(__ -> closeAfterMessage)
+							.onErrorResume(UnexpectedReplyException.class, e -> ctx.reply(":no_entry_sign: " + e.getMessage()).then(Mono.error(e)))
+							.retryWhen(Retry.indefinitely().filter(UnexpectedReplyException.class::isInstance))
+							.then(Mono.fromRunnable(closeNotifier::onComplete));
+					var reactionInteractionHandler = Flux.merge(
+									ctx.bot().gateway().on(ReactionAddEvent.class),
+									ctx.bot().gateway().on(ReactionRemoveEvent.class))
+							.takeUntilOther(closedByUser)
+							.map(ReactionToggleEvent::new)
+							.filter(event -> event.getMessageId().equals(menuMessage.getId())
+									&& event.getUserId().equals(ctx.event().getMessage().getAuthor().map(User::getId).orElse(null)))
+							.flatMap(event -> {
+								var emojiName = event.getEmoji().asCustomEmoji().map(Custom::getName)
+										.or(() -> event.getEmoji().asUnicodeEmoji().map(Unicode::getRaw))
+										.orElseThrow();
+								var action = reactionItems.get(emojiName);
+								if (action == null) {
+									return Mono.empty();
+								}
+								var interaction = new ReactionMenuInteraction(menuMessage, closeNotifier, event);
+								return action.apply(interaction).doOnSubscribe(__ -> onInteractionSink.next(0)).thenReturn(0);
+							})
+							.takeUntil(__ -> closeAfterReaction)
+							.then(Mono.fromRunnable(closeNotifier::onComplete));
+					var menuMono = Mono.when(messageInteractionHandler, reactionInteractionHandler);
+					return Mono.first(menuMono, timeout.isZero()
+							? Mono.never()
+							: onInteraction.timeout(timeout, handleTermination(menuMessage, deleteMenuOnTimeout).then(Mono.empty()))
+									.then());
 				});
 	}
 	

@@ -109,7 +109,9 @@ class GuildConfiguratorTest {
 		assertEquals(100L, newBean.getMyLong());
 		assertEquals("alice", newBean2.getMyString());
 	}
-
+	
+	interface TestDao extends GuildConfigDao<TestBean> {} // Unused
+	
 	public static class TestBean implements GuildConfigData<TestBean> {
 		
 		private Snowflake guildId;
@@ -154,14 +156,14 @@ class GuildConfiguratorTest {
 		
 		@Override
 		public GuildConfigurator<TestBean> configurator(Bot bot) {
-			return GuildConfigurator.builder(this)
+			return GuildConfigurator.builder("Test", this, TestDao.class)
 					.addEntry(LongConfigEntry.<TestBean>builder("mylong")
-							.setDescription("A description")
+							.setPrompt("A description")
 							.setValueGetter(bean -> Mono.justOrEmpty(bean.getMyLong()))
 							.setValueSetter(TestBean::setMyLong)
 							.setValidator(Validator.allowingAll()))
 					.addEntry(StringConfigEntry.<TestBean>builder("mystring")
-							.setDescription("Another description")
+							.setPrompt("Another description")
 							.setValueGetter(bean -> Mono.justOrEmpty(bean.getMyString()))
 							.setValueSetter(TestBean::setMyString)
 							.setValidator(Validator.allowingIf(

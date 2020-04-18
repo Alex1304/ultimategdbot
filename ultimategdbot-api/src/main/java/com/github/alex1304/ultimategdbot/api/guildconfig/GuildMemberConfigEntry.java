@@ -1,7 +1,6 @@
 package com.github.alex1304.ultimategdbot.api.guildconfig;
 
 import java.util.function.BiFunction;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 import discord4j.core.object.entity.Member;
@@ -9,11 +8,10 @@ import reactor.core.publisher.Mono;
 
 public class GuildMemberConfigEntry extends AbstractConfigEntry<Member> {
 
-	GuildMemberConfigEntry(GuildConfigurator<?> configurator, String key, String description,
+	GuildMemberConfigEntry(GuildConfigurator<?> configurator, String displayName, String key, String prompt,
 			Function<Object, ? extends Mono<Member>> valueGetter,
-			BiFunction<Object, ? super Member, Object> valueSetter, Validator<Member> validator,
-			Consumer<? super Member> valueObserver) {
-		super(configurator, key, description, valueGetter, valueSetter, validator, valueObserver);
+			BiFunction<Object, ? super Member, Object> valueSetter, Validator<Member> validator) {
+		super(configurator, displayName, key, prompt, valueGetter, valueSetter, validator);
 	}
 
 	@Override
