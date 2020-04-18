@@ -7,10 +7,10 @@ import reactor.core.publisher.Mono;
 
 public class StringConfigEntry extends AbstractConfigEntry<String> {
 
-	StringConfigEntry(GuildConfigurator<?> configurator, String displayName, String key, String prompt,
+	StringConfigEntry(GuildConfigurator<?> configurator, String displayName, String key,
 			Function<Object, ? extends Mono<String>> valueGetter,
 			BiFunction<Object, ? super String, Object> valueSetter, Validator<String> validator) {
-		super(configurator, displayName, key, prompt, valueGetter, valueSetter, validator);
+		super(configurator, displayName, key, valueGetter, valueSetter, validator);
 	}
 
 	@Override

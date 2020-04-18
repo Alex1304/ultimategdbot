@@ -6,6 +6,8 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.UnaryOperator;
 
+import com.github.alex1304.ultimategdbot.api.util.menu.InteractiveMenu.MenuTermination;
+
 import discord4j.core.object.entity.Message;
 import reactor.core.publisher.MonoProcessor;
 import reactor.util.annotation.Nullable;
@@ -14,9 +16,9 @@ abstract class MenuInteraction {
 	
 	private final ConcurrentHashMap<String, Object> contextVariables = new ConcurrentHashMap<>();
 	private final Message menuMessage;
-	private final MonoProcessor<Void> closeNotifier;
+	private final MonoProcessor<MenuTermination> closeNotifier;
 
-	MenuInteraction(Message menuMessage, MonoProcessor<Void> closeNotifier) {
+	MenuInteraction(Message menuMessage, MonoProcessor<MenuTermination> closeNotifier) {
 		this.menuMessage = menuMessage;
 		this.closeNotifier = closeNotifier;
 	}
@@ -114,6 +116,6 @@ abstract class MenuInteraction {
 	 * returns.
 	 */
 	public void closeMenu() {
-		closeNotifier.onComplete();
+		closeNotifier.onNext(MenuTermination.CLOSED_BY_USER);
 	}
 }

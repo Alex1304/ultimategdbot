@@ -1,5 +1,7 @@
 package com.github.alex1304.ultimategdbot.api.util.menu;
 
+import com.github.alex1304.ultimategdbot.api.util.menu.InteractiveMenu.MenuTermination;
+
 import discord4j.core.object.entity.Message;
 import reactor.core.publisher.MonoProcessor;
 
@@ -7,7 +9,7 @@ public class ReactionMenuInteraction extends MenuInteraction {
 	
 	private final ReactionToggleEvent event;
 
-	ReactionMenuInteraction(Message menuMessage, MonoProcessor<Void> closeNotifier,
+	ReactionMenuInteraction(Message menuMessage, MonoProcessor<MenuTermination> closeNotifier,
 			ReactionToggleEvent event) {
 		super(menuMessage, closeNotifier);
 		this.event = event;

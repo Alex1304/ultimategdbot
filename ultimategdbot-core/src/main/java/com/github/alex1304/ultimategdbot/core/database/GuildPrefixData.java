@@ -5,10 +5,8 @@ import java.util.Optional;
 import org.immutables.value.Value;
 
 import com.github.alex1304.ultimategdbot.api.Bot;
-import com.github.alex1304.ultimategdbot.api.guildconfig.GuildChannelConfigEntry;
 import com.github.alex1304.ultimategdbot.api.guildconfig.GuildConfigData;
 import com.github.alex1304.ultimategdbot.api.guildconfig.GuildConfigurator;
-import com.github.alex1304.ultimategdbot.api.guildconfig.LongConfigEntry;
 import com.github.alex1304.ultimategdbot.api.guildconfig.StringConfigEntry;
 import com.github.alex1304.ultimategdbot.api.guildconfig.Validator;
 
@@ -30,15 +28,6 @@ public interface GuildPrefixData extends GuildConfigData<GuildPrefixData> {
 								.prefix(Optional.ofNullable(value))
 								.build())
 						.setValidator(Validator.denyingIf(String::isBlank, "cannot be blank")))
-				.addEntry(LongConfigEntry.<GuildPrefixData>builder("random_count")
-						.setDisplayName("random count")
-						.setPrompt("new random count for testing purposes")
-						.setValueSetter((data, value) -> data)
-						.setValidator(Validator.allowingIf(l -> l >= 20, "must be greater than or equal to 20")))
-				.addEntry(GuildChannelConfigEntry.<GuildPrefixData>builder("secret_channel")
-						.setDisplayName("secret channel")
-						.setPrompt("channel where to keep things secret")
-						.setValueSetter((data, value) -> data))
 				.onSave(data -> bot.commandKernel().setPrefixForGuild(guildId().asLong(), data.prefix().orElse(null)))
 				.build();
 	}

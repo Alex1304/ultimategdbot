@@ -35,14 +35,6 @@ public interface ConfigEntry<T> {
 	 * @return the key
 	 */
 	String getKey();
-
-	/**
-	 * Gets the prompt message to display to the user in order to set a new value to
-	 * this entry.
-	 * 
-	 * @return the prompt message
-	 */
-	String getPrompt();
 	
 	/**
 	 * Tells whether this entry is read-only. If this method returns true, any call

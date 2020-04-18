@@ -14,7 +14,7 @@ import org.jdbi.v3.sqlobject.transaction.Transaction;
  */
 public interface GuildConfigDao<D extends GuildConfigData<D>> {
 	/**
-	 * Creates new, empty configuration data for this guild.
+	 * Creates new configuration data for this guild with default values.
 	 * 
 	 * @param guildId the ID of the guild
 	 */
@@ -22,7 +22,7 @@ public interface GuildConfigDao<D extends GuildConfigData<D>> {
 	void create(long guildId);
 	
 	/**
-	 * Resets settings for this guild.
+	 * Resets data for this guild.
 	 * 
 	 * @param guildId the ID of the guild
 	 */
@@ -30,28 +30,28 @@ public interface GuildConfigDao<D extends GuildConfigData<D>> {
 	void reset(long guildId);
 	
 	/**
-	 * Updates the settings for a certain guild.
+	 * Updates the data for a certain guild.
 	 * 
-	 * @param settings the settings for a guild
+	 * @param settings the data for a guild
 	 */
 	@SqlUpdate
 	void update(D data);
 	
 	/**
-	 * Retrieves the settings for a particular guild, if present.
+	 * Retrieves the data for a particular guild, if present.
 	 * 
 	 * @param guildId the ID of the guild
-	 * @return the settings for that guild, if present
+	 * @return the data for that guild, if present
 	 */
 	@SqlQuery
 	Optional<D> get(long guildId);
 	
 	/**
-	 * Retrieves the settings for a particular guild. If not present, empty settings
+	 * Retrieves the data for a particular guild. If not present, empty settings
 	 * are created and returned.
 	 * 
 	 * @param guildId the ID of the guild
-	 * @return the settings for that guild
+	 * @return the data for that guild
 	 */
 	@Transaction(TransactionIsolationLevel.SERIALIZABLE)
 	default D getOrCreate(long guildId) {
@@ -59,5 +59,17 @@ public interface GuildConfigDao<D extends GuildConfigData<D>> {
 			create(guildId);
 			return get(guildId).orElseThrow();
 		});
+	}
+	
+	/**
+	 * Resets the data for a particular guild, then returns the data after reset.
+	 * 
+	 * @param guildId the ID of the guild
+	 * @return the data for that guild after reset
+	 */
+	@Transaction(TransactionIsolationLevel.SERIALIZABLE)
+	default D resetAndGet(long guildId) {
+		reset(guildId);
+		return get(guildId).orElseThrow();
 	}
 }

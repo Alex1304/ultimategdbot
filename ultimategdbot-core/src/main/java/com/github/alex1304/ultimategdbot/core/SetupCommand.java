@@ -36,7 +36,6 @@ import com.github.alex1304.ultimategdbot.api.util.DiscordParser;
 import com.github.alex1304.ultimategdbot.api.util.Markdown;
 import com.github.alex1304.ultimategdbot.api.util.menu.InteractiveMenu;
 import com.github.alex1304.ultimategdbot.api.util.menu.MessageMenuInteraction;
-import com.github.alex1304.ultimategdbot.api.util.menu.ReactionMenuInteraction;
 import com.github.alex1304.ultimategdbot.api.util.menu.UnexpectedReplyException;
 
 import discord4j.core.object.entity.Message;
@@ -77,7 +76,8 @@ class SetupCommand {
 						formattedConfigs.add(Flux.concat(formattedEntries)
 								.collect(joining("\n")));
 					}
-					formattedConfigs.add(Mono.just("React with 📝 to edit the configuration."));
+					formattedConfigs.add(Mono.just("React with 📝 to edit the configuration for a feature.\n"
+							+ "React with 🔄 to reset the configuration for a feature to default values."));
 					return Flux.concat(formattedConfigs)
 							.collect(joining("\n\n"))
 							.map(content -> Tuples.of(configurators, content, formattedValuePerEntry));
@@ -86,15 +86,25 @@ class SetupCommand {
 						.createPaginated(ctx.bot().config().getPaginationControls(), content, 800)
 						.addReactionItem("📝", editInteraction -> {
 							editInteraction.closeMenu();
-							return handleEditInteraction(ctx, editInteraction, configurators, formattedValuePerEntry);
+							return handleEditInteraction(ctx, configurators, formattedValuePerEntry, false);
+						})
+						.addReactionItem("🔄", resetInteraction -> {
+							resetInteraction.closeMenu();
+							return handleEditInteraction(ctx, configurators, formattedValuePerEntry, true);
 						})
 						.deleteMenuOnClose(true)
 						.open(ctx)));
 	}
-	
-	private static Mono<Void> handleEditInteraction(Context ctx, ReactionMenuInteraction editInteraction,
-			List<GuildConfigurator<?>> configurators, Map<ConfigEntry<?>, String> formattedValuePerEntry) {
-		var sb = new StringBuilder(Markdown.bold("Enter the number corresponding to the feature you want to setup:") + "\n\n");
+
+	private static Mono<Void> handleEditInteraction(Context ctx, List<GuildConfigurator<?>> configurators,
+			Map<ConfigEntry<?>, String> formattedValuePerEntry, boolean reset) {
+		var sb = new StringBuilder("**Enter the number corresponding to the feature you want to ");
+		if (reset) {
+			sb.append("reset");
+		} else {
+			sb.append("setup");
+		}
+		sb.append(":**\n\n");
 		var i = 1;
 		for (var configurator : configurators) {
 			sb.append(Markdown.code(i + ""))
@@ -117,6 +127,17 @@ class SetupCommand {
 					}
 					selectInteraction.closeMenu();
 					var configurator = configurators.get(selected - 1);
+					if (reset) {
+						return InteractiveMenu.create(Markdown.bold("Are you sure you want to reset all configuration "
+										+ "for feature " + configurator.getName() + "?"))
+								.addReactionItem("✅", interaction -> {
+									return configurator.resetConfig(ctx.bot().database())
+											.then(ctx.reply("✅ Configuration has been reset"))
+											.then();
+								})
+								.addReactionItem("🚫", interaction -> Mono.fromRunnable(interaction::closeMenu))
+								.open(ctx); 
+					}
 					return handleSelectedFeatureInteraction(ctx, selectInteraction, configurator, formattedValuePerEntry);
 				})
 				.deleteMenuOnClose(true)
@@ -141,13 +162,9 @@ class SetupCommand {
 						.addReactionItem("⏭️", interaction -> goToNextEntry(ctx, entryQueue, formattedValuePerEntry,
 								configurator, interaction.getMenuMessage(), interaction::closeMenu))
 						.addMessageItem("", interaction -> {
-							var action = interaction.getArgs().get(0);
-							var input = interaction.getArgs().getAllAfter(1);
-							if (!action.equalsIgnoreCase("reset") && input.isEmpty()) {
-								return Mono.error(new UnexpectedReplyException("Please provide a new value"));
-							}
+							var input = interaction.getEvent().getMessage().getContent();
 							var currentEntry = entryQueue.element();
-							var editEntry = action.equalsIgnoreCase("reset")
+							var editEntry = input.equalsIgnoreCase("none")
 									? currentEntry.setValue(null)
 									: currentEntry.accept(new EditVisitor(ctx.bot(), input))
 											.onErrorMap(ValidationException.class,
@@ -166,10 +183,8 @@ class SetupCommand {
 	private static Mono<Void> goToNextEntry(Context ctx, Queue<ConfigEntry<?>> entryQueue,
 			Map<ConfigEntry<?>, String> formattedValuePerEntry, GuildConfigurator<?> configurator, Message menuMessage,
 			Runnable menuCloser) {
-		var currentEntry = entryQueue.element();
-		var valueOfCurrentEntry = formattedValuePerEntry.get(currentEntry);
 		var goToNextEntry = Mono.fromCallable(entryQueue::element)
-				.flatMap(nextEntry -> nextEntry.accept(new PromptVisitor(configurator, valueOfCurrentEntry))
+				.flatMap(nextEntry -> nextEntry.accept(new PromptVisitor(configurator, formattedValuePerEntry.get(nextEntry)))
 						.flatMap(prompt -> menuMessage.edit(spec -> spec.setContent(prompt))))
 				.then();
 		return Mono.fromRunnable(entryQueue::remove)
@@ -267,10 +282,9 @@ class SetupCommand {
 			return Markdown.underline("Configuring " + Markdown.bold(entry.getDisplayName()) + " in feature "
 					+ Markdown.bold(configurator.getName())) + "\n\n"
 					+ "Current value: " + currentValue + "\n\n"
-					+ "Set " + entry.getPrompt() + " by typing `set <new value>` "
-					+ (expecting == null ? "" : "(expecting " + expecting + ")") + ".\n"
-					+ "Reset the field by typing `reset`.\n"
-					+ "React with ⏭️ to skip this configuration entry.";
+					+ Markdown.bold("Enter the new value in the chat to update it"
+							+ (expecting == null ? "" : " (expecting " + expecting + ")") + ":") + "\n"
+					+ Markdown.italic("React with ⏭️ to skip this configuration entry.");
 		}
 	}
 	

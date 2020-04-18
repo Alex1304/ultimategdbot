@@ -158,12 +158,10 @@ class GuildConfiguratorTest {
 		public GuildConfigurator<TestBean> configurator(Bot bot) {
 			return GuildConfigurator.builder("Test", this, TestDao.class)
 					.addEntry(LongConfigEntry.<TestBean>builder("mylong")
-							.setPrompt("A description")
 							.setValueGetter(bean -> Mono.justOrEmpty(bean.getMyLong()))
 							.setValueSetter(TestBean::setMyLong)
 							.setValidator(Validator.allowingAll()))
 					.addEntry(StringConfigEntry.<TestBean>builder("mystring")
-							.setPrompt("Another description")
 							.setValueGetter(bean -> Mono.justOrEmpty(bean.getMyString()))
 							.setValueSetter(TestBean::setMyString)
 							.setValidator(Validator.allowingIf(
