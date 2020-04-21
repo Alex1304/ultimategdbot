@@ -27,6 +27,6 @@ public class BooleanConfigEntry extends AbstractConfigEntry<Boolean> {
 	 * @return a new builder
 	 */
 	public static <D extends GuildConfigData<D>> ConfigEntryBuilder<D, Boolean> builder(String key) {
-		return new ConfigEntryBuilder<>(BooleanConfigEntry::new, key);
+		return new ConfigEntryBuilder<D, Boolean>(BooleanConfigEntry::new, key);
 	}
 }

@@ -5,6 +5,7 @@ import static java.util.Objects.requireNonNull;
 import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.IntFunction;
@@ -173,22 +174,23 @@ public class InteractiveMenu {
 		requireNonNull(asyncPaginator);
 		return create(asyncPaginator.apply(0).map(MessageSpecTemplate::toMessageCreateSpec))
 				.addReactionItem(controls.getPreviousEmoji(), interaction -> Mono.fromCallable(
-								() -> interaction.update("currentPage", x -> x - 1, 1))
+								() -> interaction.update("currentPage", x -> x - 1, -1))
 						.flatMap(targetPage -> asyncPaginator.apply(targetPage)
 								.map(MessageSpecTemplate::toMessageEditSpec))
 						.onErrorResume(PageNumberOutOfRangeException.class, e -> Mono.fromCallable(
 										 () -> interaction.update("currentPage",
-												 x -> x + e.getMaxPage() - e.getMinPage() + 1, 1))
+												 x -> x + e.getMaxPage() - e.getMinPage() + 1, 0))
 								.flatMap(targetPage -> asyncPaginator.apply(targetPage)
 										.map(MessageSpecTemplate::toMessageEditSpec)))
 						.flatMap(interaction.getMenuMessage()::edit)
 						.then())
 				.addReactionItem(controls.getNextEmoji(), interaction -> Mono.fromCallable(
 								() -> interaction.update("currentPage", x -> x + 1, 1))
-						.flatMap(targetPage -> asyncPaginator.apply(targetPage).map(MessageSpecTemplate::toMessageEditSpec))
+						.flatMap(targetPage -> asyncPaginator.apply(targetPage)
+								.map(MessageSpecTemplate::toMessageEditSpec))
 						.onErrorResume(PageNumberOutOfRangeException.class, e -> Mono.fromCallable(
 										 () -> interaction.update("currentPage",
-												 x -> x - e.getMaxPage() + e.getMinPage() - 1, 1))
+												 x -> x - e.getMaxPage() + e.getMinPage() - 1, 0))
 								.flatMap(targetPage -> asyncPaginator.apply(targetPage)
 										.map(MessageSpecTemplate::toMessageEditSpec)))
 						.flatMap(interaction.getMenuMessage()::edit)
@@ -326,6 +328,7 @@ public class InteractiveMenu {
 		var closeNotifier = MonoProcessor.<MenuTermination>create();
 		var onInteraction = ReplayProcessor.cacheLastOrDefault(0); // Signals onNext each time user interacts with the menu
 		var onInteractionSink = onInteraction.sink(FluxSink.OverflowStrategy.LATEST);
+		var contextVariables = new ConcurrentHashMap<String, Object>();
 		return specMono.<Message>flatMap(ctx::reply)
 				.flatMap(menuMessage -> addReactionsToMenu(ctx, menuMessage))
 				.flatMap(menuMessage -> {
@@ -347,13 +350,14 @@ public class InteractiveMenu {
 										return Mono.empty();
 									}
 								}
-								var interaction = new MessageMenuInteraction(menuMessage, closeNotifier, event, new ArgumentList(args), flags);
+								var interaction = new MessageMenuInteraction(menuMessage, contextVariables, closeNotifier,
+										event, new ArgumentList(args), flags);
 								return action.apply(interaction).doOnSubscribe(__ -> onInteractionSink.next(0)).thenReturn(0);
 							})
 							.takeUntil(__ -> closeAfterMessage)
 							.onErrorResume(UnexpectedReplyException.class, e -> ctx.reply(":no_entry_sign: " + e.getMessage()).then(Mono.error(e)))
 							.retryWhen(Retry.indefinitely().filter(UnexpectedReplyException.class::isInstance))
-							.then(Mono.fromRunnable(() -> closeNotifier.onNext(MenuTermination.CLOSED_BY_USER)));
+							.doFinally(__ -> closeNotifier.onNext(MenuTermination.CLOSED_BY_USER));
 					var reactionInteractionHandler = Flux.merge(
 									ctx.bot().gateway().on(ReactionAddEvent.class),
 									ctx.bot().gateway().on(ReactionRemoveEvent.class))
@@ -369,24 +373,28 @@ public class InteractiveMenu {
 								if (action == null) {
 									return Mono.empty();
 								}
-								var interaction = new ReactionMenuInteraction(menuMessage, closeNotifier, event);
+								var interaction = new ReactionMenuInteraction(menuMessage, contextVariables, closeNotifier, event);
 								return action.apply(interaction).doOnSubscribe(__ -> onInteractionSink.next(0)).thenReturn(0);
 							})
 							.takeUntil(__ -> closeAfterReaction)
-							.then(Mono.fromRunnable(() -> closeNotifier.onNext(MenuTermination.CLOSED_BY_USER)));
+							.doFinally(__ -> closeNotifier.onNext(MenuTermination.CLOSED_BY_USER));
 					var menuMono = Mono.when(messageInteractionHandler, reactionInteractionHandler);
 					var timeoutNotifier = timeout.isZero()
 							? Mono.never()
 							: onInteraction.timeout(timeout, Flux.empty())
 									.then(Mono.fromRunnable(() -> closeNotifier.onNext(MenuTermination.TIMEOUT)));
+					var terminationHandler = closeNotifier.flatMap(termination -> {
+						switch (termination) {
+							case TIMEOUT:        return handleTermination(menuMessage, deleteMenuOnTimeout);
+							case CLOSED_BY_USER: return handleTermination(menuMessage, deleteMenuOnClose);
+							default:             return Mono.error(new AssertionError());
+						}
+					});
 					return Mono.when(menuMono, timeoutNotifier.takeUntilOther(closeNotifier))
-							.then(closeNotifier.flatMap(termination -> {
-								switch (termination) {
-									case TIMEOUT:        return handleTermination(menuMessage, deleteMenuOnTimeout);
-									case CLOSED_BY_USER: return handleTermination(menuMessage, deleteMenuOnClose);
-									default:             return Mono.error(new AssertionError());
-								}
-							}));
+							.then(terminationHandler)
+							.onErrorResume(e -> terminationHandler
+									.onErrorResume(e2 -> Mono.fromRunnable(() -> e.addSuppressed(e2)))
+									.then(Mono.error(e)));
 				});
 	}
 	

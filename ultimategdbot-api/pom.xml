@@ -9,7 +9,6 @@
 	</parent>
 	<artifactId>ultimategdbot-api</artifactId>
 
-
 	<dependencyManagement>
 		<dependencies>
 			<dependency>

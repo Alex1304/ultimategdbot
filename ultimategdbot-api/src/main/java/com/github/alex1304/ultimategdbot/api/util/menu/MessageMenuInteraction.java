@@ -1,5 +1,7 @@
 package com.github.alex1304.ultimategdbot.api.util.menu;
 
+import java.util.concurrent.ConcurrentHashMap;
+
 import com.github.alex1304.ultimategdbot.api.command.ArgumentList;
 import com.github.alex1304.ultimategdbot.api.command.FlagSet;
 import com.github.alex1304.ultimategdbot.api.util.menu.InteractiveMenu.MenuTermination;
@@ -14,9 +16,9 @@ public class MessageMenuInteraction extends MenuInteraction {
 	private final ArgumentList args;
 	private final FlagSet flags;
 
-	MessageMenuInteraction(Message menuMessage, MonoProcessor<MenuTermination> closeNotifier,
+	MessageMenuInteraction(Message menuMessage, ConcurrentHashMap<String, Object> contextVariables, MonoProcessor<MenuTermination> closeNotifier,
 			MessageCreateEvent event, ArgumentList args, FlagSet flags) {
-		super(menuMessage, closeNotifier);
+		super(menuMessage, contextVariables, closeNotifier);
 		this.event = event;
 		this.args = args;
 		this.flags = flags;

@@ -83,7 +83,7 @@ class SetupCommand {
 							.map(content -> Tuples.of(configurators, content, formattedValuePerEntry));
 				})
 				.flatMap(TupleUtils.function((configurators, content, formattedValuePerEntry) -> InteractiveMenu
-						.createPaginated(ctx.bot().config().getPaginationControls(), content, 800)
+						.createPaginated(ctx.bot().config().getPaginationControls(), content, 1000)
 						.addReactionItem("📝", editInteraction -> {
 							editInteraction.closeMenu();
 							return handleEditInteraction(ctx, configurators, formattedValuePerEntry, false);
@@ -111,10 +111,11 @@ class SetupCommand {
 					.append(": ")
 					.append(Markdown.bold(configurator.getName()))
 					.append(" - ")
-					.append(configurator.getDescription());
+					.append(configurator.getDescription())
+					.append('\n');
 			i++;
 		}
-		return InteractiveMenu.createPaginated(ctx.bot().config().getPaginationControls(), sb.toString(), 800)
+		return InteractiveMenu.createPaginated(ctx.bot().config().getPaginationControls(), sb.toString(), 1000)
 				.addMessageItem("", selectInteraction -> {
 					int selected;
 					try {
@@ -161,6 +162,7 @@ class SetupCommand {
 				.flatMap(menu -> menu
 						.addReactionItem("⏭️", interaction -> goToNextEntry(ctx, entryQueue, formattedValuePerEntry,
 								configurator, interaction.getMenuMessage(), interaction::closeMenu))
+						.addReactionItem("🚫", __ -> Mono.error(new CommandFailedException("Configuration cancelled")))
 						.addMessageItem("", interaction -> {
 							var input = interaction.getEvent().getMessage().getContent();
 							var currentEntry = entryQueue.element();
@@ -279,12 +281,11 @@ class SetupCommand {
 		}
 		
 		private String promptSet(ConfigEntry<?> entry, String expecting) {
-			return Markdown.underline("Configuring " + Markdown.bold(entry.getDisplayName()) + " in feature "
-					+ Markdown.bold(configurator.getName())) + "\n\n"
+			return Markdown.bold(entry.getDisplayName()) + " (" + configurator.getName() + ")\n"
 					+ "Current value: " + currentValue + "\n\n"
 					+ Markdown.bold("Enter the new value in the chat to update it"
 							+ (expecting == null ? "" : " (expecting " + expecting + ")") + ":") + "\n"
-					+ Markdown.italic("React with ⏭️ to skip this configuration entry.");
+					+ Markdown.italic("React with ⏭️ to skip this configuration entry, or 🚫 to cancel.");
 		}
 	}
 	
