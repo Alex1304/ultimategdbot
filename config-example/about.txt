@@ -1,7 +1,0 @@
-**Bot name:** {{ bot_name }}
-**Bot owner:** {{ bot_owner }}
-**Server count:** {{ server_count }}
-**User count:** {{ user_count }}
-{{ version_info }}
-
-Edit the file `config/about.txt` to edit the contents of this command!
