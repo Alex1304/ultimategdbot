@@ -4,6 +4,7 @@ import static java.util.Collections.synchronizedSet;
 import static java.util.Collections.unmodifiableSet;
 import static java.util.Objects.requireNonNull;
 
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.ServiceLoader;
 import java.util.Set;
@@ -131,8 +132,9 @@ public class SimpleBot implements Bot {
 	@Override
 	public Flux<GuildConfigurator<?>> configureGuild(Snowflake guildId) {
 		return Flux.fromIterable(guildConfigExtensions)
-				.flatMap(extension -> database.withExtension(extension, dao -> dao.getOrCreate(guildId.asLong()))
-						.map(data -> data.configurator(this)));
+				.flatMap(extension -> database.withExtension(extension, dao -> dao.getOrCreate(guildId.asLong())))
+				.<GuildConfigurator<?>>map(data -> data.configurator(this))
+				.sort(Comparator.comparing(GuildConfigurator::getName, String.CASE_INSENSITIVE_ORDER));
 	}
 	
 	@Override

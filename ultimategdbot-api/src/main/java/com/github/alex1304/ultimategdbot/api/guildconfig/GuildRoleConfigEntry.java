@@ -28,6 +28,6 @@ public class GuildRoleConfigEntry extends AbstractConfigEntry<Role> {
 	 * @return a new builder
 	 */
 	public static <D extends GuildConfigData<D>> ConfigEntryBuilder<D, Role> builder(String key) {
-		return new ConfigEntryBuilder<>(GuildRoleConfigEntry::new, key);
+		return new ConfigEntryBuilder<D, Role>(GuildRoleConfigEntry::new, key);
 	}
 }

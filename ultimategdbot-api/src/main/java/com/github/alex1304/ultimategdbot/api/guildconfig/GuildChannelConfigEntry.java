@@ -28,6 +28,6 @@ public class GuildChannelConfigEntry extends AbstractConfigEntry<GuildChannel> {
 	 * @return a new builder
 	 */
 	public static <D extends GuildConfigData<D>> ConfigEntryBuilder<D, GuildChannel> builder(String key) {
-		return new ConfigEntryBuilder<>(GuildChannelConfigEntry::new, key);
+		return new ConfigEntryBuilder<D, GuildChannel>(GuildChannelConfigEntry::new, key);
 	}
 }

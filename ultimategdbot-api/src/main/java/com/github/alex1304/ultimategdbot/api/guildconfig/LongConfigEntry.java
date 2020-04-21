@@ -27,6 +27,6 @@ public class LongConfigEntry extends AbstractConfigEntry<Long> {
 	 * @return a new builder
 	 */
 	public static <D extends GuildConfigData<D>> ConfigEntryBuilder<D, Long> builder(String key) {
-		return new ConfigEntryBuilder<>(LongConfigEntry::new, key);
+		return new ConfigEntryBuilder<D, Long>(LongConfigEntry::new, key);
 	}
 }

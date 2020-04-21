@@ -14,13 +14,14 @@ import reactor.util.annotation.Nullable;
 
 abstract class MenuInteraction {
 	
-	private final ConcurrentHashMap<String, Object> contextVariables = new ConcurrentHashMap<>();
+	private final ConcurrentHashMap<String, Object> contextVariables;
 	private final Message menuMessage;
 	private final MonoProcessor<MenuTermination> closeNotifier;
 
-	MenuInteraction(Message menuMessage, MonoProcessor<MenuTermination> closeNotifier) {
+	MenuInteraction(Message menuMessage, ConcurrentHashMap<String, Object> contextVariables, MonoProcessor<MenuTermination> closeNotifier) {
 		this.menuMessage = menuMessage;
 		this.closeNotifier = closeNotifier;
+		this.contextVariables = contextVariables;
 	}
 
 	/**

@@ -14,7 +14,6 @@ import org.jdbi.v3.core.argument.Argument;
 import org.jdbi.v3.core.config.ConfigRegistry;
 import org.jdbi.v3.core.extension.ExtensionCallback;
 import org.jdbi.v3.core.extension.ExtensionConsumer;
-import org.jdbi.v3.core.mapper.MapMapper;
 import org.jdbi.v3.core.transaction.SerializableTransactionRunner;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 import org.reactivestreams.Publisher;
@@ -44,7 +43,6 @@ public final class Database {
 	 * <ul>
 	 * <li>{@link SqlObjectPlugin} will be installed</li>
 	 * <li>Column and argument mappers will ba added for the {@link Snowflake} type</li>
-	 * <li>{@link MapMapper} will be registered as row mapper</li>
 	 * <li>{@link SerializableTransactionRunner} will be set as transaction handler</li>
 	 * </ul>
 	 * </p>
@@ -61,8 +59,13 @@ public final class Database {
 	public static Database create(Jdbi jdbi) {
 		requireNonNull(jdbi, "jdbi");
 		jdbi.installPlugin(new SqlObjectPlugin());
-		jdbi.registerColumnMapper(Snowflake.class, (rs, col, ctx) -> Snowflake.of(rs.getLong(col)));
-		jdbi.registerRowMapper(new MapMapper());
+		jdbi.registerColumnMapper(Snowflake.class, (rs, col, ctx) -> {
+			var value = rs.getLong(col);
+			if (rs.wasNull()) {
+				return null;
+			}
+			return Snowflake.of(value);
+		});
 		jdbi.registerArgument(new AbstractArgumentFactory<Snowflake>(Types.BIGINT) {
 			@Override
 			protected Argument build(Snowflake value, ConfigRegistry config) {

@@ -16,8 +16,8 @@ import com.github.alex1304.ultimategdbot.api.command.annotated.AnnotatedCommandP
 import com.github.alex1304.ultimategdbot.api.util.PropertyReader;
 import com.github.alex1304.ultimategdbot.core.database.BlacklistedIdDao;
 import com.github.alex1304.ultimategdbot.core.database.BotAdminDao;
-import com.github.alex1304.ultimategdbot.core.database.GuildPrefixDao;
-import com.github.alex1304.ultimategdbot.core.database.GuildPrefixData;
+import com.github.alex1304.ultimategdbot.core.database.CoreConfigDao;
+import com.github.alex1304.ultimategdbot.core.database.CoreConfigData;
 
 import discord4j.core.object.entity.Guild;
 import discord4j.core.object.entity.channel.GuildChannel;
@@ -33,9 +33,9 @@ public class CorePluginBootstrap implements PluginBootstrap {
 	@Override
 	public Mono<Plugin> setup(Bot bot, PropertyReader pluginProperties) {
 		bot.database().configureJdbi(jdbi -> {
-			jdbi.getConfig(JdbiImmutables.class).registerImmutable(GuildPrefixData.class);
+			jdbi.getConfig(JdbiImmutables.class).registerImmutable(CoreConfigData.class);
 		});
-		bot.registerGuildConfigExtension(GuildPrefixDao.class);
+		bot.registerGuildConfigExtension(CoreConfigDao.class);
 		var pluginBuilder = Plugin.builder(PLUGIN_NAME)
 				.onReady(() -> initBlacklist(bot)
 						.and(initPrefixes(bot))
@@ -89,7 +89,7 @@ public class CorePluginBootstrap implements PluginBootstrap {
 	}
 	
 	private static Mono<Void> initPrefixes(Bot bot) {
-		return bot.database().withExtension(GuildPrefixDao.class, dao -> dao.getAllNonDefault(bot.config().getCommandPrefix()))
+		return bot.database().withExtension(CoreConfigDao.class, dao -> dao.getAllNonDefaultPrefixes(bot.config().getCommandPrefix()))
 				.flatMapMany(Flux::fromIterable)
 				.doOnNext(data -> bot.commandKernel().setPrefixForGuild(data.guildId().asLong(), data.prefix().orElseThrow()))
 				.then();
