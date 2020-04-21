@@ -1,15 +1,15 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-
 	<groupId>com.github.alex1304</groupId>
-	<artifactId>ultimategdbot</artifactId>
+	<artifactId>ultimategdbot-api</artifactId>
 	<version>6.0.0-SNAPSHOT</version>
-	<packaging>pom</packaging>
 
-	<name>ultimategdbot</name>
-	<url>http://ultimategdbot.readthedocs.io</url>
+	<name>ultimategdbot-api</name>
+	<url>http://maven.apache.org</url>
 
-	<description>An awesome Discord bot for Geometry Dash players!</description>
+	<description>High-level API to conveniently build Discord bots in Java, on top of Discord4J</description>
 
 	<licenses>
 		<license>
@@ -59,9 +59,6 @@
 						<release>${java.version}</release>
 						<source>${java.version}</source>
 						<target>${java.version}</target>
-						<compilerArgs>
-							<compilerArg>-parameters</compilerArg>
-						</compilerArgs>
 					</configuration>
 				</plugin>
 				<plugin>
@@ -72,8 +69,6 @@
 					<configuration>
 						<serverId>ossrh</serverId>
 						<nexusUrl>https://oss.sonatype.org/</nexusUrl>
-						<autoReleaseAfterClose>true</autoReleaseAfterClose>
-						<skipStagingRepositoryClose>false</skipStagingRepositoryClose>
 					</configuration>
 				</plugin>
 				<plugin>
@@ -147,18 +142,61 @@
 		</profile>
 	</profiles>
 
-	<repositories>
-		<repository>
-			<id>oss.sonatype.org-snapshot</id>
-			<url>http://oss.sonatype.org/content/repositories/snapshots</url>
-			<snapshots>
-				<enabled>true</enabled>
-			</snapshots>
-		</repository>
-	</repositories>
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.jdbi</groupId>
+				<artifactId>jdbi3-bom</artifactId>
+				<type>pom</type>
+				<version>3.12.2</version>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 
-	<modules>
-		<module>ultimategdbot-api</module>
-		<module>ultimategdbot-core</module>
-	</modules>
+	<dependencies>
+		<dependency>
+			<groupId>com.discord4j</groupId>
+			<artifactId>discord4j-core</artifactId>
+			<version>3.1.0.M1</version>
+		</dependency>
+		<dependency>
+			<groupId>com.discord4j</groupId>
+			<artifactId>stores-caffeine</artifactId>
+			<version>3.1.0.RC1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.jdbi</groupId>
+			<artifactId>jdbi3-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.jdbi</groupId>
+			<artifactId>jdbi3-sqlobject</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.google.code.findbugs</groupId>
+			<artifactId>jsr305</artifactId>
+			<version>3.0.1</version>
+		</dependency>
+
+		<!-- Test dependencies -->
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<version>1.4.200</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-classic</artifactId>
+			<version>1.2.3</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter</artifactId>
+			<version>5.4.2</version>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
 </project>
