@@ -32,7 +32,7 @@ public interface GuildConfigDao<D extends GuildConfigData<D>> {
 	/**
 	 * Updates the data for a certain guild.
 	 * 
-	 * @param settings the data for a guild
+	 * @param data the data for a guild
 	 */
 	@SqlUpdate
 	void update(D data);

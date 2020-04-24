@@ -18,13 +18,13 @@ import com.github.alex1304.ultimategdbot.api.Bot;
 import discord4j.rest.util.Snowflake;
 import reactor.core.publisher.Mono;
 
-class GuildConfiguratorTest {
+public class GuildConfiguratorTest {
 	
 	private TestBean bean1, bean2;
 	private GuildConfigurator<TestBean> configurator1, configurator2;
 	
 	@BeforeEach
-	void setUp() throws Exception {
+	public void setUp() throws Exception {
 		bean1 = new TestBean(Snowflake.of(123), 40L, "toto");
 		bean2 = new TestBean(Snowflake.of(1), null, null);
 		configurator1 = bean1.configurator(null);
@@ -32,7 +32,7 @@ class GuildConfiguratorTest {
 	}
 
 	@Test
-	void testGetEntries() {
+	public void testGetEntries() {
 		var entries = configurator1.getConfigEntries();
 		var keys = entries.stream().map(ConfigEntry::getKey).collect(Collectors.toSet());
 		assertEquals(Set.of("mylong", "mystring", "readonly"), keys);
@@ -43,7 +43,7 @@ class GuildConfiguratorTest {
 	}
 	
 	@Test
-	void testManipulateValue() {
+	public void testManipulateValue() {
 		// Testing getters in normal conditions
 		
 		var entry1 = configurator1.getConfigEntry("mylong");
@@ -110,8 +110,10 @@ class GuildConfiguratorTest {
 		assertEquals("alice", newBean2.getMyString());
 	}
 	
-	interface TestDao extends GuildConfigDao<TestBean> {} // Unused
-	
+	interface TestDao extends GuildConfigDao<TestBean> {
+		// Unused 
+	}
+
 	public static class TestBean implements GuildConfigData<TestBean> {
 		
 		private Snowflake guildId;

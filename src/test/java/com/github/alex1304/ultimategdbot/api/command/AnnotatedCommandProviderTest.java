@@ -32,7 +32,7 @@ public class AnnotatedCommandProviderTest {
 	private TestCommandInvalidReturnType testCmdInvRetType;
 	
 	@BeforeEach
-	void setUp() throws Exception {
+	public void setUp() throws Exception {
 		provider = new AnnotatedCommandProvider();
 		testCmd = new TestCommand();
 		testCmd1 = new TestCommandOneParam();
@@ -50,7 +50,7 @@ public class AnnotatedCommandProviderTest {
 	}
 
 	@Test
-	void testAddAnnotated() {
+	public void testAddAnnotated() {
 		assertDoesNotThrow(() -> provider.addAnnotated(testCmd), "Add valid annotated command, without params");
 		assertDoesNotThrow(() -> provider.addAnnotated(testCmd1), "Add valid annotated command, with 1 param");
 		assertDoesNotThrow(() -> provider.addAnnotated(testCmd2), "Add valid annotated command, with 2 params");

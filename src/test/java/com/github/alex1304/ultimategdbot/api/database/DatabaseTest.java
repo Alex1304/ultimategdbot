@@ -22,7 +22,7 @@ public class DatabaseTest {
 	private Database db;
 	
 	@BeforeEach
-	void setUp() throws Exception {
+	public void setUp() throws Exception {
 		db = Database.create(Jdbi.create("jdbc:h2:mem:test"));
 		db.configureJdbi(jdbi -> {
 			jdbi.registerRowMapper(BeanMapper.factory(TestBean.class));
@@ -30,7 +30,7 @@ public class DatabaseTest {
 	}
 
 	@Test
-	void testCreate() {
+	public void testCreate() {
 		db.useExtension(TestDao.class, dao -> {
 			dao.createTable();
 			dao.create(Snowflake.of(123));
@@ -38,7 +38,7 @@ public class DatabaseTest {
 	}
 
 	@Test
-	void testGetOrCreate() {
+	public void testGetOrCreate() {
 		var bean = db.withExtension(TestDao.class, dao -> {
 			dao.createTable();
 			return dao.getOrCreate(Snowflake.of(123));
@@ -48,7 +48,7 @@ public class DatabaseTest {
 	}
 
 	@Test
-	void testUpdate() {
+	public void testUpdate() {
 		var beanOpt = db.withExtension(TestDao.class, dao -> {
 			dao.createTable();
 			var id = Snowflake.of(123);

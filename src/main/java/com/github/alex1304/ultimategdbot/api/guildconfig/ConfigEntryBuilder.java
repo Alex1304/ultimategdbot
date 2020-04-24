@@ -4,7 +4,6 @@ import static java.util.Objects.requireNonNull;
 import static java.util.Objects.requireNonNullElse;
 
 import java.util.function.BiFunction;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 import reactor.core.publisher.Mono;
@@ -64,8 +63,7 @@ public class ConfigEntryBuilder<D extends GuildConfigData<D>, T> {
 	 * function <b>MUST NOT</b> have any side-effects, i.e should not do anything
 	 * other than setting the value. Since configurators and entries are thread-safe
 	 * and atomically set new values in a lock-free way, the setter is prone to be
-	 * called more than once at each value update. If you want to add a side-effect
-	 * when a new value is set, see {@link #onValueSaved(Consumer)}.
+	 * called more than once at each value update.
 	 * 
 	 * <p>
 	 * If nothing is set or is set to <code>null</code>, the entry will be marked as
@@ -80,18 +78,20 @@ public class ConfigEntryBuilder<D extends GuildConfigData<D>, T> {
 	 */
 	public ConfigEntryBuilder<D, T> setValueSetter(
 			@Nullable BiFunction<? super D, ? super T, ? extends D> valueSetter) {
-		this.valueSetter = requireNonNull(valueSetter);
+		this.valueSetter = valueSetter;
 		return this;
 	}
 
 	/**
-	 * Specifies the validator that will validate new values set to the entry.
+	 * Specifies the validator that will validate new values set to the entry. If
+	 * not set or is set to <code>null</code>, {@link Validator#allowingAll()} will
+	 * be used.
 	 * 
 	 * @param validator the validator to set
 	 * @return this builder
 	 */
-	public ConfigEntryBuilder<D, T> setValidator(Validator<T> validator) {
-		this.validator = requireNonNull(validator);
+	public ConfigEntryBuilder<D, T> setValidator(@Nullable Validator<T> validator) {
+		this.validator = requireNonNullElse(validator, Validator.allowingAll());
 		return this;
 	}
 	

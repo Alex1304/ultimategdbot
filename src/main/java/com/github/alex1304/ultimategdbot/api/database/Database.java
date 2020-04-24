@@ -45,13 +45,11 @@ public final class Database {
 	 * <li>Column and argument mappers will ba added for the {@link Snowflake} type</li>
 	 * <li>{@link SerializableTransactionRunner} will be set as transaction handler</li>
 	 * </ul>
-	 * </p>
 	 * 
 	 * <p>
 	 * It will automatically install the {@link SqlObjectPlugin}, and register
 	 * column mappers and arguments for the {@link Snowflake} type. It will also
 	 * enable support automatic retrying of failed serializable transactions.
-	 * </p>
 	 * 
 	 * @param jdbi the {@link Jdbi} instance backing the database
 	 * @return a new {@link Database}
@@ -85,7 +83,6 @@ public final class Database {
 	 * This method <b>MUST NOT</b> attempt to open any connection to the database.
 	 * Database operations should be made using the other methods of this
 	 * {@link Database} class.
-	 * </p>
 	 * 
 	 * @param jdbiConsumer the consumer that mutates the backing {@link Jdbi}
 	 *                     instance
@@ -105,7 +102,6 @@ public final class Database {
 	 * This is suited for when the database operations don't need to return a
 	 * result. If you need to return a result, use
 	 * {@link #withHandle(HandleCallback)} instead.
-	 * </p>
 	 * 
 	 * @param handleConsumer a {@link Consumer} using the handle
 	 * @return a Mono that completes when the consumer returns. If an error is
@@ -127,7 +123,6 @@ public final class Database {
 	 * This is suited for when the database operations need to return a result. If
 	 * you don't need to return a result, use {@link #useHandle(HandleConsumer)}
 	 * instead.
-	 * </p>
 	 * 
 	 * @param <T>            the type of the desired return value
 	 * @param handleCallback a {@link Consumer} using the handle
@@ -151,7 +146,6 @@ public final class Database {
 	 * This is suited for when the database operations don't need to return a
 	 * result. If you need to return a result, use
 	 * {@link #withHandle(HandleCallback)} instead.
-	 * </p>
 	 * 
 	 * @param txConsumer a {@link Consumer} using the transaction
 	 * @return a Mono that completes when the consumer returns. If an error is
@@ -173,7 +167,6 @@ public final class Database {
 	 * This is suited for when the database operations need to return a result. If
 	 * you don't need to return a result, use {@link #useHandle(HandleConsumer)}
 	 * instead.
-	 * </p>
 	 * 
 	 * @param <T>        the type of the desired return value
 	 * @param txCallback a {@link Consumer} using the transaction
@@ -197,8 +190,8 @@ public final class Database {
 	 * This is suited for when the use of the extension doesn't need to return a
 	 * result. If you need to return a result, use
 	 * {@link #withExtension(Class, ExtensionCallback)} instead.
-	 * </p>
 	 * 
+	 * @param <E>               the extension type
 	 * @param extensionType     the type of extension to use
 	 * @param extensionConsumer the consumer that uses the extension
 	 * @return a Mono that completes when the consumer returns. If an error is
@@ -224,8 +217,9 @@ public final class Database {
 	 * This is suited for when the use of the extension needs to return a result. If
 	 * you don't need to return a result, use
 	 * {@link #useExtension(Class, ExtensionConsumer)} instead.
-	 * </p>
 	 * 
+	 * @param <T>               the return value type
+	 * @param <E>               the extension type
 	 * @param extensionType     the type of extension to use
 	 * @param extensionCallback the callback that uses the extension
 	 * @return a Mono that completes when the callback returns. If an error is

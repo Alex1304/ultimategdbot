@@ -97,7 +97,7 @@ public class InteractiveMenu {
 	 * 
 	 * <p>
 	 * If the whole text fits in one page (that is, if
-	 * <code>text.length() <= pageLength</code>), it will create a simple
+	 * <code>text.length() &lt;= pageLength</code>), it will create a simple
 	 * {@link InteractiveMenu} with no pagination items.
 	 * </p>
 	 * 

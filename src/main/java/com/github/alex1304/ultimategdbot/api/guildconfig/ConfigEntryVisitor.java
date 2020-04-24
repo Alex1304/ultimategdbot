@@ -5,7 +5,6 @@ import reactor.core.publisher.Mono;
 /**
  * Visitor that visits concrete types of {@link ConfigEntry}.
  * 
- * @param <D> Generic type D of {@link ConfigEntry}
  * @param <R> the return value type of the visitors
  */
 public interface ConfigEntryVisitor<R> {
