@@ -27,9 +27,9 @@
 	</developers>
 
 	<scm>
-		<url>https://github.com/Alex1304/ultimategdbot/tree/master</url>
-		<connection>scm:git:git://github.com/Alex1304/ultimategdbot.git</connection>
-		<developerConnection>scm:git:ssh://git@github.com/Alex1304/ultimategdbot.git</developerConnection>
+		<url>https://github.com/ultimategdbot/ultimategdbot/tree/master</url>
+		<connection>scm:git:git://github.com/ultimategdbot/ultimategdbot.git</connection>
+		<developerConnection>scm:git:ssh://git@github.com/ultimategdbot/ultimategdbot.git</developerConnection>
 		<tag>HEAD</tag>
 	</scm>
 
@@ -177,6 +177,7 @@
 			<groupId>com.google.code.findbugs</groupId>
 			<artifactId>jsr305</artifactId>
 			<version>3.0.1</version>
+			<scope>provided</scope>
 		</dependency>
 
 		<!-- Test dependencies -->

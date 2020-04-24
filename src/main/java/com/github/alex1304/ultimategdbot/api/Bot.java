@@ -97,9 +97,11 @@ public interface Bot {
 	Flux<GuildConfigurator<?>> configureGuild(Snowflake guildId);
 	
 	/**
-	 * Registers a guild configuration extension to this database. This allows to retrieve all configuration data via the {@link #
+	 * Registers a guild configuration extension to this database. This allows to
+	 * retrieve all configuration data via the {@link #configureGuild(Snowflake)}
+	 * method.
 	 * 
-	 * @param extension the extension to register
+	 * @param extension the extension class to register
 	 */
 	void registerGuildConfigExtension(Class<? extends GuildConfigDao<?>> extension);
 

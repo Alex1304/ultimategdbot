@@ -57,7 +57,9 @@ public interface Validator<T> extends Function<T, Mono<T>> {
 	/**
 	 * Creates a validator that denies all values.
 	 * 
-	 * @param <T> the type of value to validate
+	 * @param <T>            the type of value to validate
+	 * @param failureMessage the message to forward to the user if the validation
+	 *                       fails
 	 * @return a validator
 	 */
 	public static <T> Validator<T> denyingAll(String failureMessage) {

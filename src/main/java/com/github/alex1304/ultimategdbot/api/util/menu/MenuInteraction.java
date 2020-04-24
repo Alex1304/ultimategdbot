@@ -89,7 +89,7 @@ abstract class MenuInteraction {
 	 * 
 	 * @param <T>     the expected type of the value
 	 * @param varName teh variable name
-	 * @param value   the variable value
+	 * @return the value associated to the variable
 	 * @throws NoSuchElementException if no variable for the given name is set
 	 * @throws ClassCastException     if the value is not of type <code>T</code>
 	 */
