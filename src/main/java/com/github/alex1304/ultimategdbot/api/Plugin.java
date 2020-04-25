@@ -81,8 +81,8 @@ public class Plugin {
 	public Mono<Properties> getGitProperties() {
 		return Mono.fromCallable(() -> {
 			var props = new Properties();
-			try (var stream = Plugin.class
-					.getResourceAsStream("/" + getName().toLowerCase().replace(' ', '_') + ".git.properties")) {
+			try (var stream = ClassLoader.getSystemResourceAsStream(
+					"META-INF/git/" + getName().toLowerCase().replace(' ', '_') + ".git.properties")) {
 				if (stream != null) {
 					props.load(stream);
 				}
