@@ -82,10 +82,10 @@ class HelpCommand {
 					var formattedSubcommands = subcommands.stream()
 							.map(subcmd -> code(ctx.prefixUsed() + "help " + commandName + (subcmd.isEmpty() ? "" : " " + subcmd)))
 							.collect(joining("\n"));
+					if (subcommands.contains(selectedSubcommand)) {
+						return Mono.just(cmd);
+					}
 					if (!selectedSubcommand.isEmpty()) {
-						if (subcommands.contains(selectedSubcommand)) {
-							return Mono.just(cmd);
-						}
 						return Mono.error(new CommandFailedException("Subcommand " + code(selectedSubcommand) + " for command " + code(commandName) + " not found.\n"
 								+ "Available subcommands:\n" + formattedSubcommands));
 					}
