@@ -6,6 +6,7 @@ import com.github.alex1304.ultimategdbot.api.command.CommandKernel;
 import com.github.alex1304.ultimategdbot.api.database.Database;
 import com.github.alex1304.ultimategdbot.api.guildconfig.GuildConfigDao;
 import com.github.alex1304.ultimategdbot.api.guildconfig.GuildConfigurator;
+import com.github.alex1304.ultimategdbot.api.util.PropertyReader;
 
 import discord4j.core.DiscordClient;
 import discord4j.core.GatewayDiscordClient;
@@ -25,6 +26,13 @@ public interface Bot {
 	 * @return the config
 	 */
 	public BotConfig config();
+	
+	/**
+	 * Gets the properties of the bot.
+	 * 
+	 * @return the properties
+	 */
+	public PropertyReader properties();
 
 	/**
 	 * Gets the database of the bot.
