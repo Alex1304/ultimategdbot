@@ -38,4 +38,9 @@ class JdkPropertyReader implements PropertyReader {
 	public String toString() {
 		return "JdkPropertyReader{props=" + props + "}";
 	}
+
+	@Override
+	public Properties toJdkProperties() {
+		return (Properties) props.clone();
+	}
 }

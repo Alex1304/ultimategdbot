@@ -39,6 +39,11 @@ public interface PropertyReader {
 		public Stream<String> readAsStream(String name, String separator) {
 			return Stream.empty();
 		}
+
+		@Override
+		public Properties toJdkProperties() {
+			return new Properties();
+		}
 	};
 
 	/**
@@ -101,6 +106,16 @@ public interface PropertyReader {
 	 * @return a Stream containing all elements
 	 */
 	Stream<String> readAsStream(String key, String separator);
+	
+	/**
+	 * Converts this {@link PropertyReader} into a JDK {@link Properties} object.
+	 * Modifications to the properties object will not be reflected to this property
+	 * reader.
+	 * 
+	 * @return a {@link Properties} object containing same data as this
+	 *         {@link PropertyReader}.
+	 */
+	Properties toJdkProperties();
 
 	/**
 	 * Creates a new {@link PropertyReader} reading properties from the given

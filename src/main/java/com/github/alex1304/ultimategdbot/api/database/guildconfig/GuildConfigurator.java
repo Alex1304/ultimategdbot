@@ -16,7 +16,7 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import com.github.alex1304.ultimategdbot.api.database.Database;
+import com.github.alex1304.ultimategdbot.api.database.DatabaseService;
 
 import discord4j.rest.util.Snowflake;
 import reactor.core.publisher.Mono;
@@ -121,7 +121,7 @@ public class GuildConfigurator<D extends GuildConfigData<D>> {
 	 * @param database the database where to save data
 	 * @return a Mono completing when saving to database is successful
 	 */
-	public Mono<Void> saveConfig(Database database) {
+	public Mono<Void> saveConfig(DatabaseService database) {
 		var data = guildConfigData; // volatile read
 		return database.useExtension(daoType, dao -> dao.update(data))
 				.doOnSuccess(__ -> {
@@ -138,7 +138,7 @@ public class GuildConfigurator<D extends GuildConfigData<D>> {
 	 * @param database the database where to save the reset data
 	 * @return a Mono emitting the data after reset
 	 */
-	public Mono<D> resetConfig(Database database) {
+	public Mono<D> resetConfig(DatabaseService database) {
 		return database.withExtension(daoType, dao -> dao.resetAndGet(guildConfigData.guildId().asLong()))
 				.single()
 				.doOnNext(resetData -> {

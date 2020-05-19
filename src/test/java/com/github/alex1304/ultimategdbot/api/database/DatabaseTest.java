@@ -19,11 +19,11 @@ import discord4j.rest.util.Snowflake;
 
 public class DatabaseTest {
 	
-	private Database db;
+	private DatabaseService db;
 	
 	@BeforeEach
 	public void setUp() throws Exception {
-		db = Database.create(Jdbi.create("jdbc:h2:mem:test"));
+		db = DatabaseService.create(Jdbi.create("jdbc:h2:mem:test"));
 		db.configureJdbi(jdbi -> {
 			jdbi.registerRowMapper(BeanMapper.factory(TestBean.class));
 		});

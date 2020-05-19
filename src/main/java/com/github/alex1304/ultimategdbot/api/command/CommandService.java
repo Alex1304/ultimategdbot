@@ -28,11 +28,21 @@ import reactor.util.annotation.Nullable;
  */
 public class CommandService implements Service {
 	private static final Logger LOGGER = Loggers.getLogger(CommandService.class);
+	
+	private final String commandPrefix;
+	private final String flagPrefix;
+	private final Snowflake debugLogChannelId;
 
 	private final Set<CommandProvider> providers = synchronizedSet(new HashSet<>());
 	private final Set<Long> blacklist = synchronizedSet(new HashSet<>());
 	private final ConcurrentHashMap<Long, String> prefixByGuild = new ConcurrentHashMap<>();
 	private final PermissionChecker permissionChecker = new PermissionChecker();
+	
+	CommandService(String commandPrefix, String flagPrefix, @Nullable Snowflake debugLogChannelId) {
+		this.commandPrefix = commandPrefix;
+		this.flagPrefix = flagPrefix;
+		this.debugLogChannelId = debugLogChannelId;
+	}
 
 	@Override
 	public String getName() {
@@ -77,10 +87,10 @@ public class CommandService implements Service {
 		if (event.getMessage().getAuthor().map(User::isBot).orElse(true)) {
 			return Mono.empty();
 		}
-		var prefix = guildId.map(Snowflake::asLong).map(prefixByGuild::get).orElse(bot.config().getCommandPrefix());
+		var prefix = guildId.map(Snowflake::asLong).map(prefixByGuild::get).orElse(commandPrefix);
 		return Flux.fromIterable(providers)
 				.flatMap(provider -> event.getMessage().getChannel()
-						.flatMap(channel -> provider.provideFromEvent(bot, prefix, event, channel)))
+						.flatMap(channel -> provider.provideFromEvent(bot, prefix, flagPrefix, event, channel)))
 				.filter(executable -> {
 					if (authorId.map(id -> blacklist.contains(id.asLong())).orElse(false)) {
 						LOGGER.debug("Ignoring command due to AUTHOR being blacklisted: {}", executable);
@@ -176,5 +186,17 @@ public class CommandService implements Service {
 		}
 		prefixByGuild.put(guildId, prefix);
 		LOGGER.debug("Changed prefix for guild {}: {}", guildId, prefix);
+	}
+
+	public String getCommandPrefix() {
+		return commandPrefix;
+	}
+
+	public String getFlagPrefix() {
+		return flagPrefix;
+	}
+
+	public Snowflake getDebugLogChannelId() {
+		return debugLogChannelId;
 	}
 }

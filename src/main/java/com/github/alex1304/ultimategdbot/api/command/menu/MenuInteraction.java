@@ -6,6 +6,7 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.UnaryOperator;
 
+import com.github.alex1304.ultimategdbot.api.Translator;
 import com.github.alex1304.ultimategdbot.api.command.menu.InteractiveMenu.MenuTermination;
 
 import discord4j.core.object.entity.Message;
@@ -14,14 +15,25 @@ import reactor.util.annotation.Nullable;
 
 abstract class MenuInteraction {
 	
+	private final Translator translator;
 	private final ConcurrentHashMap<String, Object> contextVariables;
 	private final Message menuMessage;
 	private final MonoProcessor<MenuTermination> closeNotifier;
 
-	MenuInteraction(Message menuMessage, ConcurrentHashMap<String, Object> contextVariables, MonoProcessor<MenuTermination> closeNotifier) {
+	MenuInteraction(Translator translator, Message menuMessage, ConcurrentHashMap<String, Object> contextVariables, MonoProcessor<MenuTermination> closeNotifier) {
+		this.translator = translator;
 		this.menuMessage = menuMessage;
 		this.closeNotifier = closeNotifier;
 		this.contextVariables = contextVariables;
+	}
+
+	/**
+	 * Gets the translator associated to the context the interactive menu is run.
+	 * 
+	 * @return the translator
+	 */
+	public Translator getTranslator() {
+		return translator;
 	}
 
 	/**

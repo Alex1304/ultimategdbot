@@ -46,7 +46,7 @@ public class ServiceContainer {
 		if (loadingState != LoadingState.NOT_LOADED) {
 			throw new IllegalStateException("Cannot add more services after load");
 		}
-		declaredServices.putIfAbsent(factory.type(), factory.create(bot.properties()));
+		declaredServices.putIfAbsent(factory.type(), factory.create(bot.properties(factory.propertiesFileName())));
 	}
 	
 	/**

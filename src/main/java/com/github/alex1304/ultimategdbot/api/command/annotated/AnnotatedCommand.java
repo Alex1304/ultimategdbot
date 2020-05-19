@@ -15,23 +15,22 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import reactor.util.Logger;
-import reactor.util.Loggers;
-
 import com.github.alex1304.ultimategdbot.api.command.Command;
 import com.github.alex1304.ultimategdbot.api.command.CommandDocumentation;
 import com.github.alex1304.ultimategdbot.api.command.CommandDocumentationEntry;
 import com.github.alex1304.ultimategdbot.api.command.CommandFailedException;
+import com.github.alex1304.ultimategdbot.api.command.CommandService;
 import com.github.alex1304.ultimategdbot.api.command.Context;
 import com.github.alex1304.ultimategdbot.api.command.FlagInformation;
 import com.github.alex1304.ultimategdbot.api.command.PermissionDeniedException;
 import com.github.alex1304.ultimategdbot.api.command.PermissionLevel;
 import com.github.alex1304.ultimategdbot.api.command.Scope;
 import com.github.alex1304.ultimategdbot.api.command.annotated.paramconverter.ParamConversionException;
-import com.github.alex1304.ultimategdbot.api.util.Markdown;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.Logger;
+import reactor.util.Loggers;
 import reactor.util.annotation.Nullable;
 import reactor.util.function.Tuples;
 
@@ -181,8 +180,8 @@ public class AnnotatedCommand implements Command {
 			return Mono.just(true);
 		}
 		return Mono.zip(
-						ctx.bot().commandKernel().getPermissionChecker().isGranted(methodPermAnnot.name(), ctx),
-						ctx.bot().commandKernel().getPermissionChecker().isGranted(methodPermAnnot.level(), ctx))
+						ctx.bot().service(CommandService.class).getPermissionChecker().isGranted(methodPermAnnot.name(), ctx),
+						ctx.bot().service(CommandService.class).getPermissionChecker().isGranted(methodPermAnnot.level(), ctx))
 				.map(function(Boolean::logicalAnd));
 				
 	}

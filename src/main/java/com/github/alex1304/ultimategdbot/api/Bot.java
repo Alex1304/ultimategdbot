@@ -1,12 +1,10 @@
 package com.github.alex1304.ultimategdbot.api;
 
-import java.util.ResourceBundle;
 import java.util.Set;
 
-import com.github.alex1304.ultimategdbot.api.command.CommandService;
-import com.github.alex1304.ultimategdbot.api.database.Database;
 import com.github.alex1304.ultimategdbot.api.database.guildconfig.GuildConfigDao;
 import com.github.alex1304.ultimategdbot.api.database.guildconfig.GuildConfigurator;
+import com.github.alex1304.ultimategdbot.api.service.Service;
 import com.github.alex1304.ultimategdbot.api.util.PropertyReader;
 
 import discord4j.core.DiscordClient;
@@ -22,32 +20,24 @@ import reactor.core.publisher.Mono;
 public interface Bot {
 	
 	/**
-	 * Gets the config of the bot.
+	 * Gets the properties of the bot corresponding to the given name
 	 * 
-	 * @return the config
-	 */
-	BotConfig config();
-	
-	/**
-	 * Gets the properties of the bot.
-	 * 
+	 * @param name the name of the properties file
 	 * @return the properties
 	 */
-	PropertyReader properties();
+	PropertyReader properties(String name);
 	
 	/**
-	 * Gets the database of the bot.
+	 * Retrieves a service from the given class. The service must have been added on
+	 * setup by one of the plugins.
 	 * 
-	 * @return the database
+	 * @param <S>         the type of service
+	 * @param serviceType the class of the service
+	 * @return the service instance
+	 * @throws IllegalArgumentException if the class does not correspond to a
+	 *                                  registered service
 	 */
-	Database database();
-
-	/**
-	 * Gets the command kernel of this bot.
-	 * 
-	 * @return the command kernel
-	 */
-	CommandService commandKernel();
+	<S extends Service> S service(Class<S> serviceType);
 
 	/**
 	 * Gets the REST client of the bot.

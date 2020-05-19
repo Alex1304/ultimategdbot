@@ -23,5 +23,7 @@ public interface Service {
 	 * @param bot the bot instance
 	 * @return a Mono completing when the ready action is complete
 	 */
-	Mono<Void> onReady(Bot bot);
+	default Mono<Void> onReady(Bot bot) {
+		return Mono.empty();
+	}
 }

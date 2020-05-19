@@ -2,6 +2,7 @@ package com.github.alex1304.ultimategdbot.api.command.menu;
 
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.github.alex1304.ultimategdbot.api.Translator;
 import com.github.alex1304.ultimategdbot.api.command.menu.InteractiveMenu.MenuTermination;
 
 import discord4j.core.object.entity.Message;
@@ -11,9 +12,9 @@ public class ReactionMenuInteraction extends MenuInteraction {
 	
 	private final ReactionToggleEvent event;
 
-	ReactionMenuInteraction(Message menuMessage, ConcurrentHashMap<String, Object> contextVariables, MonoProcessor<MenuTermination> closeNotifier,
+	ReactionMenuInteraction(Translator tr, Message menuMessage, ConcurrentHashMap<String, Object> contextVariables, MonoProcessor<MenuTermination> closeNotifier,
 			ReactionToggleEvent event) {
-		super(menuMessage, contextVariables, closeNotifier);
+		super(tr, menuMessage, contextVariables, closeNotifier);
 		this.event = event;
 	}
 

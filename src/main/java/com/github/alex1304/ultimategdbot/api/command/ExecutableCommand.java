@@ -42,13 +42,13 @@ public class ExecutableCommand {
 	
 	private Mono<?> checkPermission() {
 		return Mono.just(command.getRequiredPermission())
-				.filterWhen(perm -> context.bot().commandKernel().getPermissionChecker().isGranted(perm, context))
+				.filterWhen(perm -> context.bot().service(CommandService.class).getPermissionChecker().isGranted(perm, context))
 				.switchIfEmpty(Mono.error(new PermissionDeniedException()));
 	}
 	
 	private Mono<?> checkPermissionLevel() {
 		return Mono.just(command.getMinimumPermissionLevel())
-				.filterWhen(perm -> context.bot().commandKernel().getPermissionChecker().isGranted(perm, context))
+				.filterWhen(perm -> context.bot().service(CommandService.class).getPermissionChecker().isGranted(perm, context))
 				.switchIfEmpty(Mono.error(new PermissionDeniedException()));
 	}
 	

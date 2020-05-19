@@ -18,6 +18,8 @@ import org.jdbi.v3.core.transaction.SerializableTransactionRunner;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 import org.reactivestreams.Publisher;
 
+import com.github.alex1304.ultimategdbot.api.service.Service;
+
 import discord4j.rest.util.Snowflake;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -27,11 +29,11 @@ import reactor.core.scheduler.Schedulers;
  * Database backed by <a href="https://jdbi.org">JDBI</a> with reactive capabilities.
  * 
  */
-public final class Database {
+public final class DatabaseService implements Service {
 	
 	private final Jdbi jdbi;
 	
-	private Database(Jdbi jdbi) {
+	private DatabaseService(Jdbi jdbi) {
 		this.jdbi = jdbi;
 	}
 	
@@ -52,9 +54,9 @@ public final class Database {
 	 * enable support automatic retrying of failed serializable transactions.
 	 * 
 	 * @param jdbi the {@link Jdbi} instance backing the database
-	 * @return a new {@link Database}
+	 * @return a new {@link DatabaseService}
 	 */
-	public static Database create(Jdbi jdbi) {
+	public static DatabaseService create(Jdbi jdbi) {
 		requireNonNull(jdbi, "jdbi");
 		jdbi.installPlugin(new SqlObjectPlugin());
 		jdbi.registerColumnMapper(Snowflake.class, (rs, col, ctx) -> {
@@ -71,7 +73,12 @@ public final class Database {
 			}
 		});
 		jdbi.setTransactionHandler(new SerializableTransactionRunner());
-		return new Database(jdbi);
+		return new DatabaseService(jdbi);
+	}
+
+	@Override
+	public String getName() {
+		return "database";
 	}
 
 	/**
@@ -82,7 +89,7 @@ public final class Database {
 	 * <p>
 	 * This method <b>MUST NOT</b> attempt to open any connection to the database.
 	 * Database operations should be made using the other methods of this
-	 * {@link Database} class.
+	 * {@link DatabaseService} class.
 	 * 
 	 * @param jdbiConsumer the consumer that mutates the backing {@link Jdbi}
 	 *                     instance
@@ -133,7 +140,7 @@ public final class Database {
 	public <T> Mono<T> withHandle(HandleCallback<T, ?> handleCallback) {
 		requireNonNull(handleCallback, "handleCallback");
 		return Mono.fromCallable(() -> jdbi.withHandle(handleCallback))
-				.transform(Database::transform);
+				.transform(DatabaseService::transform);
 	}
 	
 	/**
@@ -177,7 +184,7 @@ public final class Database {
 	public <T> Mono<T> inTransaction(HandleCallback<T, ?> txCallback) {
 		requireNonNull(txCallback, "txCallback");
 		return Mono.fromCallable(() -> jdbi.inTransaction(txCallback))
-				.transform(Database::transform);
+				.transform(DatabaseService::transform);
 	}
 	
 	/**
@@ -204,7 +211,7 @@ public final class Database {
 		return Mono.<Void>fromCallable(() -> {
 			jdbi.useExtension(extensionType, extensionConsumer);
 			return null;
-		}).transform(Database::transform);
+		}).transform(DatabaseService::transform);
 	}
 
 	/**
@@ -230,7 +237,7 @@ public final class Database {
 		requireNonNull(extensionType, "extensionType");
 		requireNonNull(extensionCallback, "extensionCallback");
 		return Mono.fromCallable(() -> jdbi.withExtension(extensionType, extensionCallback))
-				.transform(Database::transform);
+				.transform(DatabaseService::transform);
 	}
 	
 	private static <T> Publisher<T> transform(Publisher<T> publisher) {

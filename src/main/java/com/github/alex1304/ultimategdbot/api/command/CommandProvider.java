@@ -55,7 +55,7 @@ public class CommandProvider {
 	 * @return an ExecutableCommand if the event results in a command to be
 	 *         triggered, an empty Optional otherwise.
 	 */
-	public Mono<ExecutableCommand> provideFromEvent(Bot bot, String prefix, MessageCreateEvent event, MessageChannel channel) {
+	public Mono<ExecutableCommand> provideFromEvent(Bot bot, String prefix, String flagPrefix, MessageCreateEvent event, MessageChannel channel) {
 		requireNonNull(bot, "bot cannot be null");
 		requireNonNull(prefix, "prefix cannot be null");
 		requireNonNull(event, "event cannot be null");
@@ -74,7 +74,7 @@ public class CommandProvider {
 			if (prefixUsed == null) {
 				return Mono.empty();
 			}
-			var parsed = MessageUtils.tokenize(bot.config().getFlagPrefix(), content);
+			var parsed = MessageUtils.tokenize(flagPrefix, content);
 			var flags = parsed.getT1();
 			var args = parsed.getT2();
 			if (args.isEmpty()) {
