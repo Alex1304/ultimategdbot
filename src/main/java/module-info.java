@@ -3,13 +3,13 @@ module ultimategdbot.api {
 	exports com.github.alex1304.ultimategdbot.api.util;
 	exports com.github.alex1304.ultimategdbot.api.database;
 	exports com.github.alex1304.ultimategdbot.api.command.annotated.paramconverter;
-	exports com.github.alex1304.ultimategdbot.api.util.menu;
+	exports com.github.alex1304.ultimategdbot.api.command.menu;
 	exports com.github.alex1304.ultimategdbot.api.command.annotated;
-	exports com.github.alex1304.ultimategdbot.api.guildconfig;
+	exports com.github.alex1304.ultimategdbot.api.database.guildconfig;
 	exports com.github.alex1304.ultimategdbot.api.command;
 
 	opens com.github.alex1304.ultimategdbot.api.database;
-	opens com.github.alex1304.ultimategdbot.api.guildconfig;
+	opens com.github.alex1304.ultimategdbot.api.database.guildconfig;
 	
 	requires io.netty.codec.http;
 	requires reactor.extra;

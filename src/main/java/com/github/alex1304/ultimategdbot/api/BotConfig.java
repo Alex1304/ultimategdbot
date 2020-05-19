@@ -8,7 +8,7 @@ import java.time.Duration;
 import java.util.Optional;
 import java.util.Set;
 
-import com.github.alex1304.ultimategdbot.api.util.menu.PaginationControls;
+import com.github.alex1304.ultimategdbot.api.command.menu.PaginationControls;
 
 import discord4j.core.object.presence.Presence;
 import discord4j.discordjson.json.gateway.StatusUpdate;

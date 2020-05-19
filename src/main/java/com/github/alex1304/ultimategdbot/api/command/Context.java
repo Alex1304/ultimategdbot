@@ -3,9 +3,11 @@ package com.github.alex1304.ultimategdbot.api.command;
 import static java.util.Objects.requireNonNull;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.function.Consumer;
 
 import com.github.alex1304.ultimategdbot.api.Bot;
+import com.github.alex1304.ultimategdbot.api.Translator;
 
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.entity.Message;
@@ -15,7 +17,7 @@ import discord4j.core.spec.MessageCreateSpec;
 import discord4j.rest.http.client.ClientException;
 import reactor.core.publisher.Mono;
 
-public class Context {
+public class Context implements Translator {
 	
 	private final Command command;
 	private final MessageCreateEvent event;
@@ -103,10 +105,8 @@ public class Context {
 						return Mono.empty();
 					}
 					return author.get().getPrivateChannel()
-							.flatMap(pc -> pc.createMessage("I was unable to send a reply to your command in <#"
-									+ event.getMessage().getChannelId().asString()
-									+ ">. Make sure that I have permissions to talk and send embeds there.\nError response: `"
-									+ e.getErrorResponse() + "`"))
+							.flatMap(pc -> pc.createMessage(translate("generic", "command_reply_error",
+									event.getMessage().getChannelId().asString(), e.getErrorResponse())))
 							.onErrorResume(__ -> Mono.empty())
 							.then(Mono.empty());
 				});
@@ -142,6 +142,11 @@ public class Context {
 	 */
 	public MessageChannel channel() {
 		return channel;
+	}
+
+	@Override
+	public Locale getLocale() {
+		return Locale.ENGLISH;
 	}
 
 	@Override

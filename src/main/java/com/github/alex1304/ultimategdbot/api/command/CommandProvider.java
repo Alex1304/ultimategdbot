@@ -10,7 +10,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import com.github.alex1304.ultimategdbot.api.Bot;
-import com.github.alex1304.ultimategdbot.api.util.InputTokenizer;
+import com.github.alex1304.ultimategdbot.api.util.MessageUtils;
 
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.entity.channel.MessageChannel;
@@ -74,7 +74,7 @@ public class CommandProvider {
 			if (prefixUsed == null) {
 				return Mono.empty();
 			}
-			var parsed = InputTokenizer.tokenize(bot.config().getFlagPrefix(), content);
+			var parsed = MessageUtils.tokenize(bot.config().getFlagPrefix(), content);
 			var flags = parsed.getT1();
 			var args = parsed.getT2();
 			if (args.isEmpty()) {

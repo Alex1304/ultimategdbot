@@ -8,7 +8,7 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 import com.github.alex1304.ultimategdbot.api.command.CommandProvider;
-import com.github.alex1304.ultimategdbot.api.guildconfig.GuildConfigDao;
+import com.github.alex1304.ultimategdbot.api.database.guildconfig.GuildConfigDao;
 
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;

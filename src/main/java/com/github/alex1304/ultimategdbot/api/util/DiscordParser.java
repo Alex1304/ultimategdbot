@@ -1,6 +1,7 @@
 package com.github.alex1304.ultimategdbot.api.util;
 
 import com.github.alex1304.ultimategdbot.api.Bot;
+import com.github.alex1304.ultimategdbot.api.Translator;
 
 import discord4j.core.object.entity.Guild;
 import discord4j.core.object.entity.Role;
@@ -21,11 +22,13 @@ public class DiscordParser {
 	 * Parses the input into a Discord user. Emits {@link IllegalArgumentException}
 	 * if not found.
 	 * 
+	 * @param tr  the translator to use to translate the error message in case of
+	 *            failure
 	 * @param bot the bot used to make requests to Discord
 	 * @param str the input
 	 * @return a Mono emitting the found user
 	 */
-	public static Mono<User> parseUser(Bot bot, String str) {
+	public static Mono<User> parseUser(Translator tr, Bot bot, String str) {
 		return Mono.just(str)
 				.map(Snowflake::of)
 				.onErrorResume(e -> Mono.just(str.substring(2, str.length() - 1))
@@ -37,19 +40,21 @@ public class DiscordParser {
 						.filter(user -> user.getTag().startsWith(str))
 						.next()
 						.single())
-				.onErrorMap(e -> new IllegalArgumentException("Cannot find user '" + str + "'."));
+				.onErrorMap(e -> new IllegalArgumentException(tr.translate("generic", "user_not_found", str)));
 	}
 	
 	/**
 	 * Parses the input into a Discord role. Emits {@link IllegalArgumentException}
 	 * if not found.
 	 * 
+	 * @param tr      the translator to use to translate the error message in case
+	 *                of failure
 	 * @param bot     the bot used to make requests to Discord
 	 * @param guildId the ID of the guild the desired role belongs to
 	 * @param str     the input
 	 * @return a Mono emitting the found role
 	 */
-	public static Mono<Role> parseRole(Bot bot, Snowflake guildId, String str) {
+	public static Mono<Role> parseRole(Translator tr, Bot bot, Snowflake guildId, String str) {
 		return Mono.just(str)
 				.map(Snowflake::of)
 				.onErrorResume(e -> Mono.just(str.substring(3, str.length() - 1))
@@ -61,19 +66,21 @@ public class DiscordParser {
 						.filter(r -> r.getName().toLowerCase().startsWith(str.toLowerCase()))
 						.next()
 						.single())
-				.onErrorMap(e -> new IllegalArgumentException("Cannot find role '" + str + "'."));
+				.onErrorMap(e -> new IllegalArgumentException(tr.translate("generic", "user_not_found", str)));
 	}
 	
 	/**
 	 * Parses the input into a Discord channel. Emits
 	 * {@link IllegalArgumentException} if not found.
 	 * 
+	 * @param tr      the translator to use to translate the error message in case
+	 *                of failure
 	 * @param bot     the bot used to make requests to Discord
 	 * @param guildId the ID of the guild the desired channel belongs to
 	 * @param str     the input
 	 * @return a Mono emitting the found channel
 	 */
-	public static Mono<GuildChannel> parseGuildChannel(Bot bot, Snowflake guildId, String str) {
+	public static Mono<GuildChannel> parseGuildChannel(Translator tr, Bot bot, Snowflake guildId, String str) {
 		return Mono.just(str)
 				.map(Snowflake::of)
 				.onErrorResume(e -> Mono.just(str.substring(2, str.length() - 1))
@@ -85,7 +92,7 @@ public class DiscordParser {
 						.filter(r -> r.getName().toLowerCase().startsWith(str.toLowerCase()))
 						.next()
 						.single())
-				.onErrorMap(e -> new IllegalArgumentException("Cannot find channel '" + str + "'."));
+				.onErrorMap(e -> new IllegalArgumentException(tr.translate("generic", "channel_not_found", str)));
 	}
 	
 }

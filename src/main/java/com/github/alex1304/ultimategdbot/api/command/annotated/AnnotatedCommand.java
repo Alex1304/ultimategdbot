@@ -134,8 +134,8 @@ public class AnnotatedCommand implements Command {
 								firstArgIndex.set(1);
 								return mainMethodOptional;
 							});
-					var invalidSyntax = new CommandFailedException("Invalid syntax. See "
-							+ Markdown.code(ctx.prefixUsed() + "help " + args.get(0)) + " for more information.");
+					var invalidSyntax = new CommandFailedException(ctx.translate("generic", "invalid_syntax",
+							ctx.prefixUsed() + "help " + args.get(0)));
 					return Mono.justOrEmpty(matchingMethod)
 							.switchIfEmpty(Mono.error(invalidSyntax))
 							.filterWhen(method -> isSubcommandGranted(method, ctx))
@@ -147,7 +147,7 @@ public class AnnotatedCommand implements Command {
 										.skip(firstArgIndex.get());
 								return Flux.zip(parameters, argTokens)
 										.concatMap(function((param, arg) -> provider.convert(ctx, arg, param.getType())
-												.onErrorMap(e -> new ParamConversionException(formatParamName(param.getName()), arg, e.getMessage()))))
+												.onErrorMap(e -> new ParamConversionException(ctx, formatParamName(param.getName()), arg, e.getMessage()))))
 										.collectList()
 										.defaultIfEmpty(List.of())
 										.map(argList -> new ArrayList<Object>(argList))

@@ -5,15 +5,13 @@ import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
-import reactor.util.Logger;
-import reactor.util.Loggers;
-
 import com.github.alex1304.ultimategdbot.api.database.DatabaseException;
-import com.github.alex1304.ultimategdbot.api.util.BotUtils;
 import com.github.alex1304.ultimategdbot.api.util.Markdown;
 
 import discord4j.rest.http.client.ClientException;
 import reactor.core.publisher.Mono;
+import reactor.util.Logger;
+import reactor.util.Loggers;
 
 /**
  * Provides a convenient way to add error handlers for bot commands.
@@ -58,8 +56,7 @@ public class CommandErrorHandler {
 //		addHandler(InvalidSyntaxException.class, (e, ctx) -> ctx.reply(":no_entry_sign: Invalid syntax!"
 //				+ "\n```\n" + ctx.getPrefixUsed() + ctx.getArgs().get(0) + " " + ctx.getCommand().getSyntax()
 //				+ "\n```\n" + "See `" + ctx.getPrefixUsed() + "help " + ctx.getArgs().get(0) + "` for more information.").then());
-		addHandler(PermissionDeniedException.class, (e, ctx) ->
-				ctx.reply(":no_entry_sign: You are not granted the privileges to run this command.").then());
+		addHandler(PermissionDeniedException.class, (e, ctx) -> ctx.reply(ctx.translate("generic", "command_perm_denied")).then());
 		addHandler(ClientException.class, (e, ctx) -> {
 			LOGGER.debug("Discord ClientException thrown when using a command. User input: "
 					+ ctx.event().getMessage().getContent() + ", Error:", e);
@@ -67,18 +64,17 @@ public class CommandErrorHandler {
 			var message = responseOptional.map(response -> {
 				var sb = new StringBuilder();
 				response.getFields().forEach((k, v) -> sb.append(k).append(": ").append(String.valueOf(v)).append("\n"));
-				return ":no_entry_sign: Discord returned an error when executing this command: "
+				return ctx.translate("generic", "command_discord_error") + "\n"
 						+ Markdown.code(e.getStatus().code() + " " + e.getStatus().reasonPhrase()) + "\n"
 						+ Markdown.codeBlock(sb.toString())
-						+ (e.getStatus().code() == 403 ? "Make sure that I have sufficient permissions in this server and try again." : "");
-			}).orElse(":no_entry_sign: Discord returned an error when executing this command.");
+						+ (e.getStatus().code() == 403 ? ctx.translate("generic", "command_ensure_perms") : "");
+			}).orElse(ctx.translate("generic", "command_discord_error"));
 			
 			return ctx.reply(message).then();
 		});
 		addHandler(DatabaseException.class, (e, ctx) -> Mono.when(
-				ctx.reply(":no_entry_sign: An error occured when accessing the database. Try again."),
-				Mono.fromRunnable(() -> LOGGER.error("A database error occured", e)),
-				BotUtils.logCommandError(LOGGER, ctx, e)));
+				ctx.reply(ctx.translate("generic", "command_database_access_error")),
+				Mono.fromRunnable(() -> LOGGER.error("A database error occured", e))));
 	}
 	
 	@Override

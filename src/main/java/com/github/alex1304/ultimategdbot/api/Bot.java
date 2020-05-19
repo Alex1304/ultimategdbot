@@ -1,11 +1,12 @@
 package com.github.alex1304.ultimategdbot.api;
 
+import java.util.ResourceBundle;
 import java.util.Set;
 
-import com.github.alex1304.ultimategdbot.api.command.CommandKernel;
+import com.github.alex1304.ultimategdbot.api.command.CommandService;
 import com.github.alex1304.ultimategdbot.api.database.Database;
-import com.github.alex1304.ultimategdbot.api.guildconfig.GuildConfigDao;
-import com.github.alex1304.ultimategdbot.api.guildconfig.GuildConfigurator;
+import com.github.alex1304.ultimategdbot.api.database.guildconfig.GuildConfigDao;
+import com.github.alex1304.ultimategdbot.api.database.guildconfig.GuildConfigurator;
 import com.github.alex1304.ultimategdbot.api.util.PropertyReader;
 
 import discord4j.core.DiscordClient;
@@ -25,56 +26,56 @@ public interface Bot {
 	 * 
 	 * @return the config
 	 */
-	public BotConfig config();
+	BotConfig config();
 	
 	/**
 	 * Gets the properties of the bot.
 	 * 
 	 * @return the properties
 	 */
-	public PropertyReader properties();
-
+	PropertyReader properties();
+	
 	/**
 	 * Gets the database of the bot.
 	 * 
 	 * @return the database
 	 */
-	public Database database();
+	Database database();
 
 	/**
 	 * Gets the command kernel of this bot.
 	 * 
 	 * @return the command kernel
 	 */
-	public CommandKernel commandKernel();
+	CommandService commandKernel();
 
 	/**
 	 * Gets the REST client of the bot.
 	 * 
 	 * @return the Discord client
 	 */
-	public DiscordClient rest();
+	DiscordClient rest();
 
 	/**
 	 * Gets the gateway client of the bot.
 	 * 
 	 * @return the gateway client
 	 */
-	public GatewayDiscordClient gateway();
+	GatewayDiscordClient gateway();
 
 	/**
 	 * Gets a Set containing all successfully loaded plugins.
 	 * 
 	 * @return a Set of Plugin
 	 */
-	public Set<Plugin> plugins();
+	Set<Plugin> plugins();
 	
 	/**
 	 * Gets the bot owner.
 	 * 
 	 * @return a Mono emitting the bot owner
 	 */
-	public Mono<User> owner();
+	Mono<User> owner();
 	
 	/**
 	 * Sends a message into the debug log channel.
@@ -82,7 +83,7 @@ public interface Bot {
 	 * @param message the message to send
 	 * @return a Mono completing when the log message is sent
 	 */
-	public Mono<Void> log(String message);
+	Mono<Void> log(String message);
 	
 	/**
 	 * Gets the String representation of an emoji installed on one of the emoji
@@ -92,7 +93,7 @@ public interface Bot {
 	 * @param emojiName the name of the emoji to look for
 	 * @return a Mono emitting the emoji code corresponding to the given name
 	 */
-	public Mono<String> emoji(String emojiName);
+	Mono<String> emoji(String emojiName);
 	
 	/**
 	 * Retrieves all registered configurators for the given guild referenced by its
@@ -116,5 +117,5 @@ public interface Bot {
 	/**
 	 * Starts the bot. This method blocks until the bot disconnects.
 	 */
-	public void start();
+	void start();
 }
