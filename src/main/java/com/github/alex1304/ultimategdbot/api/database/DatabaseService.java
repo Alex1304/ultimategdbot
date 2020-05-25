@@ -1,8 +1,12 @@
 package com.github.alex1304.ultimategdbot.api.database;
 
+import static java.util.Collections.synchronizedSet;
 import static java.util.Objects.requireNonNull;
 
 import java.sql.Types;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.Consumer;
 
 import org.jdbi.v3.core.Handle;
@@ -18,6 +22,9 @@ import org.jdbi.v3.core.transaction.SerializableTransactionRunner;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 import org.reactivestreams.Publisher;
 
+import com.github.alex1304.ultimategdbot.api.Bot;
+import com.github.alex1304.ultimategdbot.api.database.guildconfig.GuildConfigDao;
+import com.github.alex1304.ultimategdbot.api.database.guildconfig.GuildConfigurator;
 import com.github.alex1304.ultimategdbot.api.service.Service;
 
 import discord4j.rest.util.Snowflake;
@@ -30,10 +37,13 @@ import reactor.core.scheduler.Schedulers;
  * 
  */
 public final class DatabaseService implements Service {
-	
+
+	private final Bot bot;
 	private final Jdbi jdbi;
+	private final Set<Class<? extends GuildConfigDao<?>>> guildConfigExtensions = synchronizedSet(new HashSet<>());
 	
-	private DatabaseService(Jdbi jdbi) {
+	private DatabaseService(Bot bot, Jdbi jdbi) {
+		this.bot = bot;
 		this.jdbi = jdbi;
 	}
 	
@@ -56,7 +66,7 @@ public final class DatabaseService implements Service {
 	 * @param jdbi the {@link Jdbi} instance backing the database
 	 * @return a new {@link DatabaseService}
 	 */
-	public static DatabaseService create(Jdbi jdbi) {
+	public static DatabaseService create(Bot bot, Jdbi jdbi) {
 		requireNonNull(jdbi, "jdbi");
 		jdbi.installPlugin(new SqlObjectPlugin());
 		jdbi.registerColumnMapper(Snowflake.class, (rs, col, ctx) -> {
@@ -73,12 +83,44 @@ public final class DatabaseService implements Service {
 			}
 		});
 		jdbi.setTransactionHandler(new SerializableTransactionRunner());
-		return new DatabaseService(jdbi);
+		return new DatabaseService(bot, jdbi);
 	}
 
 	@Override
 	public String getName() {
 		return "database";
+	}
+	
+	/**
+	 * Retrieves all registered configurators for the given guild referenced by its
+	 * ID. Empty configuration data will be inserted in database for this specific
+	 * guild if it doesn't exist yet. Configurators are emitted in alphabetical case
+	 * insensitive order.
+	 * 
+	 * @param guildId the guild ID
+	 * @return a Flux emitting all configurators for the guild
+	 */
+	public Flux<GuildConfigurator<?>> configureGuild(Snowflake guildId) {
+		return Flux.defer(() -> {
+			if (bot == null) {
+				return Mono.error(new IllegalStateException("Service not ready"));
+			}
+			return Flux.fromIterable(guildConfigExtensions)
+					.flatMap(extension -> withExtension(extension, dao -> dao.getOrCreate(guildId.asLong())))
+					.<GuildConfigurator<?>>map(data -> data.configurator(bot))
+					.sort(Comparator.comparing(GuildConfigurator::getName, String.CASE_INSENSITIVE_ORDER));
+		});
+	}
+	
+	/**
+	 * Registers a guild configuration extension to this database. This allows to
+	 * retrieve all configuration data via the {@link #configureGuild(Snowflake)}
+	 * method.
+	 * 
+	 * @param extension the extension class to register
+	 */
+	public void registerGuildConfigExtension(Class<? extends GuildConfigDao<?>> extension) {
+		guildConfigExtensions.add(extension);
 	}
 
 	/**

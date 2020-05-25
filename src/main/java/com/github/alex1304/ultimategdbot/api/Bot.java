@@ -2,16 +2,12 @@ package com.github.alex1304.ultimategdbot.api;
 
 import java.util.Set;
 
-import com.github.alex1304.ultimategdbot.api.database.guildconfig.GuildConfigDao;
-import com.github.alex1304.ultimategdbot.api.database.guildconfig.GuildConfigurator;
 import com.github.alex1304.ultimategdbot.api.service.Service;
 import com.github.alex1304.ultimategdbot.api.util.PropertyReader;
 
 import discord4j.core.DiscordClient;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.object.entity.User;
-import discord4j.rest.util.Snowflake;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
@@ -20,12 +16,19 @@ import reactor.core.publisher.Mono;
 public interface Bot {
 	
 	/**
-	 * Gets the properties of the bot corresponding to the given name
+	 * Gets the global config of the bot.
 	 * 
-	 * @param name the name of the properties file
-	 * @return the properties
+	 * @return the config
 	 */
-	PropertyReader properties(String name);
+	PropertyReader config();
+	
+	/**
+	 * Gets a config from an extra source which name is given.
+	 * 
+	 * @param name the name of the config source
+	 * @return a Mono emitting the config properties
+	 */
+	Mono<PropertyReader> extraConfig(String name);
 	
 	/**
 	 * Retrieves a service from the given class. The service must have been added on
@@ -58,7 +61,7 @@ public interface Bot {
 	 * 
 	 * @return a Set of Plugin
 	 */
-	Set<Plugin> plugins();
+	Set<PluginMetadata> plugins();
 	
 	/**
 	 * Gets the bot owner.
@@ -66,46 +69,19 @@ public interface Bot {
 	 * @return a Mono emitting the bot owner
 	 */
 	Mono<User> owner();
-	
+
 	/**
-	 * Sends a message into the debug log channel.
+	 * Logs a message.
 	 * 
-	 * @param message the message to send
-	 * @return a Mono completing when the log message is sent
+	 * @param message the message to log
+	 * @return a Mono completing when logging is successful
 	 */
 	Mono<Void> log(String message);
 	
 	/**
-	 * Gets the String representation of an emoji installed on one of the emoji
-	 * servers. If the emoji is not found, the returned value is the given name
-	 * wrapped in colons.
-	 * 
-	 * @param emojiName the name of the emoji to look for
-	 * @return a Mono emitting the emoji code corresponding to the given name
-	 */
-	Mono<String> emoji(String emojiName);
-	
-	/**
-	 * Retrieves all registered configurators for the given guild referenced by its
-	 * ID. Empty configuration data will be inserted in database for this specific
-	 * guild if it doesn't exist yet.
-	 * 
-	 * @param guildId the guild ID
-	 * @return a Flux emitting all configurators for the guild
-	 */
-	Flux<GuildConfigurator<?>> configureGuild(Snowflake guildId);
-	
-	/**
-	 * Registers a guild configuration extension to this database. This allows to
-	 * retrieve all configuration data via the {@link #configureGuild(Snowflake)}
-	 * method.
-	 * 
-	 * @param extension the extension class to register
-	 */
-	void registerGuildConfigExtension(Class<? extends GuildConfigDao<?>> extension);
-
-	/**
 	 * Starts the bot. This method blocks until the bot disconnects.
+	 * 
+	 * @return a Mono that gives asynchronous capabilities to the start method.
 	 */
-	void start();
+	Mono<Void> start();
 }

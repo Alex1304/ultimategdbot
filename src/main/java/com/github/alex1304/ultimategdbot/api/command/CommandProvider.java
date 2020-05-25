@@ -10,9 +10,20 @@ import java.util.Optional;
 import java.util.Set;
 
 import com.github.alex1304.ultimategdbot.api.Bot;
+import com.github.alex1304.ultimategdbot.api.command.annotated.AnnotatedCommand;
+import com.github.alex1304.ultimategdbot.api.command.annotated.paramconverter.GuildChannelConverter;
+import com.github.alex1304.ultimategdbot.api.command.annotated.paramconverter.IntConverter;
+import com.github.alex1304.ultimategdbot.api.command.annotated.paramconverter.LongConverter;
+import com.github.alex1304.ultimategdbot.api.command.annotated.paramconverter.ParamConverter;
+import com.github.alex1304.ultimategdbot.api.command.annotated.paramconverter.RoleConverter;
+import com.github.alex1304.ultimategdbot.api.command.annotated.paramconverter.StringConverter;
+import com.github.alex1304.ultimategdbot.api.command.annotated.paramconverter.UserConverter;
 import com.github.alex1304.ultimategdbot.api.util.MessageUtils;
 
 import discord4j.core.event.domain.message.MessageCreateEvent;
+import discord4j.core.object.entity.Role;
+import discord4j.core.object.entity.User;
+import discord4j.core.object.entity.channel.GuildChannel;
 import discord4j.core.object.entity.channel.MessageChannel;
 import discord4j.rest.util.Snowflake;
 import reactor.core.publisher.Mono;
@@ -21,12 +32,27 @@ import reactor.core.publisher.Mono;
  * Provides a set of commands. Each command handler provides their own way to
  * handle errors via a {@link CommandErrorHandler}.
  */
-public class CommandProvider {
+public final class CommandProvider {
 	
+	private final String name;
 	private CommandErrorHandler errorHandler = new CommandErrorHandler();
 	private PermissionChecker permissionChecker = new PermissionChecker();
 	private final Map<String, Command> commandMap = new HashMap<>();
+	private final Map<Class<?>, ParamConverter<?>> paramConverters = initDefaultConverters();
 	
+	public CommandProvider(String name) {
+		this.name = requireNonNull(name);
+	}
+	
+	/**
+	 * Gets the name of this command provider.
+	 * 
+	 * @return the name of this command provider
+	 */
+	public String getName() {
+		return name;
+	}
+
 	/**
 	 * Adds a command to this provider.
 	 * 
@@ -37,6 +63,20 @@ public class CommandProvider {
 		for (var alias : command.getAliases()) {
 			commandMap.put(alias, command);
 		}
+	}
+	
+	/**
+	 * Adds an annotated object as a command into this provider. This is equivalent
+	 * to doing:
+	 * 
+	 * <pre>
+	 * provider.add(AnnotatedCommand.from(object, provider));
+	 * </pre>
+	 * 
+	 * @param annotated the annotated object to add
+	 */
+	public void addAnnotated(Object annotated) {
+		add(AnnotatedCommand.from(annotated, this));
 	}
 	
 	/**
@@ -141,6 +181,37 @@ public class CommandProvider {
 	 */
 	public Set<Command> getProvidedCommands() {
 		return unmodifiableSet(new HashSet<>(commandMap.values()));
+	}
+	
+	/**
+	 * Adds a new param converter to this annotated command provider.
+	 * 
+	 * @param converter the converter to add
+	 */
+	public void addParamConverter(ParamConverter<?> converter) {
+		paramConverters.put(converter.type(), converter);
+	}
+	
+	@SuppressWarnings("unchecked")
+	public <T> Mono<T> convertParam(Context ctx, String input, Class<T> targetType) {
+		var converter = (ParamConverter<T>) paramConverters.get(targetType);
+		if (converter == null) {
+			return Mono.error(new RuntimeException("No param converter available for the type " + targetType.getName()));
+		}
+		return converter.convert(ctx, input);
+	}
+	
+	private static Map<Class<?>, ParamConverter<?>> initDefaultConverters() {
+		var map = new HashMap<Class<?>, ParamConverter<?>>();
+		map.put(String.class, new StringConverter());
+		map.put(Integer.class, new IntConverter());
+		map.put(int.class, new IntConverter());
+		map.put(Long.class, new LongConverter());
+		map.put(long.class, new LongConverter());
+		map.put(Role.class, new RoleConverter());
+		map.put(User.class, new UserConverter());
+		map.put(GuildChannel.class, new GuildChannelConverter());
+		return map;
 	}
 
 	@Override

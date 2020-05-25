@@ -1,12 +1,9 @@
 package com.github.alex1304.ultimategdbot.api.service;
 
-import com.github.alex1304.ultimategdbot.api.Bot;
-
-import reactor.core.publisher.Mono;
-
 /**
  * Represents a service provided by the bot, accessible globally via
- * {@link ServiceContainer}.
+ * {@link ServiceContainer}. A service is created on bot startup and lives until
+ * the bot disconnects.
  */
 public interface Service {
 	
@@ -16,14 +13,4 @@ public interface Service {
 	 * @return the name
 	 */
 	String getName();
-	
-	/**
-	 * Performs an action on this service when the bot is ready.
-	 * 
-	 * @param bot the bot instance
-	 * @return a Mono completing when the ready action is complete
-	 */
-	default Mono<Void> onReady(Bot bot) {
-		return Mono.empty();
-	}
 }

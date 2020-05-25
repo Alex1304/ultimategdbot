@@ -8,6 +8,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.IntFunction;
 
+import com.github.alex1304.ultimategdbot.api.Bot;
 import com.github.alex1304.ultimategdbot.api.Translator;
 import com.github.alex1304.ultimategdbot.api.service.Service;
 import com.github.alex1304.ultimategdbot.api.util.MessageSpecTemplate;
@@ -21,9 +22,16 @@ public class InteractiveMenuService implements Service {
 	private final Duration timeout;
 	private final PaginationControls controls;
 	
-	InteractiveMenuService(Duration timeout, PaginationControls controls) {
-		this.timeout = timeout;
-		this.controls = controls;
+	InteractiveMenuService(Bot bot) {
+		this.timeout = bot.config()
+				.readOptional("interactive_menu.timeout_seconds")
+				.map(Integer::parseInt)
+				.map(Duration::ofSeconds)
+				.orElse(Duration.ofMinutes(10));
+		this.controls = new PaginationControls(
+				bot.config().readOptional("interactive_menu.controls.previous").orElse(PaginationControls.DEFAULT_PREVIOUS_EMOJI),
+				bot.config().readOptional("interactive_menu.controls.next").orElse(PaginationControls.DEFAULT_NEXT_EMOJI),
+				bot.config().readOptional("interactive_menu.controls.close").orElse(PaginationControls.DEFAULT_CLOSE_EMOJI));
 	}
 
 	@Override

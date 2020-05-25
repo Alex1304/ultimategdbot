@@ -23,7 +23,7 @@ public class DatabaseTest {
 	
 	@BeforeEach
 	public void setUp() throws Exception {
-		db = DatabaseService.create(Jdbi.create("jdbc:h2:mem:test"));
+		db = DatabaseService.create(null, Jdbi.create("jdbc:h2:mem:test"));
 		db.configureJdbi(jdbi -> {
 			jdbi.registerRowMapper(BeanMapper.factory(TestBean.class));
 		});

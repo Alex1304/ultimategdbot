@@ -19,6 +19,7 @@ import com.github.alex1304.ultimategdbot.api.command.Command;
 import com.github.alex1304.ultimategdbot.api.command.CommandDocumentation;
 import com.github.alex1304.ultimategdbot.api.command.CommandDocumentationEntry;
 import com.github.alex1304.ultimategdbot.api.command.CommandFailedException;
+import com.github.alex1304.ultimategdbot.api.command.CommandProvider;
 import com.github.alex1304.ultimategdbot.api.command.CommandService;
 import com.github.alex1304.ultimategdbot.api.command.Context;
 import com.github.alex1304.ultimategdbot.api.command.FlagInformation;
@@ -96,7 +97,7 @@ public class AnnotatedCommand implements Command {
 		return "AnnotatedCommand{obj=" + obj.toString() + "}";
 	}
 	
-	static AnnotatedCommand fromAnnotatedObject(Object obj, AnnotatedCommandProvider provider) {
+	public static AnnotatedCommand from(Object obj, CommandProvider provider) {
 		var cmdSpecAnnot = readCommandSpecAnnotation(obj);
 		var cmdPermAnnot = obj.getClass().getAnnotation(CommandPermission.class);
 		Method mainMethod = null;
@@ -145,7 +146,7 @@ public class AnnotatedCommand implements Command {
 								var argTokens = Flux.fromIterable(args.getTokens(method.getParameters().length + firstArgIndex.get() - 1))
 										.skip(firstArgIndex.get());
 								return Flux.zip(parameters, argTokens)
-										.concatMap(function((param, arg) -> provider.convert(ctx, arg, param.getType())
+										.concatMap(function((param, arg) -> provider.convertParam(ctx, arg, param.getType())
 												.onErrorMap(e -> new ParamConversionException(ctx, formatParamName(param.getName()), arg, e.getMessage()))))
 										.collectList()
 										.defaultIfEmpty(List.of())

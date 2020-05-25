@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.github.alex1304.ultimategdbot.api.command.annotated.AnnotatedCommandProvider;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandAction;
 import com.github.alex1304.ultimategdbot.api.command.annotated.CommandDescriptor;
 import com.github.alex1304.ultimategdbot.api.command.annotated.InvalidAnnotatedObjectException;
@@ -14,9 +13,9 @@ import com.github.alex1304.ultimategdbot.api.command.annotated.InvalidAnnotatedO
 import reactor.core.publisher.Mono;
 import reactor.util.annotation.Nullable;
 
-public class AnnotatedCommandProviderTest {
+public class CommandProviderTest {
 	
-	private AnnotatedCommandProvider provider;
+	private CommandProvider provider;
 	private TestCommand testCmd;
 	private TestCommandOneParam testCmd1;
 	private TestCommandTwoParams testCmd2;
@@ -33,7 +32,7 @@ public class AnnotatedCommandProviderTest {
 	
 	@BeforeEach
 	public void setUp() throws Exception {
-		provider = new AnnotatedCommandProvider();
+		provider = new CommandProvider("test");
 		testCmd = new TestCommand();
 		testCmd1 = new TestCommandOneParam();
 		testCmd2 = new TestCommandTwoParams();

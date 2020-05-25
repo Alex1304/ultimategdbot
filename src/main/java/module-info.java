@@ -1,12 +1,14 @@
 module ultimategdbot.api {
 	exports com.github.alex1304.ultimategdbot.api;
-	exports com.github.alex1304.ultimategdbot.api.util;
-	exports com.github.alex1304.ultimategdbot.api.database;
+	exports com.github.alex1304.ultimategdbot.api.command;
+	exports com.github.alex1304.ultimategdbot.api.command.annotated;
 	exports com.github.alex1304.ultimategdbot.api.command.annotated.paramconverter;
 	exports com.github.alex1304.ultimategdbot.api.command.menu;
-	exports com.github.alex1304.ultimategdbot.api.command.annotated;
+	exports com.github.alex1304.ultimategdbot.api.database;
 	exports com.github.alex1304.ultimategdbot.api.database.guildconfig;
-	exports com.github.alex1304.ultimategdbot.api.command;
+	exports com.github.alex1304.ultimategdbot.api.emoji;
+	exports com.github.alex1304.ultimategdbot.api.service;
+	exports com.github.alex1304.ultimategdbot.api.util;
 
 	opens com.github.alex1304.ultimategdbot.api.database;
 	opens com.github.alex1304.ultimategdbot.api.database.guildconfig;
@@ -14,7 +16,8 @@ module ultimategdbot.api {
 	requires io.netty.codec.http;
 	requires reactor.extra;
 
-	requires transitive discord.json;
+	requires transitive discord4j.discordjson;
+	requires transitive discord4j.discordjson.api;
 	requires transitive discord4j.common;
 	requires transitive discord4j.core;
 	requires transitive discord4j.gateway;

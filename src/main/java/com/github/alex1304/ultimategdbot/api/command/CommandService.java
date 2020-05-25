@@ -1,6 +1,7 @@
 package com.github.alex1304.ultimategdbot.api.command;
 
 import static java.util.Collections.synchronizedSet;
+import static java.util.Collections.unmodifiableSet;
 import static java.util.Objects.requireNonNull;
 
 import java.util.HashSet;
@@ -31,30 +32,23 @@ public class CommandService implements Service {
 	
 	private final String commandPrefix;
 	private final String flagPrefix;
-	private final Snowflake debugLogChannelId;
 
 	private final Set<CommandProvider> providers = synchronizedSet(new HashSet<>());
 	private final Set<Long> blacklist = synchronizedSet(new HashSet<>());
 	private final ConcurrentHashMap<Long, String> prefixByGuild = new ConcurrentHashMap<>();
 	private final PermissionChecker permissionChecker = new PermissionChecker();
 	
-	CommandService(String commandPrefix, String flagPrefix, @Nullable Snowflake debugLogChannelId) {
-		this.commandPrefix = commandPrefix;
-		this.flagPrefix = flagPrefix;
-		this.debugLogChannelId = debugLogChannelId;
+	CommandService(Bot bot) {
+		this.commandPrefix = bot.config().read("command_prefix");
+		this.flagPrefix = bot.config().read("flag_prefix");
+		bot.gateway().on(MessageCreateEvent.class, event -> processEvent(bot, event))
+				.log(LOGGER)
+				.subscribe();
 	}
 
 	@Override
 	public String getName() {
 		return "command";
-	}
-	
-	@Override
-	public Mono<Void> onReady(Bot bot) {
-		return Mono.fromRunnable(() -> bot.gateway()
-				.on(MessageCreateEvent.class, event -> processEvent(bot, event))
-				.log(LOGGER)
-				.subscribe());
 	}
 	
 	/**
@@ -187,6 +181,15 @@ public class CommandService implements Service {
 		prefixByGuild.put(guildId, prefix);
 		LOGGER.debug("Changed prefix for guild {}: {}", guildId, prefix);
 	}
+	
+	/**
+	 * Gets an immutable view of the command providers added to the service.
+	 * 
+	 * @return the command providers
+	 */
+	public Set<CommandProvider> getCommandProviders() {
+		return unmodifiableSet(providers);
+	}
 
 	public String getCommandPrefix() {
 		return commandPrefix;
@@ -194,9 +197,5 @@ public class CommandService implements Service {
 
 	public String getFlagPrefix() {
 		return flagPrefix;
-	}
-
-	public Snowflake getDebugLogChannelId() {
-		return debugLogChannelId;
 	}
 }
