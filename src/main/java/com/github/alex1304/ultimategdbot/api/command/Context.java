@@ -24,16 +24,18 @@ public class Context implements Translator {
 	private final ArgumentList args;
 	private final Bot bot;
 	private final String prefixUsed;
+	private final Locale locale;
 	private final FlagSet flags;
 	private final User author;
 	private final MessageChannel channel;
 
-	public Context(Command command, MessageCreateEvent event, List<String> args, FlagSet flags, Bot bot, String prefixUsed, MessageChannel channel) {
+	public Context(Command command, MessageCreateEvent event, List<String> args, FlagSet flags, Bot bot, String prefixUsed, Locale locale, MessageChannel channel) {
 		this.command = requireNonNull(command);
 		this.event = requireNonNull(event);
 		this.args = new ArgumentList(requireNonNull(args));
 		this.bot = requireNonNull(bot);
 		this.prefixUsed = requireNonNull(prefixUsed);
+		this.locale = requireNonNull(locale);
 		this.flags = requireNonNull(flags);
 		this.author = event.getMessage().getAuthor().orElseThrow();
 		this.channel = requireNonNull(channel);
@@ -146,7 +148,7 @@ public class Context implements Translator {
 
 	@Override
 	public Locale getLocale() {
-		return Locale.ENGLISH;
+		return locale;
 	}
 
 	@Override

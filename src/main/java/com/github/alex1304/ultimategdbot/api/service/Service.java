@@ -5,7 +5,7 @@ package com.github.alex1304.ultimategdbot.api.service;
  * {@link ServiceContainer}. A service is created on bot startup and lives until
  * the bot disconnects.
  */
-public interface Service {
+public interface Service extends ServiceDependant {
 	
 	/**
 	 * Gets the name of the service.

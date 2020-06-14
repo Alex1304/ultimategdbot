@@ -8,7 +8,7 @@ import com.github.alex1304.ultimategdbot.api.Bot;
 import discord4j.core.object.entity.Member;
 import discord4j.core.object.entity.Role;
 import discord4j.core.object.entity.channel.GuildChannel;
-import discord4j.rest.util.Snowflake;
+import discord4j.common.util.Snowflake;
 import reactor.core.publisher.Mono;
 
 /**

@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -15,6 +16,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import com.github.alex1304.ultimategdbot.api.Translator;
 import com.github.alex1304.ultimategdbot.api.command.Command;
 import com.github.alex1304.ultimategdbot.api.command.CommandDocumentation;
 import com.github.alex1304.ultimategdbot.api.command.CommandDocumentationEntry;
@@ -45,14 +47,14 @@ public class AnnotatedCommand implements Command {
 	private final Object obj;
 	private final Function<Context, Mono<Void>> action;
 	private final Set<String> aliases;
-	private final CommandDocumentation doc;
+	private final Function<Locale, CommandDocumentation> doc;
 	private final String requiredPermission;
 	private final PermissionLevel requiredPermissionLevel;
 	private final Scope scope;
 
 
 	private AnnotatedCommand(Object obj, Function<Context, Mono<Void>> action, Set<String> aliases,
-			CommandDocumentation doc, String requiredPermission, PermissionLevel requiredPermissionLevel, Scope scope) {
+			Function<Locale, CommandDocumentation> doc, String requiredPermission, PermissionLevel requiredPermissionLevel, Scope scope) {
 		this.obj = obj;
 		this.action = action;
 		this.aliases = aliases;
@@ -73,8 +75,8 @@ public class AnnotatedCommand implements Command {
 	}
 	
 	@Override
-	public CommandDocumentation getDocumentation() {
-		return doc;
+	public CommandDocumentation getDocumentation(Locale locale) {
+		return doc.apply(locale);
 	}
 
 	@Override
@@ -98,7 +100,7 @@ public class AnnotatedCommand implements Command {
 	}
 	
 	public static AnnotatedCommand from(Object obj, CommandProvider provider) {
-		var cmdSpecAnnot = readCommandSpecAnnotation(obj);
+		var cmdDescriptorAnnot = readCommandSpecAnnotation(obj);
 		var cmdPermAnnot = obj.getClass().getAnnotation(CommandPermission.class);
 		Method mainMethod = null;
 		var subMethods = new HashMap<String, Method>();
@@ -168,11 +170,11 @@ public class AnnotatedCommand implements Command {
 							})
 							.then();
 				},
-				Set.of(cmdSpecAnnot.aliases()),
-				buildDocumentation(cmdSpecAnnot.shortDescription(), mainMethod, subMethods),
+				Set.of(cmdDescriptorAnnot.aliases()),
+				locale -> buildDocumentation(() -> locale, cmdDescriptorAnnot.shortDescription(), mainMethodOptional.orElse(null), subMethods),
 				cmdPermAnnot != null ? cmdPermAnnot.name() : "",
 				cmdPermAnnot != null ? cmdPermAnnot.level() : PermissionLevel.PUBLIC,
-				cmdSpecAnnot.scope());
+				cmdDescriptorAnnot.scope());
 	}
 
 	private static Mono<Boolean> isSubcommandGranted(Method method, Context ctx) {
@@ -209,7 +211,7 @@ public class AnnotatedCommand implements Command {
 		}
 	}
 	
-	private static CommandDocumentation buildDocumentation(String shortDescription, Method mainMethod, Map<String, Method> subMethods) {
+	private static CommandDocumentation buildDocumentation(Translator tr, String shortDescription, Method mainMethod, Map<String, Method> subMethods) {
 		var methodsToProcess = new HashMap<String, Method>(subMethods);
 		if (mainMethod != null) {
 			methodsToProcess.put("", mainMethod);
@@ -228,12 +230,12 @@ public class AnnotatedCommand implements Command {
 			var flagDocAnnot = method.getAnnotation(FlagDoc.class);
 			if (flagDocAnnot != null) {
 				for (var flag : flagDocAnnot.value()) {
-					flagInfo.put(flag.name(), new FlagInformation(flag.valueFormat(), flag.description()));
+					flagInfo.put(flag.name(), new FlagInformation(tr, flag.valueFormat(), flag.description()));
 				}
 			}
-			docEntries.put(name, new CommandDocumentationEntry(syntax, description, flagInfo));
+			docEntries.put(name, new CommandDocumentationEntry(tr, syntax, description, flagInfo));
 		});
-		return new CommandDocumentation(shortDescription, docEntries, isHidden);
+		return new CommandDocumentation(tr, shortDescription, docEntries, isHidden);
 	}
 	
 	private static String formatParamName(String paramName) {

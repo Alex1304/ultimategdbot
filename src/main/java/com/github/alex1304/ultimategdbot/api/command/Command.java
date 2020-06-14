@@ -1,5 +1,6 @@
 package com.github.alex1304.ultimategdbot.api.command;
 
+import java.util.Locale;
 import java.util.Set;
 
 import reactor.core.publisher.Mono;
@@ -27,9 +28,10 @@ public interface Command {
 	/**
 	 * Gets the documentation of the command.
 	 * 
+	 * @param locale the locale indicating the language of the documentation
 	 * @return the documentation
 	 */
-	CommandDocumentation getDocumentation();
+	CommandDocumentation getDocumentation(Locale locale);
 	
 	/**
 	 * Gets the name of the permission required to use the command.

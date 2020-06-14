@@ -7,7 +7,7 @@ import java.util.Set;
 import com.github.alex1304.ultimategdbot.api.Bot;
 import com.github.alex1304.ultimategdbot.api.service.Service;
 
-import discord4j.rest.util.Snowflake;
+import discord4j.common.util.Snowflake;
 
 public class EmojiService implements Service {
 

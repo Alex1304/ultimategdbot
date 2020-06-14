@@ -16,19 +16,21 @@ import reactor.core.publisher.Mono;
 public interface Bot {
 	
 	/**
-	 * Gets the global config of the bot.
+	 * Gets the global config of the bot. This is equivalent to 
+	 * <pre>
+	 * config("config")
+	 * </pre>
 	 * 
 	 * @return the config
 	 */
 	PropertyReader config();
 	
 	/**
-	 * Gets a config from an extra source which name is given.
+	 * Gets the config of the bot for the given name.
 	 * 
-	 * @param name the name of the config source
-	 * @return a Mono emitting the config properties
+	 * @return the config
 	 */
-	Mono<PropertyReader> extraConfig(String name);
+	PropertyReader config(String name);
 	
 	/**
 	 * Retrieves a service from the given class. The service must have been added on

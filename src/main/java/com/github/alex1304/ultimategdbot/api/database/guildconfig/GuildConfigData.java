@@ -2,7 +2,7 @@ package com.github.alex1304.ultimategdbot.api.database.guildconfig;
 
 import com.github.alex1304.ultimategdbot.api.Bot;
 
-import discord4j.rest.util.Snowflake;
+import discord4j.common.util.Snowflake;
 
 /**
  * Database entity representing settings for a guild.

@@ -7,7 +7,7 @@ import com.github.alex1304.ultimategdbot.api.Bot;
  * 
  * @param <S> the type of service object it can create
  */
-public interface ServiceFactory<S extends Service> extends ServiceDependant {
+public interface ServiceFactory<S extends Service> {
 	
 	/**
 	 * Creates the service.

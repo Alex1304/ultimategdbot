@@ -3,6 +3,7 @@ package com.github.alex1304.ultimategdbot.api.command.menu;
 import java.util.Optional;
 import java.util.function.Function;
 
+import discord4j.common.util.Snowflake;
 import discord4j.core.event.domain.Event;
 import discord4j.core.event.domain.message.ReactionAddEvent;
 import discord4j.core.event.domain.message.ReactionRemoveEvent;
@@ -11,7 +12,6 @@ import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.User;
 import discord4j.core.object.entity.channel.MessageChannel;
 import discord4j.core.object.reaction.ReactionEmoji;
-import discord4j.rest.util.Snowflake;
 import reactor.core.publisher.Mono;
 
 public class ReactionToggleEvent {

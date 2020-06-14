@@ -5,6 +5,7 @@ import static java.util.Objects.requireNonNull;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -25,7 +26,6 @@ import discord4j.core.object.entity.Role;
 import discord4j.core.object.entity.User;
 import discord4j.core.object.entity.channel.GuildChannel;
 import discord4j.core.object.entity.channel.MessageChannel;
-import discord4j.rest.util.Snowflake;
 import reactor.core.publisher.Mono;
 
 /**
@@ -95,36 +95,35 @@ public final class CommandProvider {
 	 * @return an ExecutableCommand if the event results in a command to be
 	 *         triggered, an empty Optional otherwise.
 	 */
-	public Mono<ExecutableCommand> provideFromEvent(Bot bot, String prefix, String flagPrefix, MessageCreateEvent event, MessageChannel channel) {
+	public Mono<ExecutableCommand> provideFromEvent(Bot bot, String prefix, String flagPrefix, Locale locale, MessageCreateEvent event, MessageChannel channel) {
 		requireNonNull(bot, "bot cannot be null");
 		requireNonNull(prefix, "prefix cannot be null");
 		requireNonNull(event, "event cannot be null");
 		requireNonNull(channel, "channel cannot be null");
-		return bot.gateway().getSelfId().map(Snowflake::asLong).flatMap(botId -> {
-			var prefixes = Set.of("<@" + botId + ">", "<@!" + botId + ">", prefix);
-			var content = event.getMessage().getContent();
-			String prefixUsed = null;
-			for (var p : prefixes) {
-				if (content.toLowerCase().startsWith(p.toLowerCase())) {
-					content = content.substring(p.length());
-					prefixUsed = p;
-					break;
-				}
+		var botId = bot.gateway().getSelfId().asLong();
+		var prefixes = Set.of("<@" + botId + ">", "<@!" + botId + ">", prefix);
+		var content = event.getMessage().getContent();
+		String prefixUsed = null;
+		for (var p : prefixes) {
+			if (content.toLowerCase().startsWith(p.toLowerCase())) {
+				content = content.substring(p.length());
+				prefixUsed = p;
+				break;
 			}
-			if (prefixUsed == null) {
-				return Mono.empty();
-			}
-			var parsed = MessageUtils.tokenize(flagPrefix, content);
-			var flags = parsed.getT1();
-			var args = parsed.getT2();
-			if (args.isEmpty()) {
-				return Mono.empty();
-			}
-			final var fPrefixUsed = prefixUsed;
-			var command = commandMap.get(args.get(0));
-			return Mono.justOrEmpty(command)
-					.map(cmd -> new ExecutableCommand(cmd, new Context(cmd, event, args, flags, bot, fPrefixUsed, channel), errorHandler));
-		});
+		}
+		if (prefixUsed == null) {
+			return Mono.empty();
+		}
+		var parsed = MessageUtils.tokenize(flagPrefix, content);
+		var flags = parsed.getT1();
+		var args = parsed.getT2();
+		if (args.isEmpty()) {
+			return Mono.empty();
+		}
+		final var fPrefixUsed = prefixUsed;
+		var command = commandMap.get(args.get(0));
+		return Mono.justOrEmpty(command)
+				.map(cmd -> new ExecutableCommand(cmd, new Context(cmd, event, args, flags, bot, fPrefixUsed, locale, channel), errorHandler));
 	}
 	
 	/**

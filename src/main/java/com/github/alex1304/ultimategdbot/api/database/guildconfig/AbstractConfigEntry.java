@@ -3,7 +3,7 @@ package com.github.alex1304.ultimategdbot.api.database.guildconfig;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import discord4j.rest.util.Snowflake;
+import discord4j.common.util.Snowflake;
 import reactor.core.publisher.Mono;
 import reactor.util.annotation.Nullable;
 

@@ -19,7 +19,7 @@ public interface Plugin extends ServiceDependant {
 	
 	/**
 	 * Gets the metadata of this plugin. May be generated from an asynchronous
-	 * source, but implementors are encourage to cache the object for future calls.
+	 * source, but implementors are encouraged to cache the object for future calls.
 	 * It is also encouraged to consistently return the same data when called
 	 * several times in the same running JVM.
 	 * 

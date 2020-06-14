@@ -1,16 +1,22 @@
 package com.github.alex1304.ultimategdbot.api.command;
 
+import static java.util.Objects.requireNonNull;
+
+import com.github.alex1304.ultimategdbot.api.Translator;
+
 /**
  * Holds information about a command flag.
  */
 public class FlagInformation {
 
+	private final DocumentationLocaleAdapter docLocaleAdapter;
 	private final String valueFormat;
 	private final String description;
 	
-	public FlagInformation(String valueFormat, String description) {
-		this.valueFormat = valueFormat;
-		this.description = description;
+	public FlagInformation(Translator translator,String valueFormat, String description) {
+		this.docLocaleAdapter = new DocumentationLocaleAdapter(requireNonNull(translator));
+		this.valueFormat = requireNonNull(valueFormat);
+		this.description = requireNonNull(description);
 	}
 
 	/**
@@ -19,7 +25,7 @@ public class FlagInformation {
 	 * @return the value format
 	 */
 	public String getValueFormat() {
-		return valueFormat;
+		return docLocaleAdapter.adapt(valueFormat);
 	}
 
 	/**
@@ -28,6 +34,6 @@ public class FlagInformation {
 	 * @return the description
 	 */
 	public String getDescription() {
-		return description;
+		return docLocaleAdapter.adapt(description);
 	}
 }

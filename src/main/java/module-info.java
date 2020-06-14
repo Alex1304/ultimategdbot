@@ -30,5 +30,5 @@ module ultimategdbot.api {
 	requires transitive org.reactivestreams;
 	requires transitive reactor.core;
 	requires transitive reactor.netty;
-	requires transitive stores.api;
+	requires transitive discord4j.store.api;
 }

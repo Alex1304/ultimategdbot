@@ -1,8 +1,11 @@
 package com.github.alex1304.ultimategdbot.api.command;
 
-import java.util.Collections;
+import static java.util.Collections.unmodifiableMap;
+import static java.util.Objects.requireNonNull;
+
 import java.util.Map;
-import java.util.Objects;
+
+import com.github.alex1304.ultimategdbot.api.Translator;
 
 /**
  * Represents a documentation entry. An entry is a subsection of the
@@ -12,14 +15,16 @@ import java.util.Objects;
  */
 public class CommandDocumentationEntry {
 
+	private final DocumentationLocaleAdapter docLocaleAdapter;
 	private final String syntax;
 	private final String description;
 	private final Map<String, FlagInformation> flagInfo;
 	
-	public CommandDocumentationEntry(String syntax, String description, Map<String, FlagInformation> flagInfo) {
-		this.syntax = Objects.requireNonNull(syntax);
-		this.description = Objects.requireNonNull(description);
-		this.flagInfo = Collections.unmodifiableMap(flagInfo);
+	public CommandDocumentationEntry(Translator translator, String syntax, String description, Map<String, FlagInformation> flagInfo) {
+		this.docLocaleAdapter = new DocumentationLocaleAdapter(requireNonNull(translator));
+		this.syntax = requireNonNull(syntax);
+		this.description = requireNonNull(description);
+		this.flagInfo = unmodifiableMap(flagInfo);
 	}
 
 	/**
@@ -28,7 +33,7 @@ public class CommandDocumentationEntry {
 	 * @return the syntax
 	 */
 	public String getSyntax() {
-		return syntax;
+		return docLocaleAdapter.adapt(syntax);
 	}
 	
 	/**
@@ -38,7 +43,7 @@ public class CommandDocumentationEntry {
 	 * @return the description
 	 */
 	public String getDescription() {
-		return description;
+		return docLocaleAdapter.adapt(description);
 	}
 
 	/**

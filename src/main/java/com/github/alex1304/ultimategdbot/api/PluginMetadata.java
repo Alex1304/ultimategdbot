@@ -21,15 +21,7 @@ public class PluginMetadata {
 	private final List<String> developers;
 	private final String url;
 	
-	/**
-	 * Creates a metadata object. Everything may be null except the name. If no name should be provided, it is recommended not to create any metadata object at all.
-	 * @param name the name of the plugin, cannot be null
-	 * @param description the description of the plugin, may be null
-	 * @param version the version of the plugin, may be null
-	 * @param developers the list of developers that contributed to this plugin, may be null
-	 * @param url the URL of the plugin's site of repository, may be null
-	 */
-	public PluginMetadata(String name, @Nullable String description, @Nullable String version, @Nullable List<String> developers, @Nullable String url) {
+	private PluginMetadata(String name, @Nullable String description, @Nullable String version, @Nullable List<String> developers, @Nullable String url) {
 		this.name = requireNonNull(name, "name");
 		this.description = description;
 		this.version = version;
@@ -103,5 +95,83 @@ public class PluginMetadata {
 	public String toString() {
 		return "PluginMetadata{name=" + name + ", description=" + description + ", version=" + version + ", developers="
 				+ developers + ", url=" + url + "}";
+	}
+	
+	/**
+	 * Initiates a builder for a {@link PluginMetadata}.
+	 * 
+	 * @param name the name of the plugin
+	 * @return a new {@link Builder}
+	 */
+	public static Builder builder(String name) {
+		return new Builder(name);
+	}
+	
+	/**
+	 * Builder to build a {@link PluginMetadata} object.
+	 */
+	public static class Builder {
+		private final String name;
+		private String description;
+		private String version;
+		private List<String> developers;
+		private String url;
+		
+		private Builder(String name) {
+			this.name = requireNonNull(name);
+		}
+		
+		/**
+		 * Sets the description of the plugin.
+		 * 
+		 * @param description the description, may be <code>null</code>
+		 * @return this builder
+		 */
+		public Builder setDescription(@Nullable String description) {
+			this.description = description;
+			return this;
+		}
+
+		/**
+		 * Sets the version of the plugin.
+		 * 
+		 * @param version the version, may be <code>null</code>
+		 * @return this builder
+		 */
+		public Builder setVersion(@Nullable String version) {
+			this.version = version;
+			return this;
+		}
+
+		/**
+		 * Sets the developers of the plugin.
+		 * 
+		 * @param developers the developers, may be <code>null</code>
+		 * @return this builder
+		 */
+		public Builder setDevelopers(@Nullable List<String> developers) {
+			this.developers = developers;
+			return this;
+		}
+
+		/**
+		 * Sets the url of the plugin.
+		 * 
+		 * @param url the url, may be <code>null</code>
+		 * @return this builder
+		 */
+		public Builder setUrl(@Nullable String url) {
+			this.url = url;
+			return this;
+		}
+		
+		/**
+		 * Builds the {@link PluginMetadata} object.
+		 * 
+		 * @return the built {@link PluginMetadata} object
+		 */
+		public PluginMetadata build() {
+			return new PluginMetadata(name, description, version, developers, url);
+		}
 	}
 }

@@ -1,5 +1,6 @@
 package com.github.alex1304.ultimategdbot.api.service;
 
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.github.alex1304.ultimategdbot.api.Bot;
@@ -24,14 +25,13 @@ public class ServiceContainer {
 	 * 
 	 * @param factory the factory that will instantate the service to add if not
 	 *                already present
+	 * @return the newly created service, or an empty optional if the service wasn't
+	 *         instantiated due to it already being present.
 	 */
-	public boolean add(ServiceFactory<?> factory) {
-		var box = new Object() { private boolean computed = false; };
-		services.computeIfAbsent(factory.serviceClass(), k -> {
-			box.computed = true;
-			return factory.create(bot);
-		});
-		return box.computed;
+	public Optional<Service> add(ServiceFactory<?> factory) {
+		var box = new Object() { private Service computed = null; };
+		services.computeIfAbsent(factory.serviceClass(), k -> box.computed = factory.create(bot));
+		return Optional.ofNullable(box.computed);
 	}
 	
 	/**

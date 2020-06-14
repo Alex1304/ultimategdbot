@@ -5,6 +5,7 @@ import static java.util.Collections.unmodifiableSet;
 import static java.util.Objects.requireNonNull;
 
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -12,9 +13,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import com.github.alex1304.ultimategdbot.api.Bot;
 import com.github.alex1304.ultimategdbot.api.service.Service;
 
+import discord4j.common.util.Snowflake;
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.entity.User;
-import discord4j.rest.util.Snowflake;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.Logger;
@@ -32,15 +33,20 @@ public class CommandService implements Service {
 	
 	private final String commandPrefix;
 	private final String flagPrefix;
+	private final Locale defaultLocale;
 
 	private final Set<CommandProvider> providers = synchronizedSet(new HashSet<>());
 	private final Set<Long> blacklist = synchronizedSet(new HashSet<>());
 	private final ConcurrentHashMap<Long, String> prefixByGuild = new ConcurrentHashMap<>();
+	private final ConcurrentHashMap<Long, Locale> localeByGuild = new ConcurrentHashMap<>();
 	private final PermissionChecker permissionChecker = new PermissionChecker();
 	
 	CommandService(Bot bot) {
 		this.commandPrefix = bot.config().read("command_prefix");
 		this.flagPrefix = bot.config().read("flag_prefix");
+		this.defaultLocale = bot.config().readOptional("default_locale")
+				.map(Locale::forLanguageTag)
+				.orElse(Locale.ENGLISH);
 		bot.gateway().on(MessageCreateEvent.class, event -> processEvent(bot, event))
 				.log(LOGGER)
 				.subscribe();
@@ -82,9 +88,10 @@ public class CommandService implements Service {
 			return Mono.empty();
 		}
 		var prefix = guildId.map(Snowflake::asLong).map(prefixByGuild::get).orElse(commandPrefix);
+		var locale = guildId.map(Snowflake::asLong).map(localeByGuild::get).orElse(defaultLocale);
 		return Flux.fromIterable(providers)
 				.flatMap(provider -> event.getMessage().getChannel()
-						.flatMap(channel -> provider.provideFromEvent(bot, prefix, flagPrefix, event, channel)))
+						.flatMap(channel -> provider.provideFromEvent(bot, prefix, flagPrefix, locale, event, channel)))
 				.filter(executable -> {
 					if (authorId.map(id -> blacklist.contains(id.asLong())).orElse(false)) {
 						LOGGER.debug("Ignoring command due to AUTHOR being blacklisted: {}", executable);
@@ -180,6 +187,24 @@ public class CommandService implements Service {
 		}
 		prefixByGuild.put(guildId, prefix);
 		LOGGER.debug("Changed prefix for guild {}: {}", guildId, prefix);
+	}
+
+	/**
+	 * Sets a locale specific for the given guild. If one was already set for the
+	 * same guild, it is overwritten.
+	 * 
+	 * @param guildId the guild id
+	 * @param locale  the new locale. May be null, in which case the locale is
+	 *                removed.
+	 */
+	public void setLocaleForGuild(long guildId, @Nullable Locale locale) {
+		if (locale == null) {
+			localeByGuild.remove(guildId);
+			LOGGER.debug("Removed locale for guild {}", guildId);
+			return;
+		}
+		localeByGuild.put(guildId, locale);
+		LOGGER.debug("Changed locale for guild {}: {}", guildId, locale);
 	}
 	
 	/**

@@ -3,6 +3,7 @@ package com.github.alex1304.ultimategdbot.api.command.menu;
 import static java.util.Objects.requireNonNull;
 
 import java.time.Duration;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -10,6 +11,8 @@ import java.util.function.IntFunction;
 
 import com.github.alex1304.ultimategdbot.api.Bot;
 import com.github.alex1304.ultimategdbot.api.Translator;
+import com.github.alex1304.ultimategdbot.api.command.CommandService;
+import com.github.alex1304.ultimategdbot.api.emoji.EmojiService;
 import com.github.alex1304.ultimategdbot.api.service.Service;
 import com.github.alex1304.ultimategdbot.api.util.MessageSpecTemplate;
 import com.github.alex1304.ultimategdbot.api.util.MessageUtils;
@@ -37,6 +40,11 @@ public class InteractiveMenuService implements Service {
 	@Override
 	public String getName() {
 		return "interactive menu";
+	}
+
+	@Override
+	public Set<Class<? extends Service>> requiredServices() {
+		return Set.of(CommandService.class, EmojiService.class);
 	}
 
 	/**

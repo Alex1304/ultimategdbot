@@ -15,7 +15,7 @@ import org.jdbi.v3.sqlobject.transaction.Transaction;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import discord4j.rest.util.Snowflake;
+import discord4j.common.util.Snowflake;
 
 public class DatabaseTest {
 	

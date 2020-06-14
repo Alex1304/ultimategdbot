@@ -12,7 +12,7 @@ public interface ServiceDependant {
 	 * 
 	 * @return a {@link Set} of {@link ServiceFactory}
 	 */
-	default Set<ServiceFactory<?>> dependedServices() {
+	default Set<Class<? extends Service>> requiredServices() {
 		return Set.of();
 	}
 }

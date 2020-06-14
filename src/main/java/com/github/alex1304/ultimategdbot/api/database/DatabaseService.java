@@ -27,7 +27,7 @@ import com.github.alex1304.ultimategdbot.api.database.guildconfig.GuildConfigDao
 import com.github.alex1304.ultimategdbot.api.database.guildconfig.GuildConfigurator;
 import com.github.alex1304.ultimategdbot.api.service.Service;
 
-import discord4j.rest.util.Snowflake;
+import discord4j.common.util.Snowflake;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
