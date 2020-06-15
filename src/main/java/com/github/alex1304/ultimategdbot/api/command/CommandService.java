@@ -42,9 +42,10 @@ public class CommandService implements Service {
 	private final PermissionChecker permissionChecker = new PermissionChecker();
 	
 	CommandService(Bot bot) {
-		this.commandPrefix = bot.config().read("command_prefix");
-		this.flagPrefix = bot.config().read("flag_prefix");
-		this.defaultLocale = bot.config().readOptional("default_locale")
+		var config = bot.config("command");
+		this.commandPrefix = config.read("command_prefix");
+		this.flagPrefix = config.read("flag_prefix");
+		this.defaultLocale = config.readOptional("default_locale")
 				.map(Locale::forLanguageTag)
 				.orElse(Locale.ENGLISH);
 		bot.gateway().on(MessageCreateEvent.class, event -> processEvent(bot, event))

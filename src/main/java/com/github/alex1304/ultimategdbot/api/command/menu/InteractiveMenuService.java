@@ -26,15 +26,15 @@ public class InteractiveMenuService implements Service {
 	private final PaginationControls controls;
 	
 	InteractiveMenuService(Bot bot) {
-		this.timeout = bot.config()
-				.readOptional("interactive_menu.timeout_seconds")
+		var config = bot.config("interactive_menu");
+		this.timeout = config.readOptional("interactive_menu.timeout_seconds")
 				.map(Integer::parseInt)
 				.map(Duration::ofSeconds)
 				.orElse(Duration.ofMinutes(10));
 		this.controls = new PaginationControls(
-				bot.config().readOptional("interactive_menu.controls.previous").orElse(PaginationControls.DEFAULT_PREVIOUS_EMOJI),
-				bot.config().readOptional("interactive_menu.controls.next").orElse(PaginationControls.DEFAULT_NEXT_EMOJI),
-				bot.config().readOptional("interactive_menu.controls.close").orElse(PaginationControls.DEFAULT_CLOSE_EMOJI));
+				config.readOptional("interactive_menu.controls.previous").orElse(PaginationControls.DEFAULT_PREVIOUS_EMOJI),
+				config.readOptional("interactive_menu.controls.next").orElse(PaginationControls.DEFAULT_NEXT_EMOJI),
+				config.readOptional("interactive_menu.controls.close").orElse(PaginationControls.DEFAULT_CLOSE_EMOJI));
 	}
 
 	@Override

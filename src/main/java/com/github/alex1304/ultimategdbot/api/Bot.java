@@ -16,16 +16,6 @@ import reactor.core.publisher.Mono;
 public interface Bot {
 	
 	/**
-	 * Gets the global config of the bot. This is equivalent to 
-	 * <pre>
-	 * config("config")
-	 * </pre>
-	 * 
-	 * @return the config
-	 */
-	PropertyReader config();
-	
-	/**
 	 * Gets the config of the bot for the given name.
 	 * 
 	 * @return the config
