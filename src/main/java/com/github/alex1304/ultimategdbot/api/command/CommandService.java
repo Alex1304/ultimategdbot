@@ -224,4 +224,8 @@ public class CommandService implements Service {
 	public String getFlagPrefix() {
 		return flagPrefix;
 	}
+
+	public Locale getDefaultLocale() {
+		return defaultLocale;
+	}
 }

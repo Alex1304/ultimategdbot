@@ -6,7 +6,18 @@ import java.util.ResourceBundle;
 /**
  * A class implementing this interface is able to translate strings.
  */
+@FunctionalInterface
 public interface Translator {
+	
+	/**
+	 * Creates a new {@link Translator} that translates to the target locale.
+	 * 
+	 * @param locale the target locale
+	 * @return a new {@link Translator}
+	 */
+	static Translator to(Locale locale) {
+		return () -> locale;
+	}
 	
 	/**
 	 * Translates a string.
