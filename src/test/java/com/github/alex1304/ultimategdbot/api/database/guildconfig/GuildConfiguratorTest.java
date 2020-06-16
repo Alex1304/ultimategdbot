@@ -15,6 +15,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.github.alex1304.ultimategdbot.api.Bot;
+import com.github.alex1304.ultimategdbot.api.Translator;
 
 import discord4j.common.util.Snowflake;
 import reactor.core.publisher.Mono;
@@ -28,8 +29,8 @@ public class GuildConfiguratorTest {
 	public void setUp() throws Exception {
 		bean1 = new TestBean(Snowflake.of(123), 40L, "toto");
 		bean2 = new TestBean(Snowflake.of(1), null, null);
-		configurator1 = bean1.configurator(null);
-		configurator2 = bean2.configurator(null);
+		configurator1 = bean1.configurator(null, null);
+		configurator2 = bean2.configurator(null, null);
 	}
 
 	@Test
@@ -158,7 +159,7 @@ public class GuildConfiguratorTest {
 		}
 		
 		@Override
-		public GuildConfigurator<TestBean> configurator(Bot bot) {
+		public GuildConfigurator<TestBean> configurator(Translator tr, Bot bot) {
 			return GuildConfigurator.builder("Test", this, TestDao.class)
 					.addEntry(LongConfigEntry.<TestBean>builder("mylong")
 							.setValueGetter(bean -> Mono.justOrEmpty(bean.getMyLong()))
