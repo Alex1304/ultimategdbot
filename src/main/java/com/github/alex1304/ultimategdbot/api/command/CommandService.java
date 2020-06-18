@@ -114,9 +114,9 @@ public class CommandService implements Service {
 	}
 
 	private static Mono<Void> logCommandError(Logger logger, Context ctx, Throwable e) {
-		var replyToUser = ctx.reply(ctx.translate("generic", "command_unknown_error"));
+		var replyToUser = ctx.reply(ctx.translate("strings_common", "command_unknown_error"));
 		var logInDebugChannel = ctx.bot().log(
-				ctx.translate("generic", "command_unknown_error_log",
+				ctx.translate("strings_common", "command_unknown_error_log",
 						ctx.author().getTag(),
 						ctx.event().getMessage().getContent(),
 						e.getClass().getName() + (e.getMessage() == null ? "" : ": " + e.getMessage())));
@@ -188,6 +188,16 @@ public class CommandService implements Service {
 		}
 		prefixByGuild.put(guildId, prefix);
 		LOGGER.debug("Changed prefix for guild {}: {}", guildId, prefix);
+	}
+
+	/**
+	 * Finds the locale specific to the given guild.
+	 * 
+	 * @param guildId the guild id
+	 * @return the locale used by the guild
+	 */
+	public Locale getLocaleForGuild(long guildId) {
+		return localeByGuild.getOrDefault(guildId, defaultLocale);
 	}
 
 	/**

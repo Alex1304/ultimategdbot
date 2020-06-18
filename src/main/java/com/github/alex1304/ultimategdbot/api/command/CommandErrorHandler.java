@@ -56,7 +56,7 @@ public class CommandErrorHandler {
 //		addHandler(InvalidSyntaxException.class, (e, ctx) -> ctx.reply(":no_entry_sign: Invalid syntax!"
 //				+ "\n```\n" + ctx.getPrefixUsed() + ctx.getArgs().get(0) + " " + ctx.getCommand().getSyntax()
 //				+ "\n```\n" + "See `" + ctx.getPrefixUsed() + "help " + ctx.getArgs().get(0) + "` for more information.").then());
-		addHandler(PermissionDeniedException.class, (e, ctx) -> ctx.reply(ctx.translate("generic", "command_perm_denied")).then());
+		addHandler(PermissionDeniedException.class, (e, ctx) -> ctx.reply(ctx.translate("strings_common", "command_perm_denied")).then());
 		addHandler(ClientException.class, (e, ctx) -> {
 			LOGGER.debug("Discord ClientException thrown when using a command. User input: "
 					+ ctx.event().getMessage().getContent() + ", Error:", e);
@@ -64,16 +64,16 @@ public class CommandErrorHandler {
 			var message = responseOptional.map(response -> {
 				var sb = new StringBuilder();
 				response.getFields().forEach((k, v) -> sb.append(k).append(": ").append(String.valueOf(v)).append("\n"));
-				return ctx.translate("generic", "command_discord_error") + "\n"
+				return ctx.translate("strings_common", "command_discord_error") + "\n"
 						+ Markdown.code(e.getStatus().code() + " " + e.getStatus().reasonPhrase()) + "\n"
 						+ Markdown.codeBlock(sb.toString())
-						+ (e.getStatus().code() == 403 ? ctx.translate("generic", "command_ensure_perms") : "");
-			}).orElse(ctx.translate("generic", "command_discord_error"));
+						+ (e.getStatus().code() == 403 ? ctx.translate("strings_common", "command_ensure_perms") : "");
+			}).orElse(ctx.translate("strings_common", "command_discord_error"));
 			
 			return ctx.reply(message).then();
 		});
 		addHandler(DatabaseException.class, (e, ctx) -> Mono.when(
-				ctx.reply(ctx.translate("generic", "command_database_access_error")),
+				ctx.reply(ctx.translate("strings_common", "command_database_access_error")),
 				Mono.fromRunnable(() -> LOGGER.error("A database error occured", e))));
 	}
 	
