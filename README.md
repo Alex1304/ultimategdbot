@@ -5,6 +5,8 @@
 ![License](https://img.shields.io/github/license/ultimategdbot/ultimategdbot)
 [![javadoc](https://javadoc.io/badge2/com.github.alex1304/ultimategdbot-api/javadoc.svg)](https://javadoc.io/doc/com.github.alex1304/ultimategdbot-api) 
 [![Official Server](https://img.shields.io/discord/357655103768887297?color=%237289DA&label=Official%20Server&logo=discord)](https://discord.gg/VpVdKvg)
+[![Crowdin](https://badges.crowdin.net/ultimategdbot/localized.svg)](https://crowdin.com/project/ultimategdbot)
+
 
 High-level API to conveniently build Discord bots in Java, on top of [Discord4J](https://discord4j.com).
 
