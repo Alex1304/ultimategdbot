@@ -47,7 +47,9 @@ public class CommandService implements Service {
 		this.flagPrefix = config.read("flag_prefix");
 		this.defaultLocale = config.readOptional("default_locale")
 				.map(Locale::forLanguageTag)
-				.orElse(Locale.ENGLISH);
+				.orElse(Locale.getDefault());
+		LOGGER.debug("Default locale: {}", defaultLocale);
+
 		bot.gateway().on(MessageCreateEvent.class, event -> processEvent(bot, event))
 				.log(LOGGER)
 				.subscribe();
