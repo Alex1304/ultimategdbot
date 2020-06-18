@@ -113,8 +113,8 @@ public class InteractiveMenuService implements Service {
 		return createPaginated((tr, page) -> {
 			PageNumberOutOfRangeException.check(page, 0, parts.size() - 1);
 			return new MessageSpecTemplate(parts.get(page), embed -> embed.addField(
-					tr.translate("generic", "pagination_page_counter", page + 1, parts.size()),
-					tr.translate("generic", "pagination_go_to"), true));
+					tr.translate("strings_common", "pagination_page_counter", page + 1, parts.size()),
+					tr.translate("strings_common", "pagination_go_to"), true));
 		});
 	}
 
@@ -185,9 +185,9 @@ public class InteractiveMenuService implements Service {
 						.then())
 				.addMessageItem("page", interaction -> Mono.fromCallable(() -> Integer.parseInt(interaction.getArgs().get(1)))
 						.onErrorMap(IndexOutOfBoundsException.class, e -> new UnexpectedReplyException(
-								interaction.getTranslator().translate("generic", "pagination_page_number_not_specified")))
+								interaction.getTranslator().translate("strings_common", "pagination_page_number_not_specified")))
 						.onErrorMap(NumberFormatException.class, e -> new UnexpectedReplyException(
-								interaction.getTranslator().translate("generic", "pagination_page_number_invalid")))
+								interaction.getTranslator().translate("strings_common", "pagination_page_number_invalid")))
 						.map(p -> p - 1)
 						.doOnNext(targetPage -> {
 							interaction.set("oldPage", interaction.get("currentPage"));
