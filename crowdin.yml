@@ -1,3 +1,4 @@
 files:
   - source: /src/main/resources/strings/*.properties
-    translation: /src/main/resources/strings/%file_name%_%locale_with_underscore%.%file_extension%
+    translation: >-
+      /src/main/resources/strings/%file_name%_%locale_with_underscore%.%file_extension%
