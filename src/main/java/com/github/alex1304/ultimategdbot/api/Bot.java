@@ -13,7 +13,7 @@ import reactor.core.publisher.Mono;
 /**
  * Represents the bot itself.
  */
-public interface Bot {
+public interface Bot extends Translator {
 	
 	/**
 	 * Gets the config of the bot for the given name.
@@ -33,6 +33,14 @@ public interface Bot {
 	 *                                  registered service
 	 */
 	<S extends Service> S service(Class<S> serviceType);
+	
+	/**
+	 * Tells whether a service of the given type is loaded into the bot or not.
+	 * 
+	 * @param serviceType the type of service to check
+	 * @return true if a service of the given type is loaded, false otherwise
+	 */
+	boolean hasService(Class<? extends Service> serviceType);
 
 	/**
 	 * Gets the REST client of the bot.

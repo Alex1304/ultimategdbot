@@ -30,6 +30,13 @@ public interface ConfigEntry<T> {
 	String getDisplayName();
 	
 	/**
+	 * Gets the description of this entry.
+	 * 
+	 * @return the description
+	 */
+	String getDescription();
+	
+	/**
 	 * Gets the unique key of this entry.
 	 * 
 	 * @return the key

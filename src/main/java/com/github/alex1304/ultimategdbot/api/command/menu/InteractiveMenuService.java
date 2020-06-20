@@ -206,4 +206,13 @@ public class InteractiveMenuService implements Service {
 				.closeAfterMessage(false)
 				.closeAfterReaction(false);
 	}
+	
+	/**
+	 * Gets the pagination controls used by this service.
+	 * 
+	 * @return the controls
+	 */
+	public PaginationControls getPaginationControls() {
+		return controls;
+	}
 }

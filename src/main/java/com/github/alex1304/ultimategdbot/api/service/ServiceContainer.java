@@ -50,4 +50,14 @@ public class ServiceContainer {
 		}
 		return (S) service;
 	}
+	
+	/**
+	 * Tells whether a service of the given type is present in this container.
+	 * 
+	 * @param serviceType the type of service
+	 * @return true if present, false otherwise
+	 */
+	public boolean has(Class<? extends Service> serviceType) {
+		return services.containsKey(serviceType);
+	}
 }
