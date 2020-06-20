@@ -8,10 +8,10 @@ import reactor.core.publisher.Mono;
 
 public class GuildRoleConfigEntry extends AbstractConfigEntry<Role> {
 
-	GuildRoleConfigEntry(GuildConfigurator<?> configurator, String displayName, String key,
+	GuildRoleConfigEntry(GuildConfigurator<?> configurator, String displayName, String description, String key,
 			Function<Object, ? extends Mono<Role>> valueGetter, BiFunction<Object, ? super Role, Object> valueSetter,
 			Validator<Role> validator) {
-		super(configurator, displayName, key, valueGetter, valueSetter, validator);
+		super(configurator, displayName, description, key, valueGetter, valueSetter, validator);
 	}
 
 	@Override

@@ -5,12 +5,12 @@ import static java.util.Collections.unmodifiableSet;
 import static java.util.Objects.requireNonNull;
 
 import java.util.HashSet;
-import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.github.alex1304.ultimategdbot.api.Bot;
+import com.github.alex1304.ultimategdbot.api.localization.LocalizationService;
 import com.github.alex1304.ultimategdbot.api.service.Service;
 
 import discord4j.common.util.Snowflake;
@@ -33,21 +33,16 @@ public class CommandService implements Service {
 	
 	private final String commandPrefix;
 	private final String flagPrefix;
-	private final Locale defaultLocale;
 
 	private final Set<CommandProvider> providers = synchronizedSet(new HashSet<>());
 	private final Set<Long> blacklist = synchronizedSet(new HashSet<>());
 	private final ConcurrentHashMap<Long, String> prefixByGuild = new ConcurrentHashMap<>();
-	private final ConcurrentHashMap<Long, Locale> localeByGuild = new ConcurrentHashMap<>();
 	private final PermissionChecker permissionChecker = new PermissionChecker();
 	
 	CommandService(Bot bot) {
 		var config = bot.config("command");
 		this.commandPrefix = config.read("command_prefix");
 		this.flagPrefix = config.read("flag_prefix");
-		this.defaultLocale = config.readOptional("default_locale")
-				.map(Locale::forLanguageTag)
-				.orElse(Locale.ENGLISH);
 		bot.gateway().on(MessageCreateEvent.class, event -> processEvent(bot, event))
 				.log(LOGGER)
 				.subscribe();
@@ -89,7 +84,10 @@ public class CommandService implements Service {
 			return Mono.empty();
 		}
 		var prefix = guildId.map(Snowflake::asLong).map(prefixByGuild::get).orElse(commandPrefix);
-		var locale = guildId.map(Snowflake::asLong).map(localeByGuild::get).orElse(defaultLocale);
+		var locale = guildId.map(Snowflake::asLong)
+				.filter(id -> bot.hasService(LocalizationService.class))
+				.map(id -> bot.service(LocalizationService.class).getLocaleForGuild(id))
+				.orElse(bot.getLocale());
 		return Flux.fromIterable(providers)
 				.flatMap(provider -> event.getMessage().getChannel()
 						.flatMap(channel -> provider.provideFromEvent(bot, prefix, flagPrefix, locale, event, channel)))
@@ -189,34 +187,6 @@ public class CommandService implements Service {
 		prefixByGuild.put(guildId, prefix);
 		LOGGER.debug("Changed prefix for guild {}: {}", guildId, prefix);
 	}
-
-	/**
-	 * Finds the locale specific to the given guild.
-	 * 
-	 * @param guildId the guild id
-	 * @return the locale used by the guild
-	 */
-	public Locale getLocaleForGuild(long guildId) {
-		return localeByGuild.getOrDefault(guildId, defaultLocale);
-	}
-
-	/**
-	 * Sets a locale specific for the given guild. If one was already set for the
-	 * same guild, it is overwritten.
-	 * 
-	 * @param guildId the guild id
-	 * @param locale  the new locale. May be null, in which case the locale is
-	 *                removed.
-	 */
-	public void setLocaleForGuild(long guildId, @Nullable Locale locale) {
-		if (locale == null) {
-			localeByGuild.remove(guildId);
-			LOGGER.debug("Removed locale for guild {}", guildId);
-			return;
-		}
-		localeByGuild.put(guildId, locale);
-		LOGGER.debug("Changed locale for guild {}: {}", guildId, locale);
-	}
 	
 	/**
 	 * Gets an immutable view of the command providers added to the service.
@@ -233,9 +203,5 @@ public class CommandService implements Service {
 
 	public String getFlagPrefix() {
 		return flagPrefix;
-	}
-
-	public Locale getDefaultLocale() {
-		return defaultLocale;
 	}
 }

@@ -7,10 +7,10 @@ import reactor.core.publisher.Mono;
 
 public class LongConfigEntry extends AbstractConfigEntry<Long> {
 	
-	LongConfigEntry(GuildConfigurator<?> configurator, String displayName, String key,
+	LongConfigEntry(GuildConfigurator<?> configurator, String displayName, String description, String key,
 			Function<Object, ? extends Mono<Long>> valueGetter, BiFunction<Object, ? super Long, Object> valueSetter,
 			Validator<Long> validator) {
-		super(configurator, displayName, key, valueGetter, valueSetter, validator);
+		super(configurator, displayName, description, key, valueGetter, valueSetter, validator);
 	}
 
 	@Override

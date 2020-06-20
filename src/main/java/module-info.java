@@ -7,6 +7,7 @@ module ultimategdbot.api {
 	exports com.github.alex1304.ultimategdbot.api.database;
 	exports com.github.alex1304.ultimategdbot.api.database.guildconfig;
 	exports com.github.alex1304.ultimategdbot.api.emoji;
+	exports com.github.alex1304.ultimategdbot.api.localization;
 	exports com.github.alex1304.ultimategdbot.api.service;
 	exports com.github.alex1304.ultimategdbot.api.util;
 

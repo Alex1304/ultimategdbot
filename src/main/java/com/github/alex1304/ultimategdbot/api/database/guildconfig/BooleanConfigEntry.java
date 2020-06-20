@@ -7,10 +7,10 @@ import reactor.core.publisher.Mono;
 
 public class BooleanConfigEntry extends AbstractConfigEntry<Boolean> {
 
-	BooleanConfigEntry(GuildConfigurator<?> configurator, String displayName, String key,
+	BooleanConfigEntry(GuildConfigurator<?> configurator, String displayName, String description, String key,
 			Function<Object, ? extends Mono<Boolean>> valueGetter,
 			BiFunction<Object, ? super Boolean, Object> valueSetter, Validator<Boolean> validator) {
-		super(configurator, displayName, key, valueGetter, valueSetter, validator);
+		super(configurator, displayName, description, key, valueGetter, valueSetter, validator);
 	}
 
 	@Override

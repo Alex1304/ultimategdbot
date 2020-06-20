@@ -20,6 +20,7 @@ public class ConfigEntryBuilder<D extends GuildConfigData<D>, T> {
 	private final AbstractConfigEntry.Constructor<T> constructor;
 	private final String key;
 	private String displayName;
+	private String description = "";
 	private Function<? super D, ? extends Mono<T>> valueGetter = this::defaultGetter;
 	private BiFunction<? super D, ? super T, ? extends D> valueSetter;
 	private Validator<T> validator = Validator.allowingAll();
@@ -39,6 +40,18 @@ public class ConfigEntryBuilder<D extends GuildConfigData<D>, T> {
 	 */
 	public ConfigEntryBuilder<D, T> setDisplayName(@Nullable String displayName) {
 		this.displayName = requireNonNullElse(displayName, key);
+		return this;
+	}
+
+	/**
+	 * Specifies a user-friendly description for this entry. If not set or is set to
+	 * <code>null</code>, the description will be an empty string.
+	 * 
+	 * @param description the description to set
+	 * @return this builder
+	 */
+	public ConfigEntryBuilder<D, T> setDescription(@Nullable String description) {
+		this.description = requireNonNullElse(description, "");
 		return this;
 	}
 
@@ -97,7 +110,7 @@ public class ConfigEntryBuilder<D extends GuildConfigData<D>, T> {
 	
 	@SuppressWarnings("unchecked")
 	ConfigEntry<T> build(GuildConfigurator<D> configurator) {
-		return constructor.newInstance(configurator, displayName, key, o -> valueGetter.apply((D) o),
+		return constructor.newInstance(configurator, displayName, description, key, o -> valueGetter.apply((D) o),
 				valueSetter == null ? null : (o, v) -> valueSetter.apply((D) o, v), validator);
 	}
 	
