@@ -161,6 +161,7 @@ public class InteractiveMenuService implements Service {
 	public InteractiveMenu createAsyncPaginated(BiFunction<Translator, Integer, Mono<MessageSpecTemplate>> asyncPaginator) {
 		requireNonNull(asyncPaginator);
 		return create((Translator tr) -> asyncPaginator.apply(tr, 0).map(MessageSpecTemplate::toMessageCreateSpec))
+				.withInteractionContext(context -> context.put("currentPage", 0))
 				.addReactionItem(controls.getPreviousEmoji(), interaction -> Mono.fromCallable(
 								() -> interaction.update("currentPage", x -> x - 1, -1))
 						.flatMap(targetPage -> asyncPaginator.apply(interaction.getTranslator(), targetPage)
