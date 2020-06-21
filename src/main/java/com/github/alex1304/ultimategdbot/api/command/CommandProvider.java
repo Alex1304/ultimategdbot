@@ -87,10 +87,12 @@ public final class CommandProvider {
 	 * {@link ExecutableCommand} which is returned. If the event does not match with
 	 * any command, an empty {@link Optional} is returned.
 	 * 
-	 * @param bot     the bot instance
-	 * @param prefix  the guild-specific bot prefix
-	 * @param event   the MessageCreateEvent to process
-	 * @param channel the channel where the event happened
+	 * @param bot        the bot instance
+	 * @param prefix     the guild-specific bot prefix
+	 * @param flagPrefix the flag prefix
+	 * @param locale     the guild-specific locale
+	 * @param event      the MessageCreateEvent to process
+	 * @param channel    the channel where the event happened
 	 * 
 	 * @return an ExecutableCommand if the event results in a command to be
 	 *         triggered, an empty Optional otherwise.

@@ -18,6 +18,7 @@ public interface Bot extends Translator {
 	/**
 	 * Gets the config of the bot for the given name.
 	 * 
+	 * @param name the name of the config
 	 * @return the config
 	 */
 	PropertyReader config(String name);

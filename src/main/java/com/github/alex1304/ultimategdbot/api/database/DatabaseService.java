@@ -55,8 +55,10 @@ public final class DatabaseService implements Service {
 	 * The given JDBI instance will be enriched as follows:
 	 * <ul>
 	 * <li>{@link SqlObjectPlugin} will be installed</li>
-	 * <li>Column and argument mappers will ba added for the {@link Snowflake} type</li>
-	 * <li>{@link SerializableTransactionRunner} will be set as transaction handler</li>
+	 * <li>Column and argument mappers will ba added for the {@link Snowflake}
+	 * type</li>
+	 * <li>{@link SerializableTransactionRunner} will be set as transaction
+	 * handler</li>
 	 * </ul>
 	 * 
 	 * <p>
@@ -64,6 +66,7 @@ public final class DatabaseService implements Service {
 	 * column mappers and arguments for the {@link Snowflake} type. It will also
 	 * enable support automatic retrying of failed serializable transactions.
 	 * 
+	 * @param bot  the bot instance
 	 * @param jdbi the {@link Jdbi} instance backing the database
 	 * @return a new {@link DatabaseService}
 	 */
@@ -117,8 +120,8 @@ public final class DatabaseService implements Service {
 	
 	/**
 	 * Registers a guild configuration extension to this database. This allows to
-	 * retrieve all configuration data via the {@link #configureGuild(Snowflake)}
-	 * method.
+	 * retrieve all configuration data via the
+	 * {@link #configureGuild(Translator, Snowflake)} method.
 	 * 
 	 * @param extension the extension class to register
 	 */

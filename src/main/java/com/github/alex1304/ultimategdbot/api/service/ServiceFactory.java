@@ -12,8 +12,8 @@ public interface ServiceFactory<S extends Service> {
 	/**
 	 * Creates the service.
 	 * 
-	 * @param properties the bot's properties
-	 * @return a Mono emitting the service object
+	 * @param bot the bot instance
+	 * @return the service object
 	 */
 	S create(Bot bot);
 	

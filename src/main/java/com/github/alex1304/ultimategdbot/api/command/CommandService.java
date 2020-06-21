@@ -69,6 +69,7 @@ public class CommandService implements Service {
 	 * prefix and trigger the command if it matches with one provided by one of the
 	 * command providers.
 	 * 
+	 * @param bot   the bot instance
 	 * @param event the {@link MessageCreateEvent} that was received
 	 * @return a Mono that completes when the command has terminated. If the
 	 *         blacklist check doesn't pass, a Mono completing immediately is

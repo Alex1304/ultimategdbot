@@ -7,7 +7,6 @@ import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.IntFunction;
 
 import com.github.alex1304.ultimategdbot.api.Bot;
 import com.github.alex1304.ultimategdbot.api.Translator;
@@ -141,7 +140,7 @@ public class InteractiveMenuService implements Service {
 
 	/**
 	 * Creates a new {@link InteractiveMenu} prefilled with menu items useful for
-	 * pagination. Unlike {@link #createPaginated(PaginationControls, IntFunction)},
+	 * pagination. Unlike {@link #createPaginated(BiFunction)}
 	 * this method support asynchronous paginator functions.
 	 * 
 	 * @param asyncPaginator a Function that asynchronously generates the message to

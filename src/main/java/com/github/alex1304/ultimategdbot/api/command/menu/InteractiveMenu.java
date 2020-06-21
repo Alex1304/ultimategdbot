@@ -161,9 +161,7 @@ public class InteractiveMenu {
 	/**
 	 * Opens the interactive menu, that is, sends the menu message over Discord and
 	 * starts listening for user's interaction. The returned Mono completes once the
-	 * menu closes or timeouts. If the menu was created using the factory method
-	 * {@link #create(Mono)} and the supplied Mono completes empty or with an
-	 * error, the respective signals will be forwarded through the returning Mono.
+	 * menu closes or timeouts.
 	 * 
 	 * @param ctx the context of the command invoking this menu
 	 * @return a Mono completing when the menu closes or timeouts. Any error
