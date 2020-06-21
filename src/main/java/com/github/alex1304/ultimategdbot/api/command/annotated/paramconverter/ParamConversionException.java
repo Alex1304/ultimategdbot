@@ -8,7 +8,7 @@ public class ParamConversionException extends CommandFailedException {
 
 	public ParamConversionException(Translator tr, String param, String arg, String message) {
 		super(message == null
-				? tr.translate("strings_common", "conversion_error", arg, param)
-				: tr.translate("strings_common", "conversion_error_with_reason", arg, param, message));
+				? tr.translate("CommonStrings", "conversion_error", arg, param)
+				: tr.translate("CommonStrings", "conversion_error_with_reason", arg, param, message));
 	}
 }
