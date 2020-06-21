@@ -2,7 +2,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.github.alex1304</groupId>
 	<artifactId>ultimategdbot-api</artifactId>
-	<version>6.0.0-alpha3-SNAPSHOT</version>
+	<version>6.0.0-alpha2-SNAPSHOT</version>
 
 	<name>ultimategdbot-api</name>
 	<url>http://maven.apache.org</url>
