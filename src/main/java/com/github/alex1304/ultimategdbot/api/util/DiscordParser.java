@@ -40,7 +40,7 @@ public class DiscordParser {
 						.filter(user -> user.getTag().startsWith(str))
 						.next()
 						.single())
-				.onErrorMap(e -> new IllegalArgumentException(tr.translate("strings.common", "user_not_found", str)));
+				.onErrorMap(e -> new IllegalArgumentException(tr.translate("CommonStrings", "user_not_found", str)));
 	}
 	
 	/**
@@ -66,7 +66,7 @@ public class DiscordParser {
 						.filter(r -> r.getName().toLowerCase().startsWith(str.toLowerCase()))
 						.next()
 						.single())
-				.onErrorMap(e -> new IllegalArgumentException(tr.translate("strings.common", "user_not_found", str)));
+				.onErrorMap(e -> new IllegalArgumentException(tr.translate("CommonStrings", "user_not_found", str)));
 	}
 	
 	/**
@@ -92,7 +92,7 @@ public class DiscordParser {
 						.filter(r -> r.getName().toLowerCase().startsWith(str.toLowerCase()))
 						.next()
 						.single())
-				.onErrorMap(e -> new IllegalArgumentException(tr.translate("strings.common", "channel_not_found", str)));
+				.onErrorMap(e -> new IllegalArgumentException(tr.translate("CommonStrings", "channel_not_found", str)));
 	}
 	
 }

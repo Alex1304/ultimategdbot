@@ -12,7 +12,7 @@ public class GuildChannelConverter implements ParamConverter<GuildChannel> {
 	public Mono<GuildChannel> convert(Context ctx, String input) {
 		return Mono.justOrEmpty(ctx.event().getGuildId())
 				.flatMap(guildId -> DiscordParser.parseGuildChannel(ctx, ctx.bot(), guildId, input))
-				.switchIfEmpty(Mono.error(new RuntimeException(ctx.translate("strings.common", "channel_outside_of_guild"))));
+				.switchIfEmpty(Mono.error(new RuntimeException(ctx.translate("CommonStrings", "channel_outside_of_guild"))));
 	}
 
 	@Override

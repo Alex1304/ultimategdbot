@@ -112,9 +112,9 @@ public class CommandService implements Service {
 	}
 
 	private static Mono<Void> logCommandError(Logger logger, Context ctx, Throwable e) {
-		var replyToUser = ctx.reply(ctx.translate("strings.common", "command_unknown_error"));
+		var replyToUser = ctx.reply(ctx.translate("CommonStrings", "command_unknown_error"));
 		var logInDebugChannel = ctx.bot().log(
-				ctx.translate("strings.common", "command_unknown_error_log",
+				ctx.translate("CommonStrings", "command_unknown_error_log",
 						ctx.author().getTag(),
 						ctx.event().getMessage().getContent(),
 						e.getClass().getName() + (e.getMessage() == null ? "" : ": " + e.getMessage())));

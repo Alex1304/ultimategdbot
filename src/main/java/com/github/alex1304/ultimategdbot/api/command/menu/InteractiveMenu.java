@@ -253,7 +253,7 @@ public class InteractiveMenu {
 								.map(ReactionEmoji::unicode)))
 				.concatMap(reaction -> menuMessage.addReaction(reaction)
 						.onErrorResume(ClientException.isStatusCode(403).negate(), e -> Mono.empty()))
-				.onErrorResume(ClientException.isStatusCode(403), e -> ctx.reply(ctx.translate("strings.common", "interactive_menu_missing_reaction_perms")).then())
+				.onErrorResume(ClientException.isStatusCode(403), e -> ctx.reply(ctx.translate("CommonStrings", "interactive_menu_missing_reaction_perms")).then())
 				.then()
 				.thenReturn(menuMessage);
 	}

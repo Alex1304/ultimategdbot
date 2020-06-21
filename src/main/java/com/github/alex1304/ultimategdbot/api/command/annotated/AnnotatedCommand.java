@@ -136,7 +136,7 @@ public class AnnotatedCommand implements Command {
 								firstArgIndex.set(1);
 								return mainMethodOptional;
 							});
-					var invalidSyntax = new CommandFailedException(ctx.translate("strings.common", "invalid_syntax",
+					var invalidSyntax = new CommandFailedException(ctx.translate("CommonStrings", "invalid_syntax",
 							ctx.prefixUsed() + "help " + args.get(0)));
 					return Mono.justOrEmpty(matchingMethod)
 							.switchIfEmpty(Mono.error(invalidSyntax))
