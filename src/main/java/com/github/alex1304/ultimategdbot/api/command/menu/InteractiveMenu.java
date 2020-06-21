@@ -49,10 +49,24 @@ public class InteractiveMenu {
 	private boolean closeAfterMessage = true;
 	private boolean closeAfterReaction = true;
 	private Duration timeout;
+	private ConcurrentHashMap<String, Object> interactionContext = new ConcurrentHashMap<>();
 
 	InteractiveMenu(Function<Translator, Mono<Consumer<MessageCreateSpec>>> menuMessageFactory, Duration timeout) {
 		this.menuMessageFactory = menuMessageFactory;
 		this.timeout = timeout;
+	}
+	
+	/**
+	 * Initializes the interaction context that will be passed to all interaction
+	 * instances happening while this menu is open.
+	 * 
+	 * @param contextConsumer the consumer that populates the context map
+	 * @return this menu
+	 */
+	public InteractiveMenu withInteractionContext(Consumer<Map<String, Object>> contextConsumer) {
+		requireNonNull(contextConsumer);
+		contextConsumer.accept(interactionContext);
+		return this;
 	}
 
 	/**
@@ -163,7 +177,6 @@ public class InteractiveMenu {
 		var closeNotifier = MonoProcessor.<MenuTermination>create();
 		var onInteraction = ReplayProcessor.cacheLastOrDefault(0); // Signals onNext each time user interacts with the menu
 		var onInteractionSink = onInteraction.sink(FluxSink.OverflowStrategy.LATEST);
-		var contextVariables = new ConcurrentHashMap<String, Object>();
 		return menuMessageFactory.apply(ctx).<Message>flatMap(ctx::reply)
 				.flatMap(menuMessage -> addReactionsToMenu(ctx, menuMessage))
 				.flatMap(menuMessage -> {
@@ -185,7 +198,7 @@ public class InteractiveMenu {
 										return Mono.empty();
 									}
 								}
-								var interaction = new MessageMenuInteraction(ctx, menuMessage, contextVariables, closeNotifier,
+								var interaction = new MessageMenuInteraction(ctx, menuMessage, interactionContext, closeNotifier,
 										event, new ArgumentList(args), flags);
 								return action.apply(interaction).doOnSubscribe(__ -> onInteractionSink.next(0)).thenReturn(0);
 							})
@@ -208,7 +221,7 @@ public class InteractiveMenu {
 								if (action == null) {
 									return Mono.empty();
 								}
-								var interaction = new ReactionMenuInteraction(ctx, menuMessage, contextVariables, closeNotifier, event);
+								var interaction = new ReactionMenuInteraction(ctx, menuMessage, interactionContext, closeNotifier, event);
 								return action.apply(interaction).doOnSubscribe(__ -> onInteractionSink.next(0)).thenReturn(0);
 							})
 							.takeUntil(__ -> closeAfterReaction)
