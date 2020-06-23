@@ -98,8 +98,8 @@ public final class DatabaseService implements Service {
 	/**
 	 * Retrieves all registered configurators for the given guild referenced by its
 	 * ID. Empty configuration data will be inserted in database for this specific
-	 * guild if it doesn't exist yet. Configurators are emitted in alphabetical case
-	 * insensitive order.
+	 * guild if it doesn't exist yet. Configurators are emitted in the alphabetical
+	 * order of the class name of their associated data object.
 	 * 
 	 * @param tr      the translator to use to translate strings necessary for the
 	 *                configuration
@@ -113,8 +113,8 @@ public final class DatabaseService implements Service {
 			}
 			return Flux.fromIterable(guildConfigExtensions)
 					.flatMap(extension -> withExtension(extension, dao -> dao.getOrCreate(guildId.asLong())))
-					.<GuildConfigurator<?>>map(data -> data.configurator(tr, bot))
-					.sort(Comparator.comparing(GuildConfigurator::getName, String.CASE_INSENSITIVE_ORDER));
+					.sort(Comparator.comparing(data -> data.getClass().getSimpleName(), String.CASE_INSENSITIVE_ORDER))
+					.map(data -> data.configurator(tr, bot));
 		});
 	}
 	
