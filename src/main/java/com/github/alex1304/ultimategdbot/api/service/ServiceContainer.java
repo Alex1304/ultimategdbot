@@ -1,9 +1,10 @@
 package com.github.alex1304.ultimategdbot.api.service;
 
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.github.alex1304.ultimategdbot.api.Bot;
+
+import reactor.core.publisher.Mono;
 
 /**
  * Load, store and access services. Services are expected to be registered via the add method.
@@ -25,13 +26,14 @@ public class ServiceContainer {
 	 * 
 	 * @param factory the factory that will instantate the service to add if not
 	 *                already present
-	 * @return the newly created service, or an empty optional if the service wasn't
-	 *         instantiated due to it already being present.
+	 * @return a Mono emitting the newly created service, or an empty Mono if the
+	 *         service wasn't instantiated due to it already being present.
 	 */
-	public Optional<Service> add(ServiceFactory<?> factory) {
-		var box = new Object() { private Service computed = null; };
-		services.computeIfAbsent(factory.serviceClass(), k -> box.computed = factory.create(bot));
-		return Optional.ofNullable(box.computed);
+	public Mono<Service> add(ServiceFactory<?> factory) {
+		var service = services.get(factory.serviceClass());
+		return service != null ? Mono.empty() : factory.create(bot)
+				.cast(Service.class)
+				.doOnNext(s -> services.put(s.getClass(), s));
 	}
 	
 	/**

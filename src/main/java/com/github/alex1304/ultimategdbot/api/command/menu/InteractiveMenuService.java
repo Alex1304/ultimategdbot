@@ -37,11 +37,6 @@ public class InteractiveMenuService implements Service {
 	}
 
 	@Override
-	public String getName() {
-		return "interactive menu";
-	}
-
-	@Override
 	public Set<Class<? extends Service>> requiredServices() {
 		return Set.of(CommandService.class, EmojiService.class);
 	}

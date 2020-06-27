@@ -26,11 +26,6 @@ public class EmojiService implements Service {
 				.collect(toUnmodifiableSet());
 	}
 
-	@Override
-	public String getName() {
-		return "emoji";
-	}
-
 	public Set<Snowflake> getEmojiGuildIds() {
 		return emojiGuildIds;
 	}

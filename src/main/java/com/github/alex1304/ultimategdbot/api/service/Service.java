@@ -6,11 +6,4 @@ package com.github.alex1304.ultimategdbot.api.service;
  * the bot disconnects.
  */
 public interface Service extends ServiceDependant {
-	
-	/**
-	 * Gets the name of the service.
-	 * 
-	 * @return the name
-	 */
-	String getName();
 }

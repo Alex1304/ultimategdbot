@@ -2,6 +2,8 @@ package com.github.alex1304.ultimategdbot.api.service;
 
 import com.github.alex1304.ultimategdbot.api.Bot;
 
+import reactor.core.publisher.Mono;
+
 /**
  * Factory that can create services.
  * 
@@ -10,12 +12,12 @@ import com.github.alex1304.ultimategdbot.api.Bot;
 public interface ServiceFactory<S extends Service> {
 	
 	/**
-	 * Creates the service.
+	 * Asynchronously creates the service.
 	 * 
 	 * @param bot the bot instance
-	 * @return the service object
+	 * @return a Mono emitting the service object
 	 */
-	S create(Bot bot);
+	Mono<S> create(Bot bot);
 	
 	/**
 	 * Gets the type of the service.

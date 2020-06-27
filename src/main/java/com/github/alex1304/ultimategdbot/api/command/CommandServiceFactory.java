@@ -3,11 +3,13 @@ package com.github.alex1304.ultimategdbot.api.command;
 import com.github.alex1304.ultimategdbot.api.Bot;
 import com.github.alex1304.ultimategdbot.api.service.ServiceFactory;
 
+import reactor.core.publisher.Mono;
+
 public class CommandServiceFactory implements ServiceFactory<CommandService> {
 
 	@Override
-	public CommandService create(Bot bot) {
-		return new CommandService(bot);
+	public Mono<CommandService> create(Bot bot) {
+		return Mono.fromCallable(() -> new CommandService(bot));
 	}
 
 	@Override

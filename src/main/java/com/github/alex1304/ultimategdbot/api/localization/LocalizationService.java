@@ -31,11 +31,6 @@ public class LocalizationService implements Service {
 				.collect(toUnmodifiableSet());
 	}
 
-	@Override
-	public String getName() {
-		return "localization";
-	}
-
 	/**
 	 * Finds the locale specific to the given guild.
 	 * 

@@ -47,11 +47,6 @@ public class CommandService implements Service {
 				.log(LOGGER)
 				.subscribe();
 	}
-
-	@Override
-	public String getName() {
-		return "command";
-	}
 	
 	/**
 	 * Adds a new command provider to this kernel.

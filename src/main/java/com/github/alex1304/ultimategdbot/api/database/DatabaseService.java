@@ -89,11 +89,6 @@ public final class DatabaseService implements Service {
 		jdbi.setTransactionHandler(new SerializableTransactionRunner());
 		return new DatabaseService(bot, jdbi);
 	}
-
-	@Override
-	public String getName() {
-		return "database";
-	}
 	
 	/**
 	 * Retrieves all registered configurators for the given guild referenced by its
