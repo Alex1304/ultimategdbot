@@ -7,27 +7,32 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
-import com.github.alex1304.ultimategdbot.api.Bot;
-import com.github.alex1304.ultimategdbot.api.service.Service;
+import com.github.alex1304.ultimategdbot.api.BotConfig;
 
 import reactor.util.Logger;
 import reactor.util.Loggers;
 import reactor.util.annotation.Nullable;
 
-public class LocalizationService implements Service {
+public class LocalizationService {
+	
+	public static final String CONFIG_RESOURCE_NAME = "localization";
+	
 	private static final Logger LOGGER = Loggers.getLogger(LocalizationService.class);
 	
-	private final Bot bot;
 	private final Set<Locale> supportedLocales;
+	private final Locale defaultLocale;
 	private final ConcurrentHashMap<Long, Locale> localeByGuild = new ConcurrentHashMap<>();
 
-	LocalizationService(Bot bot) {
-		this.bot = bot;
-		this.supportedLocales = Stream.concat(
-						bot.config("localization")
+	public LocalizationService(BotConfig botConfig) {
+		this.defaultLocale = botConfig.resource(CONFIG_RESOURCE_NAME)
+				.readOptional("default_locale")
+				.map(Locale::forLanguageTag)
+				.orElse(Locale.getDefault());
+		this.supportedLocales = Stream
+				.concat(botConfig.resource(CONFIG_RESOURCE_NAME)
 								.readAsStream("supported_locales", ",")
 								.map(Locale::forLanguageTag),
-						Stream.of(bot.getLocale()))
+						Stream.of(defaultLocale))
 				.collect(toUnmodifiableSet());
 	}
 
@@ -38,7 +43,7 @@ public class LocalizationService implements Service {
 	 * @return the locale used by the guild
 	 */
 	public Locale getLocaleForGuild(long guildId) {
-		return localeByGuild.getOrDefault(guildId, bot.getLocale());
+		return localeByGuild.getOrDefault(guildId, defaultLocale);
 	}
 
 	/**
@@ -66,5 +71,14 @@ public class LocalizationService implements Service {
 	 */
 	public Set<Locale> getSupportedLocales() {
 		return supportedLocales;
+	}
+
+	/**
+	 * Gets the default locale.
+	 * 
+	 * @return the default locale
+	 */
+	public Locale getDefaultLocale() {
+		return defaultLocale;
 	}
 }

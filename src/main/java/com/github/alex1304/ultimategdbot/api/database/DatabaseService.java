@@ -1,12 +1,11 @@
 package com.github.alex1304.ultimategdbot.api.database;
 
-import static java.util.Collections.synchronizedSet;
 import static java.util.Objects.requireNonNull;
 
 import java.sql.Types;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
 import org.jdbi.v3.core.Handle;
@@ -22,11 +21,10 @@ import org.jdbi.v3.core.transaction.SerializableTransactionRunner;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 import org.reactivestreams.Publisher;
 
-import com.github.alex1304.ultimategdbot.api.Bot;
 import com.github.alex1304.ultimategdbot.api.Translator;
 import com.github.alex1304.ultimategdbot.api.database.guildconfig.GuildConfigDao;
+import com.github.alex1304.ultimategdbot.api.database.guildconfig.GuildConfigData;
 import com.github.alex1304.ultimategdbot.api.database.guildconfig.GuildConfigurator;
-import com.github.alex1304.ultimategdbot.api.service.Service;
 
 import discord4j.common.util.Snowflake;
 import reactor.core.publisher.Flux;
@@ -37,14 +35,12 @@ import reactor.core.scheduler.Schedulers;
  * Database backed by <a href="https://jdbi.org">JDBI</a> with reactive capabilities.
  * 
  */
-public final class DatabaseService implements Service {
+public final class DatabaseService {
 
-	private final Bot bot;
 	private final Jdbi jdbi;
-	private final Set<Class<? extends GuildConfigDao<?>>> guildConfigExtensions = synchronizedSet(new HashSet<>());
-	
-	private DatabaseService(Bot bot, Jdbi jdbi) {
-		this.bot = bot;
+	private final Map<Class<? extends GuildConfigDao<?>>, BiFunction<Object, Translator, GuildConfigurator<?>>> guildConfigurators = new ConcurrentHashMap<>();
+
+	private DatabaseService(Jdbi jdbi) {
 		this.jdbi = jdbi;
 	}
 	
@@ -55,22 +51,16 @@ public final class DatabaseService implements Service {
 	 * The given JDBI instance will be enriched as follows:
 	 * <ul>
 	 * <li>{@link SqlObjectPlugin} will be installed</li>
-	 * <li>Column and argument mappers will ba added for the {@link Snowflake}
+	 * <li>Column and argument mappers will be added for the {@link Snowflake}
 	 * type</li>
 	 * <li>{@link SerializableTransactionRunner} will be set as transaction
 	 * handler</li>
 	 * </ul>
 	 * 
-	 * <p>
-	 * It will automatically install the {@link SqlObjectPlugin}, and register
-	 * column mappers and arguments for the {@link Snowflake} type. It will also
-	 * enable support automatic retrying of failed serializable transactions.
-	 * 
-	 * @param bot  the bot instance
 	 * @param jdbi the {@link Jdbi} instance backing the database
 	 * @return a new {@link DatabaseService}
 	 */
-	public static DatabaseService create(Bot bot, Jdbi jdbi) {
+	public static DatabaseService create(Jdbi jdbi) {
 		requireNonNull(jdbi, "jdbi");
 		jdbi.installPlugin(new SqlObjectPlugin());
 		jdbi.registerColumnMapper(Snowflake.class, (rs, col, ctx) -> {
@@ -87,7 +77,7 @@ public final class DatabaseService implements Service {
 			}
 		});
 		jdbi.setTransactionHandler(new SerializableTransactionRunner());
-		return new DatabaseService(bot, jdbi);
+		return new DatabaseService(jdbi);
 	}
 	
 	/**
@@ -103,13 +93,9 @@ public final class DatabaseService implements Service {
 	 */
 	public Flux<GuildConfigurator<?>> configureGuild(Translator tr, Snowflake guildId) {
 		return Flux.defer(() -> {
-			if (bot == null) {
-				return Mono.error(new IllegalStateException("Service not ready"));
-			}
-			return Flux.fromIterable(guildConfigExtensions)
-					.flatMap(extension -> withExtension(extension, dao -> dao.getOrCreate(guildId.asLong())))
-					.sort(Comparator.comparing(data -> data.getClass().getSimpleName(), String.CASE_INSENSITIVE_ORDER))
-					.map(data -> data.configurator(tr, bot));
+			return Flux.fromIterable(guildConfigurators.entrySet())
+					.flatMap(entry -> withExtension(entry.getKey(), dao -> dao.getOrCreate(guildId.asLong()))
+								.map(data -> entry.getValue().apply(data, tr)));
 		});
 	}
 	
@@ -120,8 +106,9 @@ public final class DatabaseService implements Service {
 	 * 
 	 * @param extension the extension class to register
 	 */
-	public void registerGuildConfigExtension(Class<? extends GuildConfigDao<?>> extension) {
-		guildConfigExtensions.add(extension);
+	@SuppressWarnings("unchecked")
+	public <D extends GuildConfigData<D>> void addGuildConfigurator(Class<? extends GuildConfigDao<D>> dao, BiFunction<? super D, ? super Translator, GuildConfigurator<D>> configuratorFactory) {
+		guildConfigurators.put(dao, (o, tr) -> configuratorFactory.apply((D) o, tr));
 	}
 
 	/**

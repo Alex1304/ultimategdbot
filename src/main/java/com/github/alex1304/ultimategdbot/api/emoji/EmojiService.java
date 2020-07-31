@@ -4,23 +4,25 @@ import static java.util.stream.Collectors.toUnmodifiableSet;
 
 import java.util.Set;
 
-import com.github.alex1304.ultimategdbot.api.Bot;
-import com.github.alex1304.ultimategdbot.api.service.Service;
+import com.github.alex1304.ultimategdbot.api.BotConfig;
 
 import discord4j.common.util.Snowflake;
+import discord4j.core.GatewayDiscordClient;
 import discord4j.core.object.entity.Guild;
 import discord4j.core.object.entity.GuildEmoji;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-public class EmojiService implements Service {
+public class EmojiService {
 
-	private final Bot bot;
+	public static final String CONFIG_RESOURCE_NAME = "emoji";
+	
+	private final GatewayDiscordClient gateway;
 	private final Set<Snowflake> emojiGuildIds;
 
-	EmojiService(Bot bot) {
-		this.bot = bot;
-		this.emojiGuildIds = bot.config("emoji")
+	public EmojiService(BotConfig botConfig, GatewayDiscordClient gateway) {
+		this.gateway = gateway;
+		this.emojiGuildIds = botConfig.resource(CONFIG_RESOURCE_NAME)
 				.readAsStream("emoji_guild_ids", ",")
 				.map(Snowflake::of)
 				.collect(toUnmodifiableSet());
@@ -33,7 +35,7 @@ public class EmojiService implements Service {
 	public Mono<String> emoji(String emojiName) {
 		var defaultVal = ":" + emojiName + ":";
 		return Flux.fromIterable(emojiGuildIds)
-				.flatMap(bot.gateway()::getGuildById)
+				.flatMap(gateway::getGuildById)
 				.flatMap(Guild::getEmojis)
 				.filter(emoji -> emoji.getName().equalsIgnoreCase(emojiName))
 				.next()

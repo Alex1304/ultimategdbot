@@ -1,21 +1,20 @@
 package com.github.alex1304.ultimategdbot.api;
 
-import com.github.alex1304.ultimategdbot.api.service.ServiceDependant;
+import com.github.alex1304.rdi.ServiceReference;
 
 import reactor.core.publisher.Mono;
 
 /**
  * Configures and creates a plugin.
  */
-public interface Plugin extends ServiceDependant {
+public interface Plugin {
 
 	/**
-	 * Configures a {@link Plugin} for the given bot.
+	 * Defines the root service of the plugin.
 	 * 
-	 * @param bot the bot instance
-	 * @return a Mono completing when setup is complete
+	 * @return the reference to the root service
 	 */
-	Mono<Void> setup(Bot bot);
+	ServiceReference<?> rootService();
 	
 	/**
 	 * Gets the metadata of this plugin. May be generated from an asynchronous

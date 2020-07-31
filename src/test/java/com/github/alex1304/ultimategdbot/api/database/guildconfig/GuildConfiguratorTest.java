@@ -14,9 +14,6 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.github.alex1304.ultimategdbot.api.Bot;
-import com.github.alex1304.ultimategdbot.api.Translator;
-
 import discord4j.common.util.Snowflake;
 import reactor.core.publisher.Mono;
 
@@ -29,8 +26,24 @@ public class GuildConfiguratorTest {
 	public void setUp() throws Exception {
 		bean1 = new TestBean(Snowflake.of(123), 40L, "toto");
 		bean2 = new TestBean(Snowflake.of(1), null, null);
-		configurator1 = bean1.configurator(null, null);
-		configurator2 = bean2.configurator(null, null);
+		configurator1 = createConfigurator(bean1);
+		configurator2 = createConfigurator(bean2);
+	}
+	
+	private static GuildConfigurator<TestBean> createConfigurator(TestBean b) {
+		return GuildConfigurator.builder("Test", b, TestDao.class)
+				.addEntry(LongConfigEntry.<TestBean>builder("mylong")
+						.setValueGetter(bean -> Mono.justOrEmpty(bean.getMyLong()))
+						.setValueSetter(TestBean::setMyLong)
+						.setValidator(Validator.allowingAll()))
+				.addEntry(StringConfigEntry.<TestBean>builder("mystring")
+						.setValueGetter(bean -> Mono.justOrEmpty(bean.getMyString()))
+						.setValueSetter(TestBean::setMyString)
+						.setValidator(Validator.allowingIf(
+								str -> str.startsWith("a"),
+								"value must start with 'a'")))
+				.addEntry(LongConfigEntry.builder("readonly"))
+				.build();
 	}
 
 	@Test
@@ -156,23 +169,6 @@ public class GuildConfiguratorTest {
 		public TestBean setMyString(String myString) {
 			this.myString = myString;
 			return this;
-		}
-		
-		@Override
-		public GuildConfigurator<TestBean> configurator(Translator tr, Bot bot) {
-			return GuildConfigurator.builder("Test", this, TestDao.class)
-					.addEntry(LongConfigEntry.<TestBean>builder("mylong")
-							.setValueGetter(bean -> Mono.justOrEmpty(bean.getMyLong()))
-							.setValueSetter(TestBean::setMyLong)
-							.setValidator(Validator.allowingAll()))
-					.addEntry(StringConfigEntry.<TestBean>builder("mystring")
-							.setValueGetter(bean -> Mono.justOrEmpty(bean.getMyString()))
-							.setValueSetter(TestBean::setMyString)
-							.setValidator(Validator.allowingIf(
-									str -> str.startsWith("a"),
-									"value must start with 'a'")))
-					.addEntry(LongConfigEntry.builder("readonly"))
-					.build();
 		}
 	}
 }

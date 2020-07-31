@@ -16,6 +16,7 @@ import com.github.alex1304.ultimategdbot.api.command.Context;
 import com.github.alex1304.ultimategdbot.api.emoji.EmojiService;
 import com.github.alex1304.ultimategdbot.api.util.MessageUtils;
 
+import discord4j.core.GatewayDiscordClient;
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.event.domain.message.ReactionAddEvent;
 import discord4j.core.event.domain.message.ReactionRemoveEvent;
@@ -41,6 +42,9 @@ import reactor.util.retry.Retry;
  */
 public class InteractiveMenu {
 	
+	private final GatewayDiscordClient gateway;
+	private final CommandService commandService;
+	private final EmojiService emojiService;
 	private final Function<Translator, Mono<Consumer<MessageCreateSpec>>> menuMessageFactory;
 	private final Map<String, Function<MessageMenuInteraction, Mono<Void>>> messageItems = new LinkedHashMap<>();
 	private final Map<String, Function<ReactionMenuInteraction, Mono<Void>>> reactionItems = new LinkedHashMap<>();
@@ -51,11 +55,15 @@ public class InteractiveMenu {
 	private Duration timeout;
 	private ConcurrentHashMap<String, Object> interactionContext = new ConcurrentHashMap<>();
 
-	InteractiveMenu(Function<Translator, Mono<Consumer<MessageCreateSpec>>> menuMessageFactory, Duration timeout) {
+	InteractiveMenu(GatewayDiscordClient gateway, CommandService commandService, EmojiService emojiService,
+			Function<Translator, Mono<Consumer<MessageCreateSpec>>> menuMessageFactory, Duration timeout) {
+		this.gateway = gateway;
+		this.commandService = commandService;
+		this.emojiService = emojiService;
 		this.menuMessageFactory = menuMessageFactory;
 		this.timeout = timeout;
 	}
-	
+
 	/**
 	 * Initializes the interaction context that will be passed to all interaction
 	 * instances happening while this menu is open.
@@ -178,12 +186,12 @@ public class InteractiveMenu {
 		return menuMessageFactory.apply(ctx).<Message>flatMap(ctx::reply)
 				.flatMap(menuMessage -> addReactionsToMenu(ctx, menuMessage))
 				.flatMap(menuMessage -> {
-					var messageInteractionHandler = ctx.bot().gateway().on(MessageCreateEvent.class)
+					var messageInteractionHandler = gateway.on(MessageCreateEvent.class)
 							.takeUntilOther(closeNotifier)
 							.filter(event -> event.getMessage().getAuthor().equals(ctx.event().getMessage().getAuthor())
 									&& event.getMessage().getChannelId().equals(ctx.event().getMessage().getChannelId()))
 							.flatMap(event -> {
-								var tokens = MessageUtils.tokenize(ctx.bot().service(CommandService.class).getFlagPrefix(), event.getMessage().getContent());
+								var tokens = MessageUtils.tokenize(commandService.getFlagPrefix(), event.getMessage().getContent());
 								var args = tokens.getT2();
 								var flags = tokens.getT1();
 								if (args.isEmpty()) {
@@ -205,8 +213,8 @@ public class InteractiveMenu {
 							.retryWhen(Retry.indefinitely().filter(UnexpectedReplyException.class::isInstance))
 							.doFinally(__ -> closeNotifier.onNext(MenuTermination.CLOSED_BY_USER));
 					var reactionInteractionHandler = Flux.merge(
-									ctx.bot().gateway().on(ReactionAddEvent.class),
-									ctx.bot().gateway().on(ReactionRemoveEvent.class))
+									gateway.on(ReactionAddEvent.class),
+									gateway.on(ReactionRemoveEvent.class))
 							.takeUntilOther(closeNotifier)
 							.map(ReactionToggleEvent::new)
 							.filter(event -> event.getMessageId().equals(menuMessage.getId())
@@ -253,8 +261,8 @@ public class InteractiveMenu {
 	
 	private Mono<Message> addReactionsToMenu(Context ctx, Message menuMessage) {
 		return Flux.fromIterable(reactionItems.keySet())
-				.flatMap(emojiName -> Flux.fromIterable(ctx.bot().service(EmojiService.class).getEmojiGuildIds())
-						.flatMap(ctx.bot().gateway()::getGuildById)
+				.flatMap(emojiName -> Flux.fromIterable(emojiService.getEmojiGuildIds())
+						.flatMap(gateway::getGuildById)
 						.flatMap(Guild::getEmojis)
 						.filter(emoji -> emoji.getName().equalsIgnoreCase(emojiName))
 						.next()

@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.function.Consumer;
 
-import com.github.alex1304.ultimategdbot.api.Bot;
 import com.github.alex1304.ultimategdbot.api.Translator;
 
 import discord4j.core.event.domain.message.MessageCreateEvent;
@@ -22,18 +21,16 @@ public class Context implements Translator {
 	private final Command command;
 	private final MessageCreateEvent event;
 	private final ArgumentList args;
-	private final Bot bot;
 	private final String prefixUsed;
 	private final Locale locale;
 	private final FlagSet flags;
 	private final User author;
 	private final MessageChannel channel;
 
-	public Context(Command command, MessageCreateEvent event, List<String> args, FlagSet flags, Bot bot, String prefixUsed, Locale locale, MessageChannel channel) {
+	public Context(Command command, MessageCreateEvent event, List<String> args, FlagSet flags, String prefixUsed, Locale locale, MessageChannel channel) {
 		this.command = requireNonNull(command);
 		this.event = requireNonNull(event);
 		this.args = new ArgumentList(requireNonNull(args));
-		this.bot = requireNonNull(bot);
 		this.prefixUsed = requireNonNull(prefixUsed);
 		this.locale = requireNonNull(locale);
 		this.flags = requireNonNull(flags);
@@ -70,15 +67,6 @@ public class Context implements Translator {
 	
 	public FlagSet flags() {
 		return flags;
-	}
-
-	/**
-	 * Gets the bot instance.
-	 * 
-	 * @return the bot
-	 */
-	public Bot bot() {
-		return bot;
 	}
 
 	/**

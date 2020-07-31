@@ -1,13 +1,13 @@
 package com.github.alex1304.ultimategdbot.api.util;
 
-import com.github.alex1304.ultimategdbot.api.Bot;
 import com.github.alex1304.ultimategdbot.api.Translator;
 
+import discord4j.common.util.Snowflake;
+import discord4j.core.GatewayDiscordClient;
 import discord4j.core.object.entity.Guild;
 import discord4j.core.object.entity.Role;
 import discord4j.core.object.entity.User;
 import discord4j.core.object.entity.channel.GuildChannel;
-import discord4j.common.util.Snowflake;
 import reactor.core.publisher.Mono;
 
 /**
@@ -28,15 +28,15 @@ public class DiscordParser {
 	 * @param str the input
 	 * @return a Mono emitting the found user
 	 */
-	public static Mono<User> parseUser(Translator tr, Bot bot, String str) {
+	public static Mono<User> parseUser(Translator tr, GatewayDiscordClient gateway, String str) {
 		return Mono.just(str)
 				.map(Snowflake::of)
 				.onErrorResume(e -> Mono.just(str.substring(2, str.length() - 1))
 						.map(Snowflake::of))
 				.onErrorResume(e -> Mono.just(str.substring(3, str.length() - 1))
 						.map(Snowflake::of))
-				.flatMap(userId -> bot.gateway().getUserById(userId).single())
-				.onErrorResume(e -> bot.gateway().getUsers()
+				.flatMap(userId -> gateway.getUserById(userId).single())
+				.onErrorResume(e -> gateway.getUsers()
 						.filter(user -> user.getTag().startsWith(str))
 						.next()
 						.single())
@@ -54,13 +54,13 @@ public class DiscordParser {
 	 * @param str     the input
 	 * @return a Mono emitting the found role
 	 */
-	public static Mono<Role> parseRole(Translator tr, Bot bot, Snowflake guildId, String str) {
+	public static Mono<Role> parseRole(Translator tr, GatewayDiscordClient gateway, Snowflake guildId, String str) {
 		return Mono.just(str)
 				.map(Snowflake::of)
 				.onErrorResume(e -> Mono.just(str.substring(3, str.length() - 1))
 						.map(Snowflake::of))
-				.flatMap(roleId -> bot.gateway().getRoleById(guildId, roleId).single())
-				.onErrorResume(e -> bot.gateway()
+				.flatMap(roleId -> gateway.getRoleById(guildId, roleId).single())
+				.onErrorResume(e -> gateway
 						.getGuildById(guildId)
 						.flatMapMany(Guild::getRoles)
 						.filter(r -> r.getName().toLowerCase().startsWith(str.toLowerCase()))
@@ -80,14 +80,14 @@ public class DiscordParser {
 	 * @param str     the input
 	 * @return a Mono emitting the found channel
 	 */
-	public static Mono<GuildChannel> parseGuildChannel(Translator tr, Bot bot, Snowflake guildId, String str) {
+	public static Mono<GuildChannel> parseGuildChannel(Translator tr, GatewayDiscordClient gateway, Snowflake guildId, String str) {
 		return Mono.just(str)
 				.map(Snowflake::of)
 				.onErrorResume(e -> Mono.just(str.substring(2, str.length() - 1))
 						.map(Snowflake::of))
-				.flatMap(channelId -> bot.gateway().getChannelById(channelId).single())
+				.flatMap(channelId -> gateway.getChannelById(channelId).single())
 				.ofType(GuildChannel.class)
-				.onErrorResume(e -> bot.gateway().getGuildById(guildId)
+				.onErrorResume(e -> gateway.getGuildById(guildId)
 						.flatMapMany(Guild::getChannels)
 						.filter(r -> r.getName().toLowerCase().startsWith(str.toLowerCase()))
 						.next()

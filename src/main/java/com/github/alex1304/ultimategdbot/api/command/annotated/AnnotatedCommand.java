@@ -22,9 +22,9 @@ import com.github.alex1304.ultimategdbot.api.command.CommandDocumentation;
 import com.github.alex1304.ultimategdbot.api.command.CommandDocumentationEntry;
 import com.github.alex1304.ultimategdbot.api.command.CommandFailedException;
 import com.github.alex1304.ultimategdbot.api.command.CommandProvider;
-import com.github.alex1304.ultimategdbot.api.command.CommandService;
 import com.github.alex1304.ultimategdbot.api.command.Context;
 import com.github.alex1304.ultimategdbot.api.command.FlagInformation;
+import com.github.alex1304.ultimategdbot.api.command.PermissionChecker;
 import com.github.alex1304.ultimategdbot.api.command.PermissionDeniedException;
 import com.github.alex1304.ultimategdbot.api.command.PermissionLevel;
 import com.github.alex1304.ultimategdbot.api.command.Scope;
@@ -140,7 +140,7 @@ public class AnnotatedCommand implements Command {
 							ctx.prefixUsed() + "help " + args.get(0)));
 					return Mono.justOrEmpty(matchingMethod)
 							.switchIfEmpty(Mono.error(invalidSyntax))
-							.filterWhen(method -> isSubcommandGranted(method, ctx))
+							.filterWhen(method -> isSubcommandGranted(method, ctx, provider.getPermissionChecker()))
 							.switchIfEmpty(Mono.error(new PermissionDeniedException()))
 							.flatMap(method -> {
 								LOGGER.debug("Matching method: {}#{}", method.getDeclaringClass().getName(), method.getName());
@@ -177,14 +177,13 @@ public class AnnotatedCommand implements Command {
 				cmdDescriptorAnnot.scope());
 	}
 
-	private static Mono<Boolean> isSubcommandGranted(Method method, Context ctx) {
+	private static Mono<Boolean> isSubcommandGranted(Method method, Context ctx, PermissionChecker permissionChecker) {
 		var methodPermAnnot = method.getAnnotation(CommandPermission.class);
 		if (methodPermAnnot == null) {
 			return Mono.just(true);
 		}
-		return Mono.zip(
-						ctx.bot().service(CommandService.class).getPermissionChecker().isGranted(methodPermAnnot.name(), ctx),
-						ctx.bot().service(CommandService.class).getPermissionChecker().isGranted(methodPermAnnot.level(), ctx))
+		return Mono.zip(permissionChecker.isGranted(methodPermAnnot.name(), ctx),
+						permissionChecker.isGranted(methodPermAnnot.level(), ctx))
 				.map(function(Boolean::logicalAnd));
 				
 	}

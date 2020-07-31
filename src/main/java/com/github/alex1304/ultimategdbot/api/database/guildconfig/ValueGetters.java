@@ -3,12 +3,11 @@ package com.github.alex1304.ultimategdbot.api.database.guildconfig;
 import java.util.Optional;
 import java.util.function.Function;
 
-import com.github.alex1304.ultimategdbot.api.Bot;
-
+import discord4j.common.util.Snowflake;
+import discord4j.core.GatewayDiscordClient;
 import discord4j.core.object.entity.Member;
 import discord4j.core.object.entity.Role;
 import discord4j.core.object.entity.channel.GuildChannel;
-import discord4j.common.util.Snowflake;
 import reactor.core.publisher.Mono;
 
 /**
@@ -59,10 +58,10 @@ public class ValueGetters {
 	 * @param idGetter a Function that gets the channel ID from the data object
 	 * @return a value getter for a guild channel
 	 */
-	public static <D extends GuildConfigData<D>> Function<D, Mono<GuildChannel>> forGuildChannel(Bot bot,
+	public static <D extends GuildConfigData<D>> Function<D, Mono<GuildChannel>> forGuildChannel(GatewayDiscordClient gateway,
 			Function<? super D, Snowflake> idGetter) {
 		return data -> Mono.justOrEmpty(idGetter.apply(data))
-				.flatMap(bot.gateway()::getChannelById)
+				.flatMap(gateway::getChannelById)
 				.ofType(GuildChannel.class)
 				.filter(channel -> channel.getGuildId().equals(data.guildId()));
 	}
@@ -76,10 +75,10 @@ public class ValueGetters {
 	 * @param idGetter a Function that gets the role ID from the data object
 	 * @return a value getter for a guild role
 	 */
-	public static <D extends GuildConfigData<D>> Function<D, Mono<Role>> forGuildRole(Bot bot,
+	public static <D extends GuildConfigData<D>> Function<D, Mono<Role>> forGuildRole(GatewayDiscordClient gateway,
 			Function<? super D, Snowflake> idGetter) {
 		return data -> Mono.justOrEmpty(idGetter.apply(data))
-				.flatMap(roleId -> bot.gateway().getRoleById(data.guildId(), roleId))
+				.flatMap(roleId -> gateway.getRoleById(data.guildId(), roleId))
 				.filter(role -> role.getGuildId().equals(data.guildId()));
 	}
 
@@ -92,10 +91,10 @@ public class ValueGetters {
 	 * @param idGetter a Function that gets the member ID from the data object
 	 * @return a value getter for a guild member
 	 */
-	public static <D extends GuildConfigData<D>> Function<D, Mono<Member>> forGuildMember(Bot bot,
+	public static <D extends GuildConfigData<D>> Function<D, Mono<Member>> forGuildMember(GatewayDiscordClient gateway,
 			Function<? super D, Snowflake> idGetter) {
 		return data -> Mono.justOrEmpty(idGetter.apply(data))
-				.flatMap(memberId -> bot.gateway().getMemberById(data.guildId(), memberId))
+				.flatMap(memberId -> gateway.getMemberById(data.guildId(), memberId))
 				.filter(member -> member.getGuildId().equals(data.guildId()));
 	}
 
@@ -108,10 +107,10 @@ public class ValueGetters {
 	 * @param idGetter a Function that gets the channel ID from the data object
 	 * @return a value getter for a guild channel
 	 */
-	public static <D extends GuildConfigData<D>> Function<D, Mono<GuildChannel>> forOptionalGuildChannel(Bot bot,
+	public static <D extends GuildConfigData<D>> Function<D, Mono<GuildChannel>> forOptionalGuildChannel(GatewayDiscordClient gateway,
 			Function<? super D, Optional<Snowflake>> idGetter) {
 		return data -> Mono.justOrEmpty(idGetter.apply(data))
-				.flatMap(bot.gateway()::getChannelById)
+				.flatMap(gateway::getChannelById)
 				.ofType(GuildChannel.class)
 				.filter(channel -> channel.getGuildId().equals(data.guildId()));
 	}
@@ -125,10 +124,10 @@ public class ValueGetters {
 	 * @param idGetter a Function that gets the role ID from the data object
 	 * @return a value getter for a guild role
 	 */
-	public static <D extends GuildConfigData<D>> Function<D, Mono<Role>> forOptionalGuildRole(Bot bot,
+	public static <D extends GuildConfigData<D>> Function<D, Mono<Role>> forOptionalGuildRole(GatewayDiscordClient gateway,
 			Function<? super D, Optional<Snowflake>> idGetter) {
 		return data -> Mono.justOrEmpty(idGetter.apply(data))
-				.flatMap(roleId -> bot.gateway().getRoleById(data.guildId(), roleId))
+				.flatMap(roleId -> gateway.getRoleById(data.guildId(), roleId))
 				.filter(role -> role.getGuildId().equals(data.guildId()));
 	}
 
@@ -141,10 +140,10 @@ public class ValueGetters {
 	 * @param idGetter a Function that gets the member ID from the data object
 	 * @return a value getter for a guild member
 	 */
-	public static <D extends GuildConfigData<D>> Function<D, Mono<Member>> forOptionalGuildMember(Bot bot,
+	public static <D extends GuildConfigData<D>> Function<D, Mono<Member>> forOptionalGuildMember(GatewayDiscordClient gateway,
 			Function<? super D, Optional<Snowflake>> idGetter) {
 		return data -> Mono.justOrEmpty(idGetter.apply(data))
-				.flatMap(memberId -> bot.gateway().getMemberById(data.guildId(), memberId))
+				.flatMap(memberId -> gateway.getMemberById(data.guildId(), memberId))
 				.filter(member -> member.getGuildId().equals(data.guildId()));
 	}
 }

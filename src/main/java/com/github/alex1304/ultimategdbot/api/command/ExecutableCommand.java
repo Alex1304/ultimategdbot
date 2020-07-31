@@ -13,11 +13,13 @@ public class ExecutableCommand {
 	private final Command command;
 	private final Context context;
 	private final CommandErrorHandler errorHandler;
+	private final PermissionChecker permissionChecker;
 	
-	public ExecutableCommand(Command command, Context context, CommandErrorHandler errorHandler) {
+	public ExecutableCommand(Command command, Context context, CommandErrorHandler errorHandler, PermissionChecker permissionChecker) {
 		this.command = requireNonNull(command);
 		this.context = requireNonNull(context);
 		this.errorHandler = requireNonNull(errorHandler);
+		this.permissionChecker = requireNonNull(permissionChecker);
 	}
 	
 	/**
@@ -42,13 +44,13 @@ public class ExecutableCommand {
 	
 	private Mono<?> checkPermission() {
 		return Mono.just(command.getRequiredPermission())
-				.filterWhen(perm -> context.bot().service(CommandService.class).getPermissionChecker().isGranted(perm, context))
+				.filterWhen(perm -> permissionChecker.isGranted(perm, context))
 				.switchIfEmpty(Mono.error(new PermissionDeniedException()));
 	}
 	
 	private Mono<?> checkPermissionLevel() {
 		return Mono.just(command.getMinimumPermissionLevel())
-				.filterWhen(perm -> context.bot().service(CommandService.class).getPermissionChecker().isGranted(perm, context))
+				.filterWhen(perm -> permissionChecker.isGranted(perm, context))
 				.switchIfEmpty(Mono.error(new PermissionDeniedException()));
 	}
 	

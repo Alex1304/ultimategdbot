@@ -35,7 +35,7 @@ import reactor.util.annotation.Nullable;
  * 
  * @param <D> the type of database entity backing this configurator
  */
-public class GuildConfigurator<D extends GuildConfigData<D>> {
+public final class GuildConfigurator<D extends GuildConfigData<D>> {
 	
 	private static final VarHandle GUILD_CONFIG_DATA_REF;
 	

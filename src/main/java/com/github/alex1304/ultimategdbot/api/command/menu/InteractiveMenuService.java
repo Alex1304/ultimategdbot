@@ -3,29 +3,38 @@ package com.github.alex1304.ultimategdbot.api.command.menu;
 import static java.util.Objects.requireNonNull;
 
 import java.time.Duration;
-import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import com.github.alex1304.ultimategdbot.api.Bot;
+import com.github.alex1304.ultimategdbot.api.BotConfig;
 import com.github.alex1304.ultimategdbot.api.Translator;
 import com.github.alex1304.ultimategdbot.api.command.CommandService;
 import com.github.alex1304.ultimategdbot.api.emoji.EmojiService;
-import com.github.alex1304.ultimategdbot.api.service.Service;
 import com.github.alex1304.ultimategdbot.api.util.MessageSpecTemplate;
 import com.github.alex1304.ultimategdbot.api.util.MessageUtils;
 
+import discord4j.core.GatewayDiscordClient;
 import discord4j.core.spec.MessageCreateSpec;
 import reactor.core.publisher.Mono;
 
-public class InteractiveMenuService implements Service {
+public class InteractiveMenuService {
+	
+	public static final String CONFIG_RESOURCE_NAME = "interactive_menu";
+	
+	private final GatewayDiscordClient gateway;
+	private final CommandService commandService;
+	private final EmojiService emojiService;
 	
 	private final Duration timeout;
 	private final PaginationControls controls;
-	
-	InteractiveMenuService(Bot bot) {
-		var config = bot.config("interactive_menu");
+
+	public InteractiveMenuService(BotConfig botConfig, GatewayDiscordClient gateway, CommandService commandService,
+			EmojiService emojiService) {
+		this.gateway = gateway;
+		this.commandService = commandService;
+		this.emojiService = emojiService;
+		var config = botConfig.resource(CONFIG_RESOURCE_NAME);
 		this.timeout = config.readOptional("interactive_menu.timeout_seconds")
 				.map(Integer::parseInt)
 				.map(Duration::ofSeconds)
@@ -34,11 +43,6 @@ public class InteractiveMenuService implements Service {
 				config.readOptional("interactive_menu.controls.previous").orElse(PaginationControls.DEFAULT_PREVIOUS_EMOJI),
 				config.readOptional("interactive_menu.controls.next").orElse(PaginationControls.DEFAULT_NEXT_EMOJI),
 				config.readOptional("interactive_menu.controls.close").orElse(PaginationControls.DEFAULT_CLOSE_EMOJI));
-	}
-
-	@Override
-	public Set<Class<? extends Service>> requiredServices() {
-		return Set.of(CommandService.class, EmojiService.class);
 	}
 
 	/**
@@ -75,7 +79,7 @@ public class InteractiveMenuService implements Service {
 	 */
 	public InteractiveMenu create(Function<Translator, Mono<Consumer<MessageCreateSpec>>> source) {
 		requireNonNull(source);
-		return new InteractiveMenu(source, timeout);
+		return new InteractiveMenu(gateway, commandService, emojiService, source, timeout);
 	}
 	
 	/**

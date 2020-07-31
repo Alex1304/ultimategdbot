@@ -163,7 +163,7 @@
 				<groupId>org.jdbi</groupId>
 				<artifactId>jdbi3-bom</artifactId>
 				<type>pom</type>
-				<version>3.12.2</version>
+				<version>3.13.0</version>
 				<scope>import</scope>
 			</dependency>
 		</dependencies>
@@ -171,14 +171,24 @@
 
 	<dependencies>
 		<dependency>
+			<groupId>io.projectreactor</groupId>
+			<artifactId>reactor-core</artifactId>
+			<version>3.3.8.RELEASE</version>
+		</dependency>
+		<dependency>
 			<groupId>com.discord4j</groupId>
 			<artifactId>discord4j-core</artifactId>
-			<version>3.1.0.RC2</version>
+			<version>3.1.0</version>
 		</dependency>
 		<dependency>
 			<groupId>com.discord4j</groupId>
 			<artifactId>stores-caffeine</artifactId>
-			<version>3.1.1</version>
+			<version>3.1.3</version>
+		</dependency>
+		<dependency>
+			<groupId>com.github.alex1304</groupId>
+			<artifactId>rdi</artifactId>
+			<version>1.0.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.jdbi</groupId>

@@ -9,11 +9,12 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.github.alex1304.ultimategdbot.api.Bot;
+import com.github.alex1304.ultimategdbot.api.BotConfig;
 import com.github.alex1304.ultimategdbot.api.localization.LocalizationService;
-import com.github.alex1304.ultimategdbot.api.service.Service;
+import com.github.alex1304.ultimategdbot.api.logging.LoggingService;
 
 import discord4j.common.util.Snowflake;
+import discord4j.core.GatewayDiscordClient;
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.entity.User;
 import reactor.core.publisher.Flux;
@@ -23,13 +24,19 @@ import reactor.util.Loggers;
 import reactor.util.annotation.Nullable;
 
 /**
- * The command kernel coordinates the command providers from all plugins. It
+ * The command service coordinates the command providers from all plugins. It
  * also holds a blacklist to restrict the usage of commands from certain guilds,
  * channels or users. It listens to message create events and dispatch them to
  * the proper command providers to trigger the execution of commands.
  */
-public class CommandService implements Service {
+public class CommandService {
+	
+	public static final String CONFIG_RESOURCE_NAME = "command";
+	
 	private static final Logger LOGGER = Loggers.getLogger(CommandService.class);
+
+	private final LocalizationService localizationService;
+	private final LoggingService loggingService;
 	
 	private final String commandPrefix;
 	private final String flagPrefix;
@@ -38,12 +45,15 @@ public class CommandService implements Service {
 	private final Set<Long> blacklist = synchronizedSet(new HashSet<>());
 	private final ConcurrentHashMap<Long, String> prefixByGuild = new ConcurrentHashMap<>();
 	private final PermissionChecker permissionChecker = new PermissionChecker();
-	
-	CommandService(Bot bot) {
-		var config = bot.config("command");
+
+	public CommandService(BotConfig botConfig, GatewayDiscordClient gateway, LocalizationService localizationService,
+			LoggingService loggingService) {
+		this.localizationService = localizationService;
+		this.loggingService = loggingService;
+		var config = botConfig.resource(CONFIG_RESOURCE_NAME);
 		this.commandPrefix = config.read("command_prefix");
 		this.flagPrefix = config.read("flag_prefix");
-		bot.gateway().on(MessageCreateEvent.class, event -> processEvent(bot, event))
+		gateway.on(MessageCreateEvent.class, event -> processEvent(event))
 				.log(LOGGER)
 				.subscribe();
 	}
@@ -71,7 +81,7 @@ public class CommandService implements Service {
 	 *         returned. Any errors that may occur when running the command are
 	 *         forwarded through this Mono.
 	 */
-	public Mono<Void> processEvent(Bot bot, MessageCreateEvent event) {
+	public Mono<Void> processEvent(MessageCreateEvent event) {
 		requireNonNull(event);
 		var authorId = event.getMessage().getAuthor().map(User::getId);
 		var guildId = event.getGuildId();
@@ -81,12 +91,12 @@ public class CommandService implements Service {
 		}
 		var prefix = guildId.map(Snowflake::asLong).map(prefixByGuild::get).orElse(commandPrefix);
 		var locale = guildId.map(Snowflake::asLong)
-				.filter(id -> bot.hasService(LocalizationService.class))
-				.map(id -> bot.service(LocalizationService.class).getLocaleForGuild(id))
-				.orElse(bot.getLocale());
+				.map(id -> localizationService.getLocaleForGuild(id))
+				.orElse(localizationService.getDefaultLocale());
 		return Flux.fromIterable(providers)
 				.flatMap(provider -> event.getMessage().getChannel()
-						.flatMap(channel -> provider.provideFromEvent(bot, prefix, flagPrefix, locale, event, channel)))
+						.flatMap(channel -> provider.provideFromEvent(prefix, flagPrefix, locale, event, channel,
+								permissionChecker)))
 				.filter(executable -> {
 					if (authorId.map(id -> blacklist.contains(id.asLong())).orElse(false)) {
 						LOGGER.debug("Ignoring command due to AUTHOR being blacklisted: {}", executable);
@@ -107,16 +117,15 @@ public class CommandService implements Service {
 				.then();
 	}
 
-	private static Mono<Void> logCommandError(Logger logger, Context ctx, Throwable e) {
+	private Mono<Void> logCommandError(Logger logger, Context ctx, Throwable e) {
 		var replyToUser = ctx.reply(ctx.translate("CommonStrings", "command_unknown_error"));
-		var logInDebugChannel = ctx.bot().log(
+		var logInDebugChannel = loggingService.log(
 				ctx.translate("CommonStrings", "command_unknown_error_log",
 						ctx.author().getTag(),
 						ctx.event().getMessage().getContent(),
 						e.getClass().getName() + (e.getMessage() == null ? "" : ": " + e.getMessage())));
 		var logInFile = Mono.fromRunnable(() -> logger.error("Something went wrong when executing a command. Context dump: "
 				+ ctx, e));
-		
 		return Mono.when(replyToUser, logInDebugChannel, logInFile);
 	}
 	

@@ -2,16 +2,23 @@ package com.github.alex1304.ultimategdbot.api.command;
 
 import static java.util.Collections.unmodifiableSet;
 import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNullElse;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
+import java.lang.module.ModuleReader;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
-import com.github.alex1304.ultimategdbot.api.Bot;
 import com.github.alex1304.ultimategdbot.api.command.annotated.AnnotatedCommand;
+import com.github.alex1304.ultimategdbot.api.command.annotated.CommandDescriptor;
 import com.github.alex1304.ultimategdbot.api.command.annotated.paramconverter.GuildChannelConverter;
 import com.github.alex1304.ultimategdbot.api.command.annotated.paramconverter.IntConverter;
 import com.github.alex1304.ultimategdbot.api.command.annotated.paramconverter.LongConverter;
@@ -26,13 +33,21 @@ import discord4j.core.object.entity.Role;
 import discord4j.core.object.entity.User;
 import discord4j.core.object.entity.channel.GuildChannel;
 import discord4j.core.object.entity.channel.MessageChannel;
+import reactor.core.Exceptions;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
+import reactor.util.Logger;
+import reactor.util.Loggers;
+import reactor.util.annotation.Nullable;
 
 /**
  * Provides a set of commands. Each command handler provides their own way to
  * handle errors via a {@link CommandErrorHandler}.
  */
 public final class CommandProvider {
+	
+	private static final Logger LOGGER = Loggers.getLogger(CommandProvider.class);
 	
 	private final String name;
 	private CommandErrorHandler errorHandler = new CommandErrorHandler();
@@ -60,6 +75,7 @@ public final class CommandProvider {
 	 */
 	public void add(Command command) {
 		requireNonNull(command);
+		LOGGER.debug("Added command {} to provider with name \"{}\"", command, name);
 		for (var alias : command.getAliases()) {
 			commandMap.put(alias, command);
 		}
@@ -80,6 +96,62 @@ public final class CommandProvider {
 	}
 	
 	/**
+	 * Scans the module path and adds all commands that are found in the given
+	 * module. The command's class needs to be annotated with
+	 * {@link CommandDescriptor} and have a no-arg constructor.
+	 * 
+	 * Since module path scanning requires I/O operations, this method returns a
+	 * Flux that subscribes on {@link Schedulers#boundedElastic()}.
+	 * 
+	 * @param module          the Java module where to find the package
+	 * @param classNameFilter a filter to include only certain classes,
+	 *                        <code>null</code> to accept all classes
+	 * @return a Flux emitting the instances of the annotated command classes,
+	 *         created by the module path scanning process. If an error happened
+	 *         during the scan, the Flux will error.
+	 */
+	public Flux<Object> addAllFromModule(Module module, @Nullable Predicate<String> classNameFilter) {
+		requireNonNull(module);
+		requireNonNull(module.getName(), "must be a named module");
+		var classNameFilter0 = requireNonNullElse(classNameFilter, x -> true);
+		return Mono.fromCallable(() -> {
+					try (ModuleReader moduleReader = module.getLayer().configuration()
+							.findModule(module.getName())
+							.orElseThrow(() -> new IllegalArgumentException("The given module was "
+									+ "not found in the module path"))
+							.reference()
+							.open()) {
+						List<Object> commands = moduleReader.list()
+								.filter(resource -> resource.endsWith(".class") && !resource.contains("-"))
+								.map(resource -> resource.substring(0, resource.length() - ".class".length()).replace('/', '.'))
+								.filter(classNameFilter0)
+								.map(className -> {
+									try {
+										return Class.forName(className);
+									} catch (ClassNotFoundException e) {
+										throw Exceptions.propagate(e);
+									}
+								})
+								.filter(clazz -> clazz.isAnnotationPresent(CommandDescriptor.class))
+								.map(clazz -> {
+									try { 
+										return MethodHandles.publicLookup()
+												.findConstructor(clazz, MethodType.methodType(void.class))
+												.invoke();
+									} catch (Throwable t) {
+										throw Exceptions.propagate(t);
+									}
+								})
+								.collect(Collectors.toUnmodifiableList());
+						commands.forEach(this::addAnnotated);
+						return commands;
+					}
+				})
+				.subscribeOn(Schedulers.boundedElastic())
+				.flatMapMany(Flux::fromIterable);
+	}
+	
+	/**
 	 * Provides a command based on a MessageCreateEvent. The event must come with a
 	 * message body containing a prefix and the alias of one of the commands
 	 * provided by this provider. If it matches with a provided command, arguments
@@ -97,12 +169,12 @@ public final class CommandProvider {
 	 * @return an ExecutableCommand if the event results in a command to be
 	 *         triggered, an empty Optional otherwise.
 	 */
-	public Mono<ExecutableCommand> provideFromEvent(Bot bot, String prefix, String flagPrefix, Locale locale, MessageCreateEvent event, MessageChannel channel) {
-		requireNonNull(bot, "bot cannot be null");
+	public Mono<ExecutableCommand> provideFromEvent(String prefix, String flagPrefix, Locale locale,
+			MessageCreateEvent event, MessageChannel channel, PermissionChecker permissionChecker) {
 		requireNonNull(prefix, "prefix cannot be null");
 		requireNonNull(event, "event cannot be null");
 		requireNonNull(channel, "channel cannot be null");
-		var botId = bot.gateway().getSelfId().asLong();
+		var botId = event.getClient().getSelfId().asLong();
 		var prefixes = Set.of("<@" + botId + ">", "<@!" + botId + ">", prefix);
 		var content = event.getMessage().getContent();
 		String prefixUsed = null;
@@ -125,7 +197,7 @@ public final class CommandProvider {
 		final var fPrefixUsed = prefixUsed;
 		var command = commandMap.get(args.get(0));
 		return Mono.justOrEmpty(command)
-				.map(cmd -> new ExecutableCommand(cmd, new Context(cmd, event, args, flags, bot, fPrefixUsed, locale, channel), errorHandler));
+				.map(cmd -> new ExecutableCommand(cmd, new Context(cmd, event, args, flags, fPrefixUsed, locale, channel), errorHandler, permissionChecker));
 	}
 	
 	/**
