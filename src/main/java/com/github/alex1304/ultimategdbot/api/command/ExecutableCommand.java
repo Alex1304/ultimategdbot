@@ -8,7 +8,7 @@ import reactor.core.publisher.Mono;
  * Represents a command ready to be executed, meaning that the context and the
  * error handler of the command are already defined.
  */
-public class ExecutableCommand {
+public final class ExecutableCommand {
 
 	private final Command command;
 	private final Context context;

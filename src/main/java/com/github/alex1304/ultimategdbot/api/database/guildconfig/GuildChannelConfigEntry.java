@@ -6,7 +6,7 @@ import java.util.function.Function;
 import discord4j.core.object.entity.channel.GuildChannel;
 import reactor.core.publisher.Mono;
 
-public class GuildChannelConfigEntry extends AbstractConfigEntry<GuildChannel> {
+public final class GuildChannelConfigEntry extends AbstractConfigEntry<GuildChannel> {
 
 	GuildChannelConfigEntry(GuildConfigurator<?> configurator, String displayName, String description, String key,
 			Function<Object, ? extends Mono<GuildChannel>> valueGetter,

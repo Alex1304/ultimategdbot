@@ -14,7 +14,7 @@ import discord4j.core.object.entity.channel.MessageChannel;
 import discord4j.core.object.reaction.ReactionEmoji;
 import reactor.core.publisher.Mono;
 
-public class ReactionToggleEvent {
+public final class ReactionToggleEvent {
 
 	private final Optional<ReactionAddEvent> addEvent;
 	private final Optional<ReactionRemoveEvent> removeEvent;

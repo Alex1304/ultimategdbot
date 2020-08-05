@@ -5,7 +5,7 @@ import java.util.Properties;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
-public class VersionUtils {
+public final class VersionUtils {
 	
 	public static final String API_GIT_RESOURCE = "META-INF/git/ultimategdbot.git.properties";
 

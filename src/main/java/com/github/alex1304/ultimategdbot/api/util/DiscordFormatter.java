@@ -7,7 +7,7 @@ import discord4j.core.object.entity.channel.TextChannel;
 /**
  * Contains utility methods to format a Discord entity into a user-friendly String.
  */
-public class DiscordFormatter {
+public final class DiscordFormatter {
 
 	private DiscordFormatter() {
 	}

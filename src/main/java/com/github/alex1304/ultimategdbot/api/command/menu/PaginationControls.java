@@ -2,7 +2,7 @@ package com.github.alex1304.ultimategdbot.api.command.menu;
 
 import static java.util.Objects.requireNonNull;
 
-public class PaginationControls {
+public final class PaginationControls {
 	
 	public static final String DEFAULT_PREVIOUS_EMOJI = "◀️";
 	public static final String DEFAULT_NEXT_EMOJI = "▶️";

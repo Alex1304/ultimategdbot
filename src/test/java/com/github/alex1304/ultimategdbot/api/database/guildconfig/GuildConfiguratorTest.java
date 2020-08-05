@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test;
 import discord4j.common.util.Snowflake;
 import reactor.core.publisher.Mono;
 
-public class GuildConfiguratorTest {
+public final class GuildConfiguratorTest {
 	
 	private TestBean bean1, bean2;
 	private GuildConfigurator<TestBean> configurator1, configurator2;

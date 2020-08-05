@@ -2,8 +2,10 @@ package com.github.alex1304.ultimategdbot.api.command.annotated;
 
 import static reactor.function.TupleUtils.function;
 
-import java.lang.reflect.InvocationTargetException;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -15,6 +17,8 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import org.reactivestreams.Publisher;
 
 import com.github.alex1304.ultimategdbot.api.Translator;
 import com.github.alex1304.ultimategdbot.api.command.Command;
@@ -30,6 +34,7 @@ import com.github.alex1304.ultimategdbot.api.command.PermissionLevel;
 import com.github.alex1304.ultimategdbot.api.command.Scope;
 import com.github.alex1304.ultimategdbot.api.command.annotated.paramconverter.ParamConversionException;
 
+import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.Logger;
@@ -40,7 +45,7 @@ import reactor.util.function.Tuples;
 /**
  * Command implemented via annotations.
  */
-public class AnnotatedCommand implements Command {
+public final class AnnotatedCommand implements Command {
 	
 	private static final Logger LOGGER = Loggers.getLogger(AnnotatedCommand.class);
 	
@@ -104,6 +109,7 @@ public class AnnotatedCommand implements Command {
 		var cmdPermAnnot = obj.getClass().getAnnotation(CommandPermission.class);
 		Method mainMethod = null;
 		var subMethods = new HashMap<String, Method>();
+		var mhCache = new HashMap<Method, MethodHandle>();
 		for (var method : obj.getClass().getMethods()) {
 			method.setAccessible(true);
 			var cmdActionAnnot = method.getAnnotation(CommandAction.class);
@@ -126,7 +132,17 @@ public class AnnotatedCommand implements Command {
 		if (mainMethod == null && subMethods.isEmpty()) {
 			throw new InvalidAnnotatedObjectException("No action defined for the command");
 		}
-		var mainMethodOptional = Optional.ofNullable(mainMethod); 
+		var mainMethodOptional = Optional.ofNullable(mainMethod);
+		try {
+			if (mainMethod != null) {
+				mhCache.put(mainMethod, MethodHandles.publicLookup().unreflect(mainMethod));
+			}
+			for (Method method : subMethods.values()) {
+				mhCache.put(method, MethodHandles.publicLookup().unreflect(method));
+			}
+		} catch (IllegalAccessException e) {
+			throw Exceptions.propagate(e);
+		}
 		return new AnnotatedCommand(obj,
 				ctx -> {
 					var args = ctx.args();
@@ -164,9 +180,19 @@ public class AnnotatedCommand implements Command {
 												argList.add(null);
 											}
 										})
-										.flatMap(argList -> Mono.fromCallable(() -> method.invoke(obj, argList.toArray())))
-										.onErrorMap(InvocationTargetException.class, Throwable::getCause)
-										.flatMap(mono -> (Mono<?>) mono);
+										.flatMap(argList -> {
+											try {
+												var mh = mhCache.get(method);
+												mh = mh.asType(mh.type().generic()).asSpreader(Object[].class, argList.size());
+												if (Modifier.isStatic(method.getModifiers())) {
+													return Mono.when((Publisher<?>) mh.invoke(argList.toArray()));
+												} else {
+													return Mono.when((Publisher<?>) mh.invoke(obj, argList.toArray()));
+												}
+											} catch (Throwable t) {
+												throw Exceptions.propagate(t);
+											}
+										});
 							})
 							.then();
 				},
@@ -200,8 +226,9 @@ public class AnnotatedCommand implements Command {
 	}
 	
 	private static void validateMethodPrototype(Method method) {
-		if (method.getReturnType() != Mono.class) {
-			throw new InvalidAnnotatedObjectException("The return type of a command action method must be " + Mono.class.getName());
+		if (!Publisher.class.isAssignableFrom(method.getReturnType())) {
+			throw new InvalidAnnotatedObjectException("The return type of a command action method must be compatible "
+					+ "with the type " + Publisher.class.getName());
 		}
 		var paramTypes = method.getParameterTypes();
 		if (paramTypes.length == 0 || paramTypes[0] != Context.class) {

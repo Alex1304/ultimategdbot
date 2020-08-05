@@ -10,7 +10,7 @@ import com.github.alex1304.ultimategdbot.api.util.PropertyReader;
  * Contains configuration resources for the bot. A resource is a set of
  * properties that can be read via the {@link PropertyReader} interface.
  */
-public class BotConfig {
+public final class BotConfig {
 	
 	private final Map<String, PropertyReader> resources;
 

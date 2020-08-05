@@ -7,7 +7,7 @@ import com.github.alex1304.ultimategdbot.api.Translator;
 /**
  * Holds information about a command flag.
  */
-public class FlagInformation {
+public final class FlagInformation {
 
 	private final DocumentationLocaleAdapter docLocaleAdapter;
 	private final String valueFormat;

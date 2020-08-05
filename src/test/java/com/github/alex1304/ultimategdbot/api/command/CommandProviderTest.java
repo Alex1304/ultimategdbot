@@ -13,7 +13,7 @@ import com.github.alex1304.ultimategdbot.api.command.annotated.InvalidAnnotatedO
 import reactor.core.publisher.Mono;
 import reactor.util.annotation.Nullable;
 
-public class CommandProviderTest {
+public final class CommandProviderTest {
 	
 	private CommandProvider provider;
 	private TestCommand testCmd;

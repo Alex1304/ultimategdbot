@@ -6,7 +6,7 @@ import java.util.function.Function;
 import discord4j.core.object.entity.Role;
 import reactor.core.publisher.Mono;
 
-public class GuildRoleConfigEntry extends AbstractConfigEntry<Role> {
+public final class GuildRoleConfigEntry extends AbstractConfigEntry<Role> {
 
 	GuildRoleConfigEntry(GuildConfigurator<?> configurator, String displayName, String description, String key,
 			Function<Object, ? extends Mono<Role>> valueGetter, BiFunction<Object, ? super Role, Object> valueSetter,

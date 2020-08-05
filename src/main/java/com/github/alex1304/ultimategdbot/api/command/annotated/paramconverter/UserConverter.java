@@ -6,7 +6,7 @@ import com.github.alex1304.ultimategdbot.api.util.DiscordParser;
 import discord4j.core.object.entity.User;
 import reactor.core.publisher.Mono;
 
-public class UserConverter implements ParamConverter<User> {
+public final class UserConverter implements ParamConverter<User> {
 
 	@Override
 	public Mono<User> convert(Context ctx, String input) {

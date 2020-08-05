@@ -4,7 +4,7 @@ import com.github.alex1304.ultimategdbot.api.command.Context;
 
 import reactor.core.publisher.Mono;
 
-public class LongConverter implements ParamConverter<Long> {
+public final class LongConverter implements ParamConverter<Long> {
 
 	@Override
 	public Mono<Long> convert(Context ctx, String input) {

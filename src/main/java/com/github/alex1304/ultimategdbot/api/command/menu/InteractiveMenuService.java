@@ -18,7 +18,7 @@ import discord4j.core.GatewayDiscordClient;
 import discord4j.core.spec.MessageCreateSpec;
 import reactor.core.publisher.Mono;
 
-public class InteractiveMenuService {
+public final class InteractiveMenuService {
 	
 	public static final String CONFIG_RESOURCE_NAME = "interactive_menu";
 	

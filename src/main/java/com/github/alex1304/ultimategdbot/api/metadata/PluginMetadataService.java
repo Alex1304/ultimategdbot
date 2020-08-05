@@ -7,7 +7,7 @@ import com.github.alex1304.ultimategdbot.api.PluginMetadata;
 /**
  * Service that exposes the metadata of all plugins loaded in the bot.
  */
-public class PluginMetadataService {
+public final class PluginMetadataService {
 
 	private final Set<PluginMetadata> pluginMetadataSet;
 
@@ -16,11 +16,11 @@ public class PluginMetadataService {
 	}
 
 	/**
-	 * Gets an immutable set of metadata of plugins loaded in the bot.
+	 * Gets an immutable set of metadata of all plugins loaded in the bot.
 	 * 
 	 * @return a set of plugin metadata
 	 */
-	public Set<PluginMetadata> getPluginMetadataSet() {
+	public Set<PluginMetadata> all() {
 		return pluginMetadataSet;
 	}
 }

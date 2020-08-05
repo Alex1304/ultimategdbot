@@ -13,7 +13,7 @@ import discord4j.core.object.entity.GuildEmoji;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-public class EmojiService {
+public final class EmojiService {
 
 	public static final String CONFIG_RESOURCE_NAME = "emoji";
 	
@@ -32,7 +32,7 @@ public class EmojiService {
 		return emojiGuildIds;
 	}
 	
-	public Mono<String> emoji(String emojiName) {
+	public Mono<String> get(String emojiName) {
 		var defaultVal = ":" + emojiName + ":";
 		return Flux.fromIterable(emojiGuildIds)
 				.flatMap(gateway::getGuildById)

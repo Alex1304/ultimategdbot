@@ -11,7 +11,7 @@ import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.entity.Message;
 import reactor.core.publisher.MonoProcessor;
 
-public class MessageMenuInteraction extends MenuInteraction {
+public final class MessageMenuInteraction extends MenuInteraction {
 	
 	private final MessageCreateEvent event;
 	private final ArgumentList args;

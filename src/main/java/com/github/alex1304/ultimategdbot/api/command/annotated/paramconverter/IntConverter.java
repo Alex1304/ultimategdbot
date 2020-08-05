@@ -4,7 +4,7 @@ import com.github.alex1304.ultimategdbot.api.command.Context;
 
 import reactor.core.publisher.Mono;
 
-public class IntConverter implements ParamConverter<Integer> {
+public final class IntConverter implements ParamConverter<Integer> {
 
 	@Override
 	public Mono<Integer> convert(Context ctx, String input) {

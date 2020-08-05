@@ -12,7 +12,7 @@ import discord4j.core.spec.MessageEditSpec;
  * Message specification that is compatible with both {@link MessageCreateSpec}
  * and {@link MessageEditSpec}.
  */
-public class MessageSpecTemplate {
+public final class MessageSpecTemplate {
 	
 	private final String content;
 	private final Consumer<EmbedCreateSpec> embed;

@@ -5,7 +5,7 @@ import java.util.function.Function;
 
 import reactor.core.publisher.Mono;
 
-public class StringConfigEntry extends AbstractConfigEntry<String> {
+public final class StringConfigEntry extends AbstractConfigEntry<String> {
 
 	StringConfigEntry(GuildConfigurator<?> configurator, String displayName, String description, String key,
 			Function<Object, ? extends Mono<String>> valueGetter,

@@ -29,7 +29,7 @@ import reactor.util.annotation.Nullable;
  * channels or users. It listens to message create events and dispatch them to
  * the proper command providers to trigger the execution of commands.
  */
-public class CommandService {
+public final class CommandService {
 	
 	public static final String CONFIG_RESOURCE_NAME = "command";
 	
@@ -92,7 +92,7 @@ public class CommandService {
 		var prefix = guildId.map(Snowflake::asLong).map(prefixByGuild::get).orElse(commandPrefix);
 		var locale = guildId.map(Snowflake::asLong)
 				.map(id -> localizationService.getLocaleForGuild(id))
-				.orElse(localizationService.getDefaultLocale());
+				.orElse(localizationService.getLocale());
 		return Flux.fromIterable(providers)
 				.flatMap(provider -> event.getMessage().getChannel()
 						.flatMap(channel -> provider.provideFromEvent(prefix, flagPrefix, locale, event, channel,

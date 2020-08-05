@@ -12,7 +12,7 @@ import com.github.alex1304.ultimategdbot.api.Translator;
 /**
  * Holds the documentation for a specific command.
  */
-public class CommandDocumentation {
+public final class CommandDocumentation {
 
 	private final DocumentationLocaleAdapter docLocaleAdapter;
 	private final String shortDescription;

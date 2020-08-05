@@ -15,7 +15,7 @@ import reactor.util.annotation.Nullable;
  * @param <D> the type of data object storing the value of the entry being built
  * @param <T> the type of value supported by the entry being built
  */
-public class ConfigEntryBuilder<D extends GuildConfigData<D>, T> {
+public final class ConfigEntryBuilder<D extends GuildConfigData<D>, T> {
 	
 	private final AbstractConfigEntry.Constructor<T> constructor;
 	private final String key;

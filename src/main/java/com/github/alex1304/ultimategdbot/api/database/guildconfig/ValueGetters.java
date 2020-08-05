@@ -15,7 +15,7 @@ import reactor.core.publisher.Mono;
  * It allows the use of method references on data objects, by hiding the fact
  * that a value is asynchronous.
  */
-public class ValueGetters {
+public final class ValueGetters {
 
 	private ValueGetters() {
 		throw new AssertionError();

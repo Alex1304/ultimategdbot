@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test;
 
 import discord4j.common.util.Snowflake;
 
-public class DatabaseTest {
+public final class DatabaseTest {
 	
 	private DatabaseService db;
 	

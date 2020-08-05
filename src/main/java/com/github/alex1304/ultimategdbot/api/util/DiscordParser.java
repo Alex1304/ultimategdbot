@@ -13,7 +13,7 @@ import reactor.core.publisher.Mono;
 /**
  * Contains utility methods to parse a user input into a Discord entity.
  */
-public class DiscordParser {
+public final class DiscordParser {
 	
 	private DiscordParser() {
 	}

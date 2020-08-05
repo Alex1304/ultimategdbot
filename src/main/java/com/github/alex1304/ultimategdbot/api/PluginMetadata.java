@@ -13,7 +13,7 @@ import reactor.util.annotation.Nullable;
 /**
  * Holds metadata describing a plugin.
  */
-public class PluginMetadata {
+public final class PluginMetadata {
 	
 	private final String name;
 	private final String description;

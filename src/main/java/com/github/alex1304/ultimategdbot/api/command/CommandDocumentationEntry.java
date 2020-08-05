@@ -13,7 +13,7 @@ import com.github.alex1304.ultimategdbot.api.Translator;
  * command, a description of what this part of the command does, and the
  * different flags that can be used.
  */
-public class CommandDocumentationEntry {
+public final class CommandDocumentationEntry {
 
 	private final DocumentationLocaleAdapter docLocaleAdapter;
 	private final String syntax;

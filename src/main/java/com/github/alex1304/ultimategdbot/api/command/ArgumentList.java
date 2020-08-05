@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * Represents the list of the arguments of a command.
  */
-public class ArgumentList {
+public final class ArgumentList {
 
 	private final List<String> tokens;
 	

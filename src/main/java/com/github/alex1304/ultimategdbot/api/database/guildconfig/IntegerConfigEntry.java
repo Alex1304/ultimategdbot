@@ -5,7 +5,7 @@ import java.util.function.Function;
 
 import reactor.core.publisher.Mono;
 
-public class IntegerConfigEntry extends AbstractConfigEntry<Integer> {
+public final class IntegerConfigEntry extends AbstractConfigEntry<Integer> {
 	
 	IntegerConfigEntry(GuildConfigurator<?> configurator, String displayName, String description, String key,
 			Function<Object, ? extends Mono<Integer>> valueGetter,

@@ -16,7 +16,7 @@ import reactor.util.Loggers;
 /**
  * Provides a convenient way to add error handlers for bot commands.
  */
-public class CommandErrorHandler {
+public final class CommandErrorHandler {
 	private static final Logger LOGGER = Loggers.getLogger(CommandErrorHandler.class);
 	
 	private final Map<Class<? extends Throwable>, BiFunction<Throwable, Context, Mono<Void>>> handlers = new LinkedHashMap<>();

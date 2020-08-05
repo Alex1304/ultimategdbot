@@ -8,12 +8,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
 import com.github.alex1304.ultimategdbot.api.BotConfig;
+import com.github.alex1304.ultimategdbot.api.Translator;
 
 import reactor.util.Logger;
 import reactor.util.Loggers;
 import reactor.util.annotation.Nullable;
 
-public class LocalizationService {
+public final class LocalizationService implements Translator {
 	
 	public static final String CONFIG_RESOURCE_NAME = "localization";
 	
@@ -73,12 +74,8 @@ public class LocalizationService {
 		return supportedLocales;
 	}
 
-	/**
-	 * Gets the default locale.
-	 * 
-	 * @return the default locale
-	 */
-	public Locale getDefaultLocale() {
+	@Override
+	public Locale getLocale() {
 		return defaultLocale;
 	}
 }

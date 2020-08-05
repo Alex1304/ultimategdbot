@@ -5,7 +5,7 @@ import java.util.function.Function;
 
 import reactor.core.publisher.Mono;
 
-public class BooleanConfigEntry extends AbstractConfigEntry<Boolean> {
+public final class BooleanConfigEntry extends AbstractConfigEntry<Boolean> {
 
 	BooleanConfigEntry(GuildConfigurator<?> configurator, String displayName, String description, String key,
 			Function<Object, ? extends Mono<Boolean>> valueGetter,

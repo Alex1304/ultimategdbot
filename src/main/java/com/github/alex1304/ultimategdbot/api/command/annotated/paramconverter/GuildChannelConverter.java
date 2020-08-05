@@ -6,7 +6,7 @@ import com.github.alex1304.ultimategdbot.api.util.DiscordParser;
 import discord4j.core.object.entity.channel.GuildChannel;
 import reactor.core.publisher.Mono;
 
-public class GuildChannelConverter implements ParamConverter<GuildChannel> {
+public final class GuildChannelConverter implements ParamConverter<GuildChannel> {
 
 	@Override
 	public Mono<GuildChannel> convert(Context ctx, String input) {

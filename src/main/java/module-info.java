@@ -1,5 +1,5 @@
-import com.github.alex1304.ultimategdbot.api.CommonServices;
-import com.github.alex1304.ultimategdbot.api.ServiceDeclarator;
+import com.github.alex1304.ultimategdbot.api.service.CommonServices;
+import com.github.alex1304.ultimategdbot.api.service.ServiceDeclarator;
 
 module ultimategdbot.api {
 	exports com.github.alex1304.ultimategdbot.api;
@@ -13,6 +13,7 @@ module ultimategdbot.api {
 	exports com.github.alex1304.ultimategdbot.api.localization;
 	exports com.github.alex1304.ultimategdbot.api.logging;
 	exports com.github.alex1304.ultimategdbot.api.metadata;
+	exports com.github.alex1304.ultimategdbot.api.service;
 	exports com.github.alex1304.ultimategdbot.api.util;
 
 	opens com.github.alex1304.ultimategdbot.api.database;

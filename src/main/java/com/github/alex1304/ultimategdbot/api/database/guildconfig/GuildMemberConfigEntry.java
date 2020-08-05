@@ -6,7 +6,7 @@ import java.util.function.Function;
 import discord4j.core.object.entity.Member;
 import reactor.core.publisher.Mono;
 
-public class GuildMemberConfigEntry extends AbstractConfigEntry<Member> {
+public final class GuildMemberConfigEntry extends AbstractConfigEntry<Member> {
 
 	GuildMemberConfigEntry(GuildConfigurator<?> configurator, String displayName, String description, String key,
 			Function<Object, ? extends Mono<Member>> valueGetter,

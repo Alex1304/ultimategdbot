@@ -40,7 +40,7 @@ import reactor.util.retry.Retry;
  * sends a message as a prompt and waits for a interaction from the user. The
  * said interaction can be either a message or a reaction.
  */
-public class InteractiveMenu {
+public final class InteractiveMenu {
 	
 	private final GatewayDiscordClient gateway;
 	private final CommandService commandService;

@@ -8,7 +8,7 @@ import com.github.alex1304.ultimategdbot.api.command.menu.InteractiveMenu.MenuTe
 import discord4j.core.object.entity.Message;
 import reactor.core.publisher.MonoProcessor;
 
-public class ReactionMenuInteraction extends MenuInteraction {
+public final class ReactionMenuInteraction extends MenuInteraction {
 	
 	private final ReactionToggleEvent event;
 

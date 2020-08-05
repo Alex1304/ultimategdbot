@@ -16,7 +16,7 @@ import discord4j.core.spec.MessageCreateSpec;
 import discord4j.rest.http.client.ClientException;
 import reactor.core.publisher.Mono;
 
-public class Context implements Translator {
+public final class Context implements Translator {
 	
 	private final Command command;
 	private final MessageCreateEvent event;

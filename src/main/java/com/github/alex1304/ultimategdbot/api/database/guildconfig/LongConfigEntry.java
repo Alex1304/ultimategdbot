@@ -5,7 +5,7 @@ import java.util.function.Function;
 
 import reactor.core.publisher.Mono;
 
-public class LongConfigEntry extends AbstractConfigEntry<Long> {
+public final class LongConfigEntry extends AbstractConfigEntry<Long> {
 	
 	LongConfigEntry(GuildConfigurator<?> configurator, String displayName, String description, String key,
 			Function<Object, ? extends Mono<Long>> valueGetter, BiFunction<Object, ? super Long, Object> valueSetter,

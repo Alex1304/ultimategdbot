@@ -7,6 +7,7 @@ import static java.util.Objects.requireNonNullElse;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.module.ModuleReader;
+import java.nio.file.FileSystems;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -100,10 +101,32 @@ public final class CommandProvider {
 	 * module. The command's class needs to be annotated with
 	 * {@link CommandDescriptor} and have a no-arg constructor.
 	 * 
+	 * <p>
 	 * Since module path scanning requires I/O operations, this method returns a
 	 * Flux that subscribes on {@link Schedulers#boundedElastic()}.
 	 * 
-	 * @param module          the Java module where to find the package
+	 * <p>
+	 * This method is equivalent to <code>addAllFromModule(module, null)</code>
+	 * 
+	 * @param module the Java module where to find the commands
+	 * @return a Flux emitting the instances of the annotated command classes,
+	 *         created by the module path scanning process. If an error happened
+	 *         during the scan, the Flux will error.
+	 */
+	public Flux<Object> addAllFromModule(Module module) {
+		return addAllFromModule(module, null);
+	}
+	
+	/**
+	 * Scans the module path and adds all commands that are found in the given
+	 * module. The command's class needs to be annotated with
+	 * {@link CommandDescriptor} and have a no-arg constructor.
+	 * 
+	 * <p>
+	 * Since module path scanning requires I/O operations, this method returns a
+	 * Flux that subscribes on {@link Schedulers#boundedElastic()}.
+	 * 
+	 * @param module          the Java module where to find the commands
 	 * @param classNameFilter a filter to include only certain classes,
 	 *                        <code>null</code> to accept all classes
 	 * @return a Flux emitting the instances of the annotated command classes,
@@ -123,7 +146,8 @@ public final class CommandProvider {
 							.open()) {
 						List<Object> commands = moduleReader.list()
 								.filter(resource -> resource.endsWith(".class") && !resource.contains("-"))
-								.map(resource -> resource.substring(0, resource.length() - ".class".length()).replace('/', '.'))
+								.map(resource -> resource.substring(0, resource.length() - ".class".length())
+										.replace(FileSystems.getDefault().getSeparator(), "."))
 								.filter(classNameFilter0)
 								.map(className -> {
 									try {

@@ -8,7 +8,7 @@ import java.util.Optional;
  * Contains the set of flags used in a command. A flag is defined by a name and
  * an optional value.
  */
-public class FlagSet {
+public final class FlagSet {
 	
 	private final Map<String, Optional<String>> flagMap;
 	

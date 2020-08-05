@@ -14,7 +14,7 @@ import reactor.util.function.Tuples;
 /**
  * Utility methods to process message content.
  */
-public class MessageUtils {
+public final class MessageUtils {
 	
 	private MessageUtils() {
 	}

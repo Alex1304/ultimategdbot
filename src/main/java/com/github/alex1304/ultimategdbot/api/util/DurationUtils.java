@@ -5,7 +5,7 @@ import java.time.Duration;
 /**
  * Utilities to manipulate Duration objects.
  */
-public class DurationUtils {
+public final class DurationUtils {
 	
 	/**
 	 * Formats a Duration into a human readable String.
