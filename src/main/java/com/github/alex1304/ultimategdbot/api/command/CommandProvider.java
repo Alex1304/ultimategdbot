@@ -175,25 +175,7 @@ public final class CommandProvider {
 				.flatMapMany(Flux::fromIterable);
 	}
 	
-	/**
-	 * Provides a command based on a MessageCreateEvent. The event must come with a
-	 * message body containing a prefix and the alias of one of the commands
-	 * provided by this provider. If it matches with a provided command, arguments
-	 * and flags are parsed, and everything is wrapped in an
-	 * {@link ExecutableCommand} which is returned. If the event does not match with
-	 * any command, an empty {@link Optional} is returned.
-	 * 
-	 * @param bot        the bot instance
-	 * @param prefix     the guild-specific bot prefix
-	 * @param flagPrefix the flag prefix
-	 * @param locale     the guild-specific locale
-	 * @param event      the MessageCreateEvent to process
-	 * @param channel    the channel where the event happened
-	 * 
-	 * @return an ExecutableCommand if the event results in a command to be
-	 *         triggered, an empty Optional otherwise.
-	 */
-	public Mono<ExecutableCommand> provideFromEvent(String prefix, String flagPrefix, Locale locale,
+	Mono<ExecutableCommand> provideFromEvent(String prefix, String flagPrefix, Locale locale,
 			MessageCreateEvent event, MessageChannel channel, PermissionChecker permissionChecker) {
 		requireNonNull(prefix, "prefix cannot be null");
 		requireNonNull(event, "event cannot be null");

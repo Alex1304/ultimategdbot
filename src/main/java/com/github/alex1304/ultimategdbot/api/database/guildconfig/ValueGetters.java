@@ -34,7 +34,7 @@ public final class ValueGetters {
 	public static <D extends GuildConfigData<D>, T> Function<D, Mono<T>> forSimpleValue(Function<? super D, ? extends T> getter) {
 		return data -> Mono.justOrEmpty(getter.apply(data));
 	}
-	
+
 	/**
 	 * Convenient method to generate a value getter for optional value-based
 	 * configuration entries.
@@ -54,7 +54,7 @@ public final class ValueGetters {
 	 * entries.
 	 * 
 	 * @param <D>      the type of data object
-	 * @param bot      the bot instance to use to retrieve the channel
+	 * @param gateway  the gateway client to use to retrieve the channel
 	 * @param idGetter a Function that gets the channel ID from the data object
 	 * @return a value getter for a guild channel
 	 */
@@ -71,7 +71,7 @@ public final class ValueGetters {
 	 * entries.
 	 * 
 	 * @param <D>      the type of data object
-	 * @param bot      the bot instance to use to retrieve the role
+	 * @param gateway  the gateway client to use to retrieve the role
 	 * @param idGetter a Function that gets the role ID from the data object
 	 * @return a value getter for a guild role
 	 */
@@ -87,7 +87,7 @@ public final class ValueGetters {
 	 * entries.
 	 * 
 	 * @param <D>      the type of data object
-	 * @param bot      the bot instance to use to retrieve the member
+	 * @param gateway  the gateway client to use to retrieve the member
 	 * @param idGetter a Function that gets the member ID from the data object
 	 * @return a value getter for a guild member
 	 */
@@ -103,7 +103,7 @@ public final class ValueGetters {
 	 * entries. This handles the case where the channel is optional.
 	 * 
 	 * @param <D>      the type of data object
-	 * @param bot      the bot instance to use to retrieve the channel
+	 * @param gateway  the gateway client to use to retrieve the channel
 	 * @param idGetter a Function that gets the channel ID from the data object
 	 * @return a value getter for a guild channel
 	 */
@@ -120,7 +120,7 @@ public final class ValueGetters {
 	 * entries. This handles the case where the role is optional.
 	 * 
 	 * @param <D>      the type of data object
-	 * @param bot      the bot instance to use to retrieve the role
+	 * @param gateway  the gateway client to use to retrieve the role
 	 * @param idGetter a Function that gets the role ID from the data object
 	 * @return a value getter for a guild role
 	 */
@@ -136,7 +136,7 @@ public final class ValueGetters {
 	 * entries. This handles the case where the member is optional.
 	 * 
 	 * @param <D>      the type of data object
-	 * @param bot      the bot instance to use to retrieve the member
+	 * @param gateway  the gateway client to use to retrieve the member
 	 * @param idGetter a Function that gets the member ID from the data object
 	 * @return a value getter for a guild member
 	 */

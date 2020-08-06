@@ -100,11 +100,15 @@ public final class DatabaseService {
 	}
 	
 	/**
-	 * Registers a guild configuration extension to this database. This allows to
-	 * retrieve all configuration data via the
-	 * {@link #configureGuild(Translator, Snowflake)} method.
+	 * Registers a guild configurator to this database. This allows to retrieve all
+	 * configuration data via the {@link #configureGuild(Translator, Snowflake)}
+	 * method.
 	 * 
-	 * @param extension the extension class to register
+	 * @param dao                 the DAO to retrieve configuration data
+	 * @param configuratorFactory a function which produces a
+	 *                            {@link GuildConfigurator}, given the data and a
+	 *                            translator
+	 * @param <D>                 the type of data object
 	 */
 	@SuppressWarnings("unchecked")
 	public <D extends GuildConfigData<D>> void addGuildConfigurator(Class<? extends GuildConfigDao<D>> dao, BiFunction<? super D, ? super Translator, GuildConfigurator<D>> configuratorFactory) {

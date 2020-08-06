@@ -22,10 +22,10 @@ public final class DiscordParser {
 	 * Parses the input into a Discord user. Emits {@link IllegalArgumentException}
 	 * if not found.
 	 * 
-	 * @param tr  the translator to use to translate the error message in case of
-	 *            failure
-	 * @param bot the bot used to make requests to Discord
-	 * @param str the input
+	 * @param tr      the translator to use to translate the error message in case
+	 *                of failure
+	 * @param gateway the gateway client used to make requests to Discord
+	 * @param str     the input
 	 * @return a Mono emitting the found user
 	 */
 	public static Mono<User> parseUser(Translator tr, GatewayDiscordClient gateway, String str) {
@@ -49,7 +49,7 @@ public final class DiscordParser {
 	 * 
 	 * @param tr      the translator to use to translate the error message in case
 	 *                of failure
-	 * @param bot     the bot used to make requests to Discord
+	 * @param gateway the gateway client used to make requests to Discord
 	 * @param guildId the ID of the guild the desired role belongs to
 	 * @param str     the input
 	 * @return a Mono emitting the found role
@@ -75,7 +75,7 @@ public final class DiscordParser {
 	 * 
 	 * @param tr      the translator to use to translate the error message in case
 	 *                of failure
-	 * @param bot     the bot used to make requests to Discord
+	 * @param gateway the gateway client used to make requests to Discord
 	 * @param guildId the ID of the guild the desired channel belongs to
 	 * @param str     the input
 	 * @return a Mono emitting the found channel
