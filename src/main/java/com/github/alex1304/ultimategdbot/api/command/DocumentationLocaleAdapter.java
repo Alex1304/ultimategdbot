@@ -10,7 +10,7 @@ class DocumentationLocaleAdapter {
 		this.translator = translator;
 	}
 	
-	public String adapt(String text) {
+	String adapt(String text) {
 		if (!text.startsWith("tr:")) {
 			return text;
 		}

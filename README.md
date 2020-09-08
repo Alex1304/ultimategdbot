@@ -12,20 +12,15 @@ High-level API to conveniently build Discord bots in Java, on top of [Discord4J]
 
 ## Notice
 
-**This project is at an early stage of its development and is not production-ready. Some parts of the API may have bugs and/or do not have solid structures and are subject to breaking changes until a stable release is made for the 6.x branch**.
-
-On another note, the `5.x` branch is not really an API but an artifact of the original UltimateGDBot project which was a Discord bot for Geometry Dash. This bot still exists, but the Geometry Dash features have been moved to a plugin implementing this new API, that you can find [here](https://github.com/ultimategdbot/ultimategdbot-gd-plugin).
-
-Everything in this `README` only concerns the 6.x (master) branch, which is still in development. 
+**This library is not yet fully documented.** The quick start instructions given in this README are of course insufficient to master the library and make full-fledged bots, full documentation will be available as soon as possible in a later update. In the meantime, you can take a look at the source code of the [UlitmateGDBot Core Plugin](https://github.com/ultimategdbot/ultimategdbot-core-plugin) which is a common plugin that provides essential commands for a Discord bot (such as `!help`, `!ping`, etc).
 
 ## What is UltimateGDBot?
 
-UltimateGDBot allows to make plugin-oriented bots. Everything related to how your bot communicates with Discord is abstracted behind a single `Bot` interface.
-A plugin is what will allow you to add features to this bot. The goal is that you write only the features you want to see in your bot, the library does the rest for you.
+UltimateGDBot allows to make plugin-oriented bots. A plugin is what will allow you to add features to your bot. The goal is that you write only the features you want to see in your bot with the least amount of boilerplate code possible, the library does (almost) all the boring stuff for you.
 
 ## Getting started
 
-This library requires the JDK 11. You can download the OpenJDK [here](https://adoptopenjdk.net/?variant=openjdk11&jvmVariant=hotspot).
+This library requires the JDK 11 or newer. You can download the OpenJDK [here](https://adoptopenjdk.net/?variant=openjdk11&jvmVariant=hotspot).
 
 ### Maven
 
@@ -34,10 +29,12 @@ This library requires the JDK 11. You can download the OpenJDK [here](https://ad
 	<dependency>
 		<groupId>com.github.alex1304</groupId>
 		<artifactId>ultimategdbot-api</artifactId>
-		<version>6.0.0-alpha1</version>
+		<version>[VERSION]</version>
 	</dependency>
 </dependencies>
 ```
+
+Where `[VERSION]` is the latest as per ![Maven Central](https://img.shields.io/maven-central/v/com.github.alex1304/ultimategdbot-api)
 
 ### Gradle
 
@@ -47,44 +44,93 @@ repositories {
 }
 
 dependencies {
-	implementation 'com.github.alex1304:ultimategdbot-api:6.0.0-alpha1'
+	implementation 'com.github.alex1304:ultimategdbot-api:[VERSION]'
 }
 ```
 
 ## How it works
 
-### Example of plugin definition
+Most of the boilerplate code that you will write when working with this library will be at the start, when setting up your plugin. Each plugin can declare one or more *services*, which will do specific actions such as loading commands, processing data from database, and anything you want your Discord bot to do.
+
+Services are initialized using the principle of **dependency injection**, using the [RDI library](https://github.com/Alex1304/rdi). Each service may depend on other services, either made by yourself, provided by the library (e.g `BotService`), or even from external parties. You define the service hierarchy of your plugin through RDI's `ServiceDescriptor`s that you expose via an implementation of `ServiceDeclarator`. If you didn't understand anything don't worry, maybe a concrete example will make everything clear.
+
+> Note: the API makes use of the Reactor types (`Flux` and `Mono`) to give async capabilities to the bot, you can read more about Reactor [here](https://projectreactor.io/docs/core/release/reference/).
+
+### Example of a basic plugin
+
+The first step is to declare a service for your plugin, that will serve as root. In this example, this service will only be in charge of loading commands.
 
 ```java
-public class ExamplePluginBootstrap implements PluginBootstrap {
+public class MyService {
 
-	@Override
-	public Mono<Plugin> setup(Bot bot) {
-		// Define some commands
-		var commandProvider = new AnnotatedCommandProvider();
-		commandProvider.add(new HelloCommand());
+	private final BotService bot;
 
-		// Build the plugin
-		var plugin = Plugin.builder("Example")
-				.setCommandProvider(commandProvider)
-				.build();
+	private MyService(BotService bot) {
+		this.bot = bot;
+	}
 
-		// Return it
-		return Mono.just(plugin);
+	public static Mono<MyService> create(BotService bot) {
+		return RootServiceSetupHelper.create(() -> new MyService(bot))
+				.addCommandProvider(bot.command(), new CommandProvider("MyCommands"))
+				.setup();
 	}
 }
 ```
 
-Since UltimateGDBot uses the Java module system to load the plugins, you need to declare a `module-info.java` with the following minimal contents:
+The class `RootServiceSetupHelper` is what will allow you to autoload your commands from the module path.
+
+Before adding a command, you need to declare the service you just created, so that it can be loaded on startup by the bot launcher. To achieve this, create a subclass of `ServiceDeclarator` like so:
+
+```java
+public class MyServices implements ServiceDeclarator {
+
+	public static final ServiceReference<MyService> ROOT = ServiceReference.ofType(MyService.class);
+
+	@Override
+	public Set<ServiceDescriptor> declareServices(BotConfig botConfig) {
+		return Set.of(
+			ServiceDescriptor.builder(ROOT)
+						.setFactoryMethod(FactoryMethod.staticFactory("create", Mono.class, Injectable.ref(CommonServices.BOT)))
+						.build()
+		);
+	}
+}
+```
+
+`ROOT` is just a reference that will uniquely identify your service. The `setFactoryMethod` line allows to specify the method that creates your service. In this case, it's a static method called "create" which returns a `Mono` and takes `BotService` as parameter. `CommonServices.BOT` is what allows to inject `BotService` into your service.
+
+Next step is to create the plugin. For that, just create a subclass of `Plugin`:
+
+```java
+public class MyPlugin implements Plugin {
+
+	@Override
+	public ServiceReference<?> rootService() {
+		return MyServices.ROOT;
+	}
+	
+	@Override
+	public Mono<PluginMetadata> metadata() {
+		return Mono.just(PluginMetadata.builder("MyPlugin").build());
+	}
+}
+```
+
+It simply specifies which service should be used as root, and meta information on the plugin (like the name of the plugin, the version, who created it, etc). Here we only provided the name of the plugin, which is the only information mandatory.
+
+In order to make all of this work, since UltimateGDBot uses the Java module system to load the plugins and the services, you need to declare a `module-info.java` with the following minimal contents:
 
 ```java
 open module example.plugin {
 
 	requires ultimategdbot.api;
 
-	provides PluginBootstrap with ExamplePluginBootstrap;
+	provides ServiceDeclarator with MyServices;
+	provides Plugin with MyPlugin;
 }
 ```
+
+The module must be `open` so that the launcher can initialize your plugin, and must expose your `ServiceDeclarator` and your `Plugin` via `provides` instructions.
 
 ### Example command
 
@@ -103,9 +149,14 @@ class HelloCommand {
 	}
 }
 ```
+
 Use annotations to provide all the meta-information you would give to any bot command (aliases, help message, permission level, etc).
 You can access information such as who ran the command, what are the arguments, etc via the `Context` object.
-The API makes uses of the Reactor types (`Flux` and `Mono`) to give async capabilities to the bot, you can read more about Reactor [here](https://projectreactor.io/docs/core/release/reference/).
+Your command will automatically be added thanks to the `RootServiceSetupHelper` of your root service, so no need to worry about doing `new HelloCommand()` anywhere in your code!
+
+## How to run the bot?
+
+See the [UlitmateGDBot launcher](https://github.com/ultimategdbot/ultimategdbot-launcher) project to run your plugins created with this library.
 
 ## Useful Links
 

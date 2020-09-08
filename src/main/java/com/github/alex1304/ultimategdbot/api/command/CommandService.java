@@ -53,7 +53,7 @@ public final class CommandService {
 		var config = botConfig.resource(CONFIG_RESOURCE_NAME);
 		this.commandPrefix = config.read("command_prefix");
 		this.flagPrefix = config.read("flag_prefix");
-		gateway.on(MessageCreateEvent.class, event -> processEvent(event))
+		gateway.on(MessageCreateEvent.class, this::processEvent)
 				.log(LOGGER)
 				.subscribe();
 	}

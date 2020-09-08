@@ -14,6 +14,7 @@ import discord4j.core.object.entity.User;
 import discord4j.core.object.entity.channel.MessageChannel;
 import discord4j.core.spec.MessageCreateSpec;
 import discord4j.rest.http.client.ClientException;
+import discord4j.rest.util.AllowedMentions;
 import reactor.core.publisher.Mono;
 
 public final class Context implements Translator {
@@ -87,8 +88,9 @@ public final class Context implements Translator {
 	 * @return a Mono emitting the message sent
 	 */
 	public Mono<Message> reply(Consumer<? super MessageCreateSpec> spec) {
+		Consumer<MessageCreateSpec> noRoleMentionSpec = spec2 -> spec2.setAllowedMentions(AllowedMentions.builder().allowRole().build());
 		return event.getMessage().getChannel()
-				.flatMap(c -> c.createMessage(spec))
+				.flatMap(c -> c.createMessage(noRoleMentionSpec.andThen(spec)))
 				.onErrorResume(ClientException.class, e -> {
 					var author = event.getMessage().getAuthor();
 					if (e.getStatus().code() != 403 || author.isEmpty()) {
