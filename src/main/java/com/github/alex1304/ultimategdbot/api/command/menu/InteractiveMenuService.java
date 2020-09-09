@@ -197,7 +197,7 @@ public final class InteractiveMenuService {
 								.flatMap(interaction.getMenuMessage()::edit))
 						.onErrorMap(PageNumberOutOfRangeException.class, e -> {
 							interaction.set("currentPage", interaction.get("oldPage"));
-							return new UnexpectedReplyException(interaction.getTranslator().translate("generic",
+							return new UnexpectedReplyException(interaction.getTranslator().translate("CommonStrings",
 									"pagination_page_number_out_of_range", e.getMinPage() + 1, e.getMaxPage() + 1));
 						})
 						.then(interaction.getEvent().getMessage().delete().onErrorResume(e -> Mono.empty())))

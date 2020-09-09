@@ -9,6 +9,7 @@ import com.github.alex1304.ultimategdbot.api.database.DatabaseException;
 import com.github.alex1304.ultimategdbot.api.util.Markdown;
 
 import discord4j.rest.http.client.ClientException;
+import discord4j.rest.request.DiscardedRequestException;
 import reactor.core.publisher.Mono;
 import reactor.util.Logger;
 import reactor.util.Loggers;
@@ -75,6 +76,7 @@ public final class CommandErrorHandler {
 		addHandler(DatabaseException.class, (e, ctx) -> Mono.when(
 				ctx.reply(ctx.translate("CommonStrings", "command_database_access_error")),
 				Mono.fromRunnable(() -> LOGGER.error("A database error occured", e))));
+		addHandler(DiscardedRequestException.class, (e, ctx) -> Mono.fromRunnable(() -> LOGGER.warn(e.toString())));
 	}
 	
 	@Override

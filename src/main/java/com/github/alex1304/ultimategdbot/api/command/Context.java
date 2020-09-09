@@ -97,7 +97,7 @@ public final class Context implements Translator {
 						return Mono.empty();
 					}
 					return author.get().getPrivateChannel()
-							.flatMap(pc -> pc.createMessage(translate("generic", "command_reply_error",
+							.flatMap(pc -> pc.createMessage(translate("CommonStrings", "command_reply_error",
 									event.getMessage().getChannelId().asString(), e.getErrorResponse())))
 							.onErrorResume(__ -> Mono.empty())
 							.then(Mono.empty());
