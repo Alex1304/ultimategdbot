@@ -64,6 +64,7 @@ public final class PermissionChecker {
 	 * 
 	 * @param source the source permission checker
 	 */
+	@Deprecated
 	public void registerAll(PermissionChecker source) {
 		requireNonNull(source);
 		permissionsByName.putAll(source.permissionsByName);

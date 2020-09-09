@@ -104,7 +104,7 @@ public final class AnnotatedCommand implements Command {
 		return "AnnotatedCommand{obj=" + obj.toString() + "}";
 	}
 	
-	public static AnnotatedCommand from(Object obj, CommandProvider provider) {
+	public static AnnotatedCommand from(Object obj, CommandProvider provider, PermissionChecker permChecker) {
 		var cmdDescriptorAnnot = readCommandSpecAnnotation(obj);
 		var cmdPermAnnot = obj.getClass().getAnnotation(CommandPermission.class);
 		Method mainMethod = null;
@@ -156,7 +156,7 @@ public final class AnnotatedCommand implements Command {
 							ctx.prefixUsed() + "help " + args.get(0)));
 					return Mono.justOrEmpty(matchingMethod)
 							.switchIfEmpty(Mono.error(invalidSyntax))
-							.filterWhen(method -> isSubcommandGranted(method, ctx, provider.getPermissionChecker()))
+							.filterWhen(method -> isSubcommandGranted(method, ctx, permChecker))
 							.switchIfEmpty(Mono.error(new PermissionDeniedException()))
 							.flatMap(method -> {
 								LOGGER.debug("Matching method: {}#{}", method.getDeclaringClass().getName(), method.getName());

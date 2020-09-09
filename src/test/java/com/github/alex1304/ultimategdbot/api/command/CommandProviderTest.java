@@ -32,7 +32,7 @@ public final class CommandProviderTest {
 	
 	@BeforeEach
 	public void setUp() throws Exception {
-		provider = new CommandProvider("test");
+		provider = new CommandProvider("test", new PermissionChecker());
 		testCmd = new TestCommand();
 		testCmd1 = new TestCommandOneParam();
 		testCmd2 = new TestCommandTwoParams();

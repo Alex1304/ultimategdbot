@@ -56,8 +56,14 @@ public final class CommandProvider {
 	private final Map<String, Command> commandMap = new HashMap<>();
 	private final Map<Class<?>, ParamConverter<?>> paramConverters = initDefaultConverters();
 	
+	@Deprecated
 	public CommandProvider(String name) {
+		this(name, new PermissionChecker());
+	}
+	
+	public CommandProvider(String name, PermissionChecker permissionChecker) {
 		this.name = requireNonNull(name);
+		this.permissionChecker = permissionChecker;
 	}
 	
 	/**
@@ -93,7 +99,7 @@ public final class CommandProvider {
 	 * @param annotated the annotated object to add
 	 */
 	public void addAnnotated(Object annotated) {
-		add(AnnotatedCommand.from(annotated, this));
+		add(AnnotatedCommand.from(annotated, this, permissionChecker));
 	}
 	
 	/**
@@ -240,6 +246,7 @@ public final class CommandProvider {
 	 * 
 	 * @return the permission checker
 	 */
+	@Deprecated
 	public PermissionChecker getPermissionChecker() {
 		return permissionChecker;
 	}
@@ -249,6 +256,7 @@ public final class CommandProvider {
 	 * 
 	 * @param permissionChecker the permission checker to set
 	 */
+	@Deprecated
 	public void setPermissionChecker(PermissionChecker permissionChecker) {
 		this.permissionChecker = requireNonNull(permissionChecker);
 	}

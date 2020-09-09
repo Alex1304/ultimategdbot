@@ -65,7 +65,6 @@ public final class CommandService {
 	 */
 	public void addProvider(CommandProvider provider) {
 		providers.add(requireNonNull(provider));
-		permissionChecker.registerAll(provider.getPermissionChecker());
 	}
 
 	/**
