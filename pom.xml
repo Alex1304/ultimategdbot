@@ -15,7 +15,7 @@
     <properties>
         <java.version>11</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <botrino.version>1.0.0-M1</botrino.version>
+        <botrino.version>1.0.0-M2</botrino.version>
         <delivery.name>${project.parent.artifactId}-${project.version}-${os.name}-${os.arch}</delivery.name>
         <delivery.directory>${project.build.directory}/${delivery.name}</delivery.directory>
         <app.build.directory>${project.basedir}/../app/target</app.build.directory>
@@ -117,6 +117,25 @@
                             </configuration>
                         </execution>
                     </executions>
+                </plugin>
+                <plugin>
+                    <groupId>pl.project13.maven</groupId>
+                    <artifactId>git-commit-id-plugin</artifactId>
+                    <version>2.2.5</version>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>revision</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <prefix>git</prefix>
+                        <dotGitDirectory>${project.basedir}/.git</dotGitDirectory>
+                        <injectAllReactorProjects>true</injectAllReactorProjects>
+                        <generateGitPropertiesFile>true</generateGitPropertiesFile>
+                        <generateGitPropertiesFilename>${project.build.outputDirectory}/META-INF/git/ultimategdbot.git.properties</generateGitPropertiesFilename>
+                    </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>

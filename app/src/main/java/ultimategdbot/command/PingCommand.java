@@ -1,10 +1,11 @@
-package ultimategdbot;
+package ultimategdbot.command;
 
 import botrino.command.Command;
 import botrino.command.CommandContext;
 import botrino.command.annotation.Alias;
 import botrino.command.annotation.TopLevelCommand;
 import reactor.core.publisher.Mono;
+import ultimategdbot.Strings;
 
 @TopLevelCommand
 @Alias("ping")
