@@ -16,6 +16,7 @@
         <java.version>11</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <botrino.version>1.0.0-M2</botrino.version>
+        <immutables.version>2.8.9-ea-1</immutables.version>
         <delivery.name>${project.parent.artifactId}-${project.version}-${os.name}-${os.arch}</delivery.name>
         <delivery.directory>${project.build.directory}/${delivery.name}</delivery.directory>
         <app.build.directory>${project.basedir}/../app/target</app.build.directory>
@@ -29,6 +30,13 @@
                     <version>3.8.1</version>
                     <configuration>
                         <release>${java.version}</release>
+                        <annotationProcessorPaths>
+                            <annotationProcessorPath>
+                                <groupId>org.immutables</groupId>
+                                <artifactId>value</artifactId>
+                                <version>${immutables.version}</version>
+                            </annotationProcessorPath>
+                        </annotationProcessorPaths>
                     </configuration>
                 </plugin>
                 <plugin>
@@ -52,6 +60,7 @@
                             <addModule>java.naming</addModule>
                             <addModule>java.desktop</addModule>
                             <addModule>jdk.crypto.ec</addModule>
+                            <addModule>jdk.management</addModule>
                         </addModules>
                     </configuration>
                 </plugin>
@@ -157,6 +166,14 @@
                 <groupId>ch.qos.logback</groupId>
                 <artifactId>logback-classic</artifactId>
                 <version>1.2.3</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.immutables</groupId>
+                <artifactId>bom</artifactId>
+                <version>${immutables.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>

@@ -1,5 +1,6 @@
 package ultimategdbot.command;
 
+import botrino.api.Botrino;
 import botrino.api.i18n.Translator;
 import botrino.command.Command;
 import botrino.command.CommandContext;
@@ -8,7 +9,6 @@ import botrino.command.annotation.TopLevelCommand;
 import com.github.alex1304.rdi.finder.annotation.RdiFactory;
 import com.github.alex1304.rdi.finder.annotation.RdiService;
 import discord4j.common.GitProperties;
-import discord4j.core.GatewayDiscordClient;
 import discord4j.core.object.entity.ApplicationInfo;
 import discord4j.core.object.entity.User;
 import reactor.core.publisher.Mono;
@@ -40,9 +40,8 @@ public final class AboutCommand implements Command {
     }
 
     @RdiFactory
-    public static Mono<AboutCommand> create(GatewayDiscordClient gateway) {
-        return gateway.getApplicationInfo()
-                .flatMap(ApplicationInfo::getOwner)
+    public static Mono<AboutCommand> create(ApplicationInfo applicationInfo) {
+        return applicationInfo.getOwner()
                 .flatMap(botOwner -> {
                     var url = ClassLoader.getSystemResource("about.txt");
                     if (url == null) {
@@ -69,6 +68,11 @@ public final class AboutCommand implements Command {
                     versionInfoBuilder.append(ctx.translate(Strings.APP, "d4j_version"));
                     versionInfoBuilder.append("** ")
                             .append(d4jVersion)
+                            .append("\n");
+                    versionInfoBuilder.append("**");
+                    versionInfoBuilder.append(ctx.translate(Strings.APP, "botrino_version"));
+                    versionInfoBuilder.append("** ")
+                            .append(Botrino.API_VERSION)
                             .append("\n");
                     var vars = new HashMap<String, String>();
                     vars.put("bot_name", self.getUsername());
