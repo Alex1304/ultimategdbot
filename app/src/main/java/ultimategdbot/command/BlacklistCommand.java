@@ -1,35 +1,33 @@
 package ultimategdbot.command;
 
-import botrino.command.Command;
-import botrino.command.ParentCommand;
+import botrino.api.i18n.Translator;
+import botrino.command.CommandContext;
 import botrino.command.annotation.Alias;
 import botrino.command.annotation.TopLevelCommand;
 import botrino.command.grammar.ArgumentMapper;
-import botrino.command.grammar.CommandGrammar;
 import botrino.command.privilege.Privilege;
 import com.github.alex1304.rdi.finder.annotation.RdiFactory;
 import com.github.alex1304.rdi.finder.annotation.RdiService;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import ultimategdbot.Strings;
+import ultimategdbot.service.OutputPaginator;
 import ultimategdbot.service.PrivilegeFactory;
 import ultimategdbot.service.UltimateGDBotCommandEventProcessor;
-
-import java.util.Set;
 
 @Alias("blacklist")
 @TopLevelCommand
 @RdiService
-public final class BlacklistCommand implements ParentCommand {
+public final class BlacklistCommand extends AddRemoveListCommand<Long> {
 
     private final PrivilegeFactory privilegeFactory;
     private final UltimateGDBotCommandEventProcessor ultimateGDBotCommandEventProcessor;
 
-    private final CommandGrammar<Args> grammar = CommandGrammar.builder()
-            .nextArgument("id", ArgumentMapper.asLong())
-            .build(Args.class);
-
     @RdiFactory
-    public BlacklistCommand(PrivilegeFactory privilegeFactory,
+    public BlacklistCommand(OutputPaginator outputPaginator,
+                            PrivilegeFactory privilegeFactory,
                             UltimateGDBotCommandEventProcessor ultimateGDBotCommandEventProcessor) {
+        super(outputPaginator);
         this.privilegeFactory = privilegeFactory;
         this.ultimateGDBotCommandEventProcessor = ultimateGDBotCommandEventProcessor;
     }
@@ -40,25 +38,34 @@ public final class BlacklistCommand implements ParentCommand {
     }
 
     @Override
-    public Set<Command> subcommands() {
-        return Set.of(
-                Command.builder("add", ctx -> grammar.resolve(ctx)
-                        .flatMap(args -> ultimateGDBotCommandEventProcessor.addToBlacklist(args.id)
-                                .then(ctx.channel()
-                                        .createMessage(ctx.translate(Strings.APP, "blacklist_success", args.id))
-                                        .then())))
-                        .inheritFrom(this)
-                        .build(),
-                Command.builder("remove", ctx -> grammar.resolve(ctx)
-                        .flatMap(args -> ultimateGDBotCommandEventProcessor.removeFromBlacklist(args.id)
-                                .then(ctx.channel()
-                                        .createMessage(ctx.translate(Strings.APP, "unblacklist_success", args.id))
-                                        .then())))
-                        .inheritFrom(this)
-                        .build());
+    ArgumentMapper<Long> argumentMapper() {
+        return ArgumentMapper.asLong();
     }
 
-    private final static class Args {
-        private long id;
+    @Override
+    Mono<Void> add(CommandContext ctx, Long id) {
+        return ultimateGDBotCommandEventProcessor.addToBlacklist(id);
+    }
+
+    @Override
+    Mono<Void> remove(CommandContext ctx, Long id) {
+        return ultimateGDBotCommandEventProcessor.removeFromBlacklist(id);
+    }
+
+    @Override
+    Flux<String> listFormattedItems(CommandContext ctx) {
+        return Flux.fromIterable(ultimateGDBotCommandEventProcessor.blacklist())
+                .sort()
+                .map(String::valueOf);
+    }
+
+    @Override
+    String description(Translator tr) {
+        return tr.translate(Strings.APP, "description_blacklist");
+    }
+
+    @Override
+    String syntax() {
+        return "blacklist";
     }
 }

@@ -3,7 +3,7 @@
     <option name="MAIN_CLASS_NAME" value="ultimategdbot.Main" />
     <module name="ultimategdbot-app" />
     <option name="VM_PARAMETERS" value="--add-modules=ALL-MODULE-PATH -cp ." />
-    <option name="WORKING_DIRECTORY" value="$USER_HOME$/testing/botrino/example-bot" />
+    <option name="WORKING_DIRECTORY" value="$USER_HOME$/testing/botrino/ultimategdbot-dev" />
     <method v="2">
       <option name="Make" enabled="true" />
     </method>

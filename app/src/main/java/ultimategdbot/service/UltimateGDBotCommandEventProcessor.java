@@ -96,6 +96,10 @@ public class UltimateGDBotCommandEventProcessor implements CommandEventProcessor
                 })));
     }
 
+    public GuildConfig getCurrentGuildConfig(long guildId) {
+        return guildConfigCache.getOrDefault(guildId, ImmutableGuildConfig.builder().guildId(guildId).build());
+    }
+
     public Mono<Void> addToBlacklist(long id) {
         return blacklistDao.addToBlacklist(id)
                 .then(Mono.fromRunnable(() -> blacklistCache.add(id)));
@@ -104,5 +108,9 @@ public class UltimateGDBotCommandEventProcessor implements CommandEventProcessor
     public Mono<Void> removeFromBlacklist(long id) {
         return blacklistDao.removeFromBlacklist(id)
                 .then(Mono.fromRunnable(() -> blacklistCache.remove(id)));
+    }
+
+    public Set<Long> blacklist() {
+        return Collections.unmodifiableSet(blacklistCache);
     }
 }
