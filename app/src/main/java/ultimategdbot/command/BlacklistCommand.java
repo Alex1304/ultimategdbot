@@ -13,7 +13,7 @@ import reactor.core.publisher.Mono;
 import ultimategdbot.Strings;
 import ultimategdbot.service.OutputPaginator;
 import ultimategdbot.service.PrivilegeFactory;
-import ultimategdbot.service.UltimateGDBotCommandEventProcessor;
+import ultimategdbot.framework.UltimateGDBotCommandEventProcessor;
 
 @Alias("blacklist")
 @TopLevelCommand

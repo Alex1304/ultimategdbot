@@ -12,12 +12,9 @@ import discord4j.common.GitProperties;
 import discord4j.core.object.entity.ApplicationInfo;
 import discord4j.core.object.entity.User;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 import ultimategdbot.Strings;
 import ultimategdbot.util.VersionUtils;
 
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Optional;
 import java.util.Properties;
@@ -29,28 +26,23 @@ import static reactor.function.TupleUtils.function;
 @RdiService
 public final class AboutCommand implements Command {
 
-	private static final Mono<Properties> D4J_PROPS = Mono.fromCallable(GitProperties::getProperties).cache();
+    private static final Mono<Properties> D4J_PROPS = Mono.fromCallable(GitProperties::getProperties).cache();
 
-	private final String aboutText;
-	private final User botOwner;
+    private final User botOwner;
 
-    public AboutCommand(String aboutText, User botOwner) {
-        this.aboutText = aboutText;
+    public AboutCommand(User botOwner) {
         this.botOwner = botOwner;
     }
 
     @RdiFactory
     public static Mono<AboutCommand> create(ApplicationInfo applicationInfo) {
-        return applicationInfo.getOwner()
-                .flatMap(botOwner -> {
-                    var url = ClassLoader.getSystemResource("about.txt");
-                    if (url == null) {
-                        return Mono.just(new AboutCommand(":warning: Could not retrieve about information.", botOwner));
-                    }
-                    return Mono.fromCallable(() -> String.join("\n", Files.readAllLines(Paths.get(url.toURI()))))
-                            .map(text -> new AboutCommand(text, botOwner))
-                            .subscribeOn(Schedulers.boundedElastic());
-                });
+        return applicationInfo.getOwner().map(AboutCommand::new);
+    }
+
+    private static Mono<String> version(Translator tr, Mono<Properties> props) {
+        return props.map(p -> Optional.ofNullable(p.getProperty(GitProperties.APPLICATION_VERSION))
+                .orElse("*" + tr.translate(Strings.APP, "unknown") + "*"))
+                .defaultIfEmpty("*" + tr.translate(Strings.APP, "unknown") + "*");
     }
 
     @Override
@@ -79,17 +71,13 @@ public final class AboutCommand implements Command {
                     vars.put("bot_owner", botOwner.getTag());
                     vars.put("server_count", "" + guildCount);
                     vars.put("version_info", versionInfoBuilder.toString());
-                    var box = new Object() { private String text = aboutText; };
+                    var box = new Object() {
+                        private String text = ctx.translate(Strings.ABOUT, "about_text");
+                    };
                     vars.forEach((k, v) -> box.text = box.text.replaceAll("\\{\\{ *" + k + " *\\}\\}", "" + v));
                     return box.text;
                 }))
                 .flatMap(ctx.channel()::createMessage)
                 .then();
-    }
-
-    private static Mono<String> version(Translator tr, Mono<Properties> props) {
-        return props.map(p -> Optional.ofNullable(p.getProperty(GitProperties.APPLICATION_VERSION))
-                .orElse("*" + tr.translate(Strings.APP, "unknown") + "*"))
-                .defaultIfEmpty("*" + tr.translate(Strings.APP, "unknown") + "*");
     }
 }

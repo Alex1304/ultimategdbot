@@ -12,7 +12,7 @@ import discord4j.common.util.Snowflake;
 import reactor.core.publisher.Mono;
 import reactor.util.annotation.Nullable;
 import ultimategdbot.Strings;
-import ultimategdbot.service.UltimateGDBotCommandEventProcessor;
+import ultimategdbot.framework.UltimateGDBotCommandEventProcessor;
 
 import java.util.function.Function;
 

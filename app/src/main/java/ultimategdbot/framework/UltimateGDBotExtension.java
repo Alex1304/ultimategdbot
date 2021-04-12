@@ -1,4 +1,4 @@
-package ultimategdbot;
+package ultimategdbot.framework;
 
 import botrino.api.extension.BotrinoExtension;
 import com.github.alex1304.rdi.ServiceReference;

@@ -1,6 +1,6 @@
 import botrino.api.annotation.BotModule;
 import botrino.api.extension.BotrinoExtension;
-import ultimategdbot.UltimateGDBotExtension;
+import ultimategdbot.framework.UltimateGDBotExtension;
 
 @BotModule
 open module ultimategdbot {

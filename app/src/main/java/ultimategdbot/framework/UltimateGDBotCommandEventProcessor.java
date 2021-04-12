@@ -1,4 +1,4 @@
-package ultimategdbot.service;
+package ultimategdbot.framework;
 
 import botrino.command.CommandEventProcessor;
 import com.github.alex1304.rdi.finder.annotation.RdiFactory;
