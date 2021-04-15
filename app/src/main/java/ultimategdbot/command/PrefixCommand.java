@@ -45,11 +45,6 @@ public class PrefixCommand extends GetSetResetCommand<String> {
     }
 
     @Override
-    String syntax() {
-        return "setup prefix";
-    }
-
-    @Override
     public CommandDocumentation documentation(Translator tr) {
         return CommandDocumentation.builder()
                 .setDescription(tr.translate(Strings.APP, "description_prefix"))

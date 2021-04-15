@@ -62,11 +62,6 @@ public class LocaleCommand extends GetSetResetCommand<String> {
         return ultimateGDBotCommandEventProcessor.changeLocaleForGuild(guildId, locale);
     }
 
-    @Override
-    String syntax() {
-        return "setup locale";
-    }
-
     private String listLocales() {
         return i18nConfig.supportedLocales().stream()
                 .map(loc -> "\t\t- " + formatLocale(Locale.forLanguageTag(loc)))

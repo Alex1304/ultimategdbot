@@ -23,8 +23,6 @@ abstract class GetSetResetCommand<V> implements Command {
 
     abstract Mono<Void> setValue(CommandContext ctx, @Nullable V value);
 
-    abstract String syntax();
-
     String formatValue(V value) {
         return String.valueOf(value);
     }
@@ -36,9 +34,10 @@ abstract class GetSetResetCommand<V> implements Command {
                 .defaultIfEmpty(Markdown.italic(ctx.translate(Strings.APP, "no_value_assigned")))
                 .flatMap(fv -> ctx.channel().createMessage((docs.getDescription() + "\n\n" +
                         ctx.translate(Strings.APP, "current_value_is", fv) + "\n\n" +
-                        ctx.translate(Strings.APP, "usage_value_update", ctx.getPrefixUsed() + syntax()) +
-                        "\n" +
-                        ctx.translate(Strings.APP, "usage_value_reset", ctx.getPrefixUsed() + syntax())).strip()))
+                        ctx.translate(Strings.APP, "usage_value_update", ctx.getPrefixUsed() +
+                                String.join(" ", ctx.input().getTrigger())) + "\n" +
+                        ctx.translate(Strings.APP, "usage_value_reset", ctx.getPrefixUsed() +
+                                String.join(" ", ctx.input().getTrigger()))).strip()))
                 .then();
     }
 

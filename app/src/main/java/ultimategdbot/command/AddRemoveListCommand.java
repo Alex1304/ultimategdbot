@@ -31,8 +31,6 @@ abstract class AddRemoveListCommand<E> implements Command {
 
     abstract Flux<String> listFormattedItems(CommandContext ctx);
 
-    abstract String syntax();
-
     String formatElement(E element) {
         return String.valueOf(element);
     }
@@ -42,9 +40,10 @@ abstract class AddRemoveListCommand<E> implements Command {
         var docs = documentation(ctx);
         return listFormattedItems(ctx).collectList().flatMap(list -> outputPaginator.paginate(ctx, list,
                 content -> docs.getDescription() + "\n\n" + content + "\n\n" +
-                        ctx.translate(Strings.APP, "usage_element_add", ctx.getPrefixUsed() + syntax()) +
-                        "\n" +
-                        ctx.translate(Strings.APP, "usage_element_remove", ctx.getPrefixUsed() + syntax())));
+                        ctx.translate(Strings.APP, "usage_element_add", ctx.getPrefixUsed() +
+                                String.join(" ", ctx.input().getTrigger())) + "\n" +
+                        ctx.translate(Strings.APP, "usage_element_remove", ctx.getPrefixUsed() +
+                                String.join(" ", ctx.input().getTrigger()))));
     }
 
     @SuppressWarnings("unchecked")

@@ -1,6 +1,8 @@
 package ultimategdbot.framework;
 
+import botrino.api.config.ConfigContainer;
 import botrino.api.extension.BotrinoExtension;
+import botrino.api.util.EmojiManager;
 import com.github.alex1304.rdi.ServiceReference;
 import com.github.alex1304.rdi.config.ServiceDescriptor;
 import discord4j.core.GatewayDiscordClient;
@@ -26,10 +28,17 @@ public final class UltimateGDBotExtension implements BotrinoExtension {
 
     @Override
     public Set<ServiceDescriptor> provideExtraServices() {
-        return Set.of(ServiceDescriptor.builder(ServiceReference.ofType(ApplicationInfo.class))
-                .setFactoryMethod(externalStaticFactory(ExternalServices.class, "applicationInfo",
-                        Mono.class, ref(ServiceReference.ofType(GatewayDiscordClient.class))))
-                .build());
+        return Set.of(
+                ServiceDescriptor.builder(ServiceReference.ofType(ApplicationInfo.class))
+                        .setFactoryMethod(externalStaticFactory(ExternalServices.class, "applicationInfo",
+                                Mono.class, ref(ServiceReference.ofType(GatewayDiscordClient.class))))
+                        .build(),
+                ServiceDescriptor.builder(ServiceReference.ofType(EmojiManager.class))
+                        .setFactoryMethod(externalStaticFactory(ExternalServices.class, "emojiManager",
+                                Mono.class,
+                                ref(ServiceReference.ofType(ConfigContainer.class)),
+                                ref(ServiceReference.ofType(GatewayDiscordClient.class))))
+                        .build());
     }
 
     @Override

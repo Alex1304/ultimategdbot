@@ -65,11 +65,6 @@ public final class BotAdminsCommand extends AddRemoveListCommand<User> {
     }
 
     @Override
-    String syntax() {
-        return "botadmins";
-    }
-
-    @Override
     String formatElement(User element) {
         return element.getTag();
     }

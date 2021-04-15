@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 
 import static java.util.function.Predicate.not;
 
-@Alias("help")
+@Alias({"help", "manual", "commands"})
 @TopLevelCommand
 @RdiService
 public final class HelpCommand implements Command {
@@ -80,6 +80,7 @@ public final class HelpCommand implements Command {
                                     .orElseGet(() -> Markdown.italic("No description"));
                             return Markdown.code(ctx.getPrefixUsed() + aliases) + ": " + desc;
                         })
+                        .sorted()
                         .collect(Collectors.joining("\n")));
             }
             // Send documentation for specific command
