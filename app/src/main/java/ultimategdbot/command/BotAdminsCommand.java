@@ -9,28 +9,30 @@ import botrino.command.grammar.ArgumentMapper;
 import botrino.command.privilege.Privilege;
 import com.github.alex1304.rdi.finder.annotation.RdiFactory;
 import com.github.alex1304.rdi.finder.annotation.RdiService;
+import discord4j.common.util.Snowflake;
+import discord4j.core.object.entity.User;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ultimategdbot.Strings;
-import ultimategdbot.framework.UltimateGDBotCommandEventProcessor;
+import ultimategdbot.database.BotAdminDao;
 import ultimategdbot.service.OutputPaginator;
 import ultimategdbot.service.PrivilegeFactory;
 
-@Alias("blacklist")
+@Alias("botadmins")
 @TopLevelCommand
 @RdiService
-public final class BlacklistCommand extends AddRemoveListCommand<Long> {
+public final class BotAdminsCommand extends AddRemoveListCommand<User> {
 
     private final PrivilegeFactory privilegeFactory;
-    private final UltimateGDBotCommandEventProcessor ultimateGDBotCommandEventProcessor;
+    private final BotAdminDao botAdminDao;
 
     @RdiFactory
-    public BlacklistCommand(OutputPaginator outputPaginator,
+    public BotAdminsCommand(OutputPaginator outputPaginator,
                             PrivilegeFactory privilegeFactory,
-                            UltimateGDBotCommandEventProcessor ultimateGDBotCommandEventProcessor) {
+                            BotAdminDao botAdminDao) {
         super(outputPaginator);
         this.privilegeFactory = privilegeFactory;
-        this.ultimateGDBotCommandEventProcessor = ultimateGDBotCommandEventProcessor;
+        this.botAdminDao = botAdminDao;
     }
 
     @Override
@@ -39,36 +41,43 @@ public final class BlacklistCommand extends AddRemoveListCommand<Long> {
     }
 
     @Override
-    ArgumentMapper<Long> argumentMapper() {
-        return ArgumentMapper.asLong();
+    ArgumentMapper<User> argumentMapper() {
+        return ArgumentMapper.asUser();
     }
 
     @Override
-    Mono<Void> add(CommandContext ctx, Long id) {
-        return ultimateGDBotCommandEventProcessor.addToBlacklist(id);
+    Mono<Void> add(CommandContext ctx, User user) {
+        return botAdminDao.add(user.getId().asLong());
     }
 
     @Override
-    Mono<Void> remove(CommandContext ctx, Long id) {
-        return ultimateGDBotCommandEventProcessor.removeFromBlacklist(id);
+    Mono<Void> remove(CommandContext ctx, User user) {
+        return botAdminDao.remove(user.getId().asLong());
     }
 
     @Override
     Flux<String> listFormattedItems(CommandContext ctx) {
-        return Flux.fromIterable(ultimateGDBotCommandEventProcessor.blacklist())
-                .sort()
-                .map(String::valueOf);
+        return botAdminDao.getAllIds()
+                .map(Snowflake::of)
+                .flatMap(ctx.event().getClient()::getUserById)
+                .map(User::getTag)
+                .sort();
     }
 
     @Override
     String syntax() {
-        return "blacklist";
+        return "botadmins";
+    }
+
+    @Override
+    String formatElement(User element) {
+        return element.getTag();
     }
 
     @Override
     public CommandDocumentation documentation(Translator tr) {
         return CommandDocumentation.builder()
-                .setDescription(tr.translate(Strings.APP, "description_blacklist"))
+                .setDescription(tr.translate(Strings.APP, "description_botadmins"))
                 .build();
     }
 }

@@ -18,7 +18,7 @@ public final class BlacklistDao {
         this.db = db;
     }
 
-    public Flux<Long> getAll() {
+    public Flux<Long> getAllIds() {
         return db.blacklistRepository().findAll().fetch()
                 .map(Blacklist::id);
     }

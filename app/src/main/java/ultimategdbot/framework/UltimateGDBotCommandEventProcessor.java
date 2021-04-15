@@ -42,7 +42,7 @@ public class UltimateGDBotCommandEventProcessor implements CommandEventProcessor
                                                                   BlacklistDao blacklistDao) {
         return Mono.zip(
                     guildConfigDao.getAll().collect(Collectors.toMap(GuildConfig::guildId, Function.identity())),
-                    blacklistDao.getAll().collect(Collectors.toSet()))
+                    blacklistDao.getAllIds().collect(Collectors.toSet()))
                 .map(TupleUtils.function((guildConfigCache, blacklistCache) ->
                         new UltimateGDBotCommandEventProcessor(guildConfigDao, blacklistDao,
                                 new ConcurrentHashMap<>(guildConfigCache),

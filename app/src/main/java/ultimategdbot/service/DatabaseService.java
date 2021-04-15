@@ -13,6 +13,7 @@ import org.immutables.criteria.mongo.bson4jackson.BsonModule;
 import org.immutables.criteria.mongo.bson4jackson.IdAnnotationModule;
 import org.immutables.criteria.mongo.bson4jackson.JacksonCodecs;
 import ultimategdbot.database.BlacklistRepository;
+import ultimategdbot.database.BotAdminRepository;
 import ultimategdbot.database.GuildConfigRepository;
 
 @RdiService
@@ -41,5 +42,9 @@ public final class DatabaseService {
 
     public BlacklistRepository blacklistRepository() {
         return new BlacklistRepository(backend);
+    }
+
+    public BotAdminRepository botAdminRepository() {
+        return new BotAdminRepository(backend);
     }
 }

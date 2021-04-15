@@ -37,12 +37,16 @@ public final class HelpCommand implements Command {
         this.commandService = commandService;
     }
 
-    private static String formatDocForCommand(Command cmd, CommandContext ctx, Args args) {
+    private static String formatDocForCommand(Command cmd, CommandContext ctx, String alias, List<String> subcommands) {
         var doc = cmd.documentation(ctx);
         var sb = new StringBuilder();
         sb.append("```\n");
         sb.append(ctx.getPrefixUsed());
-        sb.append(String.join(" ", args.command));
+        sb.append(alias);
+        if (!subcommands.isEmpty()) {
+            sb.append(' ');
+            sb.append(String.join(" ", subcommands));
+        }
         sb.append(' ');
         sb.append(doc.getSyntax());
         sb.append("\n```\n");
@@ -79,9 +83,10 @@ public final class HelpCommand implements Command {
                         .collect(Collectors.joining("\n")));
             }
             // Send documentation for specific command
-            var cmdFound = commandService.getCommandAt(args.command.get(0),
-                    args.command.subList(1, args.command.size()).toArray(new String[0]));
-            return cmdFound.map(cmd -> ctx.channel().createMessage(formatDocForCommand(cmd, ctx, args)))
+            var alias = args.command.get(0);
+            var subcommands = args.command.subList(1, args.command.size());
+            var cmdFound = commandService.getCommandAt(alias, subcommands.toArray(new String[0]));
+            return cmdFound.map(cmd -> ctx.channel().createMessage(formatDocForCommand(cmd, ctx, alias, subcommands)))
                     .orElseGet(() -> Mono.error(new CommandFailedException("Command not found")));
         }).then();
     }

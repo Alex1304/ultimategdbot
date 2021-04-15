@@ -4,7 +4,7 @@ import botrino.api.i18n.Translator;
 import botrino.command.CommandContext;
 import botrino.command.Scope;
 import botrino.command.annotation.Alias;
-import botrino.command.annotation.TopLevelCommand;
+import botrino.command.doc.CommandDocumentation;
 import botrino.command.grammar.ArgumentMapper;
 import com.github.alex1304.rdi.finder.annotation.RdiFactory;
 import com.github.alex1304.rdi.finder.annotation.RdiService;
@@ -17,7 +17,6 @@ import ultimategdbot.framework.UltimateGDBotCommandEventProcessor;
 import java.util.function.Function;
 
 @Alias("prefix")
-@TopLevelCommand
 @RdiService
 public class PrefixCommand extends GetSetResetCommand<String> {
 
@@ -46,13 +45,15 @@ public class PrefixCommand extends GetSetResetCommand<String> {
     }
 
     @Override
-    String description(Translator tr) {
-        return tr.translate(Strings.APP, "description_prefix");
+    String syntax() {
+        return "setup prefix";
     }
 
     @Override
-    String syntax() {
-        return "prefix";
+    public CommandDocumentation documentation(Translator tr) {
+        return CommandDocumentation.builder()
+                .setDescription(tr.translate(Strings.APP, "description_prefix"))
+                .build();
     }
 
     @Override

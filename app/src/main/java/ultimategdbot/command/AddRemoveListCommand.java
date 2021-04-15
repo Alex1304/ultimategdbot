@@ -1,6 +1,5 @@
 package ultimategdbot.command;
 
-import botrino.api.i18n.Translator;
 import botrino.command.Command;
 import botrino.command.CommandContext;
 import botrino.command.grammar.ArgumentMapper;
@@ -32,15 +31,19 @@ abstract class AddRemoveListCommand<E> implements Command {
 
     abstract Flux<String> listFormattedItems(CommandContext ctx);
 
-    abstract String description(Translator tr);
-
     abstract String syntax();
+
+    String formatElement(E element) {
+        return String.valueOf(element);
+    }
 
     @Override
     public Mono<Void> run(CommandContext ctx) {
+        var docs = documentation(ctx);
         return listFormattedItems(ctx).collectList().flatMap(list -> outputPaginator.paginate(ctx, list,
-                content -> description(ctx) + "\n\n" + content + "\n\n" +
-                        ctx.translate(Strings.APP, "usage_element_add", ctx.getPrefixUsed() + syntax()) + "\n" +
+                content -> docs.getDescription() + "\n\n" + content + "\n\n" +
+                        ctx.translate(Strings.APP, "usage_element_add", ctx.getPrefixUsed() + syntax()) +
+                        "\n" +
                         ctx.translate(Strings.APP, "usage_element_remove", ctx.getPrefixUsed() + syntax())));
     }
 
@@ -51,7 +54,8 @@ abstract class AddRemoveListCommand<E> implements Command {
                 Command.builder("add", ctx -> grammar.resolve(ctx)
                         .flatMap(args -> add(ctx, (E) args.element)
                                 .then(ctx.channel()
-                                        .createMessage(ctx.translate(Strings.APP, "element_add_success", args.element))
+                                        .createMessage(ctx.translate(Strings.APP, "element_add_success",
+                                                formatElement((E) args.element)))
                                         .then())))
                         .inheritFrom(this)
                         .build(),
@@ -59,7 +63,7 @@ abstract class AddRemoveListCommand<E> implements Command {
                         .flatMap(args -> remove(ctx, (E) args.element)
                                 .then(ctx.channel()
                                         .createMessage(ctx.translate(Strings.APP, "element_remove_success",
-                                                args.element))
+                                                formatElement((E) args.element)))
                                         .then())))
                         .inheritFrom(this)
                         .build());

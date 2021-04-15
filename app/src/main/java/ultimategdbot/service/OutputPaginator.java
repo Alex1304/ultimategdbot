@@ -1,7 +1,6 @@
 package ultimategdbot.service;
 
 import botrino.api.config.ConfigContainer;
-import botrino.api.i18n.Translator;
 import botrino.api.util.MessageTemplate;
 import botrino.command.CommandContext;
 import botrino.command.CommandService;
@@ -34,7 +33,7 @@ public final class OutputPaginator {
         }
         if (list.size() <= paginationMaxEntries) {
             return ctx.channel()
-                    .createMessage(contentTransformer.apply(totalEntries(ctx, list.size()) + String.join("\n", list)))
+                    .createMessage(contentTransformer.apply(String.join("\n", list)))
                     .then();
         }
         final var maxPage = list.size() / paginationMaxEntries;
@@ -42,7 +41,7 @@ public final class OutputPaginator {
                 .createPaginated((ctx0, page) -> {
                     PageNumberOutOfRangeException.check(page, maxPage);
                     return Mono.just(MessageTemplate.builder()
-                            .setMessageContent(contentTransformer.apply(totalEntries(ctx, list.size()) +
+                            .setMessageContent(contentTransformer.apply(
                                     String.join("\n", list.subList(page * paginationMaxEntries,
                                             Math.min(list.size(), (page + 1) * paginationMaxEntries)))))
                             .setEmbed(embed -> embed.addField(
@@ -53,10 +52,8 @@ public final class OutputPaginator {
                 .open(ctx)
                 .then();
     }
+
     public Mono<Void> paginate(CommandContext ctx, List<String> list) {
         return paginate(ctx, list, Object::toString);
-    }
-    private String totalEntries(Translator tr, int entries) {
-        return "[" + tr.translate(Strings.APP, "total_entries", entries) + "]\n\n";
     }
 }

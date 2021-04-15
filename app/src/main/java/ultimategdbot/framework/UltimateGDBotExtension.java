@@ -22,7 +22,6 @@ public final class UltimateGDBotExtension implements BotrinoExtension {
 
     @Override
     public void onServiceCreated(Object serviceInstance) {
-
     }
 
     @Override

@@ -8,7 +8,7 @@ import botrino.command.CommandContext;
 import botrino.command.CommandFailedException;
 import botrino.command.Scope;
 import botrino.command.annotation.Alias;
-import botrino.command.annotation.TopLevelCommand;
+import botrino.command.doc.CommandDocumentation;
 import botrino.command.grammar.ArgumentMapper;
 import com.github.alex1304.rdi.finder.annotation.RdiFactory;
 import com.github.alex1304.rdi.finder.annotation.RdiService;
@@ -23,7 +23,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Alias("locale")
-@TopLevelCommand
 @RdiService
 public class LocaleCommand extends GetSetResetCommand<String> {
 
@@ -63,9 +62,14 @@ public class LocaleCommand extends GetSetResetCommand<String> {
         return ultimateGDBotCommandEventProcessor.changeLocaleForGuild(guildId, locale);
     }
 
+    @Override
+    String syntax() {
+        return "setup locale";
+    }
+
     private String listLocales() {
         return i18nConfig.supportedLocales().stream()
-                .map(loc -> "- " + formatLocale(Locale.forLanguageTag(loc)))
+                .map(loc -> "\t\t- " + formatLocale(Locale.forLanguageTag(loc)))
                 .collect(Collectors.joining("\n"));
     }
 
@@ -76,14 +80,11 @@ public class LocaleCommand extends GetSetResetCommand<String> {
     }
 
     @Override
-    String description(Translator tr) {
-        return tr.translate(Strings.APP, "description_locale") + ' ' +
-                tr.translate(Strings.APP, "supported_locales", listLocales());
-    }
-
-    @Override
-    String syntax() {
-        return "locale";
+    public CommandDocumentation documentation(Translator tr) {
+        return CommandDocumentation.builder()
+                .setDescription(tr.translate(Strings.APP, "description_locale") + ' ' +
+                        tr.translate(Strings.APP, "supported_locales", listLocales()))
+                .build();
     }
 
     @Override
