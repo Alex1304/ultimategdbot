@@ -16,7 +16,7 @@ abstract class AddRemoveListCommand<E> implements Command {
     final OutputPaginator outputPaginator;
 
     private final CommandGrammar<Args> grammar = CommandGrammar.builder()
-            .nextArgument("element", argumentMapper())
+            .nextArgument("item", argumentMapper())
             .build(Args.class);
 
     AddRemoveListCommand(OutputPaginator outputPaginator) {
@@ -25,14 +25,14 @@ abstract class AddRemoveListCommand<E> implements Command {
 
     abstract ArgumentMapper<E> argumentMapper();
 
-    abstract Mono<Void> add(CommandContext ctx, E element);
+    abstract Mono<Void> add(CommandContext ctx, E item);
 
-    abstract Mono<Void> remove(CommandContext ctx, E element);
+    abstract Mono<Void> remove(CommandContext ctx, E item);
 
     abstract Flux<String> listFormattedItems(CommandContext ctx);
 
-    String formatElement(E element) {
-        return String.valueOf(element);
+    String formatItem(E item) {
+        return String.valueOf(item);
     }
 
     @Override
@@ -40,9 +40,9 @@ abstract class AddRemoveListCommand<E> implements Command {
         var docs = documentation(ctx);
         return listFormattedItems(ctx).collectList().flatMap(list -> outputPaginator.paginate(ctx, list,
                 content -> docs.getDescription() + "\n\n" + content + "\n\n" +
-                        ctx.translate(Strings.APP, "usage_element_add", ctx.getPrefixUsed() +
+                        ctx.translate(Strings.APP, "usage_item_add", ctx.getPrefixUsed() +
                                 String.join(" ", ctx.input().getTrigger())) + "\n" +
-                        ctx.translate(Strings.APP, "usage_element_remove", ctx.getPrefixUsed() +
+                        ctx.translate(Strings.APP, "usage_item_remove", ctx.getPrefixUsed() +
                                 String.join(" ", ctx.input().getTrigger()))));
     }
 
@@ -51,24 +51,24 @@ abstract class AddRemoveListCommand<E> implements Command {
     public Set<Command> subcommands() {
         return Set.of(
                 Command.builder("add", ctx -> grammar.resolve(ctx)
-                        .flatMap(args -> add(ctx, (E) args.element)
+                        .flatMap(args -> add(ctx, (E) args.item)
                                 .then(ctx.channel()
-                                        .createMessage(ctx.translate(Strings.APP, "element_add_success",
-                                                formatElement((E) args.element)))
+                                        .createMessage(ctx.translate(Strings.APP, "item_add_success",
+                                                formatItem((E) args.item)))
                                         .then())))
                         .inheritFrom(this)
                         .build(),
                 Command.builder("remove", ctx -> grammar.resolve(ctx)
-                        .flatMap(args -> remove(ctx, (E) args.element)
+                        .flatMap(args -> remove(ctx, (E) args.item)
                                 .then(ctx.channel()
-                                        .createMessage(ctx.translate(Strings.APP, "element_remove_success",
-                                                formatElement((E) args.element)))
+                                        .createMessage(ctx.translate(Strings.APP, "item_remove_success",
+                                                formatItem((E) args.item)))
                                         .then())))
                         .inheritFrom(this)
                         .build());
     }
 
     private final static class Args {
-        private Object element;
+        private Object item;
     }
 }
