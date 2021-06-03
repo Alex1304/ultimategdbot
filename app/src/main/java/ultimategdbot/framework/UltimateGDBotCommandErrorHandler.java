@@ -1,6 +1,5 @@
 package ultimategdbot.framework;
 
-import botrino.api.util.EmojiManager;
 import botrino.api.util.MatcherFunction;
 import botrino.command.CommandContext;
 import botrino.command.CommandErrorHandler;
@@ -13,15 +12,16 @@ import ultimategdbot.Strings;
 import ultimategdbot.exception.BotAdminPrivilegeException;
 import ultimategdbot.exception.BotOwnerPrivilegeException;
 import ultimategdbot.exception.GuildAdminPrivilegeException;
+import ultimategdbot.service.EmojiService;
 
 @RdiService
 public class UltimateGDBotCommandErrorHandler implements CommandErrorHandler {
 
-    private final EmojiManager emojiManager;
+    private final EmojiService emoji;
 
     @RdiFactory
-    public UltimateGDBotCommandErrorHandler(EmojiManager emojiManager) {
-        this.emojiManager = emojiManager;
+    public UltimateGDBotCommandErrorHandler(EmojiService emoji) {
+        this.emoji = emoji;
     }
 
     @Override
@@ -43,6 +43,6 @@ public class UltimateGDBotCommandErrorHandler implements CommandErrorHandler {
     }
 
     private Mono<Void> sendErrorMessage(CommandContext ctx, String message) {
-        return ctx.channel().createMessage(emojiManager.get("cross").asFormat() + " " + message).then();
+        return ctx.channel().createMessage(emoji.get("cross") + " " + message).then();
     }
 }

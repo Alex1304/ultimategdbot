@@ -28,6 +28,24 @@
                     <skip>true</skip>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>pl.project13.maven</groupId>
+                <artifactId>git-commit-id-plugin</artifactId>
+                <version>2.2.5</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>revision</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <prefix>git</prefix>
+                    <dotGitDirectory>${project.basedir}/../.git</dotGitDirectory>
+                    <generateGitPropertiesFile>true</generateGitPropertiesFile>
+                    <generateGitPropertiesFilename>${project.build.outputDirectory}/META-INF/git/ultimategdbot.git.properties</generateGitPropertiesFilename>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
@@ -74,10 +92,16 @@
                 </exclusion>
             </exclusions>
         </dependency>
+
         <dependency>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-guava</artifactId>
-            <version>2.12.2</version>
+            <groupId>com.alex1304.jdash</groupId>
+            <artifactId>jdash-events</artifactId>
+            <version>4.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.alex1304.jdash</groupId>
+            <artifactId>jdash-graphics</artifactId>
+            <version>4.0.0</version>
         </dependency>
     </dependencies>
 </project>

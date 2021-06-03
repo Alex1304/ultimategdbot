@@ -5,7 +5,6 @@ import botrino.command.Command;
 import botrino.command.CommandContext;
 import botrino.command.Scope;
 import botrino.command.annotation.Alias;
-import botrino.command.annotation.TopLevelCommand;
 import botrino.command.privilege.Privilege;
 import com.github.alex1304.rdi.finder.annotation.RdiFactory;
 import com.github.alex1304.rdi.finder.annotation.RdiService;
@@ -14,13 +13,13 @@ import ultimategdbot.Strings;
 import ultimategdbot.service.OutputPaginator;
 import ultimategdbot.service.PrivilegeFactory;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 @Alias({"setup", "settings", "configure", "config"})
-@TopLevelCommand
 @RdiService
 public class SetupCommand implements Command {
 
@@ -29,13 +28,13 @@ public class SetupCommand implements Command {
     private final PrivilegeFactory privilegeFactory;
 
     @RdiFactory
-    public SetupCommand(OutputPaginator outputPaginator,
-                        PrefixCommand prefixCommand,
-                        LocaleCommand localeCommand, PrivilegeFactory privilegeFactory) {
+    public SetupCommand(OutputPaginator outputPaginator, PrivilegeFactory privilegeFactory) {
         this.outputPaginator = outputPaginator;
         this.privilegeFactory = privilegeFactory;
-        setupEntries.add(prefixCommand);
-        setupEntries.add(localeCommand);
+    }
+
+    public void addAllSetupEntries(Collection<? extends Command> setupEntries) {
+        this.setupEntries.addAll(setupEntries);
     }
 
     @Override

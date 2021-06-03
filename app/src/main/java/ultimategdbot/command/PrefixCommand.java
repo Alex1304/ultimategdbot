@@ -18,6 +18,7 @@ import java.util.function.Function;
 
 @Alias("prefix")
 @RdiService
+@SetupEntry
 public class PrefixCommand extends GetSetResetCommand<String> {
 
     private final UltimateGDBotCommandEventProcessor ultimateGDBotCommandEventProcessor;
@@ -47,7 +48,7 @@ public class PrefixCommand extends GetSetResetCommand<String> {
     @Override
     public CommandDocumentation documentation(Translator tr) {
         return CommandDocumentation.builder()
-                .setDescription(tr.translate(Strings.APP, "description_prefix"))
+                .setDescription(tr.translate(Strings.HELP, "description_prefix"))
                 .build();
     }
 

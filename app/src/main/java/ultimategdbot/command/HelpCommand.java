@@ -22,6 +22,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static java.util.function.Predicate.not;
+import static java.util.stream.Collectors.joining;
 
 @Alias({"help", "manual", "commands"})
 @TopLevelCommand
@@ -76,7 +77,7 @@ public final class HelpCommand implements Command {
                 .stream()
                 .map(sub -> formatCommandEntry(sub, ctx, aliasSeq))
                 .sorted()
-                .collect(Collectors.joining("\n"));
+                .collect(joining("\n"));
         if (!subs.isBlank()) {
             sb.append("__Subcommands:__\n");
             sb.append(subs);
@@ -85,12 +86,12 @@ public final class HelpCommand implements Command {
     }
 
     private static String formatCommandEntry(Command cmd, CommandContext ctx, List<String> parentAliases) {
-        var aliases = String.join("|", cmd.aliases());
+        var aliases = cmd.aliases().stream().sorted().collect(joining("|"));
         var desc = Optional.of(cmd.documentation(ctx).getDescription())
                 .filter(not(String::isEmpty))
                 .orElseGet(() -> Markdown.italic("No description"));
         var parents = (String.join(" ", parentAliases) + " ").strip();
-        return Markdown.code(ctx.getPrefixUsed() + parents + ' ' + aliases) + ": " + desc;
+        return Markdown.code(ctx.getPrefixUsed() + parents + aliases) + ": " + desc;
     }
 
     @Override

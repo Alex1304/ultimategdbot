@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 
 @Alias("locale")
 @RdiService
+@SetupEntry
 public class LocaleCommand extends GetSetResetCommand<String> {
 
     private final UltimateGDBotCommandEventProcessor ultimateGDBotCommandEventProcessor;
@@ -62,6 +63,19 @@ public class LocaleCommand extends GetSetResetCommand<String> {
         return ultimateGDBotCommandEventProcessor.changeLocaleForGuild(guildId, locale);
     }
 
+    @Override
+    public CommandDocumentation documentation(Translator tr) {
+        return CommandDocumentation.builder()
+                .setDescription(tr.translate(Strings.HELP, "description_locale") + ' ' +
+                        tr.translate(Strings.APP, "supported_locales", listLocales()))
+                .build();
+    }
+
+    @Override
+    public Scope scope() {
+        return Scope.GUILD_ONLY;
+    }
+
     private String listLocales() {
         return i18nConfig.supportedLocales().stream()
                 .map(loc -> "\t\t- " + formatLocale(Locale.forLanguageTag(loc)))
@@ -72,18 +86,5 @@ public class LocaleCommand extends GetSetResetCommand<String> {
         return Markdown.code(loc.toLanguageTag()) +
                 " [" + loc.getDisplayLanguage(loc) +
                 (loc.getDisplayCountry(loc).isEmpty() ? "" : " (" + loc.getDisplayCountry(loc) + ")") + "]";
-    }
-
-    @Override
-    public CommandDocumentation documentation(Translator tr) {
-        return CommandDocumentation.builder()
-                .setDescription(tr.translate(Strings.APP, "description_locale") + ' ' +
-                        tr.translate(Strings.APP, "supported_locales", listLocales()))
-                .build();
-    }
-
-    @Override
-    public Scope scope() {
-        return Scope.GUILD_ONLY;
     }
 }

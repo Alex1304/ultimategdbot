@@ -4,17 +4,34 @@
         "presence": {
             "status": "online",
             "activity_type": "playing",
-            "activity_text": "Hello world!"
+            "activity_text": "Geometry Dash | u$help"
         },
         "enabled_intents": 32509
     },
     "i18n": {
         "default_locale": "en",
-        "supported_locales": [
-            "en"
-        ]
+        "supported_locales": ["en"]
     },
     "command": {
-        "prefix": "!"
+        "prefix": "u$"
+    },
+    "ultimategdbot": {
+        "pagination_max_entries": 20,
+        "emoji_guild_ids": [],
+        "gd": {
+            "icon_cache_max_size": 2500,
+            "icon_channel_id": 0,
+            "client": {
+                "username": "${username}",
+                "password": "${password}",
+                "host": "http://www.boomlings.com/database",
+                "cache_ttl_seconds": 900,
+                "request_timeout_seconds": 0,
+                "request_limiter": {
+                    "limit": 10,
+                    "interval_seconds": 60
+                }
+            }
+        }
     }
 }

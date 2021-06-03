@@ -9,10 +9,10 @@ open module ultimategdbot {
 
     requires botrino.api;
     requires botrino.command;
-    requires com.fasterxml.jackson.datatype.guava;
+    requires jdash.events;
+    requires jdash.graphics;
     requires jdk.management;
-    requires guava;
-    requires mongodb.driver.reactivestreams;
+    requires org.mongodb.driver.reactivestreams;
     requires org.immutables.criteria.common;
     requires org.immutables.criteria.mongo;
     requires org.immutables.criteria.reactor;

@@ -63,7 +63,7 @@ public final class BlacklistCommand extends AddRemoveListCommand<Long> {
     @Override
     public CommandDocumentation documentation(Translator tr) {
         return CommandDocumentation.builder()
-                .setDescription(tr.translate(Strings.APP, "description_blacklist"))
+                .setDescription(tr.translate(Strings.HELP, "description_blacklist"))
                 .build();
     }
 }
