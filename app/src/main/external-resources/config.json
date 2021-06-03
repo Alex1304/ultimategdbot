@@ -4,7 +4,7 @@
         "presence": {
             "status": "online",
             "activity_type": "playing",
-            "activity_text": "Geometry Dash | u$help"
+            "activity_text": "Geometry Dash | u!help"
         },
         "enabled_intents": 32509
     },
@@ -13,7 +13,7 @@
         "supported_locales": ["en"]
     },
     "command": {
-        "prefix": "u$"
+        "prefix": "u!"
     },
     "ultimategdbot": {
         "pagination_max_entries": 20,
