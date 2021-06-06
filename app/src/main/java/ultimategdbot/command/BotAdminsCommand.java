@@ -72,7 +72,7 @@ public final class BotAdminsCommand extends AddRemoveListCommand<User> {
     @Override
     public CommandDocumentation documentation(Translator tr) {
         return CommandDocumentation.builder()
-                .setDescription(tr.translate(Strings.HELP, "description_botadmins"))
+                .setDescription(tr.translate(Strings.HELP, "botadmins_description"))
                 .build();
     }
 }

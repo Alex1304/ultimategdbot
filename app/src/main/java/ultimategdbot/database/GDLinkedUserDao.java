@@ -1,6 +1,7 @@
 package ultimategdbot.database;
 
 import org.immutables.criteria.backend.Backend;
+import org.immutables.criteria.backend.WriteResult;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -21,9 +22,30 @@ public final class GDLinkedUserDao {
                 .map(GDLinkedUser::discordUserId);
     }
 
-    public Mono<GDLinkedUser> getByDiscordUserId(long discordUserId) {
+    public Mono<GDLinkedUser> get(long discordUserId) {
+        return repository
+                .find(gDLinkedUser.discordUserId.is(discordUserId))
+                .oneOrNone();
+    }
+
+    public Mono<GDLinkedUser> getActiveLink(long discordUserId) {
         return repository
                 .find(gDLinkedUser.discordUserId.is(discordUserId).and(gDLinkedUser.isLinkActivated.isTrue()))
                 .oneOrNone();
+    }
+
+    public Mono<WriteResult> save(GDLinkedUser linkedUser) {
+        return repository.upsert(linkedUser);
+    }
+
+    public Mono<WriteResult> confirmLink(long discordUserId) {
+        return repository.update(gDLinkedUser.discordUserId.is(discordUserId))
+                .set(gDLinkedUser.confirmationToken, null)
+                .set(gDLinkedUser.isLinkActivated, true)
+                .execute();
+    }
+
+    public Mono<WriteResult> delete(long discordUserId) {
+        return repository.delete(gDLinkedUser.discordUserId.is(discordUserId));
     }
 }

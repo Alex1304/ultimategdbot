@@ -46,7 +46,7 @@ public final class ProfileCommand implements Command {
     public Mono<Void> run(CommandContext ctx) {
         return grammar.resolve(ctx)
                 .flatMap(args -> Mono.justOrEmpty(args.gdUser))
-                .switchIfEmpty(db.gdLinkedUserDao().getByDiscordUserId(ctx.author().getId().asLong())
+                .switchIfEmpty(db.gdLinkedUserDao().getActiveLink(ctx.author().getId().asLong())
                         .switchIfEmpty(Mono.error(new CommandFailedException(
                                 ctx.translate(Strings.GD, "error_profile_user_not_specified", ctx.getPrefixUsed(),
                                         "profile"))))
@@ -61,8 +61,11 @@ public final class ProfileCommand implements Command {
     }
 
     @Override
-    public CommandDocumentation documentation(Translator translator) {
-        return Command.super.documentation(translator);
+    public CommandDocumentation documentation(Translator tr) {
+        return CommandDocumentation.builder()
+                .setSyntax(grammar.toString())
+                .setDescription(tr.translate(Strings.HELP, "profile_description"))
+                .build();
     }
 
     private static final class Args {

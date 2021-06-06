@@ -90,7 +90,7 @@ public final class HelpCommand implements Command {
         var desc = Optional.of(cmd.documentation(ctx).getDescription())
                 .filter(not(String::isEmpty))
                 .orElseGet(() -> Markdown.italic("No description"));
-        var parents = (String.join(" ", parentAliases) + " ").strip();
+        var parents = String.join(" ", parentAliases) + " ";
         return Markdown.code(ctx.getPrefixUsed() + parents + aliases) + ": " + desc;
     }
 

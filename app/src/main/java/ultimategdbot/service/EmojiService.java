@@ -40,4 +40,8 @@ public final class EmojiService {
             return ":" + name + ":";
         }
     }
+
+    public EmojiManager getEmojiManager() {
+        return emojiManager;
+    }
 }

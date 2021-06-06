@@ -205,7 +205,7 @@ public final class GDUserService {
 					.onErrorMap(e -> new CommandFailedException(tr.translate(Strings.GD, "error_invalid_mention")))
 					.flatMap(snowflake -> gateway.withRetrievalStrategy(STORE_FALLBACK_REST).getUserById(snowflake))
 					.onErrorMap(e -> new CommandFailedException(tr.translate(Strings.GD, "error_mention_resolve")))
-					.flatMap(user -> db.gdLinkedUserDao().getByDiscordUserId(user.getId().asLong()))
+					.flatMap(user -> db.gdLinkedUserDao().getActiveLink(user.getId().asLong()))
 					.flatMap(linkedUser -> gdClient.getUserProfile(linkedUser.gdUserId())
                             .flatMap(db.gdLeaderboardDao()::saveStats)
                             .cast(GDUserProfile.class))
