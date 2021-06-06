@@ -1,36 +1,30 @@
 package ultimategdbot.database;
 
-import com.github.alex1304.rdi.finder.annotation.RdiFactory;
-import com.github.alex1304.rdi.finder.annotation.RdiService;
+import org.immutables.criteria.backend.Backend;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import ultimategdbot.service.DatabaseService;
 
 import static ultimategdbot.database.BlacklistCriteria.blacklist;
 
-@RdiService
 public final class BlacklistDao {
 
-    private final DatabaseService db;
+    private final BlacklistRepository repository;
 
-    @RdiFactory
-    public BlacklistDao(DatabaseService db) {
-        this.db = db;
+    public BlacklistDao(Backend backend) {
+        this.repository = new BlacklistRepository(backend);
     }
 
     public Flux<Long> getAllIds() {
-        return db.blacklistRepository().findAll().fetch()
+        return repository.findAll().fetch()
                 .map(Blacklist::id);
     }
 
     public Mono<Void> addToBlacklist(long id) {
-        return db.blacklistRepository()
-                .upsert(ImmutableBlacklist.builder().id(id).build())
-                .then();
+        return repository.upsert(ImmutableBlacklist.of(id)).then();
     }
 
     public Mono<Void> removeFromBlacklist(long id) {
-        return db.blacklistRepository()
+        return repository
                 .delete(blacklist.id.is(id))
                 .then();
     }

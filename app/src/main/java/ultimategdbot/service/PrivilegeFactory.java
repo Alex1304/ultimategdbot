@@ -8,7 +8,6 @@ import discord4j.common.util.Snowflake;
 import discord4j.core.object.entity.ApplicationInfo;
 import discord4j.rest.util.Permission;
 import reactor.core.publisher.Mono;
-import ultimategdbot.database.BotAdminDao;
 import ultimategdbot.exception.BotAdminPrivilegeException;
 import ultimategdbot.exception.BotOwnerPrivilegeException;
 import ultimategdbot.exception.GuildAdminPrivilegeException;
@@ -17,12 +16,12 @@ import ultimategdbot.exception.GuildAdminPrivilegeException;
 public final class PrivilegeFactory {
 
     private final long ownerId;
-    private final BotAdminDao botAdminDao;
+    private final DatabaseService db;
 
     @RdiFactory
-    public PrivilegeFactory(ApplicationInfo applicationInfo, BotAdminDao botAdminDao) {
+    public PrivilegeFactory(ApplicationInfo applicationInfo, DatabaseService db) {
         this.ownerId = applicationInfo.getOwnerId().asLong();
-        this.botAdminDao = botAdminDao;
+        this.db = db;
     }
 
     public Privilege botOwner() {
@@ -32,7 +31,8 @@ public final class PrivilegeFactory {
     }
 
     public Privilege botAdmin() {
-        return botOwner().or(ctx -> botAdminDao.exists(Snowflake.asLong(ctx.event().getMessage().getUserData().id()))
+        return botOwner().or(ctx -> db.botAdminDao()
+                .exists(Snowflake.asLong(ctx.event().getMessage().getUserData().id()))
                 .filter(Boolean::booleanValue)
                 .switchIfEmpty(Mono.error(BotAdminPrivilegeException::new))
                 .then(), (a, b) -> b);

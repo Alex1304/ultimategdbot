@@ -11,12 +11,13 @@ import org.immutables.value.Value;
 @Value.Immutable
 @Criteria
 @Criteria.Repository(facets = { ReactorReadable.class, ReactorWritable.class })
-@JsonSerialize(as = ImmutableBotAdmin.class)
-@JsonDeserialize(as = ImmutableBotAdmin.class)
-public interface BotAdmin {
+@JsonSerialize(as = ImmutableGDLeaderboardBan.class)
+@JsonDeserialize(as = ImmutableGDLeaderboardBan.class)
+public interface GDLeaderboardBan {
 
     @Criteria.Id
     @JsonProperty("_id")
-    @Value.Parameter
-    long id();
+	long accountId();
+	
+	long bannedBy();
 }

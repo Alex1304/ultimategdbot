@@ -126,6 +126,6 @@ public final class HelpCommand implements Command {
     }
 
     private static final class Args {
-        private List<String> command;
+        List<String> command;
     }
 }

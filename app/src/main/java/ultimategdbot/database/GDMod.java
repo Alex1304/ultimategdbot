@@ -11,12 +11,15 @@ import org.immutables.value.Value;
 @Value.Immutable
 @Criteria
 @Criteria.Repository(facets = { ReactorReadable.class, ReactorWritable.class })
-@JsonSerialize(as = ImmutableBotAdmin.class)
-@JsonDeserialize(as = ImmutableBotAdmin.class)
-public interface BotAdmin {
+@JsonSerialize(as = ImmutableGDMod.class)
+@JsonDeserialize(as = ImmutableGDMod.class)
+public interface GDMod {
 
     @Criteria.Id
     @JsonProperty("_id")
-    @Value.Parameter
-    long id();
+	long accountId();
+	
+	String name();
+	
+	boolean isElder();
 }

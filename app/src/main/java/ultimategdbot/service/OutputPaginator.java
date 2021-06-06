@@ -7,6 +7,8 @@ import botrino.command.CommandService;
 import botrino.command.menu.PageNumberOutOfRangeException;
 import com.github.alex1304.rdi.finder.annotation.RdiFactory;
 import com.github.alex1304.rdi.finder.annotation.RdiService;
+import discord4j.core.spec.EmbedCreateFields.Field;
+import discord4j.core.spec.EmbedCreateSpec;
 import reactor.core.publisher.Mono;
 import ultimategdbot.Strings;
 import ultimategdbot.config.UltimateGDBotConfig;
@@ -44,9 +46,9 @@ public final class OutputPaginator {
                             .setMessageContent(contentTransformer.apply(
                                     String.join("\n", list.subList(page * paginationMaxEntries,
                                             Math.min(list.size(), (page + 1) * paginationMaxEntries)))))
-                            .setEmbed(embed -> embed.addField(
+                            .setEmbed(EmbedCreateSpec.create().withFields(Field.of(
                                     ctx.translate(Strings.APP,"page_x", (page + 1), (maxPage + 1)),
-                                    ctx.translate(Strings.APP,"page_instructions"), false))
+                                    ctx.translate(Strings.APP,"page_instructions"), false)))
                             .build());
                 })
                 .open(ctx)

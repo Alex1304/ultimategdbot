@@ -62,6 +62,6 @@ abstract class GetSetResetCommand<V> implements Command {
     }
 
     private final static class Args {
-        private Object value;
+        Object value;
     }
 }

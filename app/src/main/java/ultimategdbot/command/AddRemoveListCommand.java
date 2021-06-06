@@ -69,6 +69,6 @@ abstract class AddRemoveListCommand<E> implements Command {
     }
 
     private final static class Args {
-        private Object item;
+        Object item;
     }
 }

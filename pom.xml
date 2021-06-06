@@ -15,7 +15,7 @@
     <properties>
         <java.version>11</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <botrino.version>1.0.0-RC1</botrino.version>
+        <botrino.version>1.0.0-SNAPSHOT</botrino.version>
         <immutables.version>2.9.0-beta2</immutables.version>
         <delivery.name>${project.parent.artifactId}-${project.version}</delivery.name>
         <delivery.directory>${project.build.directory}/${delivery.name}</delivery.directory>
@@ -62,6 +62,7 @@
                             <addModule>java.desktop</addModule>
                             <addModule>jdk.crypto.ec</addModule>
                             <addModule>jdk.management</addModule>
+                            <addModule>java.sql</addModule>
                         </addModules>
                         <sourceJdkModules>${jlink.jdk}</sourceJdkModules>
                     </configuration>
@@ -134,6 +135,16 @@
         </pluginManagement>
     </build>
 
+    <repositories>
+        <repository>
+            <id>oss.sonatype.org-snapshot</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
     <dependencyManagement>
         <dependencies>
             <dependency>
@@ -158,6 +169,28 @@
                 <version>${immutables.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+
+            <!-- TEMPORARY -->
+            <dependency>
+                <groupId>com.discord4j</groupId>
+                <artifactId>discord4j-core</artifactId>
+                <version>3.2.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>com.discord4j</groupId>
+                <artifactId>discord-json</artifactId>
+                <version>1.6.5-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>com.discord4j</groupId>
+                <artifactId>discord-json-api</artifactId>
+                <version>1.6.5-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>com.discord4j</groupId>
+                <artifactId>discord-json-encoding</artifactId>
+                <version>1.6.5-SNAPSHOT</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

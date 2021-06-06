@@ -8,15 +8,22 @@ import org.immutables.criteria.reactor.ReactorReadable;
 import org.immutables.criteria.reactor.ReactorWritable;
 import org.immutables.value.Value;
 
+import java.util.Optional;
+
 @Value.Immutable
 @Criteria
 @Criteria.Repository(facets = { ReactorReadable.class, ReactorWritable.class })
-@JsonSerialize(as = ImmutableBotAdmin.class)
-@JsonDeserialize(as = ImmutableBotAdmin.class)
-public interface BotAdmin {
+@JsonSerialize(as = ImmutableGDLinkedUser.class)
+@JsonDeserialize(as = ImmutableGDLinkedUser.class)
+public interface GDLinkedUser {
 
     @Criteria.Id
     @JsonProperty("_id")
-    @Value.Parameter
-    long id();
+	long discordUserId();
+	
+	long gdUserId();
+	
+	boolean isLinkActivated();
+	
+	Optional<String> confirmationToken();
 }

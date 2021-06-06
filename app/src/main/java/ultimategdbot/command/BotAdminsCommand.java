@@ -14,7 +14,7 @@ import discord4j.core.object.entity.User;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ultimategdbot.Strings;
-import ultimategdbot.database.BotAdminDao;
+import ultimategdbot.service.DatabaseService;
 import ultimategdbot.service.OutputPaginator;
 import ultimategdbot.service.PrivilegeFactory;
 
@@ -24,15 +24,15 @@ import ultimategdbot.service.PrivilegeFactory;
 public final class BotAdminsCommand extends AddRemoveListCommand<User> {
 
     private final PrivilegeFactory privilegeFactory;
-    private final BotAdminDao botAdminDao;
+    private final DatabaseService db;
 
     @RdiFactory
     public BotAdminsCommand(OutputPaginator outputPaginator,
                             PrivilegeFactory privilegeFactory,
-                            BotAdminDao botAdminDao) {
+                            DatabaseService db) {
         super(outputPaginator);
         this.privilegeFactory = privilegeFactory;
-        this.botAdminDao = botAdminDao;
+        this.db = db;
     }
 
     @Override
@@ -47,17 +47,17 @@ public final class BotAdminsCommand extends AddRemoveListCommand<User> {
 
     @Override
     Mono<Void> add(CommandContext ctx, User user) {
-        return botAdminDao.add(user.getId().asLong());
+        return db.botAdminDao().add(user.getId().asLong());
     }
 
     @Override
     Mono<Void> remove(CommandContext ctx, User user) {
-        return botAdminDao.remove(user.getId().asLong());
+        return db.botAdminDao().remove(user.getId().asLong());
     }
 
     @Override
     Flux<String> listFormattedItems(CommandContext ctx) {
-        return botAdminDao.getAllIds()
+        return db.botAdminDao().getAllIds()
                 .map(Snowflake::of)
                 .flatMap(ctx.event().getClient()::getUserById)
                 .map(User::getTag)

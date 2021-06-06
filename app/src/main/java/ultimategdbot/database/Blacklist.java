@@ -17,5 +17,6 @@ public interface Blacklist {
 
     @Criteria.Id
     @JsonProperty("_id")
+    @Value.Parameter
     long id();
 }

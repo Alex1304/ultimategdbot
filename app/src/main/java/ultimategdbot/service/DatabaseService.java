@@ -12,9 +12,7 @@ import org.immutables.criteria.mongo.MongoSetup;
 import org.immutables.criteria.mongo.bson4jackson.BsonModule;
 import org.immutables.criteria.mongo.bson4jackson.IdAnnotationModule;
 import org.immutables.criteria.mongo.bson4jackson.JacksonCodecs;
-import ultimategdbot.database.BlacklistRepository;
-import ultimategdbot.database.BotAdminRepository;
-import ultimategdbot.database.GuildConfigRepository;
+import ultimategdbot.database.*;
 
 @RdiService
 public final class DatabaseService {
@@ -30,21 +28,30 @@ public final class DatabaseService {
                 .registerModule(new Jdk8Module())
                 .registerModule(new IdAnnotationModule())
                 .addHandler(new UnknownPropertyHandler(true));
+        @SuppressWarnings("UnstableApiUsage")
         var registry = JacksonCodecs.registryFromMapper(mapper);
         var client = MongoClients.create();
         var db = client.getDatabase(DATABASE_NAME).withCodecRegistry(registry);
         this.backend = new MongoBackend(MongoSetup.of(db));
     }
 
-    public GuildConfigRepository guildConfigRepository() {
-        return new GuildConfigRepository(backend);
+    public GuildConfigDao guildConfigDao() {
+        return new GuildConfigDao(backend);
     }
 
-    public BlacklistRepository blacklistRepository() {
-        return new BlacklistRepository(backend);
+    public BlacklistDao blacklistDao() {
+        return new BlacklistDao(backend);
     }
 
-    public BotAdminRepository botAdminRepository() {
-        return new BotAdminRepository(backend);
+    public BotAdminDao botAdminDao() {
+        return new BotAdminDao(backend);
+    }
+
+    public GDLinkedUserDao gdLinkedUserDao() {
+        return new GDLinkedUserDao(backend);
+    }
+
+    public GDLeaderboardDao gdLeaderboardDao() {
+        return new GDLeaderboardDao(backend);
     }
 }
