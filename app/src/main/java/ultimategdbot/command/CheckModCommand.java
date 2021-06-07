@@ -7,6 +7,7 @@ import botrino.command.CommandFailedException;
 import botrino.command.annotation.Alias;
 import botrino.command.annotation.TopLevelCommand;
 import botrino.command.doc.CommandDocumentation;
+import botrino.command.doc.FlagInformation;
 import botrino.command.grammar.CommandGrammar;
 import com.github.alex1304.rdi.finder.annotation.RdiFactory;
 import com.github.alex1304.rdi.finder.annotation.RdiService;
@@ -44,6 +45,8 @@ public final class CheckModCommand implements Command {
 
     @Override
     public Mono<Void> run(CommandContext ctx) {
+        final var gdClient = ctx.input().getFlag("refresh").isPresent()
+                ? this.gdClient.withWriteOnlyCache() : this.gdClient;
         return grammar.resolve(ctx)
                 .flatMap(args -> Mono.justOrEmpty(args.gdUser))
                 .switchIfEmpty(db.gdLinkedUserDao().getActiveLink(ctx.author().getId().asLong())
@@ -69,6 +72,10 @@ public final class CheckModCommand implements Command {
                 .setSyntax(grammar.toString())
                 .setDescription(tr.translate(Strings.HELP, "checkmod_description"))
                 .setBody(tr.translate(Strings.HELP, "checkmod_body"))
+                .addFlag(FlagInformation.builder()
+                        .setValueFormat("refresh")
+                        .setDescription(tr.translate(Strings.HELP, "common_flag_refresh"))
+                        .build())
                 .build();
     }
 

@@ -54,4 +54,8 @@ public final class DatabaseService {
     public GDLeaderboardDao gdLeaderboardDao() {
         return new GDLeaderboardDao(backend);
     }
+
+    public GDLeaderboardBanDao gdLeaderboardBanDao() {
+        return new GDLeaderboardBanDao(backend);
+    }
 }

@@ -15,10 +15,6 @@ abstract class AddRemoveListCommand<E> implements Command {
 
     final OutputPaginator outputPaginator;
 
-    private final CommandGrammar<Args> grammar = CommandGrammar.builder()
-            .nextArgument("item", argumentMapper())
-            .build(Args.class);
-
     AddRemoveListCommand(OutputPaginator outputPaginator) {
         this.outputPaginator = outputPaginator;
     }
@@ -49,6 +45,9 @@ abstract class AddRemoveListCommand<E> implements Command {
     @SuppressWarnings("unchecked")
     @Override
     public Set<Command> subcommands() {
+        final var grammar = CommandGrammar.builder()
+                .nextArgument("item", argumentMapper())
+                .build(Args.class);
         return Set.of(
                 Command.builder("add", ctx -> grammar.resolve(ctx)
                         .flatMap(args -> add(ctx, (E) args.item)

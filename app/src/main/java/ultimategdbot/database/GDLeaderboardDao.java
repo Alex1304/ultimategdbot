@@ -2,9 +2,13 @@ package ultimategdbot.database;
 
 import jdash.common.entity.GDUserStats;
 import org.immutables.criteria.backend.Backend;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Instant;
+import java.util.List;
+
+import static ultimategdbot.database.GDLeaderboardCriteria.gDLeaderboard;
 
 public final class GDLeaderboardDao {
 
@@ -28,5 +32,9 @@ public final class GDLeaderboardDao {
                         .creatorPoints(userStats.creatorPoints())
                         .build())
                 .thenReturn(userStats);
+    }
+
+    public Flux<GDLeaderboard> getAllIn(List<Long> gdUserIds) {
+        return repository.find(gDLeaderboard.accountId.in(gdUserIds)).fetch();
     }
 }

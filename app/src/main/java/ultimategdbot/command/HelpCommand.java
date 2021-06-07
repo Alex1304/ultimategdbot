@@ -62,9 +62,9 @@ public final class HelpCommand implements Command {
         sb.append(doc.getBody());
         sb.append('\n');
         if (!doc.getFlags().isEmpty()) {
-            sb.append("__").append(ctx.translate(Strings.APP, "flags")).append("__\n");
+            sb.append("\n__**").append(ctx.translate(Strings.APP, "flags")).append("**__\n");
             for (var flagInfo : doc.getFlags()) {
-                sb.append('`');
+                sb.append("`-");
                 sb.append(flagInfo.getValueFormat());
                 sb.append("`: ");
                 sb.append(flagInfo.getDescription());
@@ -80,7 +80,7 @@ public final class HelpCommand implements Command {
                 .sorted()
                 .collect(joining("\n"));
         if (!subs.isBlank()) {
-            sb.append("__").append(ctx.translate(Strings.APP, "subcommands")).append("__\n");
+            sb.append("\n__**").append(ctx.translate(Strings.APP, "subcommands")).append("**__\n");
             sb.append(subs);
         }
         return outputPaginator.paginate(ctx, sb.toString().lines().collect(Collectors.toList()));

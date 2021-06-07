@@ -5,6 +5,8 @@ import org.immutables.criteria.backend.WriteResult;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+
 import static ultimategdbot.database.GDLinkedUserCriteria.gDLinkedUser;
 
 public final class GDLinkedUserDao {
@@ -23,15 +25,17 @@ public final class GDLinkedUserDao {
     }
 
     public Mono<GDLinkedUser> get(long discordUserId) {
-        return repository
-                .find(gDLinkedUser.discordUserId.is(discordUserId))
-                .oneOrNone();
+        return repository.find(gDLinkedUser.discordUserId.is(discordUserId)).oneOrNone();
     }
 
     public Mono<GDLinkedUser> getActiveLink(long discordUserId) {
         return repository
                 .find(gDLinkedUser.discordUserId.is(discordUserId).and(gDLinkedUser.isLinkActivated.isTrue()))
                 .oneOrNone();
+    }
+
+    public Flux<GDLinkedUser> getAllIn(List<Long> discordUserIds) {
+        return repository.find(gDLinkedUser.discordUserId.in(discordUserIds)).fetch();
     }
 
     public Mono<WriteResult> save(GDLinkedUser linkedUser) {

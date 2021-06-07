@@ -6,7 +6,7 @@
             "activity_type": "playing",
             "activity_text": "Geometry Dash | u!help"
         },
-        "enabled_intents": 32509
+        "enabled_intents": 13835
     },
     "i18n": {
         "default_locale": "en",
