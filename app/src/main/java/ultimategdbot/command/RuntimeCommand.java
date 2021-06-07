@@ -22,6 +22,7 @@ import java.time.Instant;
 import java.util.Optional;
 import java.util.function.Function;
 
+@CommandCategory(CommandCategory.GENERAL)
 @Alias("runtime")
 @TopLevelCommand
 public final class RuntimeCommand implements Command {

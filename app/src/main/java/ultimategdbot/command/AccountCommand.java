@@ -35,6 +35,7 @@ import java.util.Set;
 import static java.util.function.Predicate.not;
 import static reactor.function.TupleUtils.function;
 
+@CommandCategory(CommandCategory.GD)
 @Alias("account")
 @TopLevelCommand
 @RdiService

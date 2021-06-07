@@ -21,6 +21,7 @@ import ultimategdbot.service.DatabaseService;
 import ultimategdbot.service.EmojiService;
 import ultimategdbot.service.GDUserService;
 
+@CommandCategory(CommandCategory.GD)
 @Alias("checkmod")
 @TopLevelCommand
 @RdiService

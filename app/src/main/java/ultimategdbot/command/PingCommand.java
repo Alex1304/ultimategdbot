@@ -15,6 +15,7 @@ import java.time.Duration;
 
 import static reactor.function.TupleUtils.function;
 
+@CommandCategory(CommandCategory.GENERAL)
 @TopLevelCommand
 @Alias("ping")
 public final class PingCommand implements Command {

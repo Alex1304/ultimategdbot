@@ -21,6 +21,7 @@ import java.util.Properties;
 
 import static reactor.function.TupleUtils.function;
 
+@CommandCategory(CommandCategory.GENERAL)
 @Alias("about")
 @TopLevelCommand
 @RdiService

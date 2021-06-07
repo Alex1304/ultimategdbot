@@ -46,6 +46,7 @@ import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toMap;
 import static reactor.function.TupleUtils.function;
 
+@CommandCategory(CommandCategory.GD)
 @Alias({"leaderboard", "leaderboards", "top"})
 @TopLevelCommand
 @RdiService

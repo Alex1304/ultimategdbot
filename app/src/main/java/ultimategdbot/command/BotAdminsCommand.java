@@ -18,6 +18,7 @@ import ultimategdbot.service.DatabaseService;
 import ultimategdbot.service.OutputPaginator;
 import ultimategdbot.service.PrivilegeFactory;
 
+@CommandCategory(CommandCategory.GENERAL)
 @Alias("botadmins")
 @TopLevelCommand
 @RdiService

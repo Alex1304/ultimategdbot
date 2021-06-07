@@ -16,15 +16,14 @@ import reactor.core.publisher.Mono;
 import ultimategdbot.Strings;
 import ultimategdbot.service.OutputPaginator;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.joining;
 
+@CommandCategory(CommandCategory.GENERAL)
 @Alias({"help", "manual", "commands"})
 @TopLevelCommand
 @RdiService
@@ -42,6 +41,16 @@ public final class HelpCommand implements Command {
     public HelpCommand(CommandService commandService, OutputPaginator outputPaginator) {
         this.commandService = commandService;
         this.outputPaginator = outputPaginator;
+    }
+
+    private static String formatCommandEntry(Command cmd, CommandContext ctx, List<String> parentAliases) {
+        var aliases = cmd.aliases().stream().sorted().collect(joining("|"));
+        var desc = Optional.of(cmd.documentation(ctx).getDescription())
+                .filter(not(String::isEmpty))
+                .orElseGet(() -> Markdown.italic(ctx.translate(Strings.APP, "no_description")));
+        var aliasSeq = Stream.concat(parentAliases.stream(), Stream.of(aliases))
+                .collect(Collectors.joining(" "));
+        return Markdown.code(ctx.getPrefixUsed() + aliasSeq) + ": " + desc;
     }
 
     private Mono<Void> buildMessage(Command cmd, CommandContext ctx, String alias, List<String> subcommands) {
@@ -86,16 +95,6 @@ public final class HelpCommand implements Command {
         return outputPaginator.paginate(ctx, sb.toString().lines().collect(Collectors.toList()));
     }
 
-    private static String formatCommandEntry(Command cmd, CommandContext ctx, List<String> parentAliases) {
-        var aliases = cmd.aliases().stream().sorted().collect(joining("|"));
-        var desc = Optional.of(cmd.documentation(ctx).getDescription())
-                .filter(not(String::isEmpty))
-                .orElseGet(() -> Markdown.italic(ctx.translate(Strings.APP, "no_description")));
-        var aliasSeq = Stream.concat(parentAliases.stream(), Stream.of(aliases))
-                .collect(Collectors.joining(" "));
-        return Markdown.code(ctx.getPrefixUsed() + aliasSeq) + ": " + desc;
-    }
-
     @Override
     public Mono<Void> run(CommandContext ctx) {
         return grammar.resolve(ctx).flatMap(args -> {
@@ -103,10 +102,20 @@ public final class HelpCommand implements Command {
                 // List all top-level commands
                 return outputPaginator.paginate(ctx,
                         commandService.listCommands().stream()
-                                .map(cmd -> formatCommandEntry(cmd, ctx, List.of()))
-                                .sorted()
+                                .collect(Collectors.groupingBy(cmd -> {
+                                    final var category = cmd.getClass().getAnnotation(CommandCategory.class);
+                                    return category != null ? category.value()
+                                            : ctx.translate(Strings.APP, "unknown");
+                                }))
+                                .entrySet()
+                                .stream()
+                                .sorted(Map.Entry.comparingByKey())
+                                .flatMap(entry -> Stream.concat(Stream.of("\n**__" + entry.getKey() + "__**"),
+                                        entry.getValue().stream()
+                                                .map(cmd -> formatCommandEntry(cmd, ctx, List.of()))
+                                                .sorted()))
                                 .collect(Collectors.toList()),
-                        content -> ctx.translate(Strings.APP, "help_intro", ctx.getPrefixUsed()) + "\n\n" + content);
+                        content -> ctx.translate(Strings.APP, "help_intro", ctx.getPrefixUsed()) + "\n" + content);
             }
             // Send documentation for specific command
             var alias = args.command.get(0);

@@ -16,6 +16,7 @@ import ultimategdbot.framework.UltimateGDBotCommandEventProcessor;
 import ultimategdbot.service.OutputPaginator;
 import ultimategdbot.service.PrivilegeFactory;
 
+@CommandCategory(CommandCategory.GENERAL)
 @Alias("blacklist")
 @TopLevelCommand
 @RdiService

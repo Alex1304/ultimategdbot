@@ -21,6 +21,7 @@ import ultimategdbot.service.DatabaseService;
 import ultimategdbot.service.GDUserService;
 import ultimategdbot.util.ProfileType;
 
+@CommandCategory(CommandCategory.GD)
 @Alias("profile")
 @TopLevelCommand
 @RdiService

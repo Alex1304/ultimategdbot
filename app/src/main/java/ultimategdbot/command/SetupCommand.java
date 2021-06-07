@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@CommandCategory(CommandCategory.GENERAL)
 @Alias({"setup", "settings", "configure", "config"})
 @RdiService
 public class SetupCommand implements Command {

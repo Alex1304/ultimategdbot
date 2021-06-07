@@ -11,6 +11,7 @@ import reactor.core.publisher.Mono;
 import ultimategdbot.Strings;
 import ultimategdbot.service.PrivilegeFactory;
 
+@CommandCategory(CommandCategory.GENERAL)
 @Alias("logout")
 @TopLevelCommand
 @RdiService
