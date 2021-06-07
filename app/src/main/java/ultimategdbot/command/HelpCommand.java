@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.joining;
@@ -90,8 +91,9 @@ public final class HelpCommand implements Command {
         var desc = Optional.of(cmd.documentation(ctx).getDescription())
                 .filter(not(String::isEmpty))
                 .orElseGet(() -> Markdown.italic(ctx.translate(Strings.APP, "no_description")));
-        var parents = String.join(" ", parentAliases) + " ";
-        return Markdown.code(ctx.getPrefixUsed() + parents + aliases) + ": " + desc;
+        var aliasSeq = Stream.concat(parentAliases.stream(), Stream.of(aliases))
+                .collect(Collectors.joining(" "));
+        return Markdown.code(ctx.getPrefixUsed() + aliasSeq) + ": " + desc;
     }
 
     @Override
