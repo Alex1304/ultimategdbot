@@ -61,7 +61,7 @@ public final class HelpCommand implements Command {
         sb.append(doc.getBody());
         sb.append('\n');
         if (!doc.getFlags().isEmpty()) {
-            sb.append("__Flags:__\n");
+            sb.append("__").append(ctx.translate(Strings.APP, "flags")).append("__\n");
             for (var flagInfo : doc.getFlags()) {
                 sb.append('`');
                 sb.append(flagInfo.getValueFormat());
@@ -79,7 +79,7 @@ public final class HelpCommand implements Command {
                 .sorted()
                 .collect(joining("\n"));
         if (!subs.isBlank()) {
-            sb.append("__Subcommands:__\n");
+            sb.append("__").append(ctx.translate(Strings.APP, "subcommands")).append("__\n");
             sb.append(subs);
         }
         return outputPaginator.paginate(ctx, sb.toString().lines().collect(Collectors.toList()));
@@ -89,7 +89,7 @@ public final class HelpCommand implements Command {
         var aliases = cmd.aliases().stream().sorted().collect(joining("|"));
         var desc = Optional.of(cmd.documentation(ctx).getDescription())
                 .filter(not(String::isEmpty))
-                .orElseGet(() -> Markdown.italic("No description"));
+                .orElseGet(() -> Markdown.italic(ctx.translate(Strings.APP, "no_description")));
         var parents = String.join(" ", parentAliases) + " ";
         return Markdown.code(ctx.getPrefixUsed() + parents + aliases) + ": " + desc;
     }
@@ -111,17 +111,17 @@ public final class HelpCommand implements Command {
             var subcommands = args.command.subList(1, args.command.size());
             var cmdFound = commandService.getCommandAt(alias, subcommands.toArray(new String[0]));
             return cmdFound.map(cmd -> buildMessage(cmd, ctx, alias, subcommands))
-                    .orElseGet(() -> Mono.error(new CommandFailedException("Command not found")));
+                    .orElseGet(() -> Mono.error(new CommandFailedException(
+                            ctx.translate(Strings.APP, "command_not_found"))));
         }).then();
     }
 
     @Override
-    public CommandDocumentation documentation(Translator translator) {
+    public CommandDocumentation documentation(Translator tr) {
         return CommandDocumentation.builder()
                 .setSyntax(grammar.toString())
-                .setDescription("Displays helpful info on commands.")
-                .setBody("Without arguments, gives a list of available commands. Pass a command or a sequence " +
-                        "of subcommands in arguments to get detailed information on that specific command/subcommand.")
+                .setDescription(tr.translate(Strings.HELP, "help_description"))
+                .setBody(tr.translate(Strings.HELP, "help_body"))
                 .build();
     }
 
