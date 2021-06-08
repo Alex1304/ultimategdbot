@@ -34,6 +34,7 @@ import java.util.Set;
 
 import static java.util.function.Predicate.not;
 import static reactor.function.TupleUtils.function;
+import static ultimategdbot.util.InteractionUtils.unexpectedReply;
 
 @CommandCategory(CommandCategory.GD)
 @Alias("account")
@@ -148,21 +149,16 @@ public final class AccountCommand implements Command {
                 .flatMap(waitMessage -> gdClient.withCacheDisabled().getPrivateMessages(0)
                         .filter(message -> message.userAccountId() == user.accountId()
                                 && message.subject().equalsIgnoreCase("confirm"))
-                        .switchIfEmpty(ctx.channel()
-                                .createMessage(ctx.translate(Strings.GD, "error_confirmation_not_found"))
-                                .then(Mono.error(new UnexpectedReplyException())))
+                        .switchIfEmpty(unexpectedReply(ctx, ctx.translate(Strings.GD, "error_confirmation_not_found")))
                         .next()
                         .flatMap(message -> gdClient.downloadPrivateMessage((int) message.id()))
                         .filter(messageDownload -> messageDownload.body().equals(token))
-                        .switchIfEmpty(ctx.channel()
-                                .createMessage(ctx.translate(Strings.GD, "error_confirmation_mismatch"))
-                                .then(Mono.error(new UnexpectedReplyException())))
+                        .switchIfEmpty(unexpectedReply(ctx, ctx.translate(Strings.GD, "error_confirmation_mismatch")))
                         .then(db.gdLinkedUserDao().confirmLink(authorId))
                         .then(ctx.channel().createMessage(emoji.get("success") + ' ' +
                                 ctx.translate(Strings.GD, "link_success", user.name())))
-                        .onErrorResume(GDClientException.class, e -> ctx.channel()
-                                .createMessage(ctx.translate(Strings.GD, "error_pm_access"))
-                                .then(Mono.error(new UnexpectedReplyException())))
+                        .onErrorResume(GDClientException.class, e -> unexpectedReply(ctx,
+                                ctx.translate(Strings.GD, "error_pm_access")))
                         .doFinally(signal -> waitMessage.delete().subscribe(null, e -> {}))
                         .then());
     }

@@ -21,6 +21,8 @@ import ultimategdbot.service.DatabaseService;
 import ultimategdbot.service.EmojiService;
 import ultimategdbot.service.GDUserService;
 
+import static ultimategdbot.util.InteractionUtils.writeOnlyIfRefresh;
+
 @CommandCategory(CommandCategory.GD)
 @Alias("checkmod")
 @TopLevelCommand
@@ -46,8 +48,7 @@ public final class CheckModCommand implements Command {
 
     @Override
     public Mono<Void> run(CommandContext ctx) {
-        final var gdClient = ctx.input().getFlag("refresh").isPresent()
-                ? this.gdClient.withWriteOnlyCache() : this.gdClient;
+        final var gdClient = writeOnlyIfRefresh(ctx, this.gdClient);
         return grammar.resolve(ctx)
                 .flatMap(args -> Mono.justOrEmpty(args.gdUser))
                 .switchIfEmpty(db.gdLinkedUserDao().getActiveLink(ctx.author().getId().asLong())

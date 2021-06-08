@@ -3,6 +3,7 @@ package ultimategdbot.service;
 import botrino.api.config.ConfigContainer;
 import botrino.api.i18n.Translator;
 import botrino.api.util.MessageTemplate;
+import botrino.command.CommandContext;
 import botrino.command.CommandFailedException;
 import com.github.alex1304.rdi.finder.annotation.RdiFactory;
 import com.github.alex1304.rdi.finder.annotation.RdiService;
@@ -26,7 +27,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 import ultimategdbot.Strings;
 import ultimategdbot.config.UltimateGDBotConfig;
-import ultimategdbot.util.ProfileType;
+import ultimategdbot.util.EmbedType;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -68,7 +69,7 @@ public final class GDUserService {
         this.gateway = gateway;
     }
 
-	/**
+    /**
 	 * Generates a random String made of alphanumeric characters. The length of the
 	 * generated String is specified as an argument.
 	 *
@@ -99,7 +100,7 @@ public final class GDUserService {
         }).subscribeOn(Schedulers.boundedElastic());
     }
 
-    public Mono<MessageTemplate> buildProfile(Translator tr, GDUserProfile gdUser, ProfileType type) {
+    public Mono<MessageTemplate> buildProfile(Translator tr, GDUserProfile gdUser, EmbedType type) {
         return Mono.zip(db.gdLinkedUserDao()
                 .getDiscordAccountsForGDUser(gdUser.accountId())
                 .flatMap(id -> gateway.withRetrievalStrategy(STORE_FALLBACK_REST).getUserById(Snowflake.of(id)))
@@ -198,6 +199,9 @@ public final class GDUserService {
     }
 
 	public Mono<GDUserProfile> stringToUser(Translator tr, String str) {
+        final var gdClient = tr instanceof CommandContext
+                && ((CommandContext) tr).input().getFlag("refresh").isPresent()
+                ? this.gdClient.withWriteOnlyCache() : this.gdClient;
 		if (str.matches("<@!?[0-9]{1,19}>")) {
 			var id = str.substring(str.startsWith("<@!") ? 3 : 2, str.length() - 1);
 			return Mono.just(id)

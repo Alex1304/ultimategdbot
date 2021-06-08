@@ -1,10 +1,8 @@
 package ultimategdbot.command;
 
 import botrino.api.i18n.Translator;
-import botrino.api.util.MessageTemplate;
 import botrino.command.Command;
 import botrino.command.CommandContext;
-import botrino.command.CommandFailedException;
 import botrino.command.annotation.Alias;
 import botrino.command.annotation.TopLevelCommand;
 import botrino.command.doc.CommandDocumentation;
@@ -16,33 +14,28 @@ import jdash.client.GDClient;
 import jdash.common.entity.GDUserProfile;
 import reactor.core.publisher.Mono;
 import ultimategdbot.Strings;
-import ultimategdbot.database.GDLinkedUser;
-import ultimategdbot.service.DatabaseService;
+import ultimategdbot.service.GDLevelService;
 import ultimategdbot.service.GDUserService;
-import ultimategdbot.util.EmbedType;
 
 import static ultimategdbot.util.InteractionUtils.writeOnlyIfRefresh;
 
 @CommandCategory(CommandCategory.GD)
-@Alias("profile")
+@Alias("levelsby")
 @TopLevelCommand
 @RdiService
-public final class ProfileCommand implements Command {
+public final class LevelsByCommand implements Command {
 
-    private final DatabaseService db;
-    private final GDUserService gdUserService;
+    private final GDLevelService levelService;
     private final GDClient gdClient;
 
     private final CommandGrammar<Args> grammar;
 
     @RdiFactory
-    public ProfileCommand(DatabaseService db, GDUserService gdUserService, GDClient gdClient) {
-        this.db = db;
-        this.gdUserService = gdUserService;
+    public LevelsByCommand(GDLevelService levelService, GDClient gdClient, GDUserService userService) {
+        this.levelService = levelService;
         this.gdClient = gdClient;
         this.grammar = CommandGrammar.builder()
-                .beginOptionalArguments()
-                .nextArgument("gdUser", gdUserService::stringToUser)
+                .nextArgument("gdUser", userService::stringToUser)
                 .build(Args.class);
     }
 
@@ -50,18 +43,10 @@ public final class ProfileCommand implements Command {
     public Mono<Void> run(CommandContext ctx) {
         final var gdClient = writeOnlyIfRefresh(ctx, this.gdClient);
         return grammar.resolve(ctx)
-                .flatMap(args -> Mono.justOrEmpty(args.gdUser))
-                .switchIfEmpty(db.gdLinkedUserDao().getActiveLink(ctx.author().getId().asLong())
-                        .switchIfEmpty(Mono.error(new CommandFailedException(
-                                ctx.translate(Strings.GD, "error_profile_user_not_specified", ctx.getPrefixUsed(),
-                                        "profile"))))
-                        .map(GDLinkedUser::gdUserId)
-                        .flatMap(gdClient::getUserProfile)
-                        .flatMap(db.gdLeaderboardDao()::saveStats)
-                        .cast(GDUserProfile.class))
-                .flatMap(user -> gdUserService.buildProfile(ctx, user, EmbedType.USER_PROFILE)
-                        .map(MessageTemplate::toCreateSpec)
-                        .flatMap(ctx.channel()::createMessage))
+                .map(args -> args.gdUser)
+                .flatMap(gdUser -> levelService.interactiveSearch(ctx,
+                        ctx.translate(Strings.GD, "player_levels", gdUser.name()),
+                        page -> gdClient.browseLevelsByUser(gdUser.playerId(), page)))
                 .then();
     }
 
@@ -69,8 +54,8 @@ public final class ProfileCommand implements Command {
     public CommandDocumentation documentation(Translator tr) {
         return CommandDocumentation.builder()
                 .setSyntax(grammar.toString())
-                .setDescription(tr.translate(Strings.HELP, "profile_description"))
-                .setBody(tr.translate(Strings.HELP, "profile_body"))
+                .setDescription(tr.translate(Strings.HELP, "levelsby_description"))
+                .setBody(tr.translate(Strings.HELP, "levelsby_body"))
                 .addFlag(FlagInformation.builder()
                         .setValueFormat("refresh")
                         .setDescription(tr.translate(Strings.HELP, "common_flag_refresh"))

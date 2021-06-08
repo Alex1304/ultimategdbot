@@ -7,7 +7,6 @@ import botrino.command.CommandFailedException;
 import botrino.command.annotation.Alias;
 import botrino.command.annotation.TopLevelCommand;
 import botrino.command.doc.CommandDocumentation;
-import botrino.command.doc.FlagInformation;
 import botrino.command.grammar.CommandGrammar;
 import botrino.command.privilege.Privilege;
 import com.github.alex1304.rdi.finder.annotation.RdiFactory;
@@ -77,10 +76,6 @@ public final class ModWaveCommand implements Command {
                 .setSyntax(grammar.toString())
                 .setDescription(tr.translate(Strings.HELP, "modwave_description"))
                 .setBody(tr.translate(Strings.HELP, "modwave_body"))
-                .addFlag(FlagInformation.builder()
-                        .setValueFormat("refresh")
-                        .setDescription(tr.translate(Strings.HELP, "common_flag_refresh"))
-                        .build())
                 .build();
     }
 
