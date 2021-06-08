@@ -65,7 +65,7 @@ public final class GDUserService {
         this.gdClient = gdClient;
         this.spriteFactory = spriteFactory;
         this.iconsCache = Caffeine.newBuilder().maximumSize(config.iconCacheMaxSize()).build();
-        this.iconChannelId = Snowflake.of(config.iconChannelId());
+        this.iconChannelId = config.iconChannelId().map(Snowflake::of).orElse(null);
         this.gateway = gateway;
     }
 
@@ -158,7 +158,7 @@ public final class GDUserService {
     }
 
     public Mono<String> makeIconSet(Translator tr, GDUserProfile user) {
-	    if (iconChannelId.asLong() == 0) {
+	    if (iconChannelId == null) {
 	        return Mono.just("No channel is configured to publish generated icon sets.");
         }
         return Mono.defer(() -> {
@@ -202,26 +202,35 @@ public final class GDUserService {
         final var gdClient = tr instanceof CommandContext
                 && ((CommandContext) tr).input().getFlag("refresh").isPresent()
                 ? this.gdClient.withWriteOnlyCache() : this.gdClient;
-		if (str.matches("<@!?[0-9]{1,19}>")) {
-			var id = str.substring(str.startsWith("<@!") ? 3 : 2, str.length() - 1);
-			return Mono.just(id)
-					.map(Snowflake::of)
-					.onErrorMap(e -> new CommandFailedException(tr.translate(Strings.GD, "error_invalid_mention")))
-					.flatMap(snowflake -> gateway.withRetrievalStrategy(STORE_FALLBACK_REST).getUserById(snowflake))
-					.onErrorMap(e -> new CommandFailedException(tr.translate(Strings.GD, "error_mention_resolve")))
-					.flatMap(user -> db.gdLinkedUserDao().getActiveLink(user.getId().asLong()))
-					.flatMap(linkedUser -> gdClient.getUserProfile(linkedUser.gdUserId())
+        return stringToUser0(tr, str, gdClient);
+	}
+
+
+    public Mono<GDUserProfile> stringToUserAlwaysRefresh(Translator tr, String str) {
+        return stringToUser0(tr, str, gdClient.withWriteOnlyCache());
+    }
+
+    private Mono<GDUserProfile> stringToUser0(Translator tr, String str, GDClient gdClient) {
+        if (str.matches("<@!?[0-9]{1,19}>")) {
+            var id = str.substring(str.startsWith("<@!") ? 3 : 2, str.length() - 1);
+            return Mono.just(id)
+                    .map(Snowflake::of)
+                    .onErrorMap(e -> new CommandFailedException(tr.translate(Strings.GD, "error_invalid_mention")))
+                    .flatMap(snowflake -> gateway.withRetrievalStrategy(STORE_FALLBACK_REST).getUserById(snowflake))
+                    .onErrorMap(e -> new CommandFailedException(tr.translate(Strings.GD, "error_mention_resolve")))
+                    .flatMap(user -> db.gdLinkedUserDao().getActiveLink(user.getId().asLong()))
+                    .flatMap(linkedUser -> gdClient.getUserProfile(linkedUser.gdUserId())
                             .flatMap(db.gdLeaderboardDao()::saveStats)
                             .cast(GDUserProfile.class))
-					.switchIfEmpty(Mono.error(new CommandFailedException(tr.translate(Strings.GD, "error_no_gd_account"))));
-		}
-		if (!str.matches("[a-zA-Z0-9 _-]+")) {
-			return Mono.error(new CommandFailedException(tr.translate(Strings.GD, "error_invalid_characters")));
-		}
-		return gdClient.searchUsers(str, 0).next()
+                    .switchIfEmpty(Mono.error(new CommandFailedException(tr.translate(Strings.GD, "error_no_gd_account"))));
+        }
+        if (!str.matches("[a-zA-Z0-9 _-]+")) {
+            return Mono.error(new CommandFailedException(tr.translate(Strings.GD, "error_invalid_characters")));
+        }
+        return gdClient.searchUsers(str, 0).next()
                 .filter(user -> user.accountId() > 0)
                 .flatMap(user -> gdClient.getUserProfile(user.accountId()));
-	}
+    }
 
     private String statEntry(String emojiName, int stat) {
         return emoji.get(emojiName) + "  " + formatCode(stat, 9) + '\n';

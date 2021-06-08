@@ -62,4 +62,8 @@ public final class DatabaseService {
     public GDModDao gdModDao() {
         return new GDModDao(backend);
     }
+
+    public GDAwardedLevelDao gdAwardedLevelDao() {
+        return new GDAwardedLevelDao(backend);
+    }
 }

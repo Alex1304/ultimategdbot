@@ -11,18 +11,22 @@ import botrino.command.grammar.CommandGrammar;
 import botrino.command.privilege.Privilege;
 import com.github.alex1304.rdi.finder.annotation.RdiFactory;
 import com.github.alex1304.rdi.finder.annotation.RdiService;
-import jdash.client.GDClient;
 import jdash.common.Role;
 import jdash.common.entity.GDUserProfile;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ultimategdbot.Strings;
+import ultimategdbot.database.ImmutableGDMod;
+import ultimategdbot.event.ImmutableModStatusUpdate;
+import ultimategdbot.event.ManualEventProducer;
 import ultimategdbot.service.DatabaseService;
 import ultimategdbot.service.EmojiService;
 import ultimategdbot.service.GDUserService;
 import ultimategdbot.service.PrivilegeFactory;
 
 import java.util.List;
+
+import static ultimategdbot.event.ModStatusUpdate.Type.*;
 
 @CommandCategory(CommandCategory.GD)
 @Alias("modwave")
@@ -32,22 +36,22 @@ public final class ModWaveCommand implements Command {
 
     private final DatabaseService db;
     private final EmojiService emoji;
-    private final GDClient gdClient;
     private final PrivilegeFactory privilegeFactory;
+    private final ManualEventProducer eventProducer;
 
     private final CommandGrammar<Args> grammar;
 
     @RdiFactory
-    public ModWaveCommand(DatabaseService db, EmojiService emoji, GDUserService gdUserService, GDClient gdClient,
-                          PrivilegeFactory privilegeFactory) {
+    public ModWaveCommand(DatabaseService db, EmojiService emoji, GDUserService gdUserService,
+                          PrivilegeFactory privilegeFactory, ManualEventProducer eventProducer) {
         this.db = db;
         this.emoji = emoji;
-        this.gdClient = gdClient.withWriteOnlyCache();
         this.grammar = CommandGrammar.builder()
                 .setVarargs(true)
-                .nextArgument("gdUsers", gdUserService::stringToUser)
+                .nextArgument("gdUsers", gdUserService::stringToUserAlwaysRefresh)
                 .build(Args.class);
         this.privilegeFactory = privilegeFactory;
+        this.eventProducer = eventProducer;
     }
 
     @Override
@@ -64,8 +68,38 @@ public final class ModWaveCommand implements Command {
                                 : emoji.get("success") + ' ' + ctx.translate(Strings.GD, "checkmod_success",
                                         user.role().orElseThrow())) + "||")
                         .then(db.gdModDao().get(user.accountId()))
-                        .switchIfEmpty(Mono.defer(Mono::empty)) // TODO requires event service
-                        //.flatMap(gdMod -> ...
+                        .switchIfEmpty(Mono.defer(() -> {
+                            if (user.role().map(Role.USER::equals).orElse(true)) {
+                                return Mono.empty();
+                            }
+                            final var isElder = user.role().map(Role.ELDER_MODERATOR::equals).orElse(false);
+                            eventProducer.submit(ImmutableModStatusUpdate.of(user, isElder
+                                    ? PROMOTED_TO_ELDER : PROMOTED_TO_MOD));
+                            return db.gdModDao()
+                                    .save(ImmutableGDMod.builder()
+                                            .accountId(user.accountId())
+                                            .name(user.name())
+                                            .isElder(isElder)
+                                            .build())
+                                    .then(Mono.empty());
+                        }))
+                        .flatMap(gdMod -> {
+                            if (user.role().map(Role.USER::equals).orElse(true)) {
+                                eventProducer.submit(ImmutableModStatusUpdate.of(user, gdMod.isElder()
+                                        ? DEMOTED_FROM_ELDER : DEMOTED_FROM_MOD));
+                                return db.gdModDao().delete(gdMod.accountId());
+                            }
+                            final var newGdMod = ImmutableGDMod.builder().from(gdMod);
+                            if(user.role().map(Role.MODERATOR::equals).orElse(false) && gdMod.isElder()) {
+                                eventProducer.submit(ImmutableModStatusUpdate.of(user, DEMOTED_FROM_ELDER));
+                                newGdMod.isElder(false);
+                            } else if (user.role().map(Role.ELDER_MODERATOR::equals).orElse(false) && !gdMod.isElder()) {
+                                eventProducer.submit(ImmutableModStatusUpdate.of(user, PROMOTED_TO_ELDER));
+                                newGdMod.isElder(true);
+                            }
+                            newGdMod.name(user.name());
+                            return db.gdModDao().save(newGdMod.build());
+                        })
                 )
                 .then();
     }

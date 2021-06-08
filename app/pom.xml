@@ -96,12 +96,12 @@
         <dependency>
             <groupId>com.alex1304.jdash</groupId>
             <artifactId>jdash-events</artifactId>
-            <version>4.0.2</version>
+            <version>4.0.3</version>
         </dependency>
         <dependency>
             <groupId>com.alex1304.jdash</groupId>
             <artifactId>jdash-graphics</artifactId>
-            <version>4.0.2</version>
+            <version>4.0.3</version>
         </dependency>
     </dependencies>
 </project>

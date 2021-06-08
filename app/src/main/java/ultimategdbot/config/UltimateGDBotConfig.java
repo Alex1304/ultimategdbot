@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import jdash.client.request.GDRequests;
 import org.immutables.value.Value;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -38,13 +39,12 @@ public interface UltimateGDBotConfig {
             return 2500;
         }
 
-        @Value.Default
         @JsonProperty("icon_channel_id")
-        default long iconChannelId() {
-            return 0;
-        }
+        Optional<Long> iconChannelId();
 
         Client client();
+
+        Events events();
 
         @Value.Immutable
         @JsonDeserialize(as = ImmutableClient.class)
@@ -88,6 +88,70 @@ public interface UltimateGDBotConfig {
                 default int intervalSeconds() {
                     return 60;
                 }
+            }
+        }
+
+        @Value.Immutable
+        @JsonDeserialize(as = ImmutableEvents.class)
+        interface Events {
+
+            @Value.Default
+            @JsonProperty("event_loop_interval_seconds")
+            default int eventLoopIntervalSeconds() {
+                return 60;
+            }
+
+            @Value.Default
+            @JsonProperty("rates_channel_ids")
+            default List<Long> ratesChannelIds() {
+                return List.of();
+            }
+
+            @Value.Default
+            @JsonProperty("demons_channel_ids")
+            default List<Long> demonsChannelIds() {
+                return List.of();
+            }
+
+            @JsonProperty("timely_channel_id")
+            Optional<Long> timelyChannelId();
+
+            @JsonProperty("mods_channel_id")
+            Optional<Long> modsChannelId();
+
+            @JsonProperty("public_random_messages")
+            RandomMessages publicRandomMessages();
+
+            @JsonProperty("dm_random_messages")
+            RandomMessages dmRandomMessages();
+
+            @Value.Immutable
+            @JsonDeserialize(as = ImmutableRandomMessages.class)
+            interface RandomMessages {
+
+                @JsonProperty("rates")
+                List<String> rates();
+
+                @JsonProperty("unrates")
+                List<String> unrates();
+
+                @JsonProperty("daily")
+                List<String> daily();
+
+                @JsonProperty("weekly")
+                List<String> weekly();
+
+                @JsonProperty("mod")
+                List<String> mod();
+
+                @JsonProperty("elder_mod")
+                List<String> elderMod();
+
+                @JsonProperty("unmod")
+                List<String> unmod();
+
+                @JsonProperty("elder_unmod")
+                List<String> elderUnmod();
             }
         }
     }

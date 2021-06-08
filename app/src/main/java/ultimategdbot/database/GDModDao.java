@@ -21,4 +21,8 @@ public final class GDModDao {
     public Mono<WriteResult> save(GDMod mod) {
         return repository.upsert(mod);
     }
+
+    public Mono<WriteResult> delete(long accountId) {
+        return repository.delete(gDMod.accountId.is(accountId));
+    }
 }

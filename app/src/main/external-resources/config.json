@@ -20,7 +20,7 @@
         "emoji_guild_ids": [],
         "gd": {
             "icon_cache_max_size": 2500,
-            "icon_channel_id": 0,
+            "icon_channel_id": null,
             "client": {
                 "username": "${username}",
                 "password": "${password}",
@@ -30,6 +30,65 @@
                 "request_limiter": {
                     "limit": 10,
                     "interval_seconds": 60
+                }
+            },
+            "events": {
+                "event_loop_interval_seconds": 60,
+                "rates_channel_ids": [],
+                "demons_channel_ids": [],
+                "timely_channel_id": null,
+                "mods_channel_id": null,
+                "public_random_messages": {
+                    "rates": [
+                        "A new level has just been rated on Geometry Dash!!!"
+                    ],
+                    "unrates": [
+                        "This level just got un-rated from Geometry Dash..."
+                    ],
+                    "daily": [
+                        "There is a new Daily level on Geometry Dash!!!"
+                    ],
+                    "weekly": [
+                        "There is a new Weekly demon on Geometry Dash!!!"
+                    ],
+                    "mod": [
+                        "A user has been promoted to Geometry Dash moderator!"
+                    ],
+                    "elder_mod": [
+                        "A user has been promoted to Geometry Dash Elder moderator!"
+                    ],
+                    "unmod": [
+                        "A user has been demoted from Geometry Dash moderator..."
+                    ],
+                    "elder_unmod": [
+                        "A user has been demoted from Geometry Dash Elder moderator..."
+                    ]
+                },
+                "dm_random_messages": {
+                    "rates": [
+                        "Congratulations for getting your level rated!"
+                    ],
+                    "unrates": [
+                        "Your level has been un-rated..."
+                    ],
+                    "daily": [
+                        "Congratulations for getting the Daily level!"
+                    ],
+                    "weekly": [
+                        "Congratulations for getting the Weekly demon!"
+                    ],
+                    "mod": [
+                        "Congratulations! You have been promoted to Geometry Dash moderator!"
+                    ],
+                    "elder_mod": [
+                        "Congratulations! You have been promoted to Geometry Dash Elder moderator!"
+                    ],
+                    "unmod": [
+                        "Oh snap! You have been demoted from Geometry Dash moderator..."
+                    ],
+                    "elder_unmod": [
+                        "Oh snap! You have been demoted from Geometry Dash Elder moderator..."
+                    ]
                 }
             }
         }
