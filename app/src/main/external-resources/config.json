@@ -15,9 +15,17 @@
     "command": {
         "prefix": "u!"
     },
+    "mongodb": {
+        "database_name": "ultimategdbot",
+        "connection_string" : "mongodb://localhost:27017"
+    },
     "ultimategdbot": {
         "pagination_max_entries": 30,
         "emoji_guild_ids": [],
+        "command_cooldown": {
+            "limit": 2,
+            "interval_seconds": 30
+        },
         "gd": {
             "icon_cache_max_size": 2500,
             "icon_channel_id": null,
@@ -38,6 +46,7 @@
                 "demons_channel_ids": [],
                 "timely_channel_id": null,
                 "mods_channel_id": null,
+                "crosspost": true,
                 "public_random_messages": {
                     "rates": [
                         "A new level has just been rated on Geometry Dash!!!"

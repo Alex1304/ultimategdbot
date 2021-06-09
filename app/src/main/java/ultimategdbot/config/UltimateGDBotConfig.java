@@ -29,6 +29,9 @@ public interface UltimateGDBotConfig {
 
     GD gd();
 
+    @JsonProperty("command_cooldown")
+    Optional<Limiter> commandCooldown();
+
     @Value.Immutable
     @JsonDeserialize(as = ImmutableGD.class)
     interface GD {
@@ -72,23 +75,7 @@ public interface UltimateGDBotConfig {
             }
 
             @JsonProperty("request_limiter")
-            Optional<RequestLimiter> requestLimiter();
-
-            @Value.Immutable
-            @JsonDeserialize(as = ImmutableRequestLimiter.class)
-            interface RequestLimiter {
-
-                @Value.Default
-                default int limit() {
-                    return 10;
-                }
-
-                @Value.Default
-                @JsonProperty("interval_seconds")
-                default int intervalSeconds() {
-                    return 60;
-                }
-            }
+            Optional<Limiter> requestLimiter();
         }
 
         @Value.Immutable
@@ -99,6 +86,11 @@ public interface UltimateGDBotConfig {
             @JsonProperty("event_loop_interval_seconds")
             default int eventLoopIntervalSeconds() {
                 return 60;
+            }
+
+            @Value.Default
+            default boolean crosspost() {
+                return true;
             }
 
             @Value.Default
@@ -153,6 +145,22 @@ public interface UltimateGDBotConfig {
                 @JsonProperty("elder_unmod")
                 List<String> elderUnmod();
             }
+        }
+    }
+
+    @Value.Immutable
+    @JsonDeserialize(as = ImmutableLimiter.class)
+    interface Limiter {
+
+        @Value.Default
+        default int limit() {
+            return 10;
+        }
+
+        @Value.Default
+        @JsonProperty("interval_seconds")
+        default int intervalSeconds() {
+            return 60;
         }
     }
 }

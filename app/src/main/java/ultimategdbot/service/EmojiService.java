@@ -37,7 +37,9 @@ public final class EmojiService {
         try {
             return emojiManager.get(name).asFormat();
         } catch (NoSuchElementException e) {
-            return ":" + name + ":";
+            throw new NoSuchElementException("Emoji '" + name + "' not found. Make sure the emoji is uploaded in a " +
+                    "server that the bot has access to, with the ID of that server listed in `config.json`. After " +
+                    "adding the emoji, restart the bot.");
         }
     }
 

@@ -17,14 +17,14 @@ import ultimategdbot.framework.UltimateGDBotCommandEventProcessor;
 import java.util.function.Function;
 
 @Alias("prefix")
-@RdiService
 @SetupEntry
-public class PrefixCommand extends GetSetResetCommand<String> {
+@RdiService
+public class SetupPrefixCommand extends GetSetResetCommand<String> {
 
     private final UltimateGDBotCommandEventProcessor ultimateGDBotCommandEventProcessor;
 
     @RdiFactory
-    public PrefixCommand(UltimateGDBotCommandEventProcessor ultimateGDBotCommandEventProcessor) {
+    public SetupPrefixCommand(UltimateGDBotCommandEventProcessor ultimateGDBotCommandEventProcessor) {
         this.ultimateGDBotCommandEventProcessor = ultimateGDBotCommandEventProcessor;
     }
 

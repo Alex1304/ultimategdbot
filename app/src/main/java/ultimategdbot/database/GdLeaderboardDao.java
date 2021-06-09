@@ -8,19 +8,19 @@ import reactor.core.publisher.Mono;
 import java.time.Instant;
 import java.util.List;
 
-import static ultimategdbot.database.GDLeaderboardCriteria.gDLeaderboard;
+import static ultimategdbot.database.GdLeaderboardCriteria.gdLeaderboard;
 
-public final class GDLeaderboardDao {
+public final class GdLeaderboardDao {
 
-    private final GDLeaderboardRepository repository;
+    private final GdLeaderboardRepository repository;
 
-    public GDLeaderboardDao(Backend backend) {
-        this.repository = new GDLeaderboardRepository(backend);
+    public GdLeaderboardDao(Backend backend) {
+        this.repository = new GdLeaderboardRepository(backend);
     }
 
     public Mono<GDUserStats> saveStats(GDUserStats userStats) {
         return repository
-                .upsert(ImmutableGDLeaderboard.builder()
+                .upsert(ImmutableGdLeaderboard.builder()
                         .accountId(userStats.accountId())
                         .name(userStats.name())
                         .lastRefreshed(Instant.now())
@@ -34,7 +34,7 @@ public final class GDLeaderboardDao {
                 .thenReturn(userStats);
     }
 
-    public Flux<GDLeaderboard> getAllIn(List<Long> gdUserIds) {
-        return repository.find(gDLeaderboard.accountId.in(gdUserIds)).fetch();
+    public Flux<GdLeaderboard> getAllIn(List<Long> gdUserIds) {
+        return repository.find(gdLeaderboard.accountId.in(gdUserIds)).fetch();
     }
 }

@@ -1,13 +1,17 @@
 package ultimategdbot.framework;
 
+import botrino.api.util.DurationUtils;
 import botrino.api.util.MatcherFunction;
 import botrino.command.CommandContext;
 import botrino.command.CommandErrorHandler;
 import botrino.command.CommandFailedException;
 import botrino.command.InvalidSyntaxException;
+import botrino.command.cooldown.CooldownException;
 import botrino.command.privilege.PrivilegeException;
 import com.github.alex1304.rdi.finder.annotation.RdiFactory;
 import com.github.alex1304.rdi.finder.annotation.RdiService;
+import discord4j.core.object.entity.ApplicationInfo;
+import discord4j.core.object.entity.User;
 import discord4j.rest.http.client.ClientException;
 import jdash.client.exception.GDClientException;
 import reactor.core.publisher.Mono;
@@ -22,10 +26,12 @@ import ultimategdbot.service.EmojiService;
 public class UltimateGDBotCommandErrorHandler implements CommandErrorHandler {
 
     private final EmojiService emoji;
+    private final ApplicationInfo applicationInfo;
 
     @RdiFactory
-    public UltimateGDBotCommandErrorHandler(EmojiService emoji) {
+    public UltimateGDBotCommandErrorHandler(EmojiService emoji, ApplicationInfo applicationInfo) {
         this.emoji = emoji;
+        this.applicationInfo = applicationInfo;
     }
 
     @Override
@@ -77,11 +83,28 @@ public class UltimateGDBotCommandErrorHandler implements CommandErrorHandler {
                                         ctx.channel().getMention())))
                         .then())
                 .apply(t)
-                .orElse(sendErrorMessage(ctx, ctx.translate(Strings.GENERAL, "error_generic"))
-                        .then(Mono.error(t)));
+                .orElse(sendCrashReport(ctx, t))
+                .then(Mono.error(t));
+    }
+
+    @Override
+    public Mono<Void> handleCooldown(CooldownException e, CommandContext ctx) {
+        return sendErrorMessage(ctx,  ctx.translate(Strings.GD, "error_cooldown", e.getPermits(),
+                DurationUtils.format(e.getResetInterval()), DurationUtils.format(e.getRetryAfter().withNanos(0))));
     }
 
     private Mono<Void> sendErrorMessage(CommandContext ctx, String message) {
         return ctx.channel().createMessage(emoji.get("cross") + " " + message).onErrorResume(e -> Mono.empty()).then();
+    }
+
+    private Mono<Void> sendCrashReport(CommandContext ctx, Throwable t) {
+        return Mono.when(
+                sendErrorMessage(ctx, ctx.translate(Strings.GENERAL, "error_generic")),
+                applicationInfo.getOwner().flatMap(User::getPrivateChannel)
+                        // That message does not need to be translated as it is only intended for the bot owner.
+                        .flatMap(dm -> dm.createMessage("**Something went wrong when executing a command.**\n" +
+                                "Input: " + ctx.input().getRaw() + "\n" +
+                                "Author: " + ctx.author().getTag() + " (" + ctx.author().getId().asString() + ")\n" +
+                                "Exception: `" + t + '`')));
     }
 }

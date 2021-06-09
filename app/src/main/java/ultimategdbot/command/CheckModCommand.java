@@ -6,6 +6,7 @@ import botrino.command.CommandContext;
 import botrino.command.CommandFailedException;
 import botrino.command.annotation.Alias;
 import botrino.command.annotation.TopLevelCommand;
+import botrino.command.cooldown.Cooldown;
 import botrino.command.doc.CommandDocumentation;
 import botrino.command.doc.FlagInformation;
 import botrino.command.grammar.CommandGrammar;
@@ -17,7 +18,8 @@ import jdash.common.entity.GDUserProfile;
 import reactor.core.publisher.Mono;
 import reactor.util.annotation.Nullable;
 import ultimategdbot.Strings;
-import ultimategdbot.database.GDLinkedUser;
+import ultimategdbot.database.GdLinkedUser;
+import ultimategdbot.service.GDCommandCooldown;
 import ultimategdbot.service.DatabaseService;
 import ultimategdbot.service.EmojiService;
 import ultimategdbot.service.GDUserService;
@@ -30,6 +32,7 @@ import static ultimategdbot.util.InteractionUtils.writeOnlyIfRefresh;
 @RdiService
 public final class CheckModCommand implements Command {
 
+    private final GDCommandCooldown commandCooldown;
     private final DatabaseService db;
     private final EmojiService emoji;
     private final GDClient gdClient;
@@ -37,7 +40,9 @@ public final class CheckModCommand implements Command {
     private final CommandGrammar<Args> grammar;
 
     @RdiFactory
-    public CheckModCommand(DatabaseService db, EmojiService emoji, GDUserService gdUserService, GDClient gdClient) {
+    public CheckModCommand(GDCommandCooldown commandCooldown, DatabaseService db, EmojiService emoji,
+                           GDUserService gdUserService, GDClient gdClient) {
+        this.commandCooldown = commandCooldown;
         this.db = db;
         this.emoji = emoji;
         this.gdClient = gdClient;
@@ -56,7 +61,7 @@ public final class CheckModCommand implements Command {
                         .switchIfEmpty(Mono.error(new CommandFailedException(
                                 ctx.translate(Strings.GD, "error_checkmod_user_not_specified", ctx.getPrefixUsed(),
                                         "profile"))))
-                        .map(GDLinkedUser::gdUserId)
+                        .map(GdLinkedUser::gdUserId)
                         .flatMap(gdClient::getUserProfile)
                         .flatMap(db.gdLeaderboardDao()::saveStats)
                         .cast(GDUserProfile.class))
@@ -80,6 +85,11 @@ public final class CheckModCommand implements Command {
                         .setDescription(tr.translate(Strings.HELP, "common_flag_refresh"))
                         .build())
                 .build();
+    }
+
+    @Override
+    public Cooldown cooldown() {
+        return commandCooldown.get();
     }
 
     private static final class Args {

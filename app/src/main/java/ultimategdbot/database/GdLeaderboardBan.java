@@ -11,19 +11,13 @@ import org.immutables.value.Value;
 @Value.Immutable
 @Criteria
 @Criteria.Repository(facets = { ReactorReadable.class, ReactorWritable.class })
-@JsonSerialize(as = ImmutableGDMod.class)
-@JsonDeserialize(as = ImmutableGDMod.class)
-public interface GDMod {
+@JsonSerialize(as = ImmutableGdLeaderboardBan.class)
+@JsonDeserialize(as = ImmutableGdLeaderboardBan.class)
+public interface GdLeaderboardBan {
 
     @Criteria.Id
     @JsonProperty("_id")
 	long accountId();
 	
-	String name();
-
-	int elder();
-	
-	default boolean isElder() {
-	    return elder() > 0;
-    }
+	long bannedBy();
 }

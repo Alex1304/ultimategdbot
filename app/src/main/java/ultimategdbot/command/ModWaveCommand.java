@@ -16,7 +16,7 @@ import jdash.common.entity.GDUserProfile;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ultimategdbot.Strings;
-import ultimategdbot.database.ImmutableGDMod;
+import ultimategdbot.database.ImmutableGdMod;
 import ultimategdbot.event.ImmutableModStatusUpdate;
 import ultimategdbot.event.ManualEventProducer;
 import ultimategdbot.service.DatabaseService;
@@ -76,7 +76,7 @@ public final class ModWaveCommand implements Command {
                             eventProducer.submit(ImmutableModStatusUpdate.of(user, isElder
                                     ? PROMOTED_TO_ELDER : PROMOTED_TO_MOD));
                             return db.gdModDao()
-                                    .save(ImmutableGDMod.builder()
+                                    .save(ImmutableGdMod.builder()
                                             .accountId(user.accountId())
                                             .name(user.name())
                                             .elder(isElder ? 1 : 0)
@@ -89,7 +89,7 @@ public final class ModWaveCommand implements Command {
                                         ? DEMOTED_FROM_ELDER : DEMOTED_FROM_MOD));
                                 return db.gdModDao().delete(gdMod.accountId());
                             }
-                            final var newGdMod = ImmutableGDMod.builder().from(gdMod);
+                            final var newGdMod = ImmutableGdMod.builder().from(gdMod);
                             if(user.role().map(Role.MODERATOR::equals).orElse(false) && gdMod.isElder()) {
                                 eventProducer.submit(ImmutableModStatusUpdate.of(user, DEMOTED_FROM_ELDER));
                                 newGdMod.elder(0);

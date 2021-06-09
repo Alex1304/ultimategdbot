@@ -1,5 +1,6 @@
 package ultimategdbot.service;
 
+import botrino.api.config.ConfigContainer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.github.alex1304.rdi.finder.annotation.RdiFactory;
@@ -12,26 +13,26 @@ import org.immutables.criteria.mongo.MongoSetup;
 import org.immutables.criteria.mongo.bson4jackson.BsonModule;
 import org.immutables.criteria.mongo.bson4jackson.IdAnnotationModule;
 import org.immutables.criteria.mongo.bson4jackson.JacksonCodecs;
+import ultimategdbot.config.MongoDBConfig;
 import ultimategdbot.database.*;
 
 @RdiService
 public final class DatabaseService {
 
-    private static final String DATABASE_NAME = "ultimategdbot";
-
     private final Backend backend;
 
     @RdiFactory
-    public DatabaseService() {
-        var mapper = new ObjectMapper()
+    public DatabaseService(ConfigContainer configContainer) {
+        final var config = configContainer.get(MongoDBConfig.class);
+        final var mapper = new ObjectMapper()
                 .registerModule(new BsonModule())
                 .registerModule(new Jdk8Module())
                 .registerModule(new IdAnnotationModule())
                 .addHandler(new UnknownPropertyHandler(true));
         @SuppressWarnings("UnstableApiUsage")
-        var registry = JacksonCodecs.registryFromMapper(mapper);
-        var client = MongoClients.create();
-        var db = client.getDatabase(DATABASE_NAME).withCodecRegistry(registry);
+        final var registry = JacksonCodecs.registryFromMapper(mapper);
+        final var client = MongoClients.create(config.connectionString());
+        final var db = client.getDatabase(config.databaseName()).withCodecRegistry(registry);
         this.backend = new MongoBackend(MongoSetup.of(db));
     }
 
@@ -47,23 +48,23 @@ public final class DatabaseService {
         return new BotAdminDao(backend);
     }
 
-    public GDLinkedUserDao gdLinkedUserDao() {
-        return new GDLinkedUserDao(backend);
+    public GdLinkedUserDao gdLinkedUserDao() {
+        return new GdLinkedUserDao(backend);
     }
 
-    public GDLeaderboardDao gdLeaderboardDao() {
-        return new GDLeaderboardDao(backend);
+    public GdLeaderboardDao gdLeaderboardDao() {
+        return new GdLeaderboardDao(backend);
     }
 
-    public GDLeaderboardBanDao gdLeaderboardBanDao() {
-        return new GDLeaderboardBanDao(backend);
+    public GdLeaderboardBanDao gdLeaderboardBanDao() {
+        return new GdLeaderboardBanDao(backend);
     }
 
-    public GDModDao gdModDao() {
-        return new GDModDao(backend);
+    public GdModDao gdModDao() {
+        return new GdModDao(backend);
     }
 
-    public GDAwardedLevelDao gdAwardedLevelDao() {
-        return new GDAwardedLevelDao(backend);
+    public GdAwardedLevelDao gdAwardedLevelDao() {
+        return new GdAwardedLevelDao(backend);
     }
 }

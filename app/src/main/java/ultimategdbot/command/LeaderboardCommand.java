@@ -22,10 +22,10 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.annotation.Nullable;
 import ultimategdbot.Strings;
-import ultimategdbot.database.GDLeaderboard;
-import ultimategdbot.database.GDLeaderboardBan;
-import ultimategdbot.database.GDLinkedUser;
-import ultimategdbot.database.ImmutableGDLeaderboardBan;
+import ultimategdbot.database.GdLeaderboard;
+import ultimategdbot.database.GdLeaderboardBan;
+import ultimategdbot.database.GdLinkedUser;
+import ultimategdbot.database.ImmutableGdLeaderboardBan;
 import ultimategdbot.service.DatabaseService;
 import ultimategdbot.service.EmojiService;
 import ultimategdbot.service.GDUserService;
@@ -127,8 +127,8 @@ public final class LeaderboardCommand implements Command {
         return embed.build();
     }
 
-    private static List<Long> gdAccIds(List<GDLinkedUser> l) {
-        return l.stream().map(GDLinkedUser::gdUserId).collect(Collectors.toList());
+    private static List<Long> gdAccIds(List<GdLinkedUser> l) {
+        return l.stream().map(GdLinkedUser::gdUserId).collect(Collectors.toList());
     }
 
     private static Flux<Member> getMembers(Guild guild) {
@@ -158,37 +158,37 @@ public final class LeaderboardCommand implements Command {
                                 emoji.get("creator_points") + " Creator Points", ctx.getPrefixUsed(), "cp") + '\n')
                         .then();
             }
-            ToIntFunction<GDLeaderboard> stat;
+            ToIntFunction<GdLeaderboard> stat;
             String statEmoji;
             boolean noBanList;
             switch (args.statName.toLowerCase()) {
                 case "stars":
-                    stat = GDLeaderboard::stars;
+                    stat = GdLeaderboard::stars;
                     statEmoji = emoji.get("star");
                     noBanList = false;
                     break;
                 case "diamonds":
-                    stat = GDLeaderboard::diamonds;
+                    stat = GdLeaderboard::diamonds;
                     statEmoji = emoji.get("diamond");
                     noBanList = false;
                     break;
                 case "ucoins":
-                    stat = GDLeaderboard::userCoins;
+                    stat = GdLeaderboard::userCoins;
                     statEmoji = emoji.get("user_coin");
                     noBanList = false;
                     break;
                 case "scoins":
-                    stat = GDLeaderboard::secretCoins;
+                    stat = GdLeaderboard::secretCoins;
                     statEmoji = emoji.get("secret_coin");
                     noBanList = false;
                     break;
                 case "demons":
-                    stat = GDLeaderboard::demons;
+                    stat = GdLeaderboard::demons;
                     statEmoji = emoji.get("demon");
                     noBanList = false;
                     break;
                 case "cp":
-                    stat = GDLeaderboard::creatorPoints;
+                    stat = GdLeaderboard::creatorPoints;
                     statEmoji = emoji.get("creator_points");
                     noBanList = true;
                     break;
@@ -205,13 +205,13 @@ public final class LeaderboardCommand implements Command {
                                     .flatMap(linkedUsers -> Mono.zip(
                                             db.gdLeaderboardDao().getAllIn(gdAccIds(linkedUsers)).collectList(),
                                             db.gdLeaderboardBanDao().getAllIn(gdAccIds(linkedUsers))
-                                                    .map(GDLeaderboardBan::accountId)
+                                                    .map(GdLeaderboardBan::accountId)
                                                     .collect(Collectors.toUnmodifiableSet()))
                                             .map(function((userStats, bans) -> userStats.stream()
                                                     .filter(u -> noBanList || !bans.contains(u.accountId()))
                                                     .flatMap(u -> linkedUsers.stream()
                                                             .filter(l -> l.gdUserId() == u.accountId())
-                                                            .map(GDLinkedUser::discordUserId)
+                                                            .map(GdLinkedUser::discordUserId)
                                                             .map(members::get)
                                                             .map(tag -> new LeaderboardEntry(
                                                                     stat.applyAsInt(u), u, tag)))
@@ -268,7 +268,7 @@ public final class LeaderboardCommand implements Command {
     private Mono<Void> runBan(CommandContext ctx) {
         return banGrammar.resolve(ctx)
                 .flatMap(args -> db.gdLeaderboardBanDao()
-                        .save(ImmutableGDLeaderboardBan.builder()
+                        .save(ImmutableGdLeaderboardBan.builder()
                                 .accountId(args.gdUser.accountId())
                                 .bannedBy(ctx.author().getId().asLong())
                                 .build())
@@ -324,10 +324,10 @@ public final class LeaderboardCommand implements Command {
 
     private static class LeaderboardEntry implements Comparable<LeaderboardEntry> {
         private final int value;
-        private final GDLeaderboard stats;
+        private final GdLeaderboard stats;
         private final String discordUser;
 
-        public LeaderboardEntry(int value, GDLeaderboard stats, String discordUser) {
+        public LeaderboardEntry(int value, GdLeaderboard stats, String discordUser) {
             this.value = value;
             this.stats = Objects.requireNonNull(stats);
             this.discordUser = Objects.requireNonNull(discordUser);
@@ -337,7 +337,7 @@ public final class LeaderboardCommand implements Command {
             return value;
         }
 
-        public GDLeaderboard getStats() {
+        public GdLeaderboard getStats() {
             return stats;
         }
 

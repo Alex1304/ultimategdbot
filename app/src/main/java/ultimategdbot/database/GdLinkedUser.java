@@ -8,32 +8,22 @@ import org.immutables.criteria.reactor.ReactorReadable;
 import org.immutables.criteria.reactor.ReactorWritable;
 import org.immutables.value.Value;
 
-import java.time.Instant;
+import java.util.Optional;
 
 @Value.Immutable
 @Criteria
 @Criteria.Repository(facets = { ReactorReadable.class, ReactorWritable.class })
-@JsonSerialize(as = ImmutableGDLeaderboard.class)
-@JsonDeserialize(as = ImmutableGDLeaderboard.class)
-public interface GDLeaderboard {
+@JsonSerialize(as = ImmutableGdLinkedUser.class)
+@JsonDeserialize(as = ImmutableGdLinkedUser.class)
+public interface GdLinkedUser {
 
     @Criteria.Id
     @JsonProperty("_id")
-	long accountId();
+	long discordUserId();
 	
-	String name();
+	long gdUserId();
 	
-	int stars();
+	boolean isLinkActivated();
 	
-	int diamonds();
-	
-	int userCoins();
-	
-	int secretCoins();
-	
-	int demons();
-	
-	int creatorPoints();
-	
-	Instant lastRefreshed();
+	Optional<String> confirmationToken();
 }

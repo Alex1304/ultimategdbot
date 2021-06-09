@@ -7,16 +7,16 @@ import reactor.core.publisher.Mono;
 
 import java.time.Instant;
 
-public final class GDAwardedLevelDao {
+public final class GdAwardedLevelDao {
 
-    private final GDAwardedLevelRepository repository;
+    private final GdAwardedLevelRepository repository;
 
-    public GDAwardedLevelDao(Backend backend) {
-        this.repository = new GDAwardedLevelRepository(backend);
+    public GdAwardedLevelDao(Backend backend) {
+        this.repository = new GdAwardedLevelRepository(backend);
     }
 
     public Mono<WriteResult> saveEvent(AwardedAdd event) {
-        return repository.upsert(ImmutableGDAwardedLevel.builder()
+        return repository.upsert(ImmutableGdAwardedLevel.builder()
                 .levelId(event.addedLevel().id())
                 .insertDate(Instant.now())
                 .downloads(event.addedLevel().downloads())

@@ -194,7 +194,7 @@ public final class GDEventService {
         this.modsChannel = config.modsChannelId()
                 .map(v -> RestChannel.create(gateway.rest(), Snowflake.of(v)))
                 .orElse(null);
-        this.crosspostQueue = new CrosspostQueue(tr);
+        this.crosspostQueue = config.crosspost() ? new CrosspostQueue(tr) : null;
         this.publicRandomMessages = config.publicRandomMessages();
         this.dmRandomMessages = config.dmRandomMessages();
         GDEventLoop.builder(gdClient)
@@ -240,7 +240,11 @@ public final class GDEventService {
                 .flatMap(msg -> Mono.justOrEmpty(gdEvent.channel(event))
                         .flatMap(channel -> channel.createMessage(msg.toCreateSpec().asRequest()))
                         .map(data -> new Message(gateway, data)))
-                .doOnNext(msg -> crosspostQueue.submit(msg, event));
+                .doOnNext(msg -> {
+                    if (crosspostQueue != null) {
+                        crosspostQueue.submit(msg, event);
+                    }
+                });
         final var sendDm = gdEvent.recipientAccountId(event)
                 .flatMapMany(db.gdLinkedUserDao()::getDiscordAccountsForGDUser)
                 .flatMap(userId -> gateway.getUserById(Snowflake.of(userId)))

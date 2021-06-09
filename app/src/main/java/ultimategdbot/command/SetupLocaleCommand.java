@@ -23,16 +23,16 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Alias("locale")
-@RdiService
 @SetupEntry
-public class LocaleCommand extends GetSetResetCommand<String> {
+@RdiService
+public class SetupLocaleCommand extends GetSetResetCommand<String> {
 
     private final UltimateGDBotCommandEventProcessor ultimateGDBotCommandEventProcessor;
     private final I18nConfig i18nConfig;
 
     @RdiFactory
-    public LocaleCommand(UltimateGDBotCommandEventProcessor ultimateGDBotCommandEventProcessor,
-                         ConfigContainer configContainer) {
+    public SetupLocaleCommand(UltimateGDBotCommandEventProcessor ultimateGDBotCommandEventProcessor,
+                              ConfigContainer configContainer) {
         this.ultimateGDBotCommandEventProcessor = ultimateGDBotCommandEventProcessor;
         this.i18nConfig = configContainer.get(I18nConfig.class);
     }

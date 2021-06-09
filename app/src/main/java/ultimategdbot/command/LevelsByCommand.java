@@ -5,6 +5,7 @@ import botrino.command.Command;
 import botrino.command.CommandContext;
 import botrino.command.annotation.Alias;
 import botrino.command.annotation.TopLevelCommand;
+import botrino.command.cooldown.Cooldown;
 import botrino.command.doc.CommandDocumentation;
 import botrino.command.doc.FlagInformation;
 import botrino.command.grammar.CommandGrammar;
@@ -14,6 +15,7 @@ import jdash.client.GDClient;
 import jdash.common.entity.GDUserProfile;
 import reactor.core.publisher.Mono;
 import ultimategdbot.Strings;
+import ultimategdbot.service.GDCommandCooldown;
 import ultimategdbot.service.GDLevelService;
 import ultimategdbot.service.GDUserService;
 
@@ -25,13 +27,16 @@ import static ultimategdbot.util.InteractionUtils.writeOnlyIfRefresh;
 @RdiService
 public final class LevelsByCommand implements Command {
 
+    private final GDCommandCooldown commandCooldown;
     private final GDLevelService levelService;
     private final GDClient gdClient;
 
     private final CommandGrammar<Args> grammar;
 
     @RdiFactory
-    public LevelsByCommand(GDLevelService levelService, GDClient gdClient, GDUserService userService) {
+    public LevelsByCommand(GDCommandCooldown commandCooldown, GDLevelService levelService, GDClient gdClient,
+                           GDUserService userService) {
+        this.commandCooldown = commandCooldown;
         this.levelService = levelService;
         this.gdClient = gdClient;
         this.grammar = CommandGrammar.builder()
@@ -61,6 +66,11 @@ public final class LevelsByCommand implements Command {
                         .setDescription(tr.translate(Strings.HELP, "common_flag_refresh"))
                         .build())
                 .build();
+    }
+
+    @Override
+    public Cooldown cooldown() {
+        return commandCooldown.get();
     }
 
     private static final class Args {

@@ -8,7 +8,7 @@ import discord4j.common.util.Snowflake;
 import discord4j.core.object.entity.ApplicationInfo;
 import discord4j.rest.util.Permission;
 import reactor.core.publisher.Mono;
-import ultimategdbot.database.GDMod;
+import ultimategdbot.database.GdMod;
 import ultimategdbot.exception.BotAdminPrivilegeException;
 import ultimategdbot.exception.BotOwnerPrivilegeException;
 import ultimategdbot.exception.ElderModPrivilegeException;
@@ -47,7 +47,7 @@ public final class PrivilegeFactory {
 
     public Privilege elderMod() {
         return botOwner().or(ctx -> db.gdLinkedUserDao().getActiveLink(ctx.author().getId().asLong())
-                .flatMap(linkedUser -> db.gdModDao().get(linkedUser.gdUserId()).map(GDMod::isElder))
+                .flatMap(linkedUser -> db.gdModDao().get(linkedUser.gdUserId()).map(GdMod::isElder))
                 .filter(Boolean::booleanValue)
                 .switchIfEmpty(Mono.error(ElderModPrivilegeException::new))
                 .then(), (a, b) -> b);

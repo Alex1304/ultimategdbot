@@ -8,6 +8,7 @@ import botrino.command.CommandFailedException;
 import botrino.command.CommandService;
 import botrino.command.annotation.Alias;
 import botrino.command.annotation.TopLevelCommand;
+import botrino.command.cooldown.Cooldown;
 import botrino.command.doc.CommandDocumentation;
 import botrino.command.grammar.CommandGrammar;
 import botrino.command.menu.UnexpectedReplyException;
@@ -24,8 +25,9 @@ import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
 import ultimategdbot.Strings;
 import ultimategdbot.config.UltimateGDBotConfig;
-import ultimategdbot.database.GDLinkedUser;
-import ultimategdbot.database.ImmutableGDLinkedUser;
+import ultimategdbot.database.GdLinkedUser;
+import ultimategdbot.database.ImmutableGdLinkedUser;
+import ultimategdbot.service.GDCommandCooldown;
 import ultimategdbot.service.DatabaseService;
 import ultimategdbot.service.EmojiService;
 import ultimategdbot.service.GDUserService;
@@ -44,6 +46,7 @@ public final class AccountCommand implements Command {
 
     private static final int TOKEN_LENGTH = 6;
 
+    private final GDCommandCooldown commandCooldown;
     private final DatabaseService db;
     private final EmojiService emoji;
     private final GDClient gdClient;
@@ -54,8 +57,9 @@ public final class AccountCommand implements Command {
     private final CommandGrammar<LinkArgs> linkGrammar;
 
     @RdiFactory
-    public AccountCommand(DatabaseService db, EmojiService emoji, GDClient gdClient, ConfigContainer configContainer,
-                          GDUserService userService, CommandService commandService) {
+    public AccountCommand(GDCommandCooldown commandCooldown, DatabaseService db, EmojiService emoji, GDClient gdClient,
+                          ConfigContainer configContainer, GDUserService userService, CommandService commandService) {
+        this.commandCooldown = commandCooldown;
         this.db = db;
         this.emoji = emoji;
         this.gdClient = gdClient;
@@ -88,12 +92,12 @@ public final class AccountCommand implements Command {
             }
             final var authorId = ctx.author().getId().asLong();
             return db.gdLinkedUserDao().get(authorId)
-                    .defaultIfEmpty(ImmutableGDLinkedUser.builder()
+                    .defaultIfEmpty(ImmutableGdLinkedUser.builder()
                             .discordUserId(authorId)
                             .gdUserId(gdUser.accountId())
                             .isLinkActivated(false)
                             .build())
-                    .filter(not(GDLinkedUser::isLinkActivated))
+                    .filter(not(GdLinkedUser::isLinkActivated))
                     .switchIfEmpty(Mono.error(new CommandFailedException(
                             ctx.translate(Strings.GD, "error_already_linked"))))
                     .flatMap(linkedUser -> {
@@ -101,7 +105,7 @@ public final class AccountCommand implements Command {
                                 .filter(ct -> linkedUser.gdUserId() == gdUser.accountId())
                                 .orElse(GDUserService.generateAlphanumericToken(TOKEN_LENGTH));
                         return db.gdLinkedUserDao()
-                                .save(ImmutableGDLinkedUser.copyOf(linkedUser)
+                                .save(ImmutableGdLinkedUser.copyOf(linkedUser)
                                         .withGdUserId(gdUser.accountId())
                                         .withConfirmationToken(token))
                                 .thenReturn(token);
@@ -193,6 +197,7 @@ public final class AccountCommand implements Command {
     public Set<Command> subcommands() {
         return Set.of(
                 Command.builder("link", this::runLink)
+                        .inheritFrom(this)
                         .setDocumentation(tr -> CommandDocumentation.builder()
                                 .setSyntax(linkGrammar.toString())
                                 .setDescription(tr.translate(Strings.HELP, "account_link_description"))
@@ -200,11 +205,17 @@ public final class AccountCommand implements Command {
                                 .build())
                         .build(),
                 Command.builder("unlink", this::runUnlink)
+                        .inheritFrom(this)
                         .setDocumentation(tr -> CommandDocumentation.builder()
                                 .setDescription(tr.translate(Strings.HELP, "account_unlink_description"))
                                 .build())
                         .build()
         );
+    }
+
+    @Override
+    public Cooldown cooldown() {
+        return commandCooldown.get();
     }
 
     private static class LinkArgs {

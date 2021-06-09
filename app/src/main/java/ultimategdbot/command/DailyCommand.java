@@ -5,12 +5,14 @@ import botrino.command.Command;
 import botrino.command.CommandContext;
 import botrino.command.annotation.Alias;
 import botrino.command.annotation.TopLevelCommand;
+import botrino.command.cooldown.Cooldown;
 import botrino.command.doc.CommandDocumentation;
 import botrino.command.doc.FlagInformation;
 import com.github.alex1304.rdi.finder.annotation.RdiFactory;
 import com.github.alex1304.rdi.finder.annotation.RdiService;
 import reactor.core.publisher.Mono;
 import ultimategdbot.Strings;
+import ultimategdbot.service.GDCommandCooldown;
 import ultimategdbot.service.GDLevelService;
 
 @CommandCategory(CommandCategory.GD)
@@ -19,10 +21,12 @@ import ultimategdbot.service.GDLevelService;
 @RdiService
 public final class DailyCommand implements Command {
 
+    private final GDCommandCooldown commandCooldown;
     private final GDLevelService levelService;
 
     @RdiFactory
-    public DailyCommand(GDLevelService levelService) {
+    public DailyCommand(GDCommandCooldown commandCooldown, GDLevelService levelService) {
+        this.commandCooldown = commandCooldown;
         this.levelService = levelService;
     }
 
@@ -41,5 +45,10 @@ public final class DailyCommand implements Command {
                         .setDescription(tr.translate(Strings.HELP, "common_flag_refresh"))
                         .build())
                 .build();
+    }
+
+    @Override
+    public Cooldown cooldown() {
+        return commandCooldown.get();
     }
 }

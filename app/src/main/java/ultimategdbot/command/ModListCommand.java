@@ -11,7 +11,7 @@ import com.github.alex1304.rdi.finder.annotation.RdiFactory;
 import com.github.alex1304.rdi.finder.annotation.RdiService;
 import reactor.core.publisher.Mono;
 import ultimategdbot.Strings;
-import ultimategdbot.database.GDMod;
+import ultimategdbot.database.GdMod;
 import ultimategdbot.service.DatabaseService;
 import ultimategdbot.service.EmojiService;
 import ultimategdbot.service.OutputPaginator;
@@ -41,8 +41,8 @@ public final class ModListCommand implements Command {
         return db.gdModDao().getAll().collectList()
                 .flatMap(modList -> paginator.paginate(ctx,
                         modList.stream()
-                                .sorted(Comparator.comparingInt(GDMod::elder).reversed()
-                                        .thenComparing(GDMod::name, String.CASE_INSENSITIVE_ORDER))
+                                .sorted(Comparator.comparingInt(GdMod::elder).reversed()
+                                        .thenComparing(GdMod::name, String.CASE_INSENSITIVE_ORDER))
                                 .map(gdMod -> (gdMod.isElder() ? emoji.get("elder_mod") : emoji.get("mod")) + ' ' +
                                         Markdown.bold(gdMod.name()))
                                 .collect(Collectors.toList()),
