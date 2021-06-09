@@ -16,7 +16,7 @@
         "prefix": "u!"
     },
     "ultimategdbot": {
-        "pagination_max_entries": 20,
+        "pagination_max_entries": 30,
         "emoji_guild_ids": [],
         "gd": {
             "icon_cache_max_size": 2500,

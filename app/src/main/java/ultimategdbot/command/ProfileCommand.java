@@ -15,6 +15,7 @@ import com.github.alex1304.rdi.finder.annotation.RdiService;
 import jdash.client.GDClient;
 import jdash.common.entity.GDUserProfile;
 import reactor.core.publisher.Mono;
+import reactor.util.annotation.Nullable;
 import ultimategdbot.Strings;
 import ultimategdbot.database.GDLinkedUser;
 import ultimategdbot.service.DatabaseService;
@@ -79,6 +80,7 @@ public final class ProfileCommand implements Command {
     }
 
     private static final class Args {
+        @Nullable
         GDUserProfile gdUser;
     }
 }

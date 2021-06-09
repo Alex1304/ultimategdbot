@@ -36,9 +36,9 @@ abstract class AddRemoveListCommand<E> implements Command {
         var docs = documentation(ctx);
         return listFormattedItems(ctx).collectList().flatMap(list -> outputPaginator.paginate(ctx, list,
                 content -> docs.getDescription() + "\n\n" + content + "\n\n" +
-                        ctx.translate(Strings.APP, "usage_item_add", ctx.getPrefixUsed() +
+                        ctx.translate(Strings.GENERAL, "usage_item_add", ctx.getPrefixUsed() +
                                 String.join(" ", ctx.input().getTrigger())) + "\n" +
-                        ctx.translate(Strings.APP, "usage_item_remove", ctx.getPrefixUsed() +
+                        ctx.translate(Strings.GENERAL, "usage_item_remove", ctx.getPrefixUsed() +
                                 String.join(" ", ctx.input().getTrigger()))));
     }
 
@@ -52,7 +52,7 @@ abstract class AddRemoveListCommand<E> implements Command {
                 Command.builder("add", ctx -> grammar.resolve(ctx)
                         .flatMap(args -> add(ctx, (E) args.item)
                                 .then(ctx.channel()
-                                        .createMessage(ctx.translate(Strings.APP, "item_add_success",
+                                        .createMessage(ctx.translate(Strings.GENERAL, "item_add_success",
                                                 formatItem((E) args.item)))
                                         .then())))
                         .inheritFrom(this)
@@ -60,7 +60,7 @@ abstract class AddRemoveListCommand<E> implements Command {
                 Command.builder("remove", ctx -> grammar.resolve(ctx)
                         .flatMap(args -> remove(ctx, (E) args.item)
                                 .then(ctx.channel()
-                                        .createMessage(ctx.translate(Strings.APP, "item_remove_success",
+                                        .createMessage(ctx.translate(Strings.GENERAL, "item_remove_success",
                                                 formatItem((E) args.item)))
                                         .then())))
                         .inheritFrom(this)

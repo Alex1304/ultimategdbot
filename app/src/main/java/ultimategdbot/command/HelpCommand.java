@@ -47,7 +47,7 @@ public final class HelpCommand implements Command {
         var aliases = cmd.aliases().stream().sorted().collect(joining("|"));
         var desc = Optional.of(cmd.documentation(ctx).getDescription())
                 .filter(not(String::isEmpty))
-                .orElseGet(() -> Markdown.italic(ctx.translate(Strings.APP, "no_description")));
+                .orElseGet(() -> Markdown.italic(ctx.translate(Strings.GENERAL, "no_description")));
         var aliasSeq = Stream.concat(parentAliases.stream(), Stream.of(aliases))
                 .collect(Collectors.joining(" "));
         return Markdown.code(ctx.getPrefixUsed() + aliasSeq) + ": " + desc;
@@ -71,7 +71,7 @@ public final class HelpCommand implements Command {
         sb.append(doc.getBody());
         sb.append('\n');
         if (!doc.getFlags().isEmpty()) {
-            sb.append("\n__**").append(ctx.translate(Strings.APP, "flags")).append("**__\n");
+            sb.append("\n__**").append(ctx.translate(Strings.GENERAL, "flags")).append("**__\n");
             for (var flagInfo : doc.getFlags()) {
                 sb.append("`-");
                 sb.append(flagInfo.getValueFormat());
@@ -89,7 +89,7 @@ public final class HelpCommand implements Command {
                 .sorted()
                 .collect(joining("\n"));
         if (!subs.isBlank()) {
-            sb.append("\n__**").append(ctx.translate(Strings.APP, "subcommands")).append("**__\n");
+            sb.append("\n__**").append(ctx.translate(Strings.GENERAL, "subcommands")).append("**__\n");
             sb.append(subs);
         }
         return outputPaginator.paginate(ctx, sb.toString().lines().collect(Collectors.toList()));
@@ -105,7 +105,7 @@ public final class HelpCommand implements Command {
                                 .collect(Collectors.groupingBy(cmd -> {
                                     final var category = cmd.getClass().getAnnotation(CommandCategory.class);
                                     return category != null ? category.value()
-                                            : ctx.translate(Strings.APP, "unknown");
+                                            : ctx.translate(Strings.GENERAL, "unknown");
                                 }))
                                 .entrySet()
                                 .stream()
@@ -115,7 +115,7 @@ public final class HelpCommand implements Command {
                                                 .map(cmd -> formatCommandEntry(cmd, ctx, List.of()))
                                                 .sorted()))
                                 .collect(Collectors.toList()),
-                        content -> ctx.translate(Strings.APP, "help_intro", ctx.getPrefixUsed()) + "\n" + content);
+                        content -> ctx.translate(Strings.GENERAL, "help_intro", ctx.getPrefixUsed()) + "\n" + content);
             }
             // Send documentation for specific command
             var alias = args.command.get(0);
@@ -123,7 +123,7 @@ public final class HelpCommand implements Command {
             var cmdFound = commandService.getCommandAt(alias, subcommands.toArray(new String[0]));
             return cmdFound.map(cmd -> buildMessage(cmd, ctx, alias, subcommands))
                     .orElseGet(() -> Mono.error(new CommandFailedException(
-                            ctx.translate(Strings.APP, "command_not_found"))));
+                            ctx.translate(Strings.GENERAL, "command_not_found"))));
         }).then();
     }
 

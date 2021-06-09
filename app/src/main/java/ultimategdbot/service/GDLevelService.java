@@ -80,8 +80,8 @@ public final class GDLevelService {
         if (i == 1) {
             embed.description(italic(ctx.translate(Strings.GD, "no_results")));
         }
-        embed.addField(ctx.translate(Strings.APP, "page_x", page + 1, "??"),
-                ctx.translate(Strings.APP, "page_instructions") + '\n'
+        embed.addField(ctx.translate(Strings.GENERAL, "page_x", page + 1, "??"),
+                ctx.translate(Strings.GENERAL, "page_instructions") + '\n'
                         + ctx.translate(Strings.GD, "select_result"), false);
         return embed.build();
     }
@@ -109,7 +109,7 @@ public final class GDLevelService {
                         }
                         objCount += level.objectCount();
                     } else {
-                        objCount += italic(ctx.translate(Strings.APP, "unknown"));
+                        objCount += italic(ctx.translate(Strings.GENERAL, "unknown"));
                     }
                     objCount += '\n';
                     final var extraInfo = new StringBuilder();
@@ -124,7 +124,7 @@ public final class GDLevelService {
                     if (level.copyPasscode().isEmpty() && level.isCopyable()) {
                         pass = ctx.translate(Strings.GD, "free_to_copy");
                     } else if (level.copyPasscode().isEmpty()) {
-                        pass = ctx.translate(Strings.APP, "no");
+                        pass = ctx.translate(Strings.GENERAL, "no");
                     } else {
                         pass = ctx.translate(Strings.GD, "protected_copyable", emoji.get("lock"),
                                 String.format("%06d", level.copyPasscode().orElseThrow()));
@@ -132,9 +132,9 @@ public final class GDLevelService {
                     extraInfo.append(bold(ctx.translate(Strings.GD, "label_copyable"))).append(' ')
                             .append(pass).append('\n');
                     extraInfo.append(bold(ctx.translate(Strings.GD, "label_uploaded"))).append(' ')
-                            .append(ctx.translate(Strings.APP, "ago", level.uploadedAgo())).append('\n');
+                            .append(ctx.translate(Strings.GENERAL, "ago", level.uploadedAgo())).append('\n');
                     extraInfo.append(bold(ctx.translate(Strings.GD, "label_last_updated"))).append(' ')
-                            .append(ctx.translate(Strings.APP, "ago", level.updatedAgo())).append('\n');
+                            .append(ctx.translate(Strings.GENERAL, "ago", level.updatedAgo())).append('\n');
                     if (level.originalLevelId().orElse(0L) > 0) {
                         extraInfo.append(emoji.get("copy")).append(' ')
                                 .append(bold(ctx.translate(Strings.GD, "label_original"))).append(' ')
@@ -159,7 +159,7 @@ public final class GDLevelService {
                     embed.author(type.getAuthorName(tr), null, type.getAuthorIconUrl());
                     embed.thumbnail(getDifficultyImageForLevel(level));
                     final var title =
-                            emoji.get("play") + "__" + level.name() + "__ by " + level.creatorName().orElse("-") +
+                            emoji.get("play") + "  __" + level.name() + "__ by " + level.creatorName().orElse("-") +
                             (level.originalLevelId().orElse(0L) > 0 ? ' ' + emoji.get("copy") : "") +
                             (level.objectCount() > 40_000 ? ' ' + emoji.get("object_overflow") : "");
                     final var coins = formatCoins(tr, level);

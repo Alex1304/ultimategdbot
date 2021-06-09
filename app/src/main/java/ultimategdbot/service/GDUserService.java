@@ -134,7 +134,7 @@ public final class GDUserService {
                                                     : "[@" + gdUser.twitter() + "](https://www.twitter.com/" +
                                                     gdUser.twitter() + ')') +
                                             infoEntry("discord", "Discord:", linkedAccounts.isEmpty()
-                                                    ? italic(tr.translate(Strings.APP, "unknown"))
+                                                    ? italic(tr.translate(Strings.GENERAL, "unknown"))
                                                     : linkedAccounts.stream().map(User::getTag)
                                                     .collect(Collectors.joining(", "))) +
                                             "\n───────────\n" +
@@ -153,6 +153,8 @@ public final class GDUserService {
                     } else {
                         embed.addField(":warning: " + tr.translate(Strings.GD, "icon_set_fail"), icons, false);
                     }
+                    embed.footer(tr.translate(Strings.GD, "label_player_id") + ' ' + gdUser.playerId() + " | "
+                            + tr.translate(Strings.GD, "label_account_id") + ' ' + gdUser.accountId(), null);
                     return MessageTemplate.builder().setEmbed(embed.build()).build();
                 }));
     }

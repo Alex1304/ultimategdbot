@@ -7,6 +7,7 @@ import botrino.command.CommandContext;
 import botrino.command.annotation.Alias;
 import botrino.command.annotation.TopLevelCommand;
 import com.sun.management.GarbageCollectionNotificationInfo;
+import discord4j.core.spec.EmbedCreateSpec;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
@@ -39,16 +40,18 @@ public final class RuntimeCommand implements Command {
                         memory(ctx),
                         shardInfo(ctx))
                         .flatMap(Function.identity())
-                        .flatMap(embedFields -> ctx.channel().createMessage(spec -> spec.setEmbed(embed -> {
+                        .flatMap(embedFields -> {
+                            final var embed = EmbedCreateSpec.builder();
                             embedFields.forEach(field -> embed.addField(field.title, field.content, false));
-                            embed.setTimestamp(Instant.now());
-                        }))))
+                            embed.timestamp(Instant.now());
+                            return ctx.channel().createEmbed(embed.build());
+                        }))
                 .then();
     }
 
     private static Mono<EmbedField> uptime(Translator tr) {
-        return Mono.just(new EmbedField(tr.translate(Strings.APP, "uptime"),
-                tr.translate(Strings.APP, "uptime_value", DurationUtils.format(
+        return Mono.just(new EmbedField(tr.translate(Strings.GENERAL, "uptime"),
+                tr.translate(Strings.GENERAL, "uptime_value", DurationUtils.format(
                         Duration.ofMillis(ManagementFactory.getRuntimeMXBean().getUptime()).withNanos(0)))));
     }
 
@@ -58,25 +61,25 @@ public final class RuntimeCommand implements Command {
                     var total = memStats.totalMemory;
                     var max = memStats.maxMemory;
                     var used = memStats.usedMemory;
-                    var str = ctx.translate(Strings.APP, "max_ram") + ' ' + SystemUnit.format(max) + "\n" +
-                            ctx.translate(Strings.APP, "jvm_size") + ' ' + SystemUnit.format(total) +
+                    var str = ctx.translate(Strings.GENERAL, "max_ram") + ' ' + SystemUnit.format(max) + "\n" +
+                            ctx.translate(Strings.GENERAL, "jvm_size") + ' ' + SystemUnit.format(total) +
                             " (" + String.format("%.2f", total * 100 / (double) max) + "%)\n" +
-                            ctx.translate(Strings.APP, "gc_run") + ' ' +
+                            ctx.translate(Strings.GENERAL, "gc_run") + ' ' +
                             memStats.elapsedSinceLastGC()
-                                    .map(t -> ctx.translate(Strings.APP, "ago", DurationUtils.format(t)))
+                                    .map(t -> ctx.translate(Strings.GENERAL, "ago", DurationUtils.format(t)))
                                     .orElse("N/A") +
                             "\n" +
-                            ctx.translate(Strings.APP, "ram_after_gc") + ' ' + SystemUnit.format(used) +
+                            ctx.translate(Strings.GENERAL, "ram_after_gc") + ' ' + SystemUnit.format(used) +
                             " (" + String.format("%.2f", used * 100 / (double) max) + "%)\n";
-                    return new EmbedField(ctx.translate(Strings.APP, "memory_usage"), str);
+                    return new EmbedField(ctx.translate(Strings.GENERAL, "memory_usage"), str);
                 });
     }
 
     private static Mono<EmbedField> shardInfo(CommandContext ctx) {
         var shardInfo = ctx.event().getShardInfo();
-        return Mono.just(new EmbedField(ctx.translate(Strings.APP, "gateway_sharding_info"),
-                ctx.translate(Strings.APP, "shard_index", shardInfo.getIndex()) + '\n'
-                        + ctx.translate(Strings.APP, "shard_count", shardInfo.getCount())));
+        return Mono.just(new EmbedField(ctx.translate(Strings.GENERAL, "gateway_sharding_info"),
+                ctx.translate(Strings.GENERAL, "shard_index", shardInfo.getIndex()) + '\n'
+                        + ctx.translate(Strings.GENERAL, "shard_count", shardInfo.getCount())));
     }
 
     private static class EmbedField {

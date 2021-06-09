@@ -21,21 +21,21 @@ import static reactor.function.TupleUtils.function;
 public final class PingCommand implements Command {
 
     private static String computeLatency(Translator tr, MessageCreateEvent event, long apiLatency) {
-        return tr.translate(Strings.APP, "pong") + '\n'
-                + tr.translate(Strings.APP, "api_latency") + ' ' + DurationUtils.format(Duration.ofMillis(apiLatency)) + "\n"
-                + tr.translate(Strings.APP, "gateway_latency") + ' ' + event.getClient()
+        return tr.translate(Strings.GENERAL, "pong") + '\n'
+                + tr.translate(Strings.GENERAL, "api_latency") + ' ' + DurationUtils.format(Duration.ofMillis(apiLatency)) + "\n"
+                + tr.translate(Strings.GENERAL, "gateway_latency") + ' ' + event.getClient()
                 .getGatewayClient(event.getShardInfo().getIndex())
                 .map(GatewayClient::getResponseTime)
                 .map(DurationUtils::format)
-                .orElse(tr.translate(Strings.APP, "unknown"));
+                .orElse(tr.translate(Strings.GENERAL, "unknown"));
     }
 
     @Override
     public Mono<Void> run(CommandContext ctx) {
-        return ctx.channel().createMessage(ctx.translate(Strings.APP, "pong"))
+        return ctx.channel().createMessage(ctx.translate(Strings.GENERAL, "pong"))
                 .elapsed()
-                .flatMap(function((apiLatency, message) -> message.edit(
-                        spec -> spec.setContent(computeLatency(ctx, ctx.event(), apiLatency)))))
+                .flatMap(function((apiLatency, message) -> message.edit()
+                        .withContentOrNull(computeLatency(ctx, ctx.event(), apiLatency))))
                 .then();
     }
 }

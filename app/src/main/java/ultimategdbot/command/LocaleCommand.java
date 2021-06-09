@@ -57,8 +57,8 @@ public class LocaleCommand extends GetSetResetCommand<String> {
         final var locale = value == null ? null : Locale.forLanguageTag(value);
         if (value != null && !i18nConfig.supportedLocales().contains(value)) {
             return Mono.error(new CommandFailedException(
-                    ctx.translate(Strings.APP, "error_unsupported_locale") + ' ' +
-                            ctx.translate(Strings.APP, "supported_locales", listLocales())));
+                    ctx.translate(Strings.GENERAL, "error_unsupported_locale") + ' ' +
+                            ctx.translate(Strings.GENERAL, "supported_locales", listLocales())));
         }
         return ultimateGDBotCommandEventProcessor.changeLocaleForGuild(guildId, locale);
     }
@@ -67,7 +67,7 @@ public class LocaleCommand extends GetSetResetCommand<String> {
     public CommandDocumentation documentation(Translator tr) {
         return CommandDocumentation.builder()
                 .setDescription(tr.translate(Strings.HELP, "locale_description") + ' ' +
-                        tr.translate(Strings.APP, "supported_locales", listLocales()))
+                        tr.translate(Strings.GENERAL, "supported_locales", listLocales()))
                 .build();
     }
 

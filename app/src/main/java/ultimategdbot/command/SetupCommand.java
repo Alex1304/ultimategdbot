@@ -41,7 +41,7 @@ public class SetupCommand implements Command {
     @Override
     public Mono<Void> run(CommandContext ctx) {
         return outputPaginator.paginate(ctx, listFormattedEntries(ctx),
-                content -> ctx.translate(Strings.APP, "setup_intro") + "\n\n" + content);
+                content -> ctx.translate(Strings.GENERAL, "setup_intro") + "\n\n" + content);
     }
 
     private List<String> listFormattedEntries(CommandContext ctx) {

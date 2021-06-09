@@ -20,6 +20,10 @@ public interface GDMod {
 	long accountId();
 	
 	String name();
+
+	int elder();
 	
-	boolean isElder();
+	default boolean isElder() {
+	    return elder() > 0;
+    }
 }

@@ -18,7 +18,7 @@ public interface UltimateGDBotConfig {
     @Value.Default
     @JsonProperty("pagination_max_entries")
     default int paginationMaxEntries() {
-        return 20;
+        return 30;
     }
 
     @Value.Default

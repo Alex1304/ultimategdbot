@@ -79,7 +79,7 @@ public final class ModWaveCommand implements Command {
                                     .save(ImmutableGDMod.builder()
                                             .accountId(user.accountId())
                                             .name(user.name())
-                                            .isElder(isElder)
+                                            .elder(isElder ? 1 : 0)
                                             .build())
                                     .then(Mono.empty());
                         }))
@@ -92,10 +92,10 @@ public final class ModWaveCommand implements Command {
                             final var newGdMod = ImmutableGDMod.builder().from(gdMod);
                             if(user.role().map(Role.MODERATOR::equals).orElse(false) && gdMod.isElder()) {
                                 eventProducer.submit(ImmutableModStatusUpdate.of(user, DEMOTED_FROM_ELDER));
-                                newGdMod.isElder(false);
+                                newGdMod.elder(0);
                             } else if (user.role().map(Role.ELDER_MODERATOR::equals).orElse(false) && !gdMod.isElder()) {
                                 eventProducer.submit(ImmutableModStatusUpdate.of(user, PROMOTED_TO_ELDER));
-                                newGdMod.isElder(true);
+                                newGdMod.elder(1);
                             }
                             newGdMod.name(user.name());
                             return db.gdModDao().save(newGdMod.build());

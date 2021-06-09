@@ -31,7 +31,7 @@ public final class OutputPaginator {
 
     public Mono<Void> paginate(CommandContext ctx, List<String> list, UnaryOperator<String> contentTransformer) {
         if (list.isEmpty()) {
-            return ctx.channel().createMessage(contentTransformer.apply(ctx.translate(Strings.APP, "no_data"))).then();
+            return ctx.channel().createMessage(contentTransformer.apply(ctx.translate(Strings.GENERAL, "no_data"))).then();
         }
         if (list.size() <= paginationMaxEntries) {
             return ctx.channel()
@@ -47,8 +47,8 @@ public final class OutputPaginator {
                                     String.join("\n", list.subList(page * paginationMaxEntries,
                                             Math.min(list.size(), (page + 1) * paginationMaxEntries)))))
                             .setEmbed(EmbedCreateSpec.create().withFields(Field.of(
-                                    ctx.translate(Strings.APP,"page_x", (page + 1), (maxPage + 1)),
-                                    ctx.translate(Strings.APP,"page_instructions"), false)))
+                                    ctx.translate(Strings.GENERAL,"page_x", (page + 1), (maxPage + 1)),
+                                    ctx.translate(Strings.GENERAL,"page_instructions"), false)))
                             .build());
                 })
                 .open(ctx)

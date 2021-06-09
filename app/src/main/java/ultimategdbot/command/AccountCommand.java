@@ -76,7 +76,7 @@ public final class AccountCommand implements Command {
                 .defaultIfEmpty(Tuples.of(false, ctx.translate(Strings.GD, "not_yet_linked")))
                 .flatMap(function((isLinked, message) -> ctx.channel()
                         .createMessage(ctx.translate(Strings.GD, "link_intro") + "\n\n" + message + "\n" +
-                                (isLinked ? ctx.translate(Strings.GD, "how_to_unlink", ctx.getPrefixUsed())
+                                (isLinked ? ctx.translate(Strings.GD, "how_to_link", ctx.getPrefixUsed())
                                         : ctx.translate(Strings.GD, "how_to_unlink", ctx.getPrefixUsed())))))
                 .then();
     }

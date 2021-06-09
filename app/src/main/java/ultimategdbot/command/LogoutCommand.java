@@ -26,7 +26,7 @@ public final class LogoutCommand implements Command {
 
     @Override
     public Mono<Void> run(CommandContext ctx) {
-        return ctx.channel().createMessage(ctx.translate(Strings.APP, "disconnecting"))
+        return ctx.channel().createMessage(ctx.translate(Strings.GENERAL, "disconnecting"))
                 .then(ctx.event().getClient().logout());
     }
 

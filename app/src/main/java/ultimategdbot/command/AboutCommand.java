@@ -42,8 +42,8 @@ public final class AboutCommand implements Command {
 
     private static Mono<String> version(Translator tr, Mono<Properties> props) {
         return props.map(p -> Optional.ofNullable(p.getProperty(GitProperties.APPLICATION_VERSION))
-                .orElse("*" + tr.translate(Strings.APP, "unknown") + "*"))
-                .defaultIfEmpty("*" + tr.translate(Strings.APP, "unknown") + "*");
+                .orElse("*" + tr.translate(Strings.GENERAL, "unknown") + "*"))
+                .defaultIfEmpty("*" + tr.translate(Strings.GENERAL, "unknown") + "*");
     }
 
     @Override
@@ -54,16 +54,16 @@ public final class AboutCommand implements Command {
                 ctx.event().getClient().getGuilds().count())
                 .map(function((d4jVersion, apiVersion, self, guildCount) -> {
                     var versionInfoBuilder = new StringBuilder("**")
-                            .append(ctx.translate(Strings.APP, "ugdb_version"))
+                            .append(ctx.translate(Strings.GENERAL, "ugdb_version"))
                             .append("** ");
                     versionInfoBuilder.append(apiVersion).append("\n");
                     versionInfoBuilder.append("**");
-                    versionInfoBuilder.append(ctx.translate(Strings.APP, "d4j_version"));
+                    versionInfoBuilder.append(ctx.translate(Strings.GENERAL, "d4j_version"));
                     versionInfoBuilder.append("** ")
                             .append(d4jVersion)
                             .append("\n");
                     versionInfoBuilder.append("**");
-                    versionInfoBuilder.append(ctx.translate(Strings.APP, "botrino_version"));
+                    versionInfoBuilder.append(ctx.translate(Strings.GENERAL, "botrino_version"));
                     versionInfoBuilder.append("** ")
                             .append(Botrino.API_VERSION)
                             .append("\n");

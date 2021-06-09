@@ -120,8 +120,8 @@ public final class LeaderboardCommand implements Command {
         embed.addField("───────────",
                 tr.translate(Strings.GD, "lb_account_notice", prefix), false);
         if (maxPage > 0) {
-            embed.addField(tr.translate(Strings.APP, "page_x", page + 1, maxPage + 1),
-                    tr.translate(Strings.APP, "page_instructions") + '\n' +
+            embed.addField(tr.translate(Strings.GENERAL, "page_x", page + 1, maxPage + 1),
+                    tr.translate(Strings.GENERAL, "page_instructions") + '\n' +
                             tr.translate(Strings.GD, "lb_jump_to_user"), false);
         }
         return embed.build();
