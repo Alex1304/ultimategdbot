@@ -15,6 +15,8 @@ import discord4j.core.object.entity.User;
 import discord4j.rest.http.client.ClientException;
 import jdash.client.exception.GDClientException;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.Sinks;
+import reactor.retry.RetryExhaustedException;
 import ultimategdbot.Strings;
 import ultimategdbot.exception.BotAdminPrivilegeException;
 import ultimategdbot.exception.BotOwnerPrivilegeException;
@@ -74,8 +76,13 @@ public class UltimateGDBotCommandErrorHandler implements CommandErrorHandler {
     @Override
     public Mono<Void> handleDefault(Throwable t, CommandContext ctx) {
         return MatcherFunction.<Mono<Void>>create()
-                .matchType(GDClientException.class, e -> sendErrorMessage(ctx,
-                        ctx.translate(Strings.GD, "error_server", e.getCause().getMessage())))
+                .matchType(GDClientException.class, e -> sendErrorMessage(ctx, MatcherFunction.<String>create()
+                        .matchType(Sinks.EmissionException.class, __ ->
+                                ctx.translate(Strings.GD, "error_queue_full"))
+                        .matchType(RetryExhaustedException.class, __ ->
+                                ctx.translate(Strings.GD, "error_retry_exhausted"))
+                        .apply(e.getCause())
+                        .orElse(ctx.translate(Strings.GD, "error_server", e.getCause().getMessage()))))
                 .matchType(ClientException.class, ClientException.isStatusCode(403), e -> ctx.author()
                         .getPrivateChannel()
                         .flatMap(channel -> channel.createMessage(
