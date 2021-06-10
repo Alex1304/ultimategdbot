@@ -88,10 +88,15 @@ public class UltimateGDBotCommandErrorHandler implements CommandErrorHandler {
                         .flatMap(channel -> channel.createMessage(
                                 ctx.translate(Strings.GENERAL, "dm_missing_permissions",
                                         ctx.channel().getMention())))
+                        .onErrorResume(__ -> Mono.empty())
                         .then())
                 .apply(t)
-                .orElse(sendCrashReport(ctx, t))
-                .then(Mono.error(t));
+                .orElse(sendCrashReport(ctx, t)
+                        .onErrorMap(e -> {
+                            t.addSuppressed(e);
+                            return t;
+                        })
+                        .then(Mono.error(t)));
     }
 
     @Override

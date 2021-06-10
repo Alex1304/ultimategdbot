@@ -3,7 +3,6 @@ package ultimategdbot.config;
 import botrino.api.annotation.ConfigEntry;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import jdash.client.request.GDRequests;
 import org.immutables.value.Value;
 
 import java.util.List;
@@ -15,32 +14,23 @@ import java.util.Set;
 @JsonDeserialize(as = ImmutableUltimateGDBotConfig.class)
 public interface UltimateGDBotConfig {
 
-    @Value.Default
     @JsonProperty("pagination_max_entries")
-    default int paginationMaxEntries() {
-        return 30;
-    }
+    int paginationMaxEntries();
 
-    @Value.Default
     @JsonProperty("emoji_guild_ids")
-    default Set<Long> emojiGuildIds() {
-        return Set.of();
-    }
-
-    GD gd();
+    Set<Long> emojiGuildIds();
 
     @JsonProperty("command_cooldown")
     Optional<Limiter> commandCooldown();
+
+    GD gd();
 
     @Value.Immutable
     @JsonDeserialize(as = ImmutableGD.class)
     interface GD {
 
-        @Value.Default
         @JsonProperty("icon_cache_max_size")
-        default int iconCacheMaxSize() {
-            return 2500;
-        }
+        int iconCacheMaxSize();
 
         @JsonProperty("icon_channel_id")
         Optional<Long> iconChannelId();
@@ -57,22 +47,13 @@ public interface UltimateGDBotConfig {
 
             String password();
 
-            @Value.Default
-            default String host() {
-                return GDRequests.BASE_URL;
-            }
+            String host();
 
-            @Value.Default
             @JsonProperty("cache_ttl_seconds")
-            default int cacheTtlSeconds() {
-                return 900;
-            }
+            int cacheTtlSeconds();
 
-            @Value.Default
             @JsonProperty("request_timeout_seconds")
-            default int requestTimeoutSeconds() {
-                return 0;
-            }
+            int requestTimeoutSeconds();
 
             @JsonProperty("request_limiter")
             Optional<Limiter> requestLimiter();
@@ -82,28 +63,16 @@ public interface UltimateGDBotConfig {
         @JsonDeserialize(as = ImmutableEvents.class)
         interface Events {
 
-            @Value.Default
             @JsonProperty("event_loop_interval_seconds")
-            default int eventLoopIntervalSeconds() {
-                return 60;
-            }
+            int eventLoopIntervalSeconds();
 
-            @Value.Default
-            default boolean crosspost() {
-                return true;
-            }
+            boolean crosspost();
 
-            @Value.Default
             @JsonProperty("rates_channel_ids")
-            default List<Long> ratesChannelIds() {
-                return List.of();
-            }
+            Set<Long> ratesChannelIds();
 
-            @Value.Default
             @JsonProperty("demons_channel_ids")
-            default List<Long> demonsChannelIds() {
-                return List.of();
-            }
+            Set<Long> demonsChannelIds();
 
             @JsonProperty("timely_channel_id")
             Optional<Long> timelyChannelId();
@@ -121,25 +90,19 @@ public interface UltimateGDBotConfig {
             @JsonDeserialize(as = ImmutableRandomMessages.class)
             interface RandomMessages {
 
-                @JsonProperty("rates")
                 List<String> rates();
 
-                @JsonProperty("unrates")
                 List<String> unrates();
 
-                @JsonProperty("daily")
                 List<String> daily();
 
-                @JsonProperty("weekly")
                 List<String> weekly();
 
-                @JsonProperty("mod")
                 List<String> mod();
 
                 @JsonProperty("elder_mod")
                 List<String> elderMod();
 
-                @JsonProperty("unmod")
                 List<String> unmod();
 
                 @JsonProperty("elder_unmod")
