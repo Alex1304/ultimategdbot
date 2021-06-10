@@ -1,10 +1,12 @@
 package ultimategdbot.command;
 
+import botrino.api.i18n.Translator;
 import botrino.api.util.Markdown;
 import botrino.command.Command;
 import botrino.command.CommandContext;
 import botrino.command.Scope;
 import botrino.command.annotation.Alias;
+import botrino.command.doc.CommandDocumentation;
 import botrino.command.privilege.Privilege;
 import com.github.alex1304.rdi.finder.annotation.RdiFactory;
 import com.github.alex1304.rdi.finder.annotation.RdiService;
@@ -50,6 +52,13 @@ public class SetupCommand implements Command {
                         String.join("|", command.aliases())) +": " + command.documentation(ctx).getDescription())
                 .sorted()
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public CommandDocumentation documentation(Translator tr) {
+        return CommandDocumentation.builder()
+                .setDescription(tr.translate(Strings.HELP, "setup_description"))
+                .build();
     }
 
     @Override

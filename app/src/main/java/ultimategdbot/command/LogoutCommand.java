@@ -1,9 +1,11 @@
 package ultimategdbot.command;
 
+import botrino.api.i18n.Translator;
 import botrino.command.Command;
 import botrino.command.CommandContext;
 import botrino.command.annotation.Alias;
 import botrino.command.annotation.TopLevelCommand;
+import botrino.command.doc.CommandDocumentation;
 import botrino.command.privilege.Privilege;
 import com.github.alex1304.rdi.finder.annotation.RdiFactory;
 import com.github.alex1304.rdi.finder.annotation.RdiService;
@@ -33,5 +35,12 @@ public final class LogoutCommand implements Command {
     @Override
     public Privilege privilege() {
         return privilegeFactory.botOwner();
+    }
+
+    @Override
+    public CommandDocumentation documentation(Translator tr) {
+        return CommandDocumentation.builder()
+                .setDescription(tr.translate(Strings.HELP, "logout_description"))
+                .build();
     }
 }

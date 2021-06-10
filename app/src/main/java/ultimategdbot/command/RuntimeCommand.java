@@ -6,6 +6,7 @@ import botrino.command.Command;
 import botrino.command.CommandContext;
 import botrino.command.annotation.Alias;
 import botrino.command.annotation.TopLevelCommand;
+import botrino.command.doc.CommandDocumentation;
 import com.sun.management.GarbageCollectionNotificationInfo;
 import discord4j.core.spec.EmbedCreateSpec;
 import reactor.core.publisher.Flux;
@@ -47,6 +48,13 @@ public final class RuntimeCommand implements Command {
                             return ctx.channel().createEmbed(embed.build());
                         }))
                 .then();
+    }
+
+    @Override
+    public CommandDocumentation documentation(Translator tr) {
+        return CommandDocumentation.builder()
+                .setDescription(tr.translate(Strings.HELP, "runtime_description"))
+                .build();
     }
 
     private static Mono<EmbedField> uptime(Translator tr) {

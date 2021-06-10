@@ -48,7 +48,7 @@ public class SetupPrefixCommand extends GetSetResetCommand<String> {
     @Override
     public CommandDocumentation documentation(Translator tr) {
         return CommandDocumentation.builder()
-                .setDescription(tr.translate(Strings.HELP, "prefix_description"))
+                .setDescription(tr.translate(Strings.HELP, "setup_prefix_description"))
                 .build();
     }
 

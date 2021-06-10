@@ -66,7 +66,7 @@ public class SetupLocaleCommand extends GetSetResetCommand<String> {
     @Override
     public CommandDocumentation documentation(Translator tr) {
         return CommandDocumentation.builder()
-                .setDescription(tr.translate(Strings.HELP, "locale_description") + ' ' +
+                .setDescription(tr.translate(Strings.HELP, "setup_locale_description") + ' ' +
                         tr.translate(Strings.GENERAL, "supported_locales", listLocales()))
                 .build();
     }

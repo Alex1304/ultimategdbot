@@ -6,6 +6,7 @@ import botrino.command.Command;
 import botrino.command.CommandContext;
 import botrino.command.annotation.Alias;
 import botrino.command.annotation.TopLevelCommand;
+import botrino.command.doc.CommandDocumentation;
 import com.github.alex1304.rdi.finder.annotation.RdiFactory;
 import com.github.alex1304.rdi.finder.annotation.RdiService;
 import discord4j.common.GitProperties;
@@ -78,5 +79,12 @@ public final class AboutCommand implements Command {
                 }))
                 .flatMap(ctx.channel()::createMessage)
                 .then();
+    }
+
+    @Override
+    public CommandDocumentation documentation(Translator tr) {
+        return CommandDocumentation.builder()
+                .setDescription(tr.translate(Strings.HELP, "about_description"))
+                .build();
     }
 }

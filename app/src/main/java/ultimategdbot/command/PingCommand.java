@@ -6,6 +6,7 @@ import botrino.command.Command;
 import botrino.command.CommandContext;
 import botrino.command.annotation.Alias;
 import botrino.command.annotation.TopLevelCommand;
+import botrino.command.doc.CommandDocumentation;
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.gateway.GatewayClient;
 import reactor.core.publisher.Mono;
@@ -37,5 +38,12 @@ public final class PingCommand implements Command {
                 .flatMap(function((apiLatency, message) -> message.edit()
                         .withContentOrNull(computeLatency(ctx, ctx.event(), apiLatency))))
                 .then();
+    }
+
+    @Override
+    public CommandDocumentation documentation(Translator tr) {
+        return CommandDocumentation.builder()
+                .setDescription(tr.translate(Strings.HELP, "ping_description"))
+                .build();
     }
 }
