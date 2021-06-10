@@ -16,8 +16,10 @@ import jdash.client.exception.ActionFailedException;
 import jdash.client.exception.GDClientException;
 import jdash.client.request.GDRequests;
 import jdash.common.entity.GDLevel;
+import jdash.common.entity.GDTimelyInfo;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.annotation.Nullable;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 import ultimategdbot.Strings;
@@ -86,13 +88,15 @@ public final class GDLevelService {
         return embed.build();
     }
 
-    public Mono<EmbedCreateSpec> detailedEmbed(CommandContext ctx, long levelId, String creatorName, EmbedType type) {
+    public Mono<EmbedCreateSpec> detailedEmbed(CommandContext ctx, long levelId, String creatorName, EmbedType type,
+                                               @Nullable GDTimelyInfo timelyInfo) {
         final var gdClient = writeOnlyIfRefresh(ctx, this.gdClient);
         return gdClient.downloadLevel(levelId)
                 .zipWhen(level -> extractSongParts(ctx, level))
                 .map(function((level, songParts) -> {
                     final var embed = EmbedCreateSpec.builder();
-                    embed.author(type.getAuthorName(ctx), null, type.getAuthorIconUrl());
+                    final var suffix = timelyInfo != null ? " #" + timelyInfo.number() : "";
+                    embed.author(type.getAuthorName(ctx) + suffix, null, type.getAuthorIconUrl());
                     embed.thumbnail(getDifficultyImageForLevel(level));
                     final var title = emoji.get("play") + "  __" + level.name() + "__ by " +
                             level.creatorName().orElse(creatorName);
@@ -152,11 +156,13 @@ public final class GDLevelService {
                 }));
     }
 
-    public Mono<EmbedCreateSpec> compactEmbed(Translator tr, GDLevel level, EmbedType type) {
+    public Mono<EmbedCreateSpec> compactEmbed(Translator tr, GDLevel level, EmbedType type,
+                                              @Nullable GDTimelyInfo timelyInfo) {
         return extractSongParts(tr, level).map(Tuple2::getT1)
                 .map(songInfo -> {
                     final var embed = EmbedCreateSpec.builder();
-                    embed.author(type.getAuthorName(tr), null, type.getAuthorIconUrl());
+                    final var suffix = timelyInfo != null ? " #" + timelyInfo.number() : "";
+                    embed.author(type.getAuthorName(tr) + suffix, null, type.getAuthorIconUrl());
                     embed.thumbnail(getDifficultyImageForLevel(level));
                     final var title =
                             emoji.get("play") + "  __" + level.name() + "__ by " + level.creatorName().orElse("-") +
@@ -203,7 +209,7 @@ public final class GDLevelService {
     }
 
     private Mono<Void> sendSelectedSearchResult(CommandContext ctx, GDLevel level, boolean withCloseOption) {
-        return detailedEmbed(ctx, level.id(), level.creatorName().orElse("-"), EmbedType.LEVEL_SEARCH_RESULT)
+        return detailedEmbed(ctx, level.id(), level.creatorName().orElse("-"), EmbedType.LEVEL_SEARCH_RESULT, null)
                 .flatMap(embed -> !withCloseOption ? ctx.channel().createEmbed(embed).then()
                         : commandService.interactiveMenuFactory().create(MessageCreateSpec.create().withEmbed(embed))
                         .addReactionItem(commandService.interactiveMenuFactory()
@@ -220,7 +226,7 @@ public final class GDLevelService {
         final var downloadId = isWeekly ? -2 : -1;
         final var type = isWeekly ? EmbedType.WEEKLY_DEMON : EmbedType.DAILY_LEVEL;
         return timelyMono
-                .flatMap(timely -> detailedEmbed(ctx, downloadId, "-", type)
+                .flatMap(timely -> detailedEmbed(ctx, downloadId, "-", type, timely)
                         .flatMap(embed -> ctx.channel()
                                 .createMessage(ctx.translate(Strings.GD, "timely_of_today",
                                         type.getAuthorName(ctx), DurationUtils.format(timely.nextIn())))
@@ -252,12 +258,12 @@ public final class GDLevelService {
     }
 
     private String formatDownloadsLikesLength(GDLevel level) {
-        final var dlWidth = 9;
+        final var width = 9;
         return emoji.get("downloads") + ' ' +
-                formatCode(level.downloads(), dlWidth) + '\n' +
+                formatCode(level.downloads(), width) + '\n' +
                 emoji.get(level.likes() >= 0 ? "like" : "dislike") + ' ' +
-                formatCode(level.likes(), dlWidth) + '\n' + emoji.get("length") + ' ' +
-                formatCode(level.length(), dlWidth);
+                formatCode(level.likes(), width) + '\n' + emoji.get("length") + ' ' +
+                formatCode(level.length(), width);
     }
 
 }

@@ -77,7 +77,7 @@ public final class GDEventService {
                                     .next()
                                     .map(GDUser::accountId)))
                             .messageTemplateFactory(event -> levelService
-                                    .compactEmbed(tr, event.addedLevel(), EmbedType.RATE)
+                                    .compactEmbed(tr, event.addedLevel(), EmbedType.RATE, null)
                                     .map(embed -> MessageTemplate.builder()
                                             .setMessageContent(randomString(publicRandomMessages.rates()))
                                             .setEmbed(embed)
@@ -95,7 +95,7 @@ public final class GDEventService {
                                     .next()
                                     .map(GDUser::accountId))
                             .messageTemplateFactory(event -> levelService
-                                    .compactEmbed(tr, event.removedLevel(), EmbedType.UNRATE)
+                                    .compactEmbed(tr, event.removedLevel(), EmbedType.UNRATE, null)
                                     .map(embed -> MessageTemplate.builder()
                                             .setMessageContent(randomString(publicRandomMessages.unrates()))
                                             .setEmbed(embed)
@@ -112,7 +112,7 @@ public final class GDEventService {
                                     .next()
                                     .map(GDUser::accountId))
                             .messageTemplateFactory(event -> levelService
-                                    .compactEmbed(tr, event.newData(), EmbedType.RATE)
+                                    .compactEmbed(tr, event.newData(), EmbedType.RATE, null)
                                     .map(embed -> MessageTemplate.builder()
                                             .setEmbed(embed)
                                             .build()))
@@ -129,7 +129,7 @@ public final class GDEventService {
                                     .map(GDUser::accountId))
                             .messageTemplateFactory(event -> gdClient.downloadDailyLevel()
                                     .flatMap(level -> levelService
-                                            .compactEmbed(tr, level, EmbedType.DAILY_LEVEL)
+                                            .compactEmbed(tr, level, EmbedType.DAILY_LEVEL, event.after())
                                             .map(embed -> MessageTemplate.builder()
                                                     .setMessageContent(randomString(publicRandomMessages.daily()))
                                                     .setEmbed(embed)
@@ -147,7 +147,7 @@ public final class GDEventService {
                                     .map(GDUser::accountId))
                             .messageTemplateFactory(event -> gdClient.downloadWeeklyDemon()
                                     .flatMap(level -> levelService
-                                            .compactEmbed(tr, level, EmbedType.WEEKLY_DEMON)
+                                            .compactEmbed(tr, level, EmbedType.WEEKLY_DEMON, event.after())
                                             .map(embed -> MessageTemplate.builder()
                                                     .setMessageContent(randomString(publicRandomMessages.weekly()))
                                                     .setEmbed(embed)
