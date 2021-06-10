@@ -1,0 +1,4 @@
+**Bot name:** {{ bot_name }}
+**Bot owner:** {{ bot_owner }}
+**Server count:** {{ server_count }}
+{{ version_info }}
