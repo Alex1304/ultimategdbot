@@ -65,6 +65,9 @@
                             <addModule>java.sql</addModule>
                         </addModules>
                         <sourceJdkModules>${jlink.jdk}</sourceJdkModules>
+                        <stripDebug>true</stripDebug>
+                        <noHeaderFiles>true</noHeaderFiles>
+                        <noManPages>true</noManPages>
                     </configuration>
                 </plugin>
                 <plugin>
@@ -100,6 +103,9 @@
                             <goals>
                                 <goal>copy-dependencies</goal>
                             </goals>
+                            <configuration>
+                                <excludeScope>provided</excludeScope>
+                            </configuration>
                         </execution>
                     </executions>
                 </plugin>

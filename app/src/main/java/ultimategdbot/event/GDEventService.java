@@ -9,6 +9,7 @@ import com.github.alex1304.rdi.finder.annotation.RdiService;
 import discord4j.common.util.Snowflake;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.object.entity.Message;
+import discord4j.discordjson.possible.Possible;
 import discord4j.rest.entity.RestChannel;
 import jdash.client.GDClient;
 import jdash.common.entity.GDLevel;
@@ -229,7 +230,15 @@ public final class GDEventService {
             return Mono.justOrEmpty(gdEvent.levelId(event).flatMap(broadcastResultCache::get))
                     .flatMapMany(Flux::fromIterable)
                     .flatMap(old -> gdEvent.createMessageTemplate(event)
-                            .map(MessageTemplate::toEditSpec)
+                            .map(msg -> {
+                                // Make sure NOT to remove message content when editing only the embed
+                                final var editSpec = msg.toEditSpec();
+                                //noinspection ConstantConditions
+                                if (editSpec.contentOrElse(null) == null) {
+                                    return editSpec.withContent(Possible.absent());
+                                }
+                                return editSpec;
+                            })
                             .flatMapMany(old::edit))
                     .collectList()
                     .filter(results -> !results.isEmpty())
