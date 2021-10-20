@@ -1,79 +1,151 @@
 package ultimategdbot.command;
 
-import botrino.api.i18n.Translator;
-import botrino.command.CommandContext;
-import botrino.command.annotation.Alias;
-import botrino.command.annotation.TopLevelCommand;
-import botrino.command.doc.CommandDocumentation;
-import botrino.command.grammar.ArgumentMapper;
-import botrino.command.privilege.Privilege;
+import botrino.interaction.annotation.ChatInputCommand;
+import botrino.interaction.annotation.Subcommand;
+import botrino.interaction.context.ChatInputInteractionContext;
+import botrino.interaction.grammar.ChatInputCommandGrammar;
+import botrino.interaction.listener.ChatInputInteractionListener;
+import botrino.interaction.privilege.Privilege;
 import com.github.alex1304.rdi.finder.annotation.RdiFactory;
 import com.github.alex1304.rdi.finder.annotation.RdiService;
 import discord4j.common.util.Snowflake;
+import discord4j.core.object.command.ApplicationCommandOption;
 import discord4j.core.object.entity.User;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
+import discord4j.discordjson.json.ApplicationCommandOptionData;
+import org.reactivestreams.Publisher;
 import ultimategdbot.Strings;
 import ultimategdbot.service.DatabaseService;
 import ultimategdbot.service.OutputPaginator;
 import ultimategdbot.service.PrivilegeFactory;
 
-@CommandCategory(CommandCategory.GENERAL)
-@Alias("botadmins")
-@TopLevelCommand
-@RdiService
-public final class BotAdminsCommand extends AddRemoveListCommand<User> {
+import java.util.List;
 
-    private final PrivilegeFactory privilegeFactory;
-    private final DatabaseService db;
+@ChatInputCommand(
+        name = "bot-admins",
+        description = "Manage users who are granted Bot Administrator permissions (Bot Owner only).",
+        subcommands = {
+                @Subcommand(
+                        name = "grant",
+                        description = "Grant Bot Admin permission to a user.",
+                        listener = BotAdminsCommand.Grant.class
+                ),
+                @Subcommand(
+                        name = "revoke",
+                        description = "Revoke Bot Admin permission from a user.",
+                        listener = BotAdminsCommand.Revoke.class
+                ),
+                @Subcommand(
+                        name = "view",
+                        description = "View the list of users that currently have the Bot Admin permission.",
+                        listener = BotAdminsCommand.View.class
+                )
+        }
+)
+public final class BotAdminsCommand {
 
-    @RdiFactory
-    public BotAdminsCommand(OutputPaginator outputPaginator,
-                            PrivilegeFactory privilegeFactory,
-                            DatabaseService db) {
-        super(outputPaginator);
-        this.privilegeFactory = privilegeFactory;
-        this.db = db;
+    private static final ChatInputCommandGrammar<Options> GRAMMAR = ChatInputCommandGrammar.of(Options.class);
+
+    @RdiService
+    public static final class Grant implements ChatInputInteractionListener {
+
+        private final PrivilegeFactory privilegeFactory;
+        private final DatabaseService db;
+
+        @RdiFactory
+        public Grant(PrivilegeFactory privilegeFactory, DatabaseService db) {
+            this.privilegeFactory = privilegeFactory;
+            this.db = db;
+        }
+
+        @Override
+        public Publisher<?> run(ChatInputInteractionContext ctx) {
+            return GRAMMAR.resolve(ctx.event()).flatMap(options -> db.botAdminDao()
+                    .add(options.user.getId().asLong())
+                    .then(ctx.event().createFollowup(
+                            ctx.translate(Strings.GENERAL, "item_add_success", options.user.getTag()))));
+        }
+
+        @Override
+        public List<ApplicationCommandOptionData> options() {
+            return GRAMMAR.toOptions();
+        }
+
+        @Override
+        public Privilege privilege() {
+            return privilegeFactory.botOwner();
+        }
     }
 
-    @Override
-    public Privilege privilege() {
-        return privilegeFactory.botOwner();
+    @RdiService
+    public static final class Revoke implements ChatInputInteractionListener {
+
+        private final PrivilegeFactory privilegeFactory;
+        private final DatabaseService db;
+
+        @RdiFactory
+        public Revoke(PrivilegeFactory privilegeFactory, DatabaseService db) {
+            this.privilegeFactory = privilegeFactory;
+            this.db = db;
+        }
+
+        @Override
+        public Publisher<?> run(ChatInputInteractionContext ctx) {
+            return GRAMMAR.resolve(ctx.event()).flatMap(options -> db.botAdminDao()
+                    .remove(options.user.getId().asLong())
+                    .then(ctx.event().createFollowup(
+                            ctx.translate(Strings.GENERAL, "item_remove_success", options.user.getTag()))));
+        }
+
+        @Override
+        public List<ApplicationCommandOptionData> options() {
+            return GRAMMAR.toOptions();
+        }
+
+        @Override
+        public Privilege privilege() {
+            return privilegeFactory.botOwner();
+        }
     }
 
-    @Override
-    ArgumentMapper<User> argumentMapper() {
-        return ArgumentMapper.asUser();
+    @RdiService
+    public static final class View implements ChatInputInteractionListener {
+
+        private final PrivilegeFactory privilegeFactory;
+        private final DatabaseService db;
+        private final OutputPaginator paginator;
+
+        @RdiFactory
+        public View(PrivilegeFactory privilegeFactory, DatabaseService db, OutputPaginator paginator) {
+            this.privilegeFactory = privilegeFactory;
+            this.db = db;
+            this.paginator = paginator;
+        }
+
+        @Override
+        public Publisher<?> run(ChatInputInteractionContext ctx) {
+            return db.botAdminDao().getAllIds()
+                    .map(Snowflake::of)
+                    .flatMap(ctx.event().getClient()::getUserById)
+                    .map(User::getTag)
+                    .sort()
+                    .collectList()
+                    .flatMap(list -> paginator.paginate(ctx, list));
+        }
+
+        @Override
+        public Privilege privilege() {
+            return privilegeFactory.botOwner();
+        }
     }
 
-    @Override
-    Mono<Void> add(CommandContext ctx, User user) {
-        return db.botAdminDao().add(user.getId().asLong());
-    }
+    private static final class Options {
 
-    @Override
-    Mono<Void> remove(CommandContext ctx, User user) {
-        return db.botAdminDao().remove(user.getId().asLong());
-    }
-
-    @Override
-    Flux<String> listFormattedItems(CommandContext ctx) {
-        return db.botAdminDao().getAllIds()
-                .map(Snowflake::of)
-                .flatMap(ctx.event().getClient()::getUserById)
-                .map(User::getTag)
-                .sort();
-    }
-
-    @Override
-    String formatItem(User element) {
-        return element.getTag();
-    }
-
-    @Override
-    public CommandDocumentation documentation(Translator tr) {
-        return CommandDocumentation.builder()
-                .setDescription(tr.translate(Strings.HELP, "botadmins_description"))
-                .build();
+        @ChatInputCommandGrammar.Option(
+                type = ApplicationCommandOption.Type.USER,
+                name = "user",
+                description = "The target user.",
+                required = true
+        )
+        User user;
     }
 }

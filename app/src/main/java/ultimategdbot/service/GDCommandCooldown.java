@@ -1,7 +1,7 @@
 package ultimategdbot.service;
 
 import botrino.api.config.ConfigContainer;
-import botrino.command.cooldown.Cooldown;
+import botrino.interaction.cooldown.Cooldown;
 import com.github.alex1304.rdi.finder.annotation.RdiFactory;
 import com.github.alex1304.rdi.finder.annotation.RdiService;
 import ultimategdbot.config.UltimateGDBotConfig;

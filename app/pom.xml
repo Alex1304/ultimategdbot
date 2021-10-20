@@ -56,7 +56,7 @@
         </dependency>
         <dependency>
             <groupId>com.alex1304.botrino</groupId>
-            <artifactId>botrino-command</artifactId>
+            <artifactId>botrino-interaction</artifactId>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
@@ -96,12 +96,12 @@
         <dependency>
             <groupId>com.alex1304.jdash</groupId>
             <artifactId>jdash-events</artifactId>
-            <version>4.0.3</version>
+            <version>4.0.4-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.alex1304.jdash</groupId>
             <artifactId>jdash-graphics</artifactId>
-            <version>4.0.3</version>
+            <version>4.0.4-SNAPSHOT</version>
         </dependency>
     </dependencies>
 </project>

@@ -1,39 +1,34 @@
 package ultimategdbot.command;
 
-import botrino.api.i18n.Translator;
-import botrino.command.Command;
-import botrino.command.CommandContext;
-import botrino.command.CommandFailedException;
-import botrino.command.annotation.Alias;
-import botrino.command.annotation.TopLevelCommand;
-import botrino.command.cooldown.Cooldown;
-import botrino.command.doc.CommandDocumentation;
-import botrino.command.doc.FlagInformation;
-import botrino.command.grammar.CommandGrammar;
+import botrino.interaction.InteractionFailedException;
+import botrino.interaction.annotation.ChatInputCommand;
+import botrino.interaction.context.ChatInputInteractionContext;
+import botrino.interaction.cooldown.Cooldown;
+import botrino.interaction.grammar.ChatInputCommandGrammar;
+import botrino.interaction.listener.ChatInputInteractionListener;
 import com.github.alex1304.rdi.finder.annotation.RdiFactory;
 import com.github.alex1304.rdi.finder.annotation.RdiService;
+import discord4j.core.object.command.ApplicationCommandOption;
+import discord4j.discordjson.json.ApplicationCommandOptionData;
 import jdash.client.GDClient;
 import jdash.common.LevelBrowseMode;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 import ultimategdbot.Strings;
 import ultimategdbot.service.GDCommandCooldown;
 import ultimategdbot.service.GDLevelService;
 
-import static ultimategdbot.util.InteractionUtils.writeOnlyIfRefresh;
+import java.util.List;
 
-@CommandCategory(CommandCategory.GD)
-@Alias("level")
-@TopLevelCommand
 @RdiService
-public final class LevelCommand implements Command {
+@ChatInputCommand(name = "level", description = "Search for online levels in Geometry Dash.")
+public final class LevelCommand implements ChatInputInteractionListener {
 
     private final GDCommandCooldown commandCooldown;
     private final GDLevelService levelService;
     private final GDClient gdClient;
 
-    private final CommandGrammar<Args> grammar = CommandGrammar.builder()
-            .nextArgument("query")
-            .build(Args.class);
+    private final ChatInputCommandGrammar<Options> grammar = ChatInputCommandGrammar.of(Options.class);
 
     @RdiFactory
     public LevelCommand(GDCommandCooldown commandCooldown, GDLevelService levelService, GDClient gdClient) {
@@ -43,11 +38,10 @@ public final class LevelCommand implements Command {
     }
 
     @Override
-    public Mono<Void> run(CommandContext ctx) {
-        final var gdClient = writeOnlyIfRefresh(ctx, this.gdClient);
-        return grammar.resolve(ctx).map(args -> args.query).flatMap(query -> {
+    public Publisher<?> run(ChatInputInteractionContext ctx) {
+        return grammar.resolve(ctx.event()).map(args -> args.query).flatMap(query -> {
             if (!query.matches("[a-zA-Z0-9 _-]+")) {
-                return Mono.error(new CommandFailedException(ctx.translate(Strings.GD, "error_invalid_characters")));
+                return Mono.error(new InteractionFailedException(ctx.translate(Strings.GD, "error_invalid_characters")));
             }
             return levelService.interactiveSearch(ctx, ctx.translate(Strings.GD, "search_results", query),
                     page -> gdClient.browseLevels(LevelBrowseMode.SEARCH, query, null, page));
@@ -55,16 +49,8 @@ public final class LevelCommand implements Command {
     }
 
     @Override
-    public CommandDocumentation documentation(Translator tr) {
-        return CommandDocumentation.builder()
-                .setSyntax(grammar.toString())
-                .setDescription(tr.translate(Strings.HELP, "level_description"))
-                .setBody(tr.translate(Strings.HELP, "level_body"))
-                .addFlag(FlagInformation.builder()
-                        .setValueFormat("refresh")
-                        .setDescription(tr.translate(Strings.HELP, "common_flag_refresh"))
-                        .build())
-                .build();
+    public List<ApplicationCommandOptionData> options() {
+        return grammar.toOptions();
     }
 
     @Override
@@ -72,7 +58,14 @@ public final class LevelCommand implements Command {
         return commandCooldown.get();
     }
 
-    private static final class Args {
+    private static final class Options {
+
+        @ChatInputCommandGrammar.Option(
+                type = ApplicationCommandOption.Type.STRING,
+                name = "query",
+                description = "The search query.",
+                required = true
+        )
         String query;
     }
 }

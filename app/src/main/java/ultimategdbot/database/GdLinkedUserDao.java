@@ -34,6 +34,15 @@ public final class GdLinkedUserDao {
                 .oneOrNone();
     }
 
+    public Flux<GdLinkedUser> getAllActiveLinks(long discordUserId) {
+        return getActiveLink(discordUserId)
+                .flatMapMany(linkedUser -> repository
+                        .find(gdLinkedUser.gdUserId.is(linkedUser.gdUserId())
+                                .and(gdLinkedUser.isLinkActivated.isTrue()))
+                        .limit(25)
+                        .fetch());
+    }
+
     public Flux<GdLinkedUser> getAllIn(List<Long> discordUserIds) {
         return repository.find(gdLinkedUser.discordUserId.in(discordUserIds)).fetch();
     }

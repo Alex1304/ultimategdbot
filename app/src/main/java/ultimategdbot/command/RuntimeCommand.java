@@ -2,13 +2,12 @@ package ultimategdbot.command;
 
 import botrino.api.i18n.Translator;
 import botrino.api.util.DurationUtils;
-import botrino.command.Command;
-import botrino.command.CommandContext;
-import botrino.command.annotation.Alias;
-import botrino.command.annotation.TopLevelCommand;
-import botrino.command.doc.CommandDocumentation;
+import botrino.interaction.annotation.ChatInputCommand;
+import botrino.interaction.context.ChatInputInteractionContext;
+import botrino.interaction.listener.ChatInputInteractionListener;
 import com.sun.management.GarbageCollectionNotificationInfo;
 import discord4j.core.spec.EmbedCreateSpec;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
@@ -24,37 +23,11 @@ import java.time.Instant;
 import java.util.Optional;
 import java.util.function.Function;
 
-@CommandCategory(CommandCategory.GENERAL)
-@Alias("runtime")
-@TopLevelCommand
-public final class RuntimeCommand implements Command {
+@ChatInputCommand(name = "runtime", description = "Display runtime information on the bot.")
+public final class RuntimeCommand implements ChatInputInteractionListener {
 
     public RuntimeCommand() {
         MemoryStats.start();
-    }
-
-    @Override
-    public Mono<Void> run(CommandContext ctx) {
-        return ctx.channel().typeUntil(
-                Mono.zip(objArray -> Flux.fromArray(objArray).cast(EmbedField.class).collectList(),
-                        uptime(ctx),
-                        memory(ctx),
-                        shardInfo(ctx))
-                        .flatMap(Function.identity())
-                        .flatMap(embedFields -> {
-                            final var embed = EmbedCreateSpec.builder();
-                            embedFields.forEach(field -> embed.addField(field.title, field.content, false));
-                            embed.timestamp(Instant.now());
-                            return ctx.channel().createEmbed(embed.build());
-                        }))
-                .then();
-    }
-
-    @Override
-    public CommandDocumentation documentation(Translator tr) {
-        return CommandDocumentation.builder()
-                .setDescription(tr.translate(Strings.HELP, "runtime_description"))
-                .build();
     }
 
     private static Mono<EmbedField> uptime(Translator tr) {
@@ -63,7 +36,7 @@ public final class RuntimeCommand implements Command {
                         Duration.ofMillis(ManagementFactory.getRuntimeMXBean().getUptime()).withNanos(0)))));
     }
 
-    private static Mono<EmbedField> memory(CommandContext ctx) {
+    private static Mono<EmbedField> memory(ChatInputInteractionContext ctx) {
         return MemoryStats.getStats()
                 .map(memStats -> {
                     var total = memStats.totalMemory;
@@ -83,11 +56,27 @@ public final class RuntimeCommand implements Command {
                 });
     }
 
-    private static Mono<EmbedField> shardInfo(CommandContext ctx) {
+    private static Mono<EmbedField> shardInfo(ChatInputInteractionContext ctx) {
         var shardInfo = ctx.event().getShardInfo();
         return Mono.just(new EmbedField(ctx.translate(Strings.GENERAL, "gateway_sharding_info"),
                 ctx.translate(Strings.GENERAL, "shard_index", shardInfo.getIndex()) + '\n'
                         + ctx.translate(Strings.GENERAL, "shard_count", shardInfo.getCount())));
+    }
+
+    @Override
+    public Publisher<?> run(ChatInputInteractionContext ctx) {
+        return Mono.zip(objArray -> Flux.fromArray(objArray).cast(EmbedField.class).collectList(),
+                        uptime(ctx),
+                        memory(ctx),
+                        shardInfo(ctx))
+                .flatMap(Function.identity())
+                .flatMap(embedFields -> {
+                    final var embed = EmbedCreateSpec.builder();
+                    embedFields.forEach(field -> embed.addField(field.title, field.content, false));
+                    embed.timestamp(Instant.now());
+                    return ctx.event().createFollowup().withEmbeds(embed.build());
+                })
+                .then();
     }
 
     private static class EmbedField {
@@ -103,11 +92,10 @@ public final class RuntimeCommand implements Command {
     private static class MemoryStats {
         private static final Sinks.Many<MemoryStats> STATS_SINK =
                 Sinks.many().replay().latestOrDefault(new MemoryStats());
-
-        private final long timestamp;
         final long totalMemory;
         final long usedMemory;
         final long maxMemory;
+        private final long timestamp;
 
         private MemoryStats(long timestamp) {
             var total = Runtime.getRuntime().totalMemory();
@@ -126,12 +114,6 @@ public final class RuntimeCommand implements Command {
             this.maxMemory = Runtime.getRuntime().maxMemory();
         }
 
-        Optional<Duration> elapsedSinceLastGC() {
-            return Optional.of(timestamp)
-                    .filter(t -> t > 0)
-                    .map(t -> Duration.ofMillis(ManagementFactory.getRuntimeMXBean().getUptime() - t));
-        }
-
         static Mono<MemoryStats> getStats() {
             return STATS_SINK.asFlux().next();
         }
@@ -140,13 +122,20 @@ public final class RuntimeCommand implements Command {
             Flux.<MemoryStats>create(sink -> {
                 NotificationListener gcListener = (notif, handback) -> {
                     if (notif.getType().equals(GarbageCollectionNotificationInfo.GARBAGE_COLLECTION_NOTIFICATION)) {
-                        var gcInfo = GarbageCollectionNotificationInfo.from((CompositeData) notif.getUserData()).getGcInfo();
+                        var gcInfo =
+                                GarbageCollectionNotificationInfo.from((CompositeData) notif.getUserData()).getGcInfo();
                         sink.next(new MemoryStats(gcInfo.getEndTime()));
                     }
                 };
                 ManagementFactory.getGarbageCollectorMXBeans()
                         .forEach(bean -> ((NotificationEmitter) bean).addNotificationListener(gcListener, null, null));
             }).subscribe(next -> STATS_SINK.emitNext(next, (signalType, emitResult) -> false));
+        }
+
+        Optional<Duration> elapsedSinceLastGC() {
+            return Optional.of(timestamp)
+                    .filter(t -> t > 0)
+                    .map(t -> Duration.ofMillis(ManagementFactory.getRuntimeMXBean().getUptime() - t));
         }
     }
 }

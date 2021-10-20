@@ -2,16 +2,15 @@ package ultimategdbot.command;
 
 import botrino.api.Botrino;
 import botrino.api.i18n.Translator;
-import botrino.command.Command;
-import botrino.command.CommandContext;
-import botrino.command.annotation.Alias;
-import botrino.command.annotation.TopLevelCommand;
-import botrino.command.doc.CommandDocumentation;
+import botrino.interaction.annotation.ChatInputCommand;
+import botrino.interaction.context.ChatInputInteractionContext;
+import botrino.interaction.listener.ChatInputInteractionListener;
 import com.github.alex1304.rdi.finder.annotation.RdiFactory;
 import com.github.alex1304.rdi.finder.annotation.RdiService;
 import discord4j.common.GitProperties;
 import discord4j.core.object.entity.ApplicationInfo;
 import discord4j.core.object.entity.User;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 import ultimategdbot.Strings;
 import ultimategdbot.util.Resources;
@@ -22,11 +21,9 @@ import java.util.Properties;
 
 import static reactor.function.TupleUtils.function;
 
-@CommandCategory(CommandCategory.GENERAL)
-@Alias("about")
-@TopLevelCommand
 @RdiService
-public final class AboutCommand implements Command {
+@ChatInputCommand(name = "about", description = "Show information about the bot itself.")
+public final class AboutCommand implements ChatInputInteractionListener {
 
     private static final Properties D4J_PROPS = GitProperties.getProperties();
     private static final Properties UGDB_PROPS = Resources.ugdbGitProperties();
@@ -34,7 +31,7 @@ public final class AboutCommand implements Command {
 
     private final User botOwner;
 
-    public AboutCommand(User botOwner) {
+    private AboutCommand(User botOwner) {
         this.botOwner = botOwner;
     }
 
@@ -49,7 +46,7 @@ public final class AboutCommand implements Command {
     }
 
     @Override
-    public Mono<Void> run(CommandContext ctx) {
+    public Publisher<?> run(ChatInputInteractionContext ctx) {
         return Mono.zip(ctx.event().getClient().getSelf(), ctx.event().getClient().getGuilds().count())
                 .map(function((self, guildCount) -> {
                     final var versionInfoBuilder = new StringBuilder("**")
@@ -77,14 +74,7 @@ public final class AboutCommand implements Command {
                     vars.forEach((k, v) -> box.text = box.text.replaceAll("\\{\\{ *" + k + " *\\}\\}", "" + v));
                     return box.text;
                 }))
-                .flatMap(ctx.channel()::createMessage)
+                .flatMap(ctx.event()::createFollowup)
                 .then();
-    }
-
-    @Override
-    public CommandDocumentation documentation(Translator tr) {
-        return CommandDocumentation.builder()
-                .setDescription(tr.translate(Strings.HELP, "about_description"))
-                .build();
     }
 }

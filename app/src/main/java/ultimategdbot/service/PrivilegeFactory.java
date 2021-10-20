@@ -1,10 +1,9 @@
 package ultimategdbot.service;
 
-import botrino.command.privilege.Privilege;
-import botrino.command.privilege.Privileges;
+import botrino.interaction.privilege.Privilege;
+import botrino.interaction.privilege.Privileges;
 import com.github.alex1304.rdi.finder.annotation.RdiFactory;
 import com.github.alex1304.rdi.finder.annotation.RdiService;
-import discord4j.common.util.Snowflake;
 import discord4j.core.object.entity.ApplicationInfo;
 import discord4j.rest.util.Permission;
 import reactor.core.publisher.Mono;
@@ -27,14 +26,14 @@ public final class PrivilegeFactory {
     }
 
     public Privilege botOwner() {
-        return ctx -> Snowflake.asLong(ctx.event().getMessage().getUserData().id()) == ownerId
+        return ctx -> ctx.event().getInteraction().getUser().getId().asLong() == ownerId
                 ? Mono.empty()
                 : Mono.error(new BotOwnerPrivilegeException());
     }
 
     public Privilege botAdmin() {
         return botOwner().or(ctx -> db.botAdminDao()
-                .exists(Snowflake.asLong(ctx.event().getMessage().getUserData().id()))
+                .exists(ctx.event().getInteraction().getUser().getId().asLong())
                 .filter(Boolean::booleanValue)
                 .switchIfEmpty(Mono.error(BotAdminPrivilegeException::new))
                 .then(), (a, b) -> b);
@@ -46,7 +45,8 @@ public final class PrivilegeFactory {
     }
 
     public Privilege elderMod() {
-        return botOwner().or(ctx -> db.gdLinkedUserDao().getActiveLink(ctx.author().getId().asLong())
+        return botOwner().or(ctx -> db.gdLinkedUserDao()
+                .getActiveLink(ctx.event().getInteraction().getUser().getId().asLong())
                 .flatMap(linkedUser -> db.gdModDao().get(linkedUser.gdUserId()).map(GdMod::isElder))
                 .filter(Boolean::booleanValue)
                 .switchIfEmpty(Mono.error(ElderModPrivilegeException::new))

@@ -2,215 +2,279 @@ package ultimategdbot.command;
 
 import botrino.api.i18n.Translator;
 import botrino.api.util.Markdown;
-import botrino.api.util.MessageTemplate;
-import botrino.command.*;
-import botrino.command.annotation.Alias;
-import botrino.command.annotation.TopLevelCommand;
-import botrino.command.doc.CommandDocumentation;
-import botrino.command.doc.FlagInformation;
-import botrino.command.grammar.ArgumentMapper;
-import botrino.command.grammar.CommandGrammar;
-import botrino.command.menu.InteractiveMenu;
-import botrino.command.menu.PageNumberOutOfRangeException;
-import botrino.command.privilege.Privilege;
+import botrino.interaction.InteractionFailedException;
+import botrino.interaction.annotation.ChatInputCommand;
+import botrino.interaction.annotation.Subcommand;
+import botrino.interaction.context.ChatInputInteractionContext;
+import botrino.interaction.grammar.ChatInputCommandGrammar;
+import botrino.interaction.listener.ChatInputInteractionListener;
+import botrino.interaction.privilege.Privilege;
+import botrino.interaction.util.MessagePaginator;
 import com.github.alex1304.rdi.finder.annotation.RdiFactory;
 import com.github.alex1304.rdi.finder.annotation.RdiService;
-import discord4j.core.object.reaction.ReactionEmoji;
+import discord4j.core.object.command.ApplicationCommandOption;
+import discord4j.core.object.component.LayoutComponent;
+import discord4j.core.spec.MessageCreateSpec;
+import discord4j.discordjson.json.ApplicationCommandOptionData;
 import jdash.client.GDClient;
 import jdash.common.LevelBrowseMode;
 import jdash.events.object.*;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.util.annotation.Nullable;
 import ultimategdbot.Strings;
 import ultimategdbot.event.ManualEventProducer;
 import ultimategdbot.service.EmojiService;
 import ultimategdbot.service.PrivilegeFactory;
 import ultimategdbot.util.GDLevels;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
-@CommandCategory(CommandCategory.GD)
-@Alias("gdevents")
-@TopLevelCommand
-@RdiService
-public final class GDEventsCommand implements ParentCommand {
+import static ultimategdbot.util.Interactions.confirmButtons;
+import static ultimategdbot.util.Interactions.paginationButtons;
 
-    private final GDClient gdClient;
-    private final ManualEventProducer eventProducer;
-    private final EmojiService emoji;
-    private final CommandService commandService;
-    private final PrivilegeFactory privilegeFactory;
-    private final ReactionEmoji reactionCross, reactionSuccess;
+@ChatInputCommand(
+        name = "gd-events",
+        description = "Manage the GD event announcement system (Bot Owner only).",
+        subcommands = {
+            @Subcommand(
+                    name = "dispatch",
+                    description = "Manually dispatch a new GD event.",
+                    listener = GDEventsCommand.Dispatch.class
+            ),
+            @Subcommand(
+                    name = "dispatch-all",
+                    description = "Dispatch new awarded events for all levels that have been rated after the " +
+                            "specified one.",
+                    listener = GDEventsCommand.DispatchAll.class
+            )
+        }
+)
+public final class GDEventsCommand {
 
-    private final CommandGrammar<DispatchArgs> grammar = CommandGrammar.builder()
-            .nextArgument("eventName")
-            .beginOptionalArguments()
-            .nextArgument("levelId", ArgumentMapper.asLong())
-            .build(DispatchArgs.class);
+    @RdiService
+    public static final class Dispatch implements ChatInputInteractionListener {
 
-    private final CommandGrammar<DispatchAllArgs> grammar2 = CommandGrammar.builder()
-            .nextArgument("levelId", ArgumentMapper.asLong())
-            .build(DispatchAllArgs.class);
+        private final GDClient gdClient;
+        private final ManualEventProducer eventProducer;
+        private final EmojiService emoji;
+        private final PrivilegeFactory privilegeFactory;
 
-    @RdiFactory
-    public GDEventsCommand(GDClient gdClient, ManualEventProducer eventProducer, EmojiService emoji,
-                           CommandService commandService, PrivilegeFactory privilegeFactory) {
-        this.gdClient = gdClient.withWriteOnlyCache();
-        this.eventProducer = eventProducer;
-        this.emoji = emoji;
-        this.commandService = commandService;
-        this.reactionCross = commandService.interactiveMenuFactory().getPaginationControls().getCloseEmoji();
-        this.reactionSuccess = ReactionEmoji.custom(emoji.getEmojiManager().get("success"));
-        this.privilegeFactory = privilegeFactory;
-    }
+        private final ChatInputCommandGrammar<Options> grammar = ChatInputCommandGrammar.of(Options.class);
 
-    private Mono<Void> runDispatch(CommandContext ctx) {
-        return grammar.resolve(ctx).flatMap(args -> {
-            Mono<Object> eventToDispatch;
-            switch (args.eventName) {
-                case "daily_level_changed":
-                    eventToDispatch = gdClient.getDailyLevelInfo()
-                            .map(info -> ImmutableDailyLevelChange.of(info, info));
-                    break;
-                case "weekly_demon_changed":
-                    eventToDispatch = gdClient.getWeeklyDemonInfo()
-                            .map(info -> ImmutableWeeklyDemonChange.of(info, info));
-                    break;
-                default:
-                    if (args.levelId == null) {
-                        return Mono.error(new CommandFailedException(
-                                ctx.translate(Strings.GD, "error_id_not_specified")));
-                    }
-                    switch (args.eventName) {
-                        case "awarded_level_added":
-                            eventToDispatch = gdClient.findLevelById(args.levelId).map(ImmutableAwardedAdd::of);
-                            break;
-                        case "awarded_level_removed":
-                            eventToDispatch = gdClient.findLevelById(args.levelId).map(ImmutableAwardedRemove::of);
-                            break;
-                        case "awarded_level_updated":
-                            eventToDispatch = gdClient.findLevelById(args.levelId)
-                                    .map(level -> ImmutableAwardedUpdate.of(level, level));
-                            break;
-                        default:
-                            return Mono.error(new CommandFailedException(
-                                    ctx.translate(Strings.GD, "error_unknown_event", ctx.getPrefixUsed())));
-                    }
-            }
-            return eventToDispatch.doOnNext(eventProducer::submit)
-                    .then(ctx.channel().createMessage(emoji.get("success") + ' ' +
-                            ctx.translate(Strings.GD, "dispatch_success")));
-        }).then();
-    }
+        @RdiFactory
+        public Dispatch(GDClient gdClient, ManualEventProducer eventProducer, EmojiService emoji,
+                        PrivilegeFactory privilegeFactory) {
+            this.gdClient = gdClient;
+            this.eventProducer = eventProducer;
+            this.emoji = emoji;
+            this.privilegeFactory = privilegeFactory;
+        }
 
-    private Mono<Void> runDispatchAll(CommandContext ctx) {
-        return grammar2.resolve(ctx).flatMap(args -> {
-            final var maxPage = ctx.input().getFlag("max-page")
-                    .filter(s -> s.matches("[0-9]{1,3}"))
-                    .map(Integer::parseInt)
-                    .orElse(10);
-            if (maxPage < 1) {
-			    return Mono.error(new CommandFailedException(ctx.translate(Strings.GD, "error_invalid_max_page")));
-            }
-            return Flux.range(0, maxPage + 1)
-                    .concatMap(n -> n <= maxPage
-                            ? gdClient.browseLevels(LevelBrowseMode.AWARDED, null, null, n)
-                            : Mono.error(new CommandFailedException(
-                            ctx.translate(Strings.GD, "error_max_page_reached", maxPage))))
-                    .takeWhile(level -> level.id() != args.levelId)
-                    .map(ImmutableAwardedAdd::of)
-                    .collectList()
-                    .doOnNext(Collections::reverse)
-                    .flatMap(events -> {
-                        final var lastPage = (events.size() - 1) / 10;
-                        InteractiveMenu menu;
-                        if (lastPage == 0) {
-                            menu = commandService.interactiveMenuFactory()
-                                    .create(paginateEvents(ctx, 0, 0, events).toCreateSpec()
-                                            .contentOrElse(""))
-                                    .closeAfterReaction(false)
-                                    .addReactionItem(reactionCross, interaction ->
-                                            Mono.fromRunnable(interaction::closeMenu));
-                        } else {
-                            menu = commandService.interactiveMenuFactory()
-                                    .createPaginated((tr, page) ->
-                                            Mono.just(paginateEvents(tr, page, lastPage, events)));
+        @Override
+        public Publisher<?> run(ChatInputInteractionContext ctx) {
+            return grammar.resolve(ctx.event())
+                    .flatMap(options -> {
+                        Mono<Object> eventToDispatch;
+                        switch (options.eventName) {
+                            case Options.DAILY_LEVEL_CHANGED:
+                                eventToDispatch = gdClient.getDailyLevelInfo()
+                                        .map(info -> ImmutableDailyLevelChange.of(info, info));
+                                break;
+                            case Options.WEEKLY_DEMON_CHANGED:
+                                eventToDispatch = gdClient.getWeeklyDemonInfo()
+                                        .map(info -> ImmutableWeeklyDemonChange.of(info, info));
+                                break;
+                            default:
+                                if (options.levelId == null) {
+                                    return Mono.error(new InteractionFailedException(
+                                            ctx.translate(Strings.GD, "error_id_not_specified")));
+                                }
+                                switch (options.eventName) {
+                                    case Options.AWARDED_LEVEL_ADDED:
+                                        eventToDispatch = gdClient.findLevelById(options.levelId)
+                                                .map(ImmutableAwardedAdd::of);
+                                        break;
+                                    case Options.AWARDED_LEVEL_REMOVED:
+                                        eventToDispatch = gdClient.findLevelById(options.levelId)
+                                                .map(ImmutableAwardedRemove::of);
+                                        break;
+                                    case Options.AWARDED_LEVEL_UPDATED:
+                                        eventToDispatch = gdClient.findLevelById(options.levelId)
+                                                .map(level -> ImmutableAwardedUpdate.of(level, level));
+                                        break;
+                                    default:
+                                        return Mono.error(new AssertionError());
+                                }
                         }
-                        return menu.deleteMenuOnClose(true)
-                                .addReactionItem(reactionSuccess, interaction -> {
-                                    events.forEach(eventProducer::submit);
-                                    return ctx.channel().createMessage(emoji.get("success") + ' ' +
-                                            ctx.translate(Strings.GD, "dispatch_success_multi", events.size()))
-                                            .then(Mono.fromRunnable(interaction::closeMenu));
-                                })
-                                .open(ctx);
+                        return eventToDispatch.doOnNext(eventProducer::submit)
+                                .then(ctx.event().createFollowup(emoji.get("success") + ' ' +
+                                        ctx.translate(Strings.GD, "dispatch_success")));
                     });
-        }).then();
+        }
+
+        @Override
+        public List<ApplicationCommandOptionData> options() {
+            return grammar.toOptions();
+        }
+
+        @Override
+        public Privilege privilege() {
+            return privilegeFactory.botOwner();
+        }
+
+        private static final class Options {
+
+            private static final String DAILY_LEVEL_CHANGED = "daily_level_changed";
+            private static final String WEEKLY_DEMON_CHANGED = "weekly_demon_changed";
+            private static final String AWARDED_LEVEL_ADDED = "awarded_level_added";
+            private static final String AWARDED_LEVEL_REMOVED = "awarded_level_removed";
+            private static final String AWARDED_LEVEL_UPDATED = "awarded_level_updated";
+
+            @ChatInputCommandGrammar.Option(
+                    type = ApplicationCommandOption.Type.STRING,
+                    name = "event-name",
+                    description = "The name of the event to dispatch.",
+                    required = true,
+                    choices = {
+                            @ChatInputCommandGrammar.Choice(
+                                    name = "Daily Level Changed",
+                                    stringValue = DAILY_LEVEL_CHANGED
+                            ),
+                            @ChatInputCommandGrammar.Choice(
+                                    name = "Weekly Demon Changed",
+                                    stringValue = WEEKLY_DEMON_CHANGED
+                            ),
+                            @ChatInputCommandGrammar.Choice(
+                                    name = "Awarded Level Added",
+                                    stringValue = AWARDED_LEVEL_ADDED
+                            ),
+                            @ChatInputCommandGrammar.Choice(
+                                    name = "Awarded Level Removed",
+                                    stringValue = AWARDED_LEVEL_REMOVED
+                            ),
+                            @ChatInputCommandGrammar.Choice(
+                                    name = "Awarded Level Updated",
+                                    stringValue = AWARDED_LEVEL_UPDATED
+                            )
+                    }
+            )
+            String eventName;
+
+            @ChatInputCommandGrammar.Option(
+                    type = ApplicationCommandOption.Type.INTEGER,
+                    name = "level-id",
+                    description = "The ID of the level concerned by the event, if applicable."
+            )
+            Long levelId;
+        }
     }
 
-	private static MessageTemplate paginateEvents(Translator tr, int page, int lastPage,
-                                                  List<? extends AwardedAdd> events) {
-		PageNumberOutOfRangeException.check(page, lastPage);
-		return MessageTemplate.builder()
-                .setMessageContent(tr.translate(Strings.GD, "dispatch_list") + "\n\n" +
-                        tr.translate(Strings.GENERAL, "page_x", page + 1, lastPage + 1) + '\n' +
-                        events.stream()
-                                .skip(page * 10L)
-                                .limit(10)
-                                .map(event -> Markdown.quote(GDLevels.format(event.addedLevel())))
-                                .collect(Collectors.joining("\n")) + "\n\n" +
-                        tr.translate(Strings.GD, "dispatch_confirm"))
-                .build();
-	}
+    @RdiService
+    public static final class DispatchAll implements ChatInputInteractionListener {
 
-    @Override
-    public CommandDocumentation documentation(Translator tr) {
-        return CommandDocumentation.builder()
-                .setDescription(tr.translate(Strings.HELP, "gdevents_description"))
-                .build();
-    }
+        private final GDClient gdClient;
+        private final ManualEventProducer eventProducer;
+        private final EmojiService emoji;
+        private final PrivilegeFactory privilegeFactory;
 
-    @Override
-    public Privilege privilege() {
-        return privilegeFactory.botOwner();
-    }
+        private final ChatInputCommandGrammar<Options> grammar = ChatInputCommandGrammar.of(Options.class);
 
-    @Override
-    public Set<Command> subcommands() {
-        return Set.of(
-                Command.builder("dispatch", this::runDispatch)
-                        .inheritFrom(this)
-                        .setDocumentation(tr -> CommandDocumentation.builder()
-                                .setSyntax(grammar.toString())
-                                .setDescription(tr.translate(Strings.HELP, "gdevents_dispatch_description"))
-                                .setBody(tr.translate(Strings.HELP, "gdevents_dispatch_body"))
-                                .build())
-                        .build(),
-                Command.builder("dispatch_all", this::runDispatchAll)
-                        .inheritFrom(this)
-                        .setDocumentation(tr -> CommandDocumentation.builder()
-                                .setSyntax(grammar2.toString())
-                                .setDescription(tr.translate(Strings.HELP, "gdevents_dispatch_all_description"))
-                                .addFlag(FlagInformation.builder()
-                                        .setValueFormat("max-page")
-                                        .setDescription(tr.translate(Strings.HELP, "gdevents_dispatch_flag_max_page"))
-                                        .build())
-                                .build())
-                        .build()
-        );
-    }
+        @RdiFactory
+        public DispatchAll(GDClient gdClient, ManualEventProducer eventProducer, EmojiService emoji,
+                           PrivilegeFactory privilegeFactory) {
+            this.gdClient = gdClient;
+            this.eventProducer = eventProducer;
+            this.emoji = emoji;
+            this.privilegeFactory = privilegeFactory;
+        }
 
-    private static final class DispatchArgs {
-        String eventName;
-        @Nullable
-        Long levelId;
-    }
+        private static MessageCreateSpec paginateEvents(Translator tr, MessagePaginator.State state,
+                                                        List<? extends AwardedAdd> events, String okId,
+                                                        String cancelId) {
+            final var components = new ArrayList<LayoutComponent>();
+            if (state.getPageCount() > 1) {
+                components.add(paginationButtons(tr, state));
+            }
+            components.add(confirmButtons(tr, okId, cancelId, !state.isActive()));
+            return MessageCreateSpec.create()
+                    .withContent(tr.translate(Strings.GD, "dispatch_list") + "\n\n" +
+                            tr.translate(Strings.GENERAL, "page_x", state.getPage() + 1,
+                                    state.getPageCount()) + '\n' +
+                            events.stream()
+                                    .skip(state.getPage() * 10L)
+                                    .limit(10)
+                                    .map(event -> Markdown.quote(GDLevels.format(event.addedLevel())))
+                                    .collect(Collectors.joining("\n")) + "\n\n" +
+                            tr.translate(Strings.GD, "dispatch_confirm"))
+                    .withComponents(components);
+        }
 
-    private static final class DispatchAllArgs {
-        long levelId;
+        @Override
+        public Publisher<?> run(ChatInputInteractionContext ctx) {
+            return grammar.resolve(ctx.event()).flatMap(options -> {
+                if (options.maxPage < 1) {
+                    return Mono.error(new InteractionFailedException(
+                            ctx.translate(Strings.GD, "error_invalid_max_page")));
+                }
+                return Flux.range(0, (int) (options.maxPage + 1))
+                        .concatMap(n -> n <= options.maxPage
+                                ? gdClient.browseLevels(LevelBrowseMode.AWARDED, null, null, n)
+                                : Mono.error(new InteractionFailedException(
+                                ctx.translate(Strings.GD, "error_max_page_reached", options.maxPage))))
+                        .takeWhile(level -> level.id() != options.fromLevelId)
+                        .map(ImmutableAwardedAdd::of)
+                        .collectList()
+                        .doOnNext(Collections::reverse)
+                        .flatMap(events -> {
+                            final var pageCount = (events.size() - 1) / 10 + 1;
+                            final var okId = UUID.randomUUID().toString();
+                            final var cancelId = UUID.randomUUID().toString();
+                            return Mono.firstWithSignal(
+                                    MessagePaginator.paginate(ctx, pageCount, state -> Mono.just(
+                                            paginateEvents(ctx, state, events, okId, cancelId))),
+                                    Mono.firstWithValue(ctx.awaitButtonClick(okId), ctx.awaitButtonClick(cancelId))
+                                            .filter(okId::equals)
+                                            .flatMap(__ -> {
+                                                events.forEach(eventProducer::submit);
+                                                return ctx.event().createFollowup(emoji.get("success") + ' ' +
+                                                        ctx.translate(Strings.GD, "dispatch_success_multi",
+                                                                events.size()));
+                                            }));
+                        });
+            });
+        }
+
+        @Override
+        public List<ApplicationCommandOptionData> options() {
+            return grammar.toOptions();
+        }
+
+        @Override
+        public Privilege privilege() {
+            return privilegeFactory.botOwner();
+        }
+
+        private static final class Options {
+            @ChatInputCommandGrammar.Option(
+                    type = ApplicationCommandOption.Type.INTEGER,
+                    name = "from-level-id",
+                    description = "The ID of the level concerned by the event, if applicable.",
+                    required = true
+            )
+            long fromLevelId;
+
+            @ChatInputCommandGrammar.Option(
+                    type = ApplicationCommandOption.Type.INTEGER,
+                    name = "max-page",
+                    description = "The maximum number of pages to load when searching for the selected level. Default" +
+                            " is 10."
+            )
+            Long maxPage;
+        }
     }
 }

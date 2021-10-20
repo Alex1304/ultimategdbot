@@ -1,6 +1,6 @@
 package ultimategdbot.event;
 
-import botrino.api.util.MessageTemplate;
+import discord4j.core.spec.MessageCreateSpec;
 import discord4j.rest.entity.RestChannel;
 import org.immutables.value.Value;
 import reactor.core.publisher.Mono;
@@ -17,7 +17,7 @@ public interface GDEvent<E> {
 
     Function<E, Mono<Long>> recipientAccountId();
 
-    Function<E, Mono<MessageTemplate>> messageTemplateFactory();
+    Function<E, Mono<MessageCreateSpec>> messageTemplateFactory();
 
     Function<E, String> congratMessage();
 
@@ -39,7 +39,7 @@ public interface GDEvent<E> {
 	}
 
 	@SuppressWarnings("unchecked")
-	default Mono<MessageTemplate> createMessageTemplate(Object event) {
+	default Mono<MessageCreateSpec> createMessageTemplate(Object event) {
 		return messageTemplateFactory().apply((E) event);
 	}
 

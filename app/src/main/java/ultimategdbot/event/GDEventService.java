@@ -3,12 +3,12 @@ package ultimategdbot.event;
 import botrino.api.config.ConfigContainer;
 import botrino.api.i18n.Translator;
 import botrino.api.util.MatcherFunction;
-import botrino.api.util.MessageTemplate;
 import com.github.alex1304.rdi.finder.annotation.RdiFactory;
 import com.github.alex1304.rdi.finder.annotation.RdiService;
 import discord4j.common.util.Snowflake;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.object.entity.Message;
+import discord4j.core.spec.MessageCreateSpec;
 import discord4j.discordjson.possible.Possible;
 import discord4j.rest.entity.RestChannel;
 import jdash.client.GDClient;
@@ -34,6 +34,8 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import static botrino.api.util.MessageUtils.toMessageEditSpec;
 
 @RdiService
 public final class GDEventService {
@@ -79,10 +81,9 @@ public final class GDEventService {
                                     .map(GDUser::accountId)))
                             .messageTemplateFactory(event -> levelService
                                     .compactEmbed(tr, event.addedLevel(), EmbedType.RATE, null)
-                                    .map(embed -> MessageTemplate.builder()
-                                            .setMessageContent(randomString(publicRandomMessages.rates()))
-                                            .setEmbed(embed)
-                                            .build()))
+                                    .map(embed -> MessageCreateSpec.create()
+                                            .withContent(randomString(publicRandomMessages.rates()))
+                                            .withEmbeds(embed)))
                             .congratMessage(event -> randomString(dmRandomMessages.rates()))
                             .isUpdate(false)
                             .build())
@@ -97,10 +98,9 @@ public final class GDEventService {
                                     .map(GDUser::accountId))
                             .messageTemplateFactory(event -> levelService
                                     .compactEmbed(tr, event.removedLevel(), EmbedType.UNRATE, null)
-                                    .map(embed -> MessageTemplate.builder()
-                                            .setMessageContent(randomString(publicRandomMessages.unrates()))
-                                            .setEmbed(embed)
-                                            .build()))
+                                    .map(embed -> MessageCreateSpec.create()
+                                            .withContent(randomString(publicRandomMessages.unrates()))
+                                            .withEmbeds(embed)))
                             .congratMessage(event -> randomString(dmRandomMessages.unrates()))
                             .isUpdate(false)
                             .build())
@@ -114,9 +114,8 @@ public final class GDEventService {
                                     .map(GDUser::accountId))
                             .messageTemplateFactory(event -> levelService
                                     .compactEmbed(tr, event.newData(), EmbedType.RATE, null)
-                                    .map(embed -> MessageTemplate.builder()
-                                            .setEmbed(embed)
-                                            .build()))
+                                    .map(embed -> MessageCreateSpec.create()
+                                            .withEmbeds(embed)))
                             .congratMessage(event -> { throw new UnsupportedOperationException(); })
                             .isUpdate(true)
                             .build())
@@ -131,10 +130,9 @@ public final class GDEventService {
                             .messageTemplateFactory(event -> gdClient.downloadDailyLevel()
                                     .flatMap(level -> levelService
                                             .compactEmbed(tr, level, EmbedType.DAILY_LEVEL, event.after())
-                                            .map(embed -> MessageTemplate.builder()
-                                                    .setMessageContent(randomString(publicRandomMessages.daily()))
-                                                    .setEmbed(embed)
-                                                    .build())))
+                                            .map(embed -> MessageCreateSpec.create()
+                                                    .withContent(randomString(publicRandomMessages.daily()))
+                                                    .withEmbeds(embed))))
                             .congratMessage(event -> randomString(dmRandomMessages.daily()))
                             .isUpdate(false)
                             .build())
@@ -149,10 +147,9 @@ public final class GDEventService {
                             .messageTemplateFactory(event -> gdClient.downloadWeeklyDemon()
                                     .flatMap(level -> levelService
                                             .compactEmbed(tr, level, EmbedType.WEEKLY_DEMON, event.after())
-                                            .map(embed -> MessageTemplate.builder()
-                                                    .setMessageContent(randomString(publicRandomMessages.weekly()))
-                                                    .setEmbed(embed)
-                                                    .build())))
+                                            .map(embed -> MessageCreateSpec.create()
+                                                    .withContent(randomString(publicRandomMessages.weekly()))
+                                                    .withEmbeds(embed))))
                             .congratMessage(event -> randomString(dmRandomMessages.weekly()))
                             .isUpdate(false)
                             .build())
@@ -163,7 +160,7 @@ public final class GDEventService {
                             .recipientAccountId(event -> Mono.just(event.user().accountId()))
                             .messageTemplateFactory(event -> userService
                                     .buildProfile(tr, event.user(), event.type().embedType())
-                                    .map(messageTemplate -> replaceContent(messageTemplate,
+                                    .map(messageTemplate -> messageTemplate.withContent(
                                             randomString(event.type().selectList(publicRandomMessages)))))
                             .congratMessage(event -> randomString(event.type().selectList(dmRandomMessages)))
                             .isUpdate(false)
@@ -213,13 +210,6 @@ public final class GDEventService {
         return list.get(RANDOM.nextInt(list.size()));
     }
 
-    private static MessageTemplate replaceContent(MessageTemplate messageTemplate, String otherContent) {
-        return MessageTemplate.builder()
-                .setMessageContent(otherContent)
-                .setEmbed(messageTemplate.toCreateSpec().embed().get())
-                .build();
-    }
-
     public Mono<Void> process(Object event) {
         final var gdEvent = events.get(event.getClass()).orElse(null);
         if (gdEvent == null) {
@@ -232,7 +222,7 @@ public final class GDEventService {
                     .flatMap(old -> gdEvent.createMessageTemplate(event)
                             .map(msg -> {
                                 // Make sure NOT to remove message content when editing only the embed
-                                final var editSpec = msg.toEditSpec();
+                                final var editSpec = toMessageEditSpec(msg);
                                 //noinspection ConstantConditions
                                 if (editSpec.contentOrElse(null) == null) {
                                     return editSpec.withContent(Possible.absent());
@@ -247,7 +237,7 @@ public final class GDEventService {
         }
         final var sendGuild = gdEvent.createMessageTemplate(event)
                 .flatMap(msg -> Mono.justOrEmpty(gdEvent.channel(event))
-                        .flatMap(channel -> channel.createMessage(msg.toCreateSpec().asRequest()))
+                        .flatMap(channel -> channel.createMessage(msg.asRequest()))
                         .map(data -> new Message(gateway, data)))
                 .doOnNext(msg -> {
                     if (crosspostQueue != null) {
@@ -259,7 +249,7 @@ public final class GDEventService {
                 .flatMap(userId -> gateway.getUserById(Snowflake.of(userId)))
                 .flatMap(user -> user.getPrivateChannel()
                         .flatMap(channel -> gdEvent.createMessageTemplate(event)
-                                .map(msg -> msg.toCreateSpec().withContent(gdEvent.congratMessage(event)))
+                                .map(msg -> msg.withContent(gdEvent.congratMessage(event)))
                                 .flatMap(channel::createMessage)))
                 .onErrorResume(e -> Mono.fromRunnable(() -> LOGGER.debug("Could not DM user for GD event", e)));
         return Flux.merge(sendGuild, sendDm)

@@ -1,15 +1,12 @@
 package ultimategdbot.command;
 
-import botrino.api.i18n.Translator;
 import botrino.api.util.Markdown;
-import botrino.command.Command;
-import botrino.command.CommandContext;
-import botrino.command.annotation.Alias;
-import botrino.command.annotation.TopLevelCommand;
-import botrino.command.doc.CommandDocumentation;
+import botrino.interaction.annotation.ChatInputCommand;
+import botrino.interaction.context.ChatInputInteractionContext;
+import botrino.interaction.listener.ChatInputInteractionListener;
 import com.github.alex1304.rdi.finder.annotation.RdiFactory;
 import com.github.alex1304.rdi.finder.annotation.RdiService;
-import reactor.core.publisher.Mono;
+import org.reactivestreams.Publisher;
 import ultimategdbot.Strings;
 import ultimategdbot.database.GdMod;
 import ultimategdbot.service.DatabaseService;
@@ -19,11 +16,9 @@ import ultimategdbot.service.OutputPaginator;
 import java.util.Comparator;
 import java.util.stream.Collectors;
 
-@CommandCategory(CommandCategory.GD)
-@Alias("modlist")
-@TopLevelCommand
 @RdiService
-public final class ModListCommand implements Command {
+@ChatInputCommand(name = "mod-list", description = "Displays the full list of last known Geometry Dash moderators.")
+public final class ModListCommand implements ChatInputInteractionListener {
 
     private final EmojiService emoji;
     private final DatabaseService db;
@@ -37,7 +32,7 @@ public final class ModListCommand implements Command {
     }
 
     @Override
-    public Mono<Void> run(CommandContext ctx) {
+    public Publisher<?> run(ChatInputInteractionContext ctx) {
         return db.gdModDao().getAll().collectList()
                 .flatMap(modList -> paginator.paginate(ctx,
                         modList.stream()
@@ -47,13 +42,6 @@ public final class ModListCommand implements Command {
                                         Markdown.bold(gdMod.name()))
                                 .collect(Collectors.toList()),
                         content -> "**__" + ctx.translate(Strings.GD, "mod_list") + "__\n**" +
-                                ctx.translate(Strings.GD, "modlist_intro", ctx.getPrefixUsed()) + "\n\n" + content));
-    }
-
-    @Override
-    public CommandDocumentation documentation(Translator tr) {
-        return CommandDocumentation.builder()
-                .setDescription(tr.translate(Strings.HELP, "modlist_description"))
-                .build();
+                                ctx.translate(Strings.GD, "modlist_intro") + "\n\n" + content));
     }
 }

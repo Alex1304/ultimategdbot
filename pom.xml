@@ -15,7 +15,7 @@
     <properties>
         <java.version>11</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <botrino.version>1.0.0-SNAPSHOT</botrino.version>
+        <botrino.version>1.0.0</botrino.version>
         <immutables.version>2.9.0-beta2</immutables.version>
         <delivery.name>${project.parent.artifactId}-${project.version}</delivery.name>
         <delivery.directory>${project.build.directory}/${delivery.name}</delivery.directory>
@@ -160,7 +160,7 @@
             </dependency>
             <dependency>
                 <groupId>com.alex1304.botrino</groupId>
-                <artifactId>botrino-command</artifactId>
+                <artifactId>botrino-interaction</artifactId>
                 <version>${botrino.version}</version>
             </dependency>
             <dependency>
@@ -175,28 +175,6 @@
                 <version>${immutables.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
-            </dependency>
-
-            <!-- TEMPORARY -->
-            <dependency>
-                <groupId>com.discord4j</groupId>
-                <artifactId>discord4j-core</artifactId>
-                <version>3.2.0-SNAPSHOT</version>
-            </dependency>
-            <dependency>
-                <groupId>com.discord4j</groupId>
-                <artifactId>discord-json</artifactId>
-                <version>1.6.5-SNAPSHOT</version>
-            </dependency>
-            <dependency>
-                <groupId>com.discord4j</groupId>
-                <artifactId>discord-json-api</artifactId>
-                <version>1.6.5-SNAPSHOT</version>
-            </dependency>
-            <dependency>
-                <groupId>com.discord4j</groupId>
-                <artifactId>discord-json-encoding</artifactId>
-                <version>1.6.5-SNAPSHOT</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

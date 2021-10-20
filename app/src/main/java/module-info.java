@@ -8,7 +8,7 @@ open module ultimategdbot {
     provides BotrinoExtension with UltimateGDBotExtension;
 
     requires botrino.api;
-    requires botrino.command;
+    requires botrino.interaction;
     requires java.desktop;
     requires java.sql;
     requires jdash.events;

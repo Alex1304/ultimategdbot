@@ -2,29 +2,28 @@ package ultimategdbot.command;
 
 import botrino.api.i18n.Translator;
 import botrino.api.util.DurationUtils;
-import botrino.command.Command;
-import botrino.command.CommandContext;
-import botrino.command.annotation.Alias;
-import botrino.command.annotation.TopLevelCommand;
-import botrino.command.doc.CommandDocumentation;
-import discord4j.core.event.domain.message.MessageCreateEvent;
+import botrino.interaction.annotation.Acknowledge;
+import botrino.interaction.annotation.ChatInputCommand;
+import botrino.interaction.context.ChatInputInteractionContext;
+import botrino.interaction.listener.ChatInputInteractionListener;
+import discord4j.core.event.domain.interaction.InteractionCreateEvent;
 import discord4j.gateway.GatewayClient;
-import reactor.core.publisher.Mono;
+import org.reactivestreams.Publisher;
 import ultimategdbot.Strings;
 
 import java.time.Duration;
 
 import static reactor.function.TupleUtils.function;
 
-@CommandCategory(CommandCategory.GENERAL)
-@TopLevelCommand
-@Alias("ping")
-public final class PingCommand implements Command {
+@Acknowledge(Acknowledge.Mode.NONE)
+@ChatInputCommand(name = "ping", description = "Ping the bot to check if it is alive and view latency information.")
+public final class PingCommand implements ChatInputInteractionListener {
 
-    private static String computeLatency(Translator tr, MessageCreateEvent event, long apiLatency) {
-        return tr.translate(Strings.GENERAL, "pong") + '\n'
-                + tr.translate(Strings.GENERAL, "api_latency") + ' ' + DurationUtils.format(Duration.ofMillis(apiLatency)) + "\n"
-                + tr.translate(Strings.GENERAL, "gateway_latency") + ' ' + event.getClient()
+    private static String computeLatency(Translator tr, InteractionCreateEvent event, long apiLatency) {
+        return tr.translate(Strings.GENERAL, "pong") + '\n' +
+                tr.translate(Strings.GENERAL, "api_latency") + ' ' +
+                DurationUtils.format(Duration.ofMillis(apiLatency)) + "\n" +
+                tr.translate(Strings.GENERAL, "gateway_latency") + ' ' + event.getClient()
                 .getGatewayClient(event.getShardInfo().getIndex())
                 .map(GatewayClient::getResponseTime)
                 .map(DurationUtils::format)
@@ -32,18 +31,11 @@ public final class PingCommand implements Command {
     }
 
     @Override
-    public Mono<Void> run(CommandContext ctx) {
-        return ctx.channel().createMessage(ctx.translate(Strings.GENERAL, "pong"))
+    public Publisher<?> run(ChatInputInteractionContext ctx) {
+        return ctx.event().reply(ctx.translate(Strings.GENERAL, "pong"))
                 .elapsed()
-                .flatMap(function((apiLatency, message) -> message.edit()
-                        .withContentOrNull(computeLatency(ctx, ctx.event(), apiLatency))))
+                .flatMap(function((apiLatency, __) -> ctx.event()
+                        .editReply(computeLatency(ctx, ctx.event(), apiLatency))))
                 .then();
-    }
-
-    @Override
-    public CommandDocumentation documentation(Translator tr) {
-        return CommandDocumentation.builder()
-                .setDescription(tr.translate(Strings.HELP, "ping_description"))
-                .build();
     }
 }

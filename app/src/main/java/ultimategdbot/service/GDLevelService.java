@@ -2,12 +2,13 @@ package ultimategdbot.service;
 
 import botrino.api.i18n.Translator;
 import botrino.api.util.DurationUtils;
-import botrino.api.util.MessageTemplate;
-import botrino.command.CommandContext;
-import botrino.command.CommandFailedException;
-import botrino.command.CommandService;
+import botrino.interaction.InteractionFailedException;
+import botrino.interaction.context.InteractionContext;
+import botrino.interaction.util.MessagePaginator;
 import com.github.alex1304.rdi.finder.annotation.RdiFactory;
 import com.github.alex1304.rdi.finder.annotation.RdiService;
+import discord4j.core.object.component.ActionRow;
+import discord4j.core.object.component.SelectMenu;
 import discord4j.core.object.entity.Message;
 import discord4j.core.spec.EmbedCreateSpec;
 import discord4j.core.spec.MessageCreateSpec;
@@ -23,34 +24,34 @@ import reactor.util.annotation.Nullable;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 import ultimategdbot.Strings;
+import ultimategdbot.util.Interactions;
 import ultimategdbot.util.EmbedType;
+import ultimategdbot.util.GDLevels;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.IntFunction;
+import java.util.stream.Collectors;
 
 import static botrino.api.util.Markdown.*;
 import static reactor.function.TupleUtils.function;
 import static ultimategdbot.util.GDFormatter.formatCode;
 import static ultimategdbot.util.GDLevels.*;
-import static ultimategdbot.util.InteractionUtils.unexpectedReply;
-import static ultimategdbot.util.InteractionUtils.writeOnlyIfRefresh;
 
 @RdiService
 public final class GDLevelService {
 
     private final EmojiService emoji;
-    private final CommandService commandService;
     private final GDClient gdClient;
 
     @RdiFactory
-    public GDLevelService(EmojiService emoji, CommandService commandService, GDClient gdClient) {
+    public GDLevelService(EmojiService emoji, GDClient gdClient) {
         this.emoji = emoji;
-        this.commandService = commandService;
         this.gdClient = gdClient;
     }
 
-    public EmbedCreateSpec searchResultsEmbed(CommandContext ctx, Iterable<? extends GDLevel> results, String title,
+    public EmbedCreateSpec searchResultsEmbed(InteractionContext ctx, Iterable<? extends GDLevel> results, String title,
                                               int page) {
         final var embed = EmbedCreateSpec.builder();
         embed.title(title);
@@ -88,9 +89,8 @@ public final class GDLevelService {
         return embed.build();
     }
 
-    public Mono<EmbedCreateSpec> detailedEmbed(CommandContext ctx, long levelId, String creatorName, EmbedType type,
+    public Mono<EmbedCreateSpec> detailedEmbed(InteractionContext ctx, long levelId, String creatorName, EmbedType type,
                                                @Nullable GDTimelyInfo timelyInfo) {
-        final var gdClient = writeOnlyIfRefresh(ctx, this.gdClient);
         return gdClient.downloadLevel(levelId)
                 .zipWhen(level -> extractSongParts(ctx, level))
                 .map(function((level, songParts) -> {
@@ -177,64 +177,59 @@ public final class GDLevelService {
                 });
     }
 
-    public Mono<Void> interactiveSearch(CommandContext ctx, String title,
+    public Mono<Void> interactiveSearch(InteractionContext ctx, String title,
                                         IntFunction<? extends Flux<? extends GDLevel>> searchFunction) {
-		final var resultsOfCurrentPage = new AtomicReference<List<? extends GDLevel>>();
+        final var resultsOfCurrentPage = new AtomicReference<List<? extends GDLevel>>();
+        final var selectMenuId = UUID.randomUUID().toString();
         return searchFunction.apply(0).collectList()
                 .doOnNext(resultsOfCurrentPage::set)
-                .flatMap(results -> results.size() == 1 ? sendSelectedSearchResult(ctx, results.get(0), false)
-                        : commandService.interactiveMenuFactory()
-                        .createPaginated((tr, page) -> searchFunction.apply(page).collectList()
-                                .doOnNext(resultsOfCurrentPage::set)
-                                .map(newResults -> MessageTemplate.builder()
-                                        .setEmbed(searchResultsEmbed(ctx, newResults, title, page))
-                                        .build()))
-                        .addMessageItem("select", interaction -> {
-                            if (interaction.getInput().getArguments().size() < 2) {
-                                return unexpectedReply(ctx, ctx.translate(Strings.GD, "error_select_not_specified"));
-                            }
-                            final var selectedInput = interaction.getInput().getArguments().get(1);
-                            if (!selectedInput.matches("[0-9]{1,2}")) {
-                                return unexpectedReply(ctx, ctx.translate(Strings.GD, "error_invalid_input"));
-                            }
-                            final var currentResults = resultsOfCurrentPage.get();
-                            final var selected = Integer.parseInt(selectedInput) - 1;
-                            if (selected < 0 || selected >= currentResults.size()) {
-                                return unexpectedReply(ctx, ctx.translate(Strings.GD, "error_select_not_existing"));
-                            }
-                            return sendSelectedSearchResult(ctx, currentResults.get(selected), true);
-                        })
-                        .open(ctx)
-                        .then());
+                .flatMap(results -> results.size() == 1 ? sendSelectedSearchResult(ctx, results.get(0))
+                        : Mono.firstWithSignal(
+                                MessagePaginator.paginate(ctx, Integer.MAX_VALUE, state -> searchFunction
+                                        .apply(state.getPage())
+                                        .collectList()
+                                        .doOnNext(resultsOfCurrentPage::set)
+                                        .map(newResults -> MessageCreateSpec.create()
+                                                .withEmbeds(searchResultsEmbed(ctx, newResults, title, state.getPage()))
+                                                .withComponents(Interactions.paginationButtons(ctx, state), ActionRow.of(
+                                                        SelectMenu.of(selectMenuId, newResults.stream()
+                                                                .map(level -> SelectMenu.Option.of(
+                                                                        GDLevels.format(level), level.id() + ""))
+                                                                .collect(Collectors.toUnmodifiableList()))
+                                                                .disabled(!state.isActive())
+                                                ))
+                                        )),
+                                ctx.awaitSelectMenuItems(selectMenuId)
+                                        .map(items -> resultsOfCurrentPage.get().stream()
+                                                .filter(level -> level.id() == Long.parseLong(items.get(0)))
+                                                .findAny()
+                                                .orElseThrow())
+                                        .flatMap(level -> sendSelectedSearchResult(ctx, level))
+                                        .repeat()
+                                        .then()
+                        ));
     }
 
-    private Mono<Void> sendSelectedSearchResult(CommandContext ctx, GDLevel level, boolean withCloseOption) {
+    private Mono<Void> sendSelectedSearchResult(InteractionContext ctx, GDLevel level) {
         return detailedEmbed(ctx, level.id(), level.creatorName().orElse("-"), EmbedType.LEVEL_SEARCH_RESULT, null)
-                .flatMap(embed -> !withCloseOption ? ctx.channel().createEmbed(embed).then()
-                        : commandService.interactiveMenuFactory().create(MessageCreateSpec.create().withEmbed(embed))
-                        .addReactionItem(commandService.interactiveMenuFactory()
-                                .getPaginationControls()
-                                .getCloseEmoji(), interaction -> Mono.empty())
-                        .deleteMenuOnClose(true)
-                        .open(ctx)
-                        .then());
+                .flatMap(embed -> ctx.event().createFollowup().withEmbeds(embed))
+                .then();
     }
 
-    public Mono<Message> sendTimelyInfo(CommandContext ctx, boolean isWeekly) {
-        final var gdClient = writeOnlyIfRefresh(ctx, this.gdClient);
+    public Mono<Message> sendTimelyInfo(InteractionContext ctx, boolean isWeekly) {
         final var timelyMono = isWeekly ? gdClient.getWeeklyDemonInfo() : gdClient.getDailyLevelInfo();
         final var downloadId = isWeekly ? -2 : -1;
         final var type = isWeekly ? EmbedType.WEEKLY_DEMON : EmbedType.DAILY_LEVEL;
         return timelyMono
                 .flatMap(timely -> detailedEmbed(ctx, downloadId, "-", type, timely)
-                        .flatMap(embed -> ctx.channel()
-                                .createMessage(ctx.translate(Strings.GD, "timely_of_today",
+                        .flatMap(embed -> ctx.event()
+                                .createFollowup(ctx.translate(Strings.GD, "timely_of_today",
                                         type.getAuthorName(ctx), DurationUtils.format(timely.nextIn())))
-                                .withEmbed(embed)))
+                                .withEmbeds(embed)))
                 .onErrorMap(e -> e instanceof GDClientException
                                 && ((GDClientException) e).getRequest().getUri().equals(GDRequests.GET_GJ_DAILY_LEVEL)
                                 && e.getCause() instanceof ActionFailedException,
-                        e -> new CommandFailedException(
+                        e -> new InteractionFailedException(
                                 ctx.translate(Strings.GD, "error_no_timely_set", type.getAuthorName(ctx))));
     }
 

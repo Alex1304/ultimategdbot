@@ -1,6 +1,6 @@
 package ultimategdbot.exception;
 
-import botrino.command.privilege.PrivilegeException;
+import botrino.interaction.privilege.PrivilegeException;
 
 public final class GuildAdminPrivilegeException extends PrivilegeException {
 }

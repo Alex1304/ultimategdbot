@@ -1,72 +1,66 @@
 package ultimategdbot.command;
 
-import botrino.api.i18n.Translator;
-import botrino.command.Command;
-import botrino.command.CommandContext;
-import botrino.command.CommandFailedException;
-import botrino.command.annotation.Alias;
-import botrino.command.annotation.TopLevelCommand;
-import botrino.command.cooldown.Cooldown;
-import botrino.command.doc.CommandDocumentation;
-import botrino.command.doc.FlagInformation;
-import botrino.command.grammar.CommandGrammar;
+import botrino.interaction.InteractionFailedException;
+import botrino.interaction.annotation.ChatInputCommand;
+import botrino.interaction.context.ChatInputInteractionContext;
+import botrino.interaction.cooldown.Cooldown;
+import botrino.interaction.grammar.ChatInputCommandGrammar;
+import botrino.interaction.listener.ChatInputInteractionListener;
 import com.github.alex1304.rdi.finder.annotation.RdiFactory;
 import com.github.alex1304.rdi.finder.annotation.RdiService;
+import discord4j.core.object.command.ApplicationCommandOption;
+import discord4j.discordjson.json.ApplicationCommandOptionData;
 import jdash.client.GDClient;
 import jdash.common.Role;
 import jdash.common.entity.GDUserProfile;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
-import reactor.util.annotation.Nullable;
 import ultimategdbot.Strings;
 import ultimategdbot.database.GdLinkedUser;
-import ultimategdbot.service.GDCommandCooldown;
 import ultimategdbot.service.DatabaseService;
 import ultimategdbot.service.EmojiService;
+import ultimategdbot.service.GDCommandCooldown;
 import ultimategdbot.service.GDUserService;
 
-import static ultimategdbot.util.InteractionUtils.writeOnlyIfRefresh;
+import java.util.List;
 
-@CommandCategory(CommandCategory.GD)
-@Alias("checkmod")
-@TopLevelCommand
 @RdiService
-public final class CheckModCommand implements Command {
+@ChatInputCommand(name = "check-mod", description = "Checks for the presence of the Moderator badge on someone's " +
+        "profile.")
+public final class CheckModCommand implements ChatInputInteractionListener {
 
     private final GDCommandCooldown commandCooldown;
     private final DatabaseService db;
     private final EmojiService emoji;
     private final GDClient gdClient;
+    private final GDUserService userService;
 
-    private final CommandGrammar<Args> grammar;
+    private final ChatInputCommandGrammar<Options> grammar = ChatInputCommandGrammar.of(Options.class);
 
     @RdiFactory
     public CheckModCommand(GDCommandCooldown commandCooldown, DatabaseService db, EmojiService emoji,
-                           GDUserService gdUserService, GDClient gdClient) {
+                           GDUserService userService, GDClient gdClient) {
         this.commandCooldown = commandCooldown;
         this.db = db;
         this.emoji = emoji;
-        this.gdClient = gdClient;
-        this.grammar = CommandGrammar.builder()
-                .beginOptionalArguments()
-                .nextArgument("gdUser", gdUserService::stringToUser)
-                .build(Args.class);
+        this.userService = userService;
+        this.gdClient = gdClient.withWriteOnlyCache();
     }
 
     @Override
-    public Mono<Void> run(CommandContext ctx) {
-        final var gdClient = writeOnlyIfRefresh(ctx, this.gdClient);
-        return grammar.resolve(ctx)
-                .flatMap(args -> Mono.justOrEmpty(args.gdUser))
-                .switchIfEmpty(db.gdLinkedUserDao().getActiveLink(ctx.author().getId().asLong())
-                        .switchIfEmpty(Mono.error(new CommandFailedException(
-                                ctx.translate(Strings.GD, "error_checkmod_user_not_specified", ctx.getPrefixUsed(),
-                                        "profile"))))
+    public Publisher<?> run(ChatInputInteractionContext ctx) {
+        return grammar.resolve(ctx.event())
+                .flatMap(options -> Mono.justOrEmpty(options.gdUsername)
+                        .flatMap(username -> userService.stringToUser(ctx, username)))
+                .switchIfEmpty(db.gdLinkedUserDao().getActiveLink(ctx.user().getId().asLong())
+                        .switchIfEmpty(Mono.error(new InteractionFailedException(
+                                ctx.translate(Strings.GD, "error_checkmod_user_not_specified"))))
                         .map(GdLinkedUser::gdUserId)
                         .flatMap(gdClient::getUserProfile)
                         .flatMap(db.gdLeaderboardDao()::saveStats)
                         .cast(GDUserProfile.class))
-                .flatMap(user -> ctx.channel()
-                        .createMessage(ctx.translate(Strings.GD, "checking_mod", user.name()) + "\n||" +
+                .flatMap(user -> ctx.event()
+                        .createFollowup(ctx.translate(Strings.GD, "checking_mod", user.name()) + "\n||" +
                                 (user.role().orElse(Role.USER) == Role.USER
                                 ? emoji.get("failed") + ' ' + ctx.translate(Strings.GD, "checkmod_failed")
                                 : emoji.get("success") + ' ' + ctx.translate(Strings.GD, "checkmod_success",
@@ -75,16 +69,8 @@ public final class CheckModCommand implements Command {
     }
 
     @Override
-    public CommandDocumentation documentation(Translator tr) {
-        return CommandDocumentation.builder()
-                .setSyntax(grammar.toString())
-                .setDescription(tr.translate(Strings.HELP, "checkmod_description"))
-                .setBody(tr.translate(Strings.HELP, "checkmod_body"))
-                .addFlag(FlagInformation.builder()
-                        .setValueFormat("refresh")
-                        .setDescription(tr.translate(Strings.HELP, "common_flag_refresh"))
-                        .build())
-                .build();
+    public List<ApplicationCommandOptionData> options() {
+        return grammar.toOptions();
     }
 
     @Override
@@ -92,8 +78,12 @@ public final class CheckModCommand implements Command {
         return commandCooldown.get();
     }
 
-    private static final class Args {
-        @Nullable
-        GDUserProfile gdUser;
+    private static final class Options {
+        @ChatInputCommandGrammar.Option(
+                type = ApplicationCommandOption.Type.STRING,
+                name = "gd-username",
+                description = "The GD username of the target."
+        )
+        String gdUsername;
     }
 }

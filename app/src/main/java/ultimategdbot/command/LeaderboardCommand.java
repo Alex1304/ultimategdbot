@@ -1,130 +1,64 @@
 package ultimategdbot.command;
 
-import botrino.api.i18n.Translator;
-import botrino.api.util.MessageTemplate;
-import botrino.command.*;
-import botrino.command.annotation.Alias;
-import botrino.command.annotation.TopLevelCommand;
-import botrino.command.doc.CommandDocumentation;
-import botrino.command.grammar.CommandGrammar;
-import botrino.command.menu.PageNumberOutOfRangeException;
+import botrino.interaction.InteractionFailedException;
+import botrino.interaction.annotation.ChatInputCommand;
+import botrino.interaction.context.ChatInputInteractionContext;
+import botrino.interaction.grammar.ChatInputCommandGrammar;
+import botrino.interaction.listener.ChatInputInteractionListener;
+import botrino.interaction.util.MessagePaginator;
 import com.github.alex1304.rdi.finder.annotation.RdiFactory;
 import com.github.alex1304.rdi.finder.annotation.RdiService;
 import discord4j.common.store.action.read.ReadActions;
 import discord4j.common.store.api.object.ExactResultNotAvailableException;
+import discord4j.core.object.command.ApplicationCommandOption;
 import discord4j.core.object.entity.Guild;
 import discord4j.core.object.entity.Member;
 import discord4j.core.object.entity.User;
-import discord4j.core.spec.EmbedCreateSpec;
+import discord4j.core.spec.MessageCreateSpec;
+import discord4j.discordjson.json.ApplicationCommandOptionData;
 import jdash.client.exception.GDClientException;
-import jdash.common.entity.GDUserProfile;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.util.annotation.Nullable;
+import reactor.util.function.Tuples;
 import ultimategdbot.Strings;
 import ultimategdbot.database.GdLeaderboard;
 import ultimategdbot.database.GdLeaderboardBan;
 import ultimategdbot.database.GdLinkedUser;
-import ultimategdbot.database.ImmutableGdLeaderboardBan;
 import ultimategdbot.service.DatabaseService;
 import ultimategdbot.service.EmojiService;
 import ultimategdbot.service.GDUserService;
-import ultimategdbot.service.PrivilegeFactory;
-import ultimategdbot.util.GDFormatter;
+import ultimategdbot.util.Leaderboards;
 
-import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.IntFunction;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeSet;
 import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
 
-import static botrino.api.util.Markdown.bold;
-import static botrino.api.util.Markdown.underline;
 import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toMap;
 import static reactor.function.TupleUtils.function;
-import static ultimategdbot.util.InteractionUtils.unexpectedReply;
 
-@CommandCategory(CommandCategory.GD)
-@Alias({"leaderboard", "leaderboards", "top"})
-@TopLevelCommand
+@ChatInputCommand(
+        name = "leaderboard",
+        description = "Show a leaderboard ranking members of this server based on in-game stats."
+)
 @RdiService
-public final class LeaderboardCommand implements Command {
-
-    private static final int ENTRIES_PER_PAGE = 20;
+public final class LeaderboardCommand implements ChatInputInteractionListener {
 
     private final DatabaseService db;
     private final EmojiService emoji;
-    private final CommandService commandService;
     private final GDUserService userService;
-    private final PrivilegeFactory privilegeFactory;
 
-    private final CommandGrammar<Args> grammar = CommandGrammar.builder()
-            .beginOptionalArguments()
-            .nextArgument("statName")
-            .build(Args.class);
-    private final CommandGrammar<BanArgs> banGrammar;
+    private final ChatInputCommandGrammar<Options> grammar = ChatInputCommandGrammar.of(Options.class);
 
     @RdiFactory
-    public LeaderboardCommand(DatabaseService db, EmojiService emoji, CommandService commandService,
-                              GDUserService userService, PrivilegeFactory privilegeFactory) {
+    public LeaderboardCommand(DatabaseService db, EmojiService emoji, GDUserService userService) {
         this.db = db;
         this.emoji = emoji;
-        this.commandService = commandService;
         this.userService = userService;
-        this.banGrammar = CommandGrammar.builder()
-                .nextArgument("gdUser", userService::stringToUser)
-                .build(BanArgs.class);
-        this.privilegeFactory = privilegeFactory;
-    }
-
-    private static EmbedCreateSpec leaderboardEmbed(Translator tr, String prefix, Guild guild,
-                                                    List<LeaderboardEntry> entryList, int page,
-                                                    @Nullable String highlighted, String emoji) {
-        final var size = entryList.size();
-        final var maxPage = (size - 1) / ENTRIES_PER_PAGE;
-        final var offset = page * ENTRIES_PER_PAGE;
-        final var subList = entryList.subList(offset, Math.min(offset + ENTRIES_PER_PAGE, size));
-        var embed = EmbedCreateSpec.builder()
-                .title(tr.translate(Strings.GD, "lb_title", guild.getName()));
-        if (size == 0 || subList.isEmpty()) {
-            return embed.description(tr.translate(Strings.GD, "lb_no_entries")).build();
-        }
-        var sb = new StringBuilder();
-        var rankWidth = (int) Math.log10(size) + 1;
-        var statWidth = (int) Math.log10(subList.get(0).getValue()) + 1;
-        final var maxRowLength = 100;
-        for (var i = 1; i <= subList.size(); i++) {
-            var entry = subList.get(i - 1);
-            var isHighlighted = entry.getStats().name().equalsIgnoreCase(highlighted);
-            var rank = page * ENTRIES_PER_PAGE + i;
-            if (isHighlighted) {
-                sb.append("**");
-            }
-            var row = String.format("%s | %s %s | %s (%s)",
-                    String.format("`#%" + rankWidth + "d`", rank).replaceAll(" ", " ‌‌"),
-                    emoji,
-                    GDFormatter.formatCode(entry.getValue(), statWidth),
-                    entry.getStats().name(),
-                    entry.getDiscordUser());
-            if (row.length() > maxRowLength) {
-                row = row.substring(0, maxRowLength - 3) + "...";
-            }
-            sb.append(row).append("\n");
-            if (isHighlighted) {
-                sb.append("**");
-            }
-        }
-        embed.description("**" + tr.translate(Strings.GD, "lb_total_players", size, emoji) + "**\n\n" + sb);
-        embed.addField("───────────",
-                tr.translate(Strings.GD, "lb_account_notice", prefix), false);
-        if (maxPage > 0) {
-            embed.addField(tr.translate(Strings.GENERAL, "page_x", page + 1, maxPage + 1),
-                    tr.translate(Strings.GENERAL, "page_instructions") + '\n' +
-                            tr.translate(Strings.GD, "lb_jump_to_user"), false);
-        }
-        return embed.build();
     }
 
     private static List<Long> gdAccIds(List<GdLinkedUser> l) {
@@ -133,234 +67,140 @@ public final class LeaderboardCommand implements Command {
 
     private static Flux<Member> getMembers(Guild guild) {
         return Flux.from(guild.getClient().getGatewayResources().getStore()
-                .execute(ReadActions.getExactMembersInGuild(guild.getId().asLong())))
+                        .execute(ReadActions.getExactMembersInGuild(guild.getId().asLong())))
                 .map(data -> new Member(guild.getClient(), data, guild.getId().asLong()))
                 .onErrorResume(ExactResultNotAvailableException.class, e -> guild.requestMembers());
     }
 
     @Override
-    public Mono<Void> run(CommandContext ctx) {
-        return grammar.resolve(ctx).flatMap(args -> {
-            if (args.statName == null) {
-                return ctx.channel().createMessage(bold(ctx.translate(Strings.GD, "lb_intro")) + '\n' +
-                        underline(ctx.translate(Strings.GD, "select_lb")) + '\n' +
-                        ctx.translate(Strings.GD, "select_lb_item",
-                                emoji.get("star") + " Stars", ctx.getPrefixUsed(), "stars") + '\n' +
-                        ctx.translate(Strings.GD, "select_lb_item",
-                                emoji.get("diamond") + " Diamonds", ctx.getPrefixUsed(), "diamonds") + '\n' +
-                        ctx.translate(Strings.GD, "select_lb_item",
-                                emoji.get("user_coin") + " User Coins", ctx.getPrefixUsed(), "ucoins") + '\n' +
-                        ctx.translate(Strings.GD, "select_lb_item",
-                                emoji.get("secret_coin") + " Secret Coins", ctx.getPrefixUsed(), "scoins") + '\n' +
-                        ctx.translate(Strings.GD, "select_lb_item",
-                                emoji.get("demon") + " Demons", ctx.getPrefixUsed(), "demons") + '\n' +
-                        ctx.translate(Strings.GD, "select_lb_item",
-                                emoji.get("creator_points") + " Creator Points", ctx.getPrefixUsed(), "cp") + '\n')
-                        .then();
-            }
+    public Publisher<?> run(ChatInputInteractionContext ctx) {
+        return grammar.resolve(ctx.event()).flatMap(options -> {
             ToIntFunction<GdLeaderboard> stat;
             String statEmoji;
             boolean noBanList;
-            switch (args.statName.toLowerCase()) {
-                case "stars":
+            switch (options.type) {
+                case Options.STARS:
                     stat = GdLeaderboard::stars;
                     statEmoji = emoji.get("star");
                     noBanList = false;
                     break;
-                case "diamonds":
+                case Options.DIAMONDS:
                     stat = GdLeaderboard::diamonds;
                     statEmoji = emoji.get("diamond");
                     noBanList = false;
                     break;
-                case "ucoins":
+                case Options.USER_COINS:
                     stat = GdLeaderboard::userCoins;
                     statEmoji = emoji.get("user_coin");
                     noBanList = false;
                     break;
-                case "scoins":
+                case Options.SECRET_COINS:
                     stat = GdLeaderboard::secretCoins;
                     statEmoji = emoji.get("secret_coin");
                     noBanList = false;
                     break;
-                case "demons":
+                case Options.DEMONS:
                     stat = GdLeaderboard::demons;
                     statEmoji = emoji.get("demon");
                     noBanList = false;
                     break;
-                case "cp":
+                case Options.CREATOR_POINTS:
                     stat = GdLeaderboard::creatorPoints;
                     statEmoji = emoji.get("creator_points");
                     noBanList = true;
                     break;
                 default:
-                    return Mono.error(new CommandFailedException(ctx.translate(Strings.GD, "error_unknown_lb_type")));
+                    return Mono.error(new AssertionError());
             }
-            return ctx.event().getGuild()
-                    .flatMap(guild -> getMembers(guild)
-                            .collect(toMap(m -> m.getId().asLong(), User::getTag, (a, b) -> a))
-                            .filter(not(Map::isEmpty))
-                            .flatMap(members -> db.gdLinkedUserDao().getAllIn(List.copyOf(members.keySet()))
-                                    .collectList()
-                                    .filter(not(List::isEmpty))
-                                    .flatMap(linkedUsers -> Mono.zip(
+            return ctx.event().getInteraction().getGuild().flatMap(guild -> getMembers(guild)
+                    .collect(toMap(m -> m.getId().asLong(), User::getTag, (a, b) -> a))
+                    .filter(not(Map::isEmpty))
+                    .flatMap(members -> db.gdLinkedUserDao().getAllIn(List.copyOf(members.keySet()))
+                            .collectList()
+                            .filter(not(List::isEmpty))
+                            .flatMap(linkedUsers -> Mono.zip(
                                             db.gdLeaderboardDao().getAllIn(gdAccIds(linkedUsers)).collectList(),
                                             db.gdLeaderboardBanDao().getAllIn(gdAccIds(linkedUsers))
                                                     .map(GdLeaderboardBan::accountId)
                                                     .collect(Collectors.toUnmodifiableSet()))
-                                            .map(function((userStats, bans) -> userStats.stream()
-                                                    .filter(u -> noBanList || !bans.contains(u.accountId()))
-                                                    .flatMap(u -> linkedUsers.stream()
-                                                            .filter(l -> l.gdUserId() == u.accountId())
-                                                            .map(GdLinkedUser::discordUserId)
-                                                            .map(members::get)
-                                                            .map(tag -> new LeaderboardEntry(
-                                                                    stat.applyAsInt(u), u, tag)))
-                                                    .collect(toCollection(TreeSet::new))
-                                            ))))
-                            .map(List::copyOf)
-                            .defaultIfEmpty(List.of())
-                            .flatMap(list -> {
-                                if (list.size() <= ENTRIES_PER_PAGE) {
-                                    return ctx.channel().createEmbed(leaderboardEmbed(ctx, ctx.getPrefixUsed(), guild,
-                                            list, 0, null, statEmoji)).then();
-                                }
-                                final var highlighted = new AtomicReference<String>();
-                                final IntFunction<MessageTemplate> templateGenerator = page -> MessageTemplate.builder()
-                                        .setEmbed(leaderboardEmbed(ctx, ctx.getPrefixUsed(), guild, list, page,
-                                                highlighted.get(), statEmoji))
-                                        .build();
-                                return commandService.interactiveMenuFactory()
-                                        .createPaginated((tr, page) -> {
-                                            PageNumberOutOfRangeException.check(page,
-                                                    (list.size() - 1) / ENTRIES_PER_PAGE);
-                                            return Mono.just(templateGenerator.apply(page));
-                                        })
-                                        .addMessageItem("finduser", interaction -> Mono
-                                                .just(interaction.getInput().getArguments().stream().skip(1)
-                                                        .collect(Collectors.joining(" ")))
-                                                .filter(not(String::isEmpty))
-                                                .switchIfEmpty(unexpectedReply(ctx,
-                                                        ctx.translate(Strings.GD, "error_username_not_specified")))
-                                                .flatMap(userName -> userService.stringToUser(ctx, userName))
-                                                .onErrorResume(GDClientException.class, e -> unexpectedReply(ctx,
-                                                        ctx.translate(Strings.GD, "error_user_fetch")))
-                                                .flatMap(gdUser -> {
-                                                    final var ids = list.stream()
-                                                            .map(entry -> entry.getStats().accountId())
-                                                            .collect(Collectors.toList());
-                                                    final var rank = ids.indexOf(gdUser.accountId());
-                                                    if (rank == -1) {
-                                                        return unexpectedReply(ctx,
-                                                                ctx.translate(Strings.GD, "error_user_not_on_lb"));
-                                                    }
-                                                    final var jumpTo = rank / ENTRIES_PER_PAGE;
-                                                    interaction.set("currentPage", jumpTo);
-                                                    highlighted.set(gdUser.name());
-                                                    return interaction.getMenuMessage()
-                                                            .edit(templateGenerator.apply(jumpTo).toEditSpec())
-                                                            .then();
-                                                }))
-                                        .open(ctx);
-                            })).then();
+                                    .map(function((userStats, bans) -> userStats.stream()
+                                            .filter(u -> noBanList || !bans.contains(u.accountId()))
+                                            .flatMap(u -> linkedUsers.stream()
+                                                    .filter(l -> l.gdUserId() == u.accountId())
+                                                    .map(GdLinkedUser::discordUserId)
+                                                    .map(members::get)
+                                                    .map(tag -> new Leaderboards.LeaderboardEntry(
+                                                            stat.applyAsInt(u), u, tag)))
+                                            .collect(toCollection(TreeSet::new))
+                                    ))))
+                    .map(List::copyOf)
+                    .defaultIfEmpty(List.of())
+                    .flatMap(list -> {
+                        if (list.size() <= Leaderboards.ENTRIES_PER_PAGE) {
+                            return ctx.event().createFollowup()
+                                    .withEmbeds(Leaderboards.embed(ctx, guild, list, 0, null, statEmoji))
+                                    .then();
+                        }
+                        final var pageCount = ((list.size() - 1) / Leaderboards.ENTRIES_PER_PAGE) + 1;
+                        return Mono.justOrEmpty(options.searchUser)
+                                .flatMap(username -> userService.stringToUser(ctx, username))
+                                .onErrorMap(GDClientException.class, e -> new InteractionFailedException(
+                                        ctx.translate(Strings.GD, "error_user_fetch")))
+                                .map(user -> {
+                                    final var ids = list.stream()
+                                            .map(entry -> entry.getStats().accountId())
+                                            .collect(Collectors.toList());
+                                    final var rank = ids.indexOf(user.accountId());
+                                    if (rank == -1) {
+                                        throw new InteractionFailedException(
+                                                ctx.translate(Strings.GD, "error_user_not_on_lb"));
+                                    }
+                                    return Tuples.of(rank / Leaderboards.ENTRIES_PER_PAGE, user.name());
+                                })
+                                .defaultIfEmpty(Tuples.of(0, ""))
+                                .flatMap(function((initialPage, highlighted) -> MessagePaginator.paginate(
+                                        ctx, initialPage, pageCount, state -> Mono.just(MessageCreateSpec.create()
+                                                .withEmbeds(Leaderboards.embed(ctx, guild, list, state.getPage(),
+                                                        highlighted, statEmoji))))));
+                    })).then();
         }).then();
     }
 
-    private Mono<Void> runBan(CommandContext ctx) {
-        return banGrammar.resolve(ctx)
-                .flatMap(args -> db.gdLeaderboardBanDao()
-                        .save(ImmutableGdLeaderboardBan.builder()
-                                .accountId(args.gdUser.accountId())
-                                .bannedBy(ctx.author().getId().asLong())
-                                .build())
-                        .then(ctx.channel()
-                                .createMessage(ctx.translate(Strings.GD, "ban_success", args.gdUser.name()))))
-                .then();
-    }
-
-    private Mono<Void> runUnban(CommandContext ctx) {
-        return banGrammar.resolve(ctx)
-                .flatMap(args -> db.gdLeaderboardBanDao()
-                        .delete(args.gdUser.accountId())
-                        .then(ctx.channel()
-                                .createMessage(ctx.translate(Strings.GD, "unban_success", args.gdUser.name()))))
-                .then();
-    }
-
     @Override
-    public CommandDocumentation documentation(Translator tr) {
-        return CommandDocumentation.builder()
-                .setSyntax(grammar.toString())
-                .setDescription(tr.translate(Strings.HELP, "leaderboard_description"))
-                .setBody(tr.translate(Strings.HELP, "leaderboard_body"))
-                .build();
+    public List<ApplicationCommandOptionData> options() {
+        return grammar.toOptions();
     }
 
-    @Override
-    public Set<Command> subcommands() {
-        return Set.of(
-                Command.builder("ban", this::runBan)
-                        .setDocumentation(tr -> CommandDocumentation.builder()
-                                .setSyntax(grammar.toString())
-                                .setDescription(tr.translate(Strings.HELP, "leaderboard_ban_description"))
-                                .setBody(tr.translate(Strings.HELP, "leaderboard_ban_body"))
-                                .build())
-                        .setPrivilege(privilegeFactory.botAdmin())
-                        .build(),
-                Command.builder("unban", this::runUnban)
-                        .setDocumentation(tr -> CommandDocumentation.builder()
-                                .setSyntax(grammar.toString())
-                                .setDescription(tr.translate(Strings.HELP, "leaderboard_unban_description"))
-                                .setBody(tr.translate(Strings.HELP, "leaderboard_unban_body"))
-                                .build())
-                        .setPrivilege(privilegeFactory.botAdmin())
-                        .build()
-        );
-    }
+    private static final class Options {
 
-    @Override
-    public Scope scope() {
-        return Scope.GUILD_ONLY;
-    }
+        private static final String STARS = "stars";
+        private static final String DIAMONDS = "diamonds";
+        private static final String DEMONS = "demons";
+        private static final String USER_COINS = "user_coins";
+        private static final String SECRET_COINS = "secret_coins";
+        private static final String CREATOR_POINTS = "creator_points";
 
-    private static class LeaderboardEntry implements Comparable<LeaderboardEntry> {
-        private final int value;
-        private final GdLeaderboard stats;
-        private final String discordUser;
+        @ChatInputCommandGrammar.Option(
+                type = ApplicationCommandOption.Type.STRING,
+                name = "type",
+                description = "The type of leaderboard to show.",
+                required = true,
+                choices = {
+                        @ChatInputCommandGrammar.Choice(name = "Stars", stringValue = STARS),
+                        @ChatInputCommandGrammar.Choice(name = "Diamonds", stringValue = DIAMONDS),
+                        @ChatInputCommandGrammar.Choice(name = "Demons", stringValue = DEMONS),
+                        @ChatInputCommandGrammar.Choice(name = "User Coins", stringValue = USER_COINS),
+                        @ChatInputCommandGrammar.Choice(name = "Secret Coins", stringValue = SECRET_COINS),
+                        @ChatInputCommandGrammar.Choice(name = "Creator Points", stringValue = CREATOR_POINTS),
+                }
+        )
+        String type;
 
-        public LeaderboardEntry(int value, GdLeaderboard stats, String discordUser) {
-            this.value = value;
-            this.stats = Objects.requireNonNull(stats);
-            this.discordUser = Objects.requireNonNull(discordUser);
-        }
-
-        public int getValue() {
-            return value;
-        }
-
-        public GdLeaderboard getStats() {
-            return stats;
-        }
-
-        public String getDiscordUser() {
-            return discordUser;
-        }
-
-        @Override
-        public int compareTo(LeaderboardEntry o) {
-            return value == o.value ? stats.name().compareToIgnoreCase(o.stats.name()) : o.value - value;
-        }
-
-        @Override
-        public String toString() {
-            return "LeaderboardEntry{" + stats.name() + ": " + value + "}";
-        }
-    }
-
-    private static final class Args {
-        String statName;
-    }
-
-    private static final class BanArgs {
-        GDUserProfile gdUser;
+        @ChatInputCommandGrammar.Option(
+                type = ApplicationCommandOption.Type.STRING,
+                name = "search-user",
+                description = "Search for a specific user by GD username in the leaderboard."
+        )
+        String searchUser;
     }
 }

@@ -1,25 +1,18 @@
 package ultimategdbot.command;
 
-import botrino.api.i18n.Translator;
-import botrino.command.Command;
-import botrino.command.CommandContext;
-import botrino.command.annotation.Alias;
-import botrino.command.annotation.TopLevelCommand;
-import botrino.command.cooldown.Cooldown;
-import botrino.command.doc.CommandDocumentation;
-import botrino.command.doc.FlagInformation;
+import botrino.interaction.annotation.ChatInputCommand;
+import botrino.interaction.context.ChatInputInteractionContext;
+import botrino.interaction.cooldown.Cooldown;
+import botrino.interaction.listener.ChatInputInteractionListener;
 import com.github.alex1304.rdi.finder.annotation.RdiFactory;
 import com.github.alex1304.rdi.finder.annotation.RdiService;
-import reactor.core.publisher.Mono;
-import ultimategdbot.Strings;
+import org.reactivestreams.Publisher;
 import ultimategdbot.service.GDCommandCooldown;
 import ultimategdbot.service.GDLevelService;
 
-@CommandCategory(CommandCategory.GD)
-@Alias({"weekly", "weeklydemon"})
-@TopLevelCommand
 @RdiService
-public final class WeeklyCommand implements Command {
+@ChatInputCommand(name = "weekly", description = "Displays info on the current Weekly demon.")
+public final class WeeklyCommand implements ChatInputInteractionListener {
 
     private final GDCommandCooldown commandCooldown;
     private final GDLevelService levelService;
@@ -31,20 +24,8 @@ public final class WeeklyCommand implements Command {
     }
 
     @Override
-    public Mono<Void> run(CommandContext ctx) {
+    public Publisher<?> run(ChatInputInteractionContext ctx) {
         return levelService.sendTimelyInfo(ctx, true).then();
-    }
-
-    @Override
-    public CommandDocumentation documentation(Translator tr) {
-        return CommandDocumentation.builder()
-                .setDescription(tr.translate(Strings.HELP, "weekly_description"))
-                .setBody(tr.translate(Strings.HELP, "weekly_body"))
-                .addFlag(FlagInformation.builder()
-                        .setValueFormat("refresh")
-                        .setDescription(tr.translate(Strings.HELP, "common_flag_refresh"))
-                        .build())
-                .build();
     }
 
     @Override

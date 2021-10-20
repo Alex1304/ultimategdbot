@@ -1,37 +1,33 @@
 package ultimategdbot.command;
 
-import botrino.api.i18n.Translator;
-import botrino.command.Command;
-import botrino.command.CommandContext;
-import botrino.command.annotation.Alias;
-import botrino.command.annotation.TopLevelCommand;
-import botrino.command.cooldown.Cooldown;
-import botrino.command.doc.CommandDocumentation;
-import botrino.command.doc.FlagInformation;
-import botrino.command.grammar.CommandGrammar;
+import botrino.interaction.annotation.ChatInputCommand;
+import botrino.interaction.context.ChatInputInteractionContext;
+import botrino.interaction.cooldown.Cooldown;
+import botrino.interaction.grammar.ChatInputCommandGrammar;
+import botrino.interaction.listener.ChatInputInteractionListener;
 import com.github.alex1304.rdi.finder.annotation.RdiFactory;
 import com.github.alex1304.rdi.finder.annotation.RdiService;
+import discord4j.core.object.command.ApplicationCommandOption;
+import discord4j.discordjson.json.ApplicationCommandOptionData;
 import jdash.client.GDClient;
-import jdash.common.entity.GDUserProfile;
-import reactor.core.publisher.Mono;
+import org.reactivestreams.Publisher;
 import ultimategdbot.Strings;
 import ultimategdbot.service.GDCommandCooldown;
 import ultimategdbot.service.GDLevelService;
 import ultimategdbot.service.GDUserService;
 
-import static ultimategdbot.util.InteractionUtils.writeOnlyIfRefresh;
+import java.util.List;
 
-@CommandCategory(CommandCategory.GD)
-@Alias("levelsby")
-@TopLevelCommand
 @RdiService
-public final class LevelsByCommand implements Command {
+@ChatInputCommand(name = "levels-by", description = "Browse levels from a specific player in Geometry Dash.")
+public final class LevelsByCommand implements ChatInputInteractionListener {
 
     private final GDCommandCooldown commandCooldown;
     private final GDLevelService levelService;
     private final GDClient gdClient;
+    private final GDUserService userService;
 
-    private final CommandGrammar<Args> grammar;
+    private final ChatInputCommandGrammar<Options> grammar = ChatInputCommandGrammar.of(Options.class);
 
     @RdiFactory
     public LevelsByCommand(GDCommandCooldown commandCooldown, GDLevelService levelService, GDClient gdClient,
@@ -39,16 +35,13 @@ public final class LevelsByCommand implements Command {
         this.commandCooldown = commandCooldown;
         this.levelService = levelService;
         this.gdClient = gdClient;
-        this.grammar = CommandGrammar.builder()
-                .nextArgument("gdUser", userService::stringToUser)
-                .build(Args.class);
+        this.userService = userService;
     }
 
     @Override
-    public Mono<Void> run(CommandContext ctx) {
-        final var gdClient = writeOnlyIfRefresh(ctx, this.gdClient);
-        return grammar.resolve(ctx)
-                .map(args -> args.gdUser)
+    public Publisher<?> run(ChatInputInteractionContext ctx) {
+        return grammar.resolve(ctx.event())
+                .flatMap(args -> userService.stringToUser(ctx, args.gdUsername))
                 .flatMap(gdUser -> levelService.interactiveSearch(ctx,
                         ctx.translate(Strings.GD, "player_levels", gdUser.name()),
                         page -> gdClient.browseLevelsByUser(gdUser.playerId(), page)))
@@ -56,16 +49,8 @@ public final class LevelsByCommand implements Command {
     }
 
     @Override
-    public CommandDocumentation documentation(Translator tr) {
-        return CommandDocumentation.builder()
-                .setSyntax(grammar.toString())
-                .setDescription(tr.translate(Strings.HELP, "levelsby_description"))
-                .setBody(tr.translate(Strings.HELP, "levelsby_body"))
-                .addFlag(FlagInformation.builder()
-                        .setValueFormat("refresh")
-                        .setDescription(tr.translate(Strings.HELP, "common_flag_refresh"))
-                        .build())
-                .build();
+    public List<ApplicationCommandOptionData> options() {
+        return grammar.toOptions();
     }
 
     @Override
@@ -73,7 +58,13 @@ public final class LevelsByCommand implements Command {
         return commandCooldown.get();
     }
 
-    private static final class Args {
-        GDUserProfile gdUser;
+    private static final class Options {
+
+        @ChatInputCommandGrammar.Option(
+                type = ApplicationCommandOption.Type.STRING,
+                name = "gd-username",
+                description = "The GD username of the target."
+        )
+        String gdUsername;
     }
 }
