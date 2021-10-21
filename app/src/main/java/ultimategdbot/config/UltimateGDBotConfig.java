@@ -23,17 +23,33 @@ public interface UltimateGDBotConfig {
     @JsonProperty("command_cooldown")
     Optional<Limiter> commandCooldown();
 
+    @JsonProperty("legacy_command_redirect_prefix")
+    Optional<String> legacyCommandRedirectPrefix();
+
+    @Value.Default
+    @JsonProperty("command_permissions")
+    default List<CommandPermission> commandPermissions() {
+        return List.of();
+    }
+
+    @Value.Immutable
+    @JsonDeserialize(as = ImmutableCommandPermission.class)
+    interface CommandPermission {
+
+        String name();
+
+        @JsonProperty("guild_id")
+        long guildId();
+
+        @JsonProperty("role_id")
+        long roleId();
+    }
+
     GD gd();
 
     @Value.Immutable
     @JsonDeserialize(as = ImmutableGD.class)
     interface GD {
-
-        @JsonProperty("icon_cache_max_size")
-        int iconCacheMaxSize();
-
-        @JsonProperty("icon_channel_id")
-        Optional<Long> iconChannelId();
 
         Client client();
 

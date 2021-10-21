@@ -11,7 +11,6 @@ import com.github.alex1304.rdi.finder.annotation.RdiFactory;
 import com.github.alex1304.rdi.finder.annotation.RdiService;
 import discord4j.core.object.entity.ApplicationInfo;
 import discord4j.core.object.entity.User;
-import discord4j.rest.http.client.ClientException;
 import jdash.client.exception.GDClientException;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
@@ -67,8 +66,6 @@ public class UGDBErrorHandler implements InteractionErrorHandler {
                                 ctx.translate(Strings.GD, "error_retry_exhausted"))
                         .apply(e.getCause())
                         .orElse(ctx.translate(Strings.GD, "error_server", e.getCause().getMessage()))))
-                .matchType(ClientException.class, ClientException.isStatusCode(403), e -> sendErrorMessage(ctx,
-                        ctx.translate(Strings.GENERAL, "dm_missing_permissions", ctx.channel().getMention())))
                 .matchType(TimeoutException.class, e -> sendErrorMessage(ctx,
                         ctx.translate(Strings.GENERAL, "command_exec_timeout")))
                 .apply(t)

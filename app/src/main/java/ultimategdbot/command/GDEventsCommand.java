@@ -13,7 +13,6 @@ import botrino.interaction.util.MessagePaginator;
 import com.github.alex1304.rdi.finder.annotation.RdiFactory;
 import com.github.alex1304.rdi.finder.annotation.RdiService;
 import discord4j.core.object.command.ApplicationCommandOption;
-import discord4j.core.object.component.LayoutComponent;
 import discord4j.core.spec.MessageCreateSpec;
 import discord4j.discordjson.json.ApplicationCommandOptionData;
 import jdash.client.GDClient;
@@ -28,18 +27,17 @@ import ultimategdbot.service.EmojiService;
 import ultimategdbot.service.PrivilegeFactory;
 import ultimategdbot.util.GDLevels;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static ultimategdbot.util.Interactions.confirmButtons;
-import static ultimategdbot.util.Interactions.paginationButtons;
+import static ultimategdbot.util.Interactions.paginationAndConfirmButtons;
 
 @ChatInputCommand(
         name = "gd-events",
         description = "Manage the GD event announcement system (Bot Owner only).",
+        defaultPermission = false,
         subcommands = {
             @Subcommand(
                     name = "dispatch",
@@ -196,11 +194,6 @@ public final class GDEventsCommand {
         private static MessageCreateSpec paginateEvents(Translator tr, MessagePaginator.State state,
                                                         List<? extends AwardedAdd> events, String okId,
                                                         String cancelId) {
-            final var components = new ArrayList<LayoutComponent>();
-            if (state.getPageCount() > 1) {
-                components.add(paginationButtons(tr, state));
-            }
-            components.add(confirmButtons(tr, okId, cancelId, !state.isActive()));
             return MessageCreateSpec.create()
                     .withContent(tr.translate(Strings.GD, "dispatch_list") + "\n\n" +
                             tr.translate(Strings.GENERAL, "page_x", state.getPage() + 1,
@@ -211,7 +204,7 @@ public final class GDEventsCommand {
                                     .map(event -> Markdown.quote(GDLevels.format(event.addedLevel())))
                                     .collect(Collectors.joining("\n")) + "\n\n" +
                             tr.translate(Strings.GD, "dispatch_confirm"))
-                    .withComponents(components);
+                    .withComponents(paginationAndConfirmButtons(tr, state, okId, cancelId));
         }
 
         @Override
@@ -274,7 +267,7 @@ public final class GDEventsCommand {
                     description = "The maximum number of pages to load when searching for the selected level. Default" +
                             " is 10."
             )
-            Long maxPage;
+            Long maxPage = 10L;
         }
     }
 }

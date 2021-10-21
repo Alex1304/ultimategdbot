@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 @ChatInputCommand(
         name = "blacklist",
         description = "Manage IDs of users, servers, or channels to be ignored by the bot (Bot Admin only).",
+        defaultPermission = false,
         subcommands = {
                 @Subcommand(
                         name = "add",

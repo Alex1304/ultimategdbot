@@ -23,6 +23,7 @@ import java.util.List;
 @ChatInputCommand(
         name = "bot-admins",
         description = "Manage users who are granted Bot Administrator permissions (Bot Owner only).",
+        defaultPermission = false,
         subcommands = {
                 @Subcommand(
                         name = "grant",

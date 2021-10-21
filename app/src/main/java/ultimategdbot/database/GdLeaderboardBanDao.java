@@ -17,6 +17,10 @@ public final class GdLeaderboardBanDao {
         this.repository = new GdLeaderboardBanRepository(backend);
     }
 
+    public Mono<GdLeaderboardBan> get(long userId) {
+        return repository.find(gdLeaderboardBan.accountId.is(userId)).oneOrNone();
+    }
+
     public Flux<GdLeaderboardBan> getAll() {
         return repository.findAll().fetch();
     }

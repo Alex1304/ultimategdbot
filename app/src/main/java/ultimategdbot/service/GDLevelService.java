@@ -7,6 +7,7 @@ import botrino.interaction.context.InteractionContext;
 import botrino.interaction.util.MessagePaginator;
 import com.github.alex1304.rdi.finder.annotation.RdiFactory;
 import com.github.alex1304.rdi.finder.annotation.RdiService;
+import discord4j.common.util.Snowflake;
 import discord4j.core.object.component.ActionRow;
 import discord4j.core.object.component.SelectMenu;
 import discord4j.core.object.entity.Message;
@@ -83,9 +84,8 @@ public final class GDLevelService {
         if (i == 1) {
             embed.description(italic(ctx.translate(Strings.GD, "no_results")));
         }
-        embed.addField(ctx.translate(Strings.GENERAL, "page_x", page + 1, "??"),
-                ctx.translate(Strings.GENERAL, "page_instructions") + '\n'
-                        + ctx.translate(Strings.GD, "select_result"), false);
+        embed.addField(ctx.translate(Strings.GENERAL, "page_number", page + 1),
+                ctx.translate(Strings.GENERAL, "page_instructions"), false);
         return embed.build();
     }
 
@@ -180,10 +180,11 @@ public final class GDLevelService {
     public Mono<Void> interactiveSearch(InteractionContext ctx, String title,
                                         IntFunction<? extends Flux<? extends GDLevel>> searchFunction) {
         final var resultsOfCurrentPage = new AtomicReference<List<? extends GDLevel>>();
+        final var selectionMessageId = new AtomicReference<Snowflake>();
         final var selectMenuId = UUID.randomUUID().toString();
         return searchFunction.apply(0).collectList()
                 .doOnNext(resultsOfCurrentPage::set)
-                .flatMap(results -> results.size() == 1 ? sendSelectedSearchResult(ctx, results.get(0))
+                .flatMap(results -> results.size() == 1 ? sendSelectedSearchResult(ctx, results.get(0), null).then()
                         : Mono.firstWithSignal(
                                 MessagePaginator.paginate(ctx, Integer.MAX_VALUE, state -> searchFunction
                                         .apply(state.getPage())
@@ -194,7 +195,8 @@ public final class GDLevelService {
                                                 .withComponents(Interactions.paginationButtons(ctx, state), ActionRow.of(
                                                         SelectMenu.of(selectMenuId, newResults.stream()
                                                                 .map(level -> SelectMenu.Option.of(
-                                                                        GDLevels.format(level), level.id() + ""))
+                                                                        GDLevels.format(level).replaceAll("_", ""),
+                                                                        level.id() + ""))
                                                                 .collect(Collectors.toUnmodifiableList()))
                                                                 .disabled(!state.isActive())
                                                 ))
@@ -204,16 +206,20 @@ public final class GDLevelService {
                                                 .filter(level -> level.id() == Long.parseLong(items.get(0)))
                                                 .findAny()
                                                 .orElseThrow())
-                                        .flatMap(level -> sendSelectedSearchResult(ctx, level))
+                                        .flatMap(level -> sendSelectedSearchResult(ctx, level,
+                                                selectionMessageId.get()).doOnNext(selectionMessageId::set))
                                         .repeat()
                                         .then()
                         ));
     }
 
-    private Mono<Void> sendSelectedSearchResult(InteractionContext ctx, GDLevel level) {
+    private Mono<Snowflake> sendSelectedSearchResult(InteractionContext ctx, GDLevel level,
+                                                @Nullable Snowflake selectionMessageId) {
         return detailedEmbed(ctx, level.id(), level.creatorName().orElse("-"), EmbedType.LEVEL_SEARCH_RESULT, null)
-                .flatMap(embed -> ctx.event().createFollowup().withEmbeds(embed))
-                .then();
+                .flatMap(embed -> selectionMessageId == null ?
+                        ctx.event().createFollowup().withEmbeds(embed) :
+                        ctx.event().editFollowup(selectionMessageId).withEmbeds(embed))
+                .map(Message::getId);
     }
 
     public Mono<Message> sendTimelyInfo(InteractionContext ctx, boolean isWeekly) {

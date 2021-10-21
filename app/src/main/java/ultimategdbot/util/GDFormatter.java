@@ -10,7 +10,21 @@ public final class GDFormatter {
 	}
 	
 	public static String formatPolicy(Translator tr, AccessPolicy policy) {
-		return tr.translate(Strings.GD, "policy_" + policy.name().toLowerCase());
+        String str;
+        switch (policy) {
+            case NONE:
+                str = "policy_none";
+                break;
+            case FRIENDS_ONLY:
+                str = "policy_friends_only";
+                break;
+            case ALL:
+                str = "policy_all";
+                break;
+            default:
+                throw new AssertionError();
+        }
+		return tr.translate(Strings.GD, str);
 	}
 	
 	public static String formatCode(Object val, int n) {

@@ -2,11 +2,15 @@ package ultimategdbot.command;
 
 import botrino.api.util.MessageUtils;
 import botrino.interaction.InteractionFailedException;
+import botrino.interaction.annotation.Acknowledge;
 import botrino.interaction.annotation.ChatInputCommand;
+import botrino.interaction.annotation.UserCommand;
 import botrino.interaction.context.ChatInputInteractionContext;
+import botrino.interaction.context.UserInteractionContext;
 import botrino.interaction.cooldown.Cooldown;
 import botrino.interaction.grammar.ChatInputCommandGrammar;
 import botrino.interaction.listener.ChatInputInteractionListener;
+import botrino.interaction.listener.UserInteractionListener;
 import com.github.alex1304.rdi.finder.annotation.RdiFactory;
 import com.github.alex1304.rdi.finder.annotation.RdiService;
 import discord4j.core.object.command.ApplicationCommandOption;
@@ -25,8 +29,10 @@ import ultimategdbot.util.EmbedType;
 import java.util.List;
 
 @RdiService
+@Acknowledge(Acknowledge.Mode.NONE)
 @ChatInputCommand(name = "profile", description = "View the profile of any player in Geometry Dash.")
-public final class ProfileCommand implements ChatInputInteractionListener {
+@UserCommand("View GD Profile")
+public final class ProfileCommand implements ChatInputInteractionListener, UserInteractionListener {
 
     private final GDCommandCooldown commandCooldown;
     private final DatabaseService db;
@@ -46,7 +52,7 @@ public final class ProfileCommand implements ChatInputInteractionListener {
 
     @Override
     public Publisher<?> run(ChatInputInteractionContext ctx) {
-        return grammar.resolve(ctx.event())
+        return ctx.event().deferReply().then(grammar.resolve(ctx.event()))
                 .flatMap(options -> Mono.justOrEmpty(options.gdUsername)
                         .flatMap(username -> userService.stringToUser(ctx, username)))
                 .switchIfEmpty(db.gdLinkedUserDao().getActiveLink(ctx.user().getId().asLong())
@@ -58,8 +64,23 @@ public final class ProfileCommand implements ChatInputInteractionListener {
                         .cast(GDUserProfile.class))
                 .flatMap(user -> userService.buildProfile(ctx, user, EmbedType.USER_PROFILE)
                         .map(MessageUtils::toFollowupCreateSpec)
-                        .flatMap(ctx.event()::createFollowup))
-                .then();
+                        .flatMap(ctx.event()::createFollowup));
+    }
+
+    @Override
+    public Publisher<?> run(UserInteractionContext ctx) {
+        return ctx.event().deferReply().withEphemeral(true)
+                .then(db.gdLinkedUserDao().getActiveLink(ctx.event().getTargetId().asLong()))
+                .switchIfEmpty(Mono.error(new InteractionFailedException(
+                        ctx.translate(Strings.GD, "error_no_gd_account"))))
+                .map(GdLinkedUser::gdUserId)
+                .flatMap(gdClient::getUserProfile)
+                .flatMap(db.gdLeaderboardDao()::saveStats)
+                .cast(GDUserProfile.class)
+                .flatMap(user -> userService.buildProfile(ctx, user, EmbedType.USER_PROFILE)
+                        .map(MessageUtils::toFollowupCreateSpec)
+                        .map(spec -> spec.withEphemeral(true))
+                        .flatMap(ctx.event()::createFollowup));
     }
 
     @Override

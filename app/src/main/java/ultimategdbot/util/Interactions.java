@@ -21,10 +21,21 @@ public final class Interactions {
         return ActionRow.of(
                 state.previousButton(customId -> Button.secondary(customId,
                         "<< " + tr.translate(Strings.GENERAL, "pagination_previous"))),
-                state.previousButton(customId -> Button.secondary(customId,
+                state.nextButton(customId -> Button.secondary(customId,
                         tr.translate(Strings.GENERAL, "pagination_next") + " >>")),
-                state.previousButton(customId -> Button.danger(customId,
+                state.closeButton(customId -> Button.danger(customId,
                         tr.translate(Strings.GENERAL, "pagination_close")))
+        );
+    }
+
+    public static ActionRow paginationAndConfirmButtons(Translator tr, MessagePaginator.State state, String okId, String cancelId) {
+        return ActionRow.of(
+                state.previousButton(customId -> Button.secondary(customId,
+                        "<< " + tr.translate(Strings.GENERAL, "pagination_previous"))),
+                state.nextButton(customId -> Button.secondary(customId,
+                        tr.translate(Strings.GENERAL, "pagination_next") + " >>")),
+                Button.success(okId, tr.translate(Strings.GENERAL, "ok_button")).disabled(!state.isActive()),
+                Button.danger(cancelId, tr.translate(Strings.GENERAL, "cancel_button")).disabled(!state.isActive())
         );
     }
 

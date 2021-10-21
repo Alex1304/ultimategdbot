@@ -63,7 +63,8 @@ public final class LevelsByCommand implements ChatInputInteractionListener {
         @ChatInputCommandGrammar.Option(
                 type = ApplicationCommandOption.Type.STRING,
                 name = "gd-username",
-                description = "The GD username of the target."
+                description = "The GD username of the target.",
+                required = true
         )
         String gdUsername;
     }

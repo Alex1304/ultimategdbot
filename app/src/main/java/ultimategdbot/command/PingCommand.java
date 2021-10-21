@@ -33,6 +33,7 @@ public final class PingCommand implements ChatInputInteractionListener {
     @Override
     public Publisher<?> run(ChatInputInteractionContext ctx) {
         return ctx.event().reply(ctx.translate(Strings.GENERAL, "pong"))
+                .thenReturn(0)
                 .elapsed()
                 .flatMap(function((apiLatency, __) -> ctx.event()
                         .editReply(computeLatency(ctx, ctx.event(), apiLatency))))

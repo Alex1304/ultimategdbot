@@ -29,7 +29,8 @@ import java.util.stream.IntStream;
 import static ultimategdbot.event.ModStatusUpdate.Type.*;
 
 @RdiService
-@ChatInputCommand(name = "mod-wave", description = "Trigger moderator promotion/demotion events (Elder Mod only).")
+@ChatInputCommand(name = "mod-wave", description = "Trigger moderator promotion/demotion events (Elder Mod only).",
+        defaultPermission = false)
 public final class ModWaveCommand implements ChatInputInteractionListener {
 
     private final DatabaseService db;

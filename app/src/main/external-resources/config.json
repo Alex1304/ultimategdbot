@@ -26,6 +26,7 @@
             "limit": 2,
             "interval_seconds": 30
         },
+        "command_permissions": [],
         "gd": {
             "icon_cache_max_size": 2500,
             "icon_channel_id": null,
