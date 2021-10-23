@@ -40,6 +40,7 @@ import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toMap;
 import static reactor.function.TupleUtils.function;
+import static ultimategdbot.util.Interactions.paginationButtons;
 
 @ChatInputCommand(
         name = "leaderboard",
@@ -161,7 +162,8 @@ public final class LeaderboardCommand implements ChatInputInteractionListener {
                                 .flatMap(function((initialPage, highlighted) -> MessagePaginator.paginate(
                                         ctx, initialPage, pageCount, state -> Mono.just(MessageCreateSpec.create()
                                                 .withEmbeds(Leaderboards.embed(ctx, guild, list, state.getPage(),
-                                                        highlighted, statEmoji))))));
+                                                        highlighted, statEmoji))
+                                                .withComponents(paginationButtons(ctx, state))))));
                     })).then();
         }).then();
     }

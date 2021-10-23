@@ -269,7 +269,7 @@ public final class AccountCommand {
                     .collectList()
                     .flatMap(linkedUsers -> {
                         if (linkedUsers.size() == 1) {
-                            return doUnlink(ctx, List.of(linkedUsers.get(0).discordUserId()));
+                            return doUnlink(ctx, List.of(linkedUsers.get(0).discordUserId()), false);
                         }
                         final var selectId = UUID.randomUUID().toString();
                         return Flux.fromIterable(linkedUsers)
@@ -285,8 +285,8 @@ public final class AccountCommand {
                                         .withComponents(ActionRow.of(SelectMenu.of(selectId, tagsByUserId.entrySet()
                                                         .stream()
                                                         .map(entry -> SelectMenu.Option
-                                                                .of(entry.getValue() + " (" + entry.getKey() + ')',
-                                                                        entry.getKey() + "")
+                                                                .of(entry.getValue(), "" + entry.getKey())
+                                                                .withDescription("" + entry.getKey())
                                                                 .withDefault(entry.getKey() == authorId))
                                                         .collect(Collectors.toUnmodifiableList()))
                                                 .withMaxValues(tagsByUserId.size())))
@@ -295,18 +295,18 @@ public final class AccountCommand {
                                                 .map(items -> items.stream()
                                                         .map(Snowflake::asLong)
                                                         .collect(Collectors.toUnmodifiableList()))
-                                                .flatMap(userIds -> doUnlink(ctx, userIds))
+                                                .flatMap(userIds -> doUnlink(ctx, userIds, true))
                                                 .then(ctx.event().deleteFollowup(messageId))
                                                 .onErrorResume(deleteFollowupAndPropagate(ctx, messageId))));
                     })
                     .then();
         }
 
-        private Mono<Void> doUnlink(ChatInputInteractionContext ctx, List<Long> discordUserIds) {
+        private Mono<Void> doUnlink(ChatInputInteractionContext ctx, List<Long> discordUserIds, boolean isMany) {
             final var yesId = UUID.randomUUID().toString();
             final var noId = UUID.randomUUID().toString();
-            return ctx.event().createFollowup(ctx.translate(Strings.GD, discordUserIds.size() == 1 ?
-                            "unlink_confirm" : "unlink_confirm_many"))
+            return ctx.event().createFollowup(ctx.translate(Strings.GD, isMany ? "unlink_confirm" :
+                            "unlink_confirm_many"))
                     .withComponents(confirmButtons(ctx, yesId, noId))
                     .map(Message::getId)
                     .flatMap(messageId -> Mono.firstWithValue(ctx.awaitButtonClick(yesId), ctx.awaitButtonClick(noId))
@@ -315,8 +315,8 @@ public final class AccountCommand {
                                     .flatMap(db.gdLinkedUserDao()::delete)
                                     .then(ctx.event().editFollowup(messageId)
                                             .withContentOrNull(emoji.get("success") + ' ' +
-                                                    ctx.translate(Strings.GD, discordUserIds.size() == 1 ?
-                                                            "unlink_success" : "unlink_success_many"))
+                                                    ctx.translate(Strings.GD, isMany ? "unlink_success" :
+                                                            "unlink_success_many"))
                                             .withComponentsOrNull(null))))
                     .then();
         }
