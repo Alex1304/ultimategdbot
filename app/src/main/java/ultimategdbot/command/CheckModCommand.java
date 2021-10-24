@@ -64,9 +64,9 @@ public final class CheckModCommand implements ChatInputInteractionListener, User
                         .switchIfEmpty(Mono.error(new InteractionFailedException(
                                 ctx.translate(Strings.GD, "error_checkmod_user_not_specified"))))
                         .map(GdLinkedUser::gdUserId)
-                        .flatMap(gdClient::getUserProfile)
-                        .flatMap(db.gdLeaderboardDao()::saveStats)
-                        .cast(GDUserProfile.class))
+                        .flatMap(gdClient::getUserProfile))
+                .flatMap(db.gdLeaderboardDao()::saveStats)
+                .cast(GDUserProfile.class)
                 .flatMap(user -> sendModStatus(ctx, user, false));
     }
 
