@@ -4,17 +4,15 @@
         "presence": {
             "status": "online",
             "activity_type": "playing",
-            "activity_text": "Geometry Dash | u!help"
+            "activity_text": "Geometry Dash"
         },
-        "enabled_intents": 13835
+        "enabled_intents": 4619
     },
     "i18n": {
         "default_locale": "en",
-        "supported_locales": ["en"]
+        "supported_locales": ["en", "fr-FR", "ru-RU", "it-IT", "de-DE"]
     },
-    "command": {
-        "prefix": "u!"
-    },
+    "interaction": {},
     "mongodb": {
         "database_name": "ultimategdbot",
         "connection_string" : "mongodb://localhost:27017"
@@ -28,8 +26,6 @@
         },
         "command_permissions": [],
         "gd": {
-            "icon_cache_max_size": 2500,
-            "icon_channel_id": null,
             "client": {
                 "username": "${username}",
                 "password": "${password}",

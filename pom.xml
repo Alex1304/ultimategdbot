@@ -63,6 +63,7 @@
                             <addModule>jdk.crypto.ec</addModule>
                             <addModule>jdk.management</addModule>
                             <addModule>java.sql</addModule>
+                            <addModule>jdk.naming.dns</addModule>
                         </addModules>
                         <sourceJdkModules>${jlink.jdk}</sourceJdkModules>
                         <stripDebug>true</stripDebug>
