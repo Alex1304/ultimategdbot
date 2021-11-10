@@ -18,6 +18,7 @@ import jdash.graphics.GDUserIconSet;
 import jdash.graphics.SpriteFactory;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
+import reactor.util.annotation.Nullable;
 import ultimategdbot.Strings;
 import ultimategdbot.util.EmbedType;
 
@@ -26,6 +27,7 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.Random;
 import java.util.stream.Collectors;
 
@@ -133,16 +135,22 @@ public final class GDUserService {
                                                             "label_comment_history"),
                                                     formatPolicy(tr, gdUser.commentHistoryPolicy())),
                                     false);
-                    embed.image("attachment://icons.png");
                     embed.footer(tr.translate(Strings.GD, "label_player_id") + ' ' + gdUser.playerId() + " | "
                             + tr.translate(Strings.GD, "label_account_id") + ' ' + gdUser.accountId(), null);
-                    return MessageCreateSpec.create()
-                            .withFiles(File.of("icons.png", iconSet))
-                            .withEmbeds(embed.build());
+                    var spec = MessageCreateSpec.create();
+                    if (iconSet.inputStream == null) {
+                        Objects.requireNonNull(iconSet.error);
+                        embed.addField(":warning: " + tr.translate(Strings.GD, "error_icon_set_failed"),
+                                iconSet.error, false);
+                    } else {
+                        embed.image("attachment://icons.png");
+                        spec = spec.withFiles(File.of("icons.png", iconSet.inputStream));
+                    }
+                    return spec.withEmbeds(embed.build());
                 }));
     }
 
-    public Mono<ByteArrayInputStream> makeIconSet(Translator tr, GDUserProfile user) {
+    public Mono<GeneratedIconSet> makeIconSet(Translator tr, GDUserProfile user) {
         return Mono.defer(() -> {
             final var iconSet = GDUserIconSet.create(user, spriteFactory);
             final var icons = new ArrayList<BufferedImage>();
@@ -151,7 +159,7 @@ public final class GDUserService {
                     icons.add(iconSet.generateIcon(iconType));
                 }
             } catch (IllegalArgumentException e) {
-                return Mono.error(e);
+                return Mono.just(new GeneratedIconSet(null, e.getMessage()));
             }
             final var iconSetImg = new BufferedImage(icons.stream().mapToInt(BufferedImage::getWidth).sum(),
                     icons.get(0).getHeight(), icons.get(0).getType());
@@ -162,7 +170,7 @@ public final class GDUserService {
                 offset += icon.getWidth();
             }
             g.dispose();
-            return imageStream(iconSetImg);
+            return imageStream(iconSetImg).map(inputStream -> new GeneratedIconSet(inputStream, null));
         });
     }
 
@@ -188,5 +196,16 @@ public final class GDUserService {
         return role == Role.USER ? "" : role == Role.MODERATOR
                 ? emoji.get("mod") + " **MODERATOR**\n"
                 : emoji.get("elder_mod") + " **ELDER MODERATOR**\n";
+    }
+
+    private static final class GeneratedIconSet {
+
+        private final ByteArrayInputStream inputStream;
+        private final String error;
+
+        private GeneratedIconSet(@Nullable ByteArrayInputStream inputStream, @Nullable String error) {
+            this.inputStream = inputStream;
+            this.error = error;
+        }
     }
 }

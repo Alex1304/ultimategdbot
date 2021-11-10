@@ -70,7 +70,19 @@ public final class LeaderboardCommand implements ChatInputInteractionListener {
         return Flux.from(guild.getClient().getGatewayResources().getStore()
                         .execute(ReadActions.getExactMembersInGuild(guild.getId().asLong())))
                 .map(data -> new Member(guild.getClient(), data, guild.getId().asLong()))
-                .onErrorResume(ExactResultNotAvailableException.class, e -> guild.requestMembers());
+                .onErrorResume(ExactResultNotAvailableException.class,
+                        e -> guild.getMemberCount() > 50_000 ?
+                                Flux.error(new InteractionFailedException("Leaderboard command is temporarily " +
+                                                "disabled in servers larger than 50k members.")) :
+                                guild.requestMembers()
+                        /*.index()
+                        .map(t2 -> t2.getT1() + 1)
+                        .filter(l -> l % 1000 == 0)
+                        .elapsed()
+                        .map(function((time, count) -> "1000 more members processed in " +
+                                DurationUtils.format(Duration.ofMillis(time)) + ", total processed: " + count))
+                        .log("LeaderboardCommand.requestMembers", Level.INFO, true)
+                        .then(Mono.empty())*/);
     }
 
     @Override

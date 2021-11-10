@@ -9,6 +9,10 @@ import botrino.interaction.cooldown.CooldownException;
 import botrino.interaction.privilege.PrivilegeException;
 import com.github.alex1304.rdi.finder.annotation.RdiFactory;
 import com.github.alex1304.rdi.finder.annotation.RdiService;
+import discord4j.core.event.domain.interaction.ApplicationCommandInteractionEvent;
+import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
+import discord4j.core.event.domain.interaction.ComponentInteractionEvent;
+import discord4j.core.object.command.ApplicationCommandInteractionOptionValue;
 import discord4j.core.object.entity.ApplicationInfo;
 import discord4j.core.object.entity.User;
 import jdash.client.exception.GDClientException;
@@ -25,6 +29,8 @@ import ultimategdbot.exception.GuildAdminPrivilegeException;
 import ultimategdbot.service.EmojiService;
 
 import java.util.concurrent.TimeoutException;
+
+import static java.util.stream.Collectors.joining;
 
 @RdiService
 public class UGDBErrorHandler implements InteractionErrorHandler {
@@ -97,14 +103,35 @@ public class UGDBErrorHandler implements InteractionErrorHandler {
     }
 
     private Mono<Void> sendCrashReport(InteractionContext ctx, Throwable t) {
+        final var format = formatContext(ctx);
         return Mono.when(
                 sendErrorMessage(ctx, ctx.translate(Strings.GENERAL, "error_generic")),
                 applicationInfo.getOwner().flatMap(User::getPrivateChannel)
                         // That message does not need to be translated as it is only intended for the bot owner.
                         .flatMap(dm -> dm.createMessage("**Something went wrong when executing a command.**\n" +
                                 "Exception: `" + t + '`' + "\n" +
-                                "Interaction data:\n```\n" + ctx.event().getInteraction().toString()
-                                .substring(0, Math.min(ctx.event().getInteraction().toString().length(), 1500)) + "\n" +
-                                "```")));
+                                "Context:\n```\n" + format.substring(0, Math.min(format.length(), 1500)) +
+                                "\n```")));
+    }
+
+    private static String formatContext(InteractionContext ctx) {
+        final String commandName;
+        if (ctx.event() instanceof ChatInputInteractionEvent) {
+            final var event = ((ChatInputInteractionEvent) ctx.event());
+            commandName = "/" + event.getCommandName() + ' ' + event.getOptions().stream()
+                    .map(o -> o.getName() + ":" + o.getValue()
+                            .map(ApplicationCommandInteractionOptionValue::getRaw)
+                            .orElse("<null>"))
+                    .collect(joining(" "));
+        } else if (ctx.event() instanceof ApplicationCommandInteractionEvent) {
+            final var event = ((ApplicationCommandInteractionEvent) ctx.event());
+            commandName = "[context menu] " + event.getCommandName();
+        } else if (ctx.event() instanceof ComponentInteractionEvent) {
+            commandName = "[component] " + ((ComponentInteractionEvent) ctx.event()).getCustomId();
+        } else {
+            commandName = "unknown";
+        }
+        return "Command: " + commandName + "\n" +
+                "User: " + ctx.event().getInteraction().getUser().getTag() + "\n";
     }
 }

@@ -223,6 +223,7 @@ public final class GDLevelService {
     }
 
     public Mono<Message> sendTimelyInfo(InteractionContext ctx, boolean isWeekly) {
+        final var gdClient = this.gdClient.withCacheDisabled();
         final var timelyMono = isWeekly ? gdClient.getWeeklyDemonInfo() : gdClient.getDailyLevelInfo();
         final var downloadId = isWeekly ? -2 : -1;
         final var type = isWeekly ? EmbedType.WEEKLY_DEMON : EmbedType.DAILY_LEVEL;

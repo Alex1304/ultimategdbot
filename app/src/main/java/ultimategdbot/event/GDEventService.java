@@ -127,7 +127,7 @@ public final class GDEventService {
                                     .map(GDLevel::creatorPlayerId)
                                     .flatMap(playerId -> gdClient.searchUsers("" + playerId, 0).next())
                                     .map(GDUser::accountId))
-                            .messageTemplateFactory(event -> gdClient.downloadDailyLevel()
+                            .messageTemplateFactory(event -> gdClient.withWriteOnlyCache().downloadDailyLevel()
                                     .flatMap(level -> levelService
                                             .compactEmbed(tr, level, EmbedType.DAILY_LEVEL, event.after())
                                             .map(embed -> MessageCreateSpec.create()
@@ -144,7 +144,7 @@ public final class GDEventService {
                                     .map(GDLevel::creatorPlayerId)
                                     .flatMap(playerId -> gdClient.searchUsers("" + playerId, 0).next())
                                     .map(GDUser::accountId))
-                            .messageTemplateFactory(event -> gdClient.downloadWeeklyDemon()
+                            .messageTemplateFactory(event -> gdClient.withWriteOnlyCache().downloadWeeklyDemon()
                                     .flatMap(level -> levelService
                                             .compactEmbed(tr, level, EmbedType.WEEKLY_DEMON, event.after())
                                             .map(embed -> MessageCreateSpec.create()
@@ -252,7 +252,7 @@ public final class GDEventService {
                                 .map(msg -> msg.withContent(gdEvent.congratMessage(event)))
                                 .flatMap(channel::createMessage)))
                 .onErrorResume(e -> Mono.fromRunnable(() -> LOGGER.debug("Could not DM user for GD event", e)));
-        return Flux.merge(sendGuild, sendDm)
+        return Flux.concat(sendGuild, sendDm)
                 .collectList()
                 .doOnNext(results -> gdEvent.levelId(event).ifPresent(id -> broadcastResultCache.put(id, results)))
                 .then();

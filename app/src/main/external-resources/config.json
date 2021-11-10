@@ -10,7 +10,7 @@
     },
     "i18n": {
         "default_locale": "en",
-        "supported_locales": ["en", "fr-FR", "ru-RU", "it-IT", "de-DE"]
+        "supported_locales": ["en", "fr-FR", "ru-RU", "it-IT", "de-DE", "cs-CZ", "es-ES", "tr-TR"]
     },
     "interaction": {},
     "mongodb": {
