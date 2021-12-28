@@ -12,7 +12,9 @@ import com.github.alex1304.rdi.finder.annotation.RdiService;
 import discord4j.core.event.domain.interaction.ApplicationCommandInteractionEvent;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import discord4j.core.event.domain.interaction.ComponentInteractionEvent;
+import discord4j.core.object.command.ApplicationCommandInteractionOption;
 import discord4j.core.object.command.ApplicationCommandInteractionOptionValue;
+import discord4j.core.object.command.ApplicationCommandOption;
 import discord4j.core.object.entity.ApplicationInfo;
 import discord4j.core.object.entity.User;
 import jdash.client.exception.GDClientException;
@@ -28,6 +30,7 @@ import ultimategdbot.exception.ElderModPrivilegeException;
 import ultimategdbot.exception.GuildAdminPrivilegeException;
 import ultimategdbot.service.EmojiService;
 
+import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 import static java.util.stream.Collectors.joining;
@@ -44,6 +47,38 @@ public class UGDBErrorHandler implements InteractionErrorHandler {
     public UGDBErrorHandler(EmojiService emoji, ApplicationInfo applicationInfo) {
         this.emoji = emoji;
         this.applicationInfo = applicationInfo;
+    }
+
+    private static String formatContext(InteractionContext ctx) {
+        final String commandName;
+        if (ctx.event() instanceof ChatInputInteractionEvent) {
+            final var event = ((ChatInputInteractionEvent) ctx.event());
+            commandName = "/" + event.getCommandName() + (event.getOptions().isEmpty() ? "" :
+                    ' ' + formatOptions(event.getOptions()));
+        } else if (ctx.event() instanceof ApplicationCommandInteractionEvent) {
+            final var event = ((ApplicationCommandInteractionEvent) ctx.event());
+            commandName = "[context menu] " + event.getCommandName();
+        } else if (ctx.event() instanceof ComponentInteractionEvent) {
+            commandName = "[component] " + ((ComponentInteractionEvent) ctx.event()).getCustomId();
+        } else {
+            commandName = "unknown";
+        }
+        return "Command: " + commandName + "\n" +
+                "User: " + ctx.event().getInteraction().getUser().getTag() + "\n";
+    }
+
+    private static String formatOptions(List<ApplicationCommandInteractionOption> options) {
+        return options.stream()
+                .map(o -> o.getType() == ApplicationCommandOption.Type.SUB_COMMAND ||
+                        o.getType() == ApplicationCommandOption.Type.SUB_COMMAND_GROUP ?
+                        o.getName() + ' ' + formatOptions(o.getOptions()) : formatOptionValue(o))
+                .collect(joining(" "));
+    }
+
+    private static String formatOptionValue(ApplicationCommandInteractionOption o) {
+        return o.getName() + ":" + o.getValue()
+                .map(ApplicationCommandInteractionOptionValue::getRaw)
+                .orElse("<null>");
     }
 
     @Override
@@ -112,26 +147,5 @@ public class UGDBErrorHandler implements InteractionErrorHandler {
                                 "Exception: `" + t + '`' + "\n" +
                                 "Context:\n```\n" + format.substring(0, Math.min(format.length(), 1500)) +
                                 "\n```")));
-    }
-
-    private static String formatContext(InteractionContext ctx) {
-        final String commandName;
-        if (ctx.event() instanceof ChatInputInteractionEvent) {
-            final var event = ((ChatInputInteractionEvent) ctx.event());
-            commandName = "/" + event.getCommandName() + ' ' + event.getOptions().stream()
-                    .map(o -> o.getName() + ":" + o.getValue()
-                            .map(ApplicationCommandInteractionOptionValue::getRaw)
-                            .orElse("<null>"))
-                    .collect(joining(" "));
-        } else if (ctx.event() instanceof ApplicationCommandInteractionEvent) {
-            final var event = ((ApplicationCommandInteractionEvent) ctx.event());
-            commandName = "[context menu] " + event.getCommandName();
-        } else if (ctx.event() instanceof ComponentInteractionEvent) {
-            commandName = "[component] " + ((ComponentInteractionEvent) ctx.event()).getCustomId();
-        } else {
-            commandName = "unknown";
-        }
-        return "Command: " + commandName + "\n" +
-                "User: " + ctx.event().getInteraction().getUser().getTag() + "\n";
     }
 }

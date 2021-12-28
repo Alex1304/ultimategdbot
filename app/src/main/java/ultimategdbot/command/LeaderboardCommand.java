@@ -30,6 +30,7 @@ import ultimategdbot.service.EmojiService;
 import ultimategdbot.service.GDUserService;
 import ultimategdbot.util.Leaderboards;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
@@ -71,10 +72,7 @@ public final class LeaderboardCommand implements ChatInputInteractionListener {
                         .execute(ReadActions.getExactMembersInGuild(guild.getId().asLong())))
                 .map(data -> new Member(guild.getClient(), data, guild.getId().asLong()))
                 .onErrorResume(ExactResultNotAvailableException.class,
-                        e -> guild.getMemberCount() > 50_000 ?
-                                Flux.error(new InteractionFailedException("Leaderboard command is temporarily " +
-                                                "disabled in servers larger than 50k members.")) :
-                                guild.requestMembers()
+                        e -> guild.requestMembers().timeout(Duration.ofMinutes(2))
                         /*.index()
                         .map(t2 -> t2.getT1() + 1)
                         .filter(l -> l % 1000 == 0)

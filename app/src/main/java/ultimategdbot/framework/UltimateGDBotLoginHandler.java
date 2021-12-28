@@ -8,6 +8,7 @@ import discord4j.core.GatewayDiscordClient;
 import discord4j.core.object.presence.ClientPresence;
 import discord4j.core.shard.MemberRequestFilter;
 import discord4j.gateway.intent.IntentSet;
+import discord4j.rest.response.ResponseFunction;
 import discord4j.rest.util.AllowedMentions;
 import reactor.core.publisher.Mono;
 
@@ -18,6 +19,7 @@ public final class UltimateGDBotLoginHandler implements LoginHandler {
         final var config = configContainer.get(BotConfig.class);
         final var discordClient = DiscordClient.builder(config.token())
                 .setDefaultAllowedMentions(AllowedMentions.suppressAll())
+                .onClientResponse(ResponseFunction.emptyIfNotFound())
                 .build();
         return discordClient.gateway()
                 .setInitialPresence(shard -> config.presence()

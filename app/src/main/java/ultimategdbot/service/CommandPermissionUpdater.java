@@ -1,6 +1,7 @@
 package ultimategdbot.service;
 
 import botrino.api.config.ConfigContainer;
+import botrino.interaction.InteractionService;
 import botrino.interaction.config.InteractionConfig;
 import com.github.alex1304.rdi.finder.annotation.RdiFactory;
 import com.github.alex1304.rdi.finder.annotation.RdiService;
@@ -14,7 +15,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ultimategdbot.config.UltimateGDBotConfig;
 
-import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -29,18 +29,20 @@ public final class CommandPermissionUpdater {
     private final List<UltimateGDBotConfig.CommandPermission> permissions;
     private final ApplicationService appService;
     private final Long guildId;
+    private final Mono<Void> onCommandsDeployed;
 
     @RdiFactory
     public CommandPermissionUpdater(ConfigContainer configContainer, ApplicationInfo applicationInfo,
-                                    GatewayDiscordClient gateway) {
+                                    GatewayDiscordClient gateway, InteractionService interactionService) {
         this.applicationId = applicationInfo.getId().asLong();
         this.permissions = configContainer.get(UltimateGDBotConfig.class).commandPermissions();
         this.appService = gateway.rest().getApplicationService();
         this.guildId = configContainer.get(InteractionConfig.class).applicationCommandsGuildId().orElse(null);
+        this.onCommandsDeployed = interactionService.onCommandsDeployed();
     }
 
     public Mono<Void> run() {
-        return Mono.delay(Duration.ofSeconds(10))
+        return onCommandsDeployed
                 .thenMany(guildId == null ?
                         appService.getGlobalApplicationCommands(applicationId) :
                         appService.getGuildApplicationCommands(applicationId, guildId))
