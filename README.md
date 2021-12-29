@@ -21,7 +21,7 @@ The most popular Discord bot for Geometry Dash players!
 
 UltimateGDBot is a Discord bot owned by **Alex1304#9704** and designed for Geometry Dash players. It is written in **Java 11** and uses [Discord4J](https://discord4j.com) and [Botrino](https://botrino.alex1304.com).
 
-UltimateGDBot is currently operating in more than 12,000 servers. You can invite UltimateGDBot to your own server using the following authorization link: https://discordapp.com/oauth2/authorize?client_id=358598636436979713&scope=bot&permissions=388096
+UltimateGDBot is currently operating in more than 12,000 servers. You can invite UltimateGDBot to your own server using the following authorization link: https://discord.com/oauth2/authorize?client_id=358598636436979713&scope=bot+applications.commands&permissions=379904
 
 You have a suggestion, a bug to report, or need help? Join the official server: https://discord.gg/VpVdKvg
 
