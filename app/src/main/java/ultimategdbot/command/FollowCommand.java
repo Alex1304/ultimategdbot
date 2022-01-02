@@ -60,7 +60,8 @@ public final class FollowCommand implements ChatInputInteractionListener {
         return Flux
                 .just(
                         Tuples.of(Options.ULTIMATEGDBOT_ANNOUNCEMENTS, config.botAnnouncementsChannelIds()),
-                        Tuples.of(Options.NEW_RATED_LEVELS, config.gd().events().ratesChannelIds()),
+                        Tuples.of(Options.NEW_RATED_LEVELS_NON_DEMONS, config.gd().events().ratesChannelIds()),
+                        Tuples.of(Options.NEW_RATED_LEVELS_DEMONS, config.gd().events().demonsChannelIds()),
                         Tuples.of(Options.NEW_DAILY_WEEKLY_LEVELS, config.gd().events().timelyChannelId()
                                 .map(Set::of)
                                 .orElse(Set.of())),
@@ -117,7 +118,8 @@ public final class FollowCommand implements ChatInputInteractionListener {
     private static final class Options {
 
         private static final String ULTIMATEGDBOT_ANNOUNCEMENTS = "UltimateGDBot Announcements";
-        private static final String NEW_RATED_LEVELS = "New Rated Levels";
+        private static final String NEW_RATED_LEVELS_NON_DEMONS = "New Rated Levels (non-Demons)";
+        private static final String NEW_RATED_LEVELS_DEMONS = "New Rated Levels (Demons)";
         private static final String NEW_DAILY_WEEKLY_LEVELS = "New Daily/Weekly Levels";
         private static final String NEW_GD_MODERATOR_PROMOTIONS_DEMOTIONS = "New GD Moderator Promotions/Demotions";
 
@@ -131,8 +133,11 @@ public final class FollowCommand implements ChatInputInteractionListener {
                                 name = ULTIMATEGDBOT_ANNOUNCEMENTS,
                                 stringValue = ULTIMATEGDBOT_ANNOUNCEMENTS),
                         @ChatInputCommandGrammar.Choice(
-                                name = NEW_RATED_LEVELS,
-                                stringValue = NEW_RATED_LEVELS),
+                                name = NEW_RATED_LEVELS_NON_DEMONS,
+                                stringValue = NEW_RATED_LEVELS_NON_DEMONS),
+                        @ChatInputCommandGrammar.Choice(
+                                name = NEW_RATED_LEVELS_DEMONS,
+                                stringValue = NEW_RATED_LEVELS_DEMONS),
                         @ChatInputCommandGrammar.Choice(
                                 name = NEW_DAILY_WEEKLY_LEVELS,
                                 stringValue = NEW_DAILY_WEEKLY_LEVELS),
