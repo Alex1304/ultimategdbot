@@ -25,6 +25,7 @@
             "interval_seconds": 30
         },
         "command_permissions": [],
+        "bot_announcements_channel_ids": [],
         "gd": {
             "client": {
                 "username": "${username}",

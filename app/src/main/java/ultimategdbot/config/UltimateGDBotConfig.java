@@ -32,6 +32,12 @@ public interface UltimateGDBotConfig {
         return List.of();
     }
 
+    @Value.Default
+    @JsonProperty("bot_announcements_channel_ids")
+    default Set<Long> botAnnouncementsChannelIds() {
+        return Set.of();
+    }
+
     @Value.Immutable
     @JsonDeserialize(as = ImmutableCommandPermission.class)
     interface CommandPermission {

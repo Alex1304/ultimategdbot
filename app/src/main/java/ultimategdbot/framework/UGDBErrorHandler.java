@@ -24,10 +24,7 @@ import reactor.retry.RetryExhaustedException;
 import reactor.util.Logger;
 import reactor.util.Loggers;
 import ultimategdbot.Strings;
-import ultimategdbot.exception.BotAdminPrivilegeException;
-import ultimategdbot.exception.BotOwnerPrivilegeException;
-import ultimategdbot.exception.ElderModPrivilegeException;
-import ultimategdbot.exception.GuildAdminPrivilegeException;
+import ultimategdbot.exception.*;
 import ultimategdbot.service.EmojiService;
 
 import java.util.List;
@@ -95,6 +92,8 @@ public class UGDBErrorHandler implements InteractionErrorHandler {
                         ctx.translate(Strings.GENERAL, "error_privilege_bot_admin")))
                 .matchType(GuildAdminPrivilegeException.class, __ -> sendErrorMessage(ctx,
                         ctx.translate(Strings.GENERAL, "error_privilege_guild_admin")))
+                .matchType(ManageWebhooksPrivilegeException.class, __ -> sendErrorMessage(ctx,
+                        ctx.translate(Strings.GENERAL, "error_privilege_manage_webhooks")))
                 .matchType(ElderModPrivilegeException.class, __ -> sendErrorMessage(ctx,
                         ctx.translate(Strings.GD, "error_privilege_elder_mod")))
                 .apply(e)
