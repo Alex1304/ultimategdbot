@@ -38,13 +38,13 @@ public final class OutputPaginator {
                     .createFollowup(contentTransformer.apply(String.join("\n", list)))
                     .then();
         }
-        final var maxPage = list.size() / paginationMaxEntries;
-        return MessagePaginator.paginate(ctx, maxPage, state -> Mono.just(MessageCreateSpec.create()
+        final var pageCount = list.size() / paginationMaxEntries + 1;
+        return MessagePaginator.paginate(ctx, pageCount, state -> Mono.just(MessageCreateSpec.create()
                 .withContent(contentTransformer.apply(
                         String.join("\n", list.subList(state.getPage() * paginationMaxEntries,
                                 Math.min(list.size(), (state.getPage() + 1) * paginationMaxEntries)))))
                 .withEmbeds(EmbedCreateSpec.create().withFields(Field.of(
-                        ctx.translate(Strings.GENERAL, "page_x", (state.getPage() + 1), (maxPage + 1)),
+                        ctx.translate(Strings.GENERAL, "page_x", (state.getPage() + 1), pageCount),
                         ctx.translate(Strings.GENERAL, "page_instructions"), false)))
                 .withComponents(Interactions.paginationButtons(ctx, state))));
     }
