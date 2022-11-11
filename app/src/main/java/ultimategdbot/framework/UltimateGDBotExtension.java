@@ -8,10 +8,8 @@ import discord4j.core.object.entity.ApplicationInfo;
 import jdash.client.GDClient;
 import jdash.graphics.SpriteFactory;
 import reactor.core.publisher.Mono;
-import ultimategdbot.service.CommandPermissionUpdater;
 import ultimategdbot.service.ExternalServices;
 
-import java.util.Objects;
 import java.util.Set;
 
 import static com.github.alex1304.rdi.ServiceReference.ofType;
@@ -20,17 +18,12 @@ import static com.github.alex1304.rdi.config.Injectable.ref;
 
 public final class UltimateGDBotExtension implements BotrinoExtension {
 
-    private CommandPermissionUpdater commandPermissionUpdater;
-
     @Override
     public void onClassDiscovered(Class<?> clazz) {
     }
 
     @Override
     public void onServiceCreated(Object serviceInstance) {
-        if (serviceInstance instanceof CommandPermissionUpdater) {
-            this.commandPermissionUpdater = (CommandPermissionUpdater) serviceInstance;
-        }
     }
 
     @Override
@@ -57,7 +50,6 @@ public final class UltimateGDBotExtension implements BotrinoExtension {
 
     @Override
     public Mono<Void> finishAndJoin() {
-        Objects.requireNonNull(commandPermissionUpdater);
-        return commandPermissionUpdater.run();
+        return Mono.empty();
     }
 }

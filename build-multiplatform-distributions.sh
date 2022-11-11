@@ -2,6 +2,8 @@
 
 set -e
 
+JAVA_HOME=$LINUX_JDK
+
 # Build for Linux
 
 mvn clean package -Djlink.jdk="$LINUX_JDK"

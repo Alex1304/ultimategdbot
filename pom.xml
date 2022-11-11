@@ -15,8 +15,8 @@
     <properties>
         <java.version>11</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <botrino.version>1.0.3</botrino.version>
-        <immutables.version>2.9.0-beta2</immutables.version>
+        <botrino.version>1.0.5</botrino.version>
+        <immutables.version>2.9.1</immutables.version>
         <delivery.name>${project.parent.artifactId}-${project.version}</delivery.name>
         <delivery.directory>${project.build.directory}/${delivery.name}</delivery.directory>
         <app.build.directory>${project.basedir}/../app/target</app.build.directory>
@@ -28,7 +28,7 @@
             <plugins>
                 <plugin>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.8.1</version>
+                    <version>3.10.1</version>
                     <configuration>
                         <release>${java.version}</release>
                         <annotationProcessorPaths>
@@ -42,15 +42,15 @@
                 </plugin>
                 <plugin>
                     <artifactId>maven-install-plugin</artifactId>
-                    <version>3.0.0-M1</version>
+                    <version>3.0.1</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-deploy-plugin</artifactId>
-                    <version>3.0.0-M1</version>
+                    <version>3.0.0</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-jlink-plugin</artifactId>
-                    <version>3.0.0</version>
+                    <version>3.1.0</version>
                     <extensions>true</extensions>
                     <configuration>
                         <launcher>${project.parent.artifactId}=ultimategdbot.launcher/ultimategdbot.Launcher</launcher>
@@ -96,7 +96,7 @@
                 </plugin>
                 <plugin>
                     <artifactId>maven-dependency-plugin</artifactId>
-                    <version>3.1.2</version>
+                    <version>3.3.0</version>
                     <executions>
                         <execution>
                             <id>copy-dependencies</id>
@@ -112,7 +112,7 @@
                 </plugin>
                 <plugin>
                     <artifactId>maven-antrun-plugin</artifactId>
-                    <version>3.0.0</version>
+                    <version>3.1.0</version>
                     <executions>
                         <execution>
                             <id>antrun-archive</id>
