@@ -30,7 +30,7 @@ public class Launcher {
         List<String> jvmArgs;
         if (Files.exists(jvmArgsTxt) && !(jvmArgs = Files.lines(jvmArgsTxt)
                 .filter(line -> !line.startsWith("#"))
-                .collect(Collectors.toList())).isEmpty()) {
+                .toList()).isEmpty()) {
             command.addAll(jvmArgs);
         }
 

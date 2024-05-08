@@ -63,18 +63,22 @@ public final class AboutCommand implements ChatInputInteractionListener {
                     versionInfoBuilder.append("** ")
                             .append(Botrino.API_VERSION)
                             .append("\n");
-                    final var vars = new HashMap<String, String>();
-                    vars.put("bot_name", self.getUsername());
-                    vars.put("bot_owner", botOwner.getTag());
-                    vars.put("server_count", "" + guildCount);
-                    vars.put("version_info", versionInfoBuilder.toString());
-                    final var box = new Object() {
-                        private String text = ABOUT;
-                    };
-                    vars.forEach((k, v) -> box.text = box.text.replaceAll("\\{\\{ *" + k + " *\\}\\}", "" + v));
-                    return box.text;
+                    return buildAboutText(self, guildCount, versionInfoBuilder);
                 }))
                 .flatMap(ctx.event()::createFollowup)
                 .then();
+    }
+
+    private String buildAboutText(User self, Long guildCount, StringBuilder versionInfoBuilder) {
+        final var vars = new HashMap<String, String>();
+        vars.put("bot_name", self.getUsername());
+        vars.put("bot_owner", botOwner.getTag());
+        vars.put("server_count", "" + guildCount);
+        vars.put("version_info", versionInfoBuilder.toString());
+        final var box = new Object() {
+            private String text = ABOUT;
+        };
+        vars.forEach((k, v) -> box.text = box.text.replaceAll("\\{\\{ *" + k + " *}}", v));
+        return box.text;
     }
 }

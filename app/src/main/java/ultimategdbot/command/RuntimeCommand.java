@@ -79,14 +79,7 @@ public final class RuntimeCommand implements ChatInputInteractionListener {
                 .then();
     }
 
-    private static class EmbedField {
-        private final String title;
-        private final String content;
-
-        private EmbedField(String title, String content) {
-            this.title = title;
-            this.content = content;
-        }
+    private record EmbedField(String title, String content) {
     }
 
     private static class MemoryStats {

@@ -52,14 +52,6 @@ public final class DatabaseService {
         return new GdLinkedUserDao(backend);
     }
 
-    public GdLeaderboardDao gdLeaderboardDao() {
-        return new GdLeaderboardDao(backend);
-    }
-
-    public GdLeaderboardBanDao gdLeaderboardBanDao() {
-        return new GdLeaderboardBanDao(backend);
-    }
-
     public GdModDao gdModDao() {
         return new GdModDao(backend);
     }

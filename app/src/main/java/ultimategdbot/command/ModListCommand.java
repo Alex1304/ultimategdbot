@@ -14,7 +14,6 @@ import ultimategdbot.service.EmojiService;
 import ultimategdbot.service.OutputPaginator;
 
 import java.util.Comparator;
-import java.util.stream.Collectors;
 
 @RdiService
 @ChatInputCommand(name = "mod-list", description = "Displays the full list of last known Geometry Dash moderators.")
@@ -40,7 +39,7 @@ public final class ModListCommand implements ChatInputInteractionListener {
                                         .thenComparing(GdMod::name, String.CASE_INSENSITIVE_ORDER))
                                 .map(gdMod -> (gdMod.isElder() ? emoji.get("elder_mod") : emoji.get("mod")) + ' ' +
                                         Markdown.bold(gdMod.name()))
-                                .collect(Collectors.toList()),
+                                .toList(),
                         content -> "**__" + ctx.translate(Strings.GD, "mod_list") + "__\n**" +
                                 ctx.translate(Strings.GD, "modlist_intro") + "\n\n" + content));
     }

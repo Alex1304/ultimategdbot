@@ -6,7 +6,6 @@ import com.github.alex1304.rdi.config.ServiceDescriptor;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.object.entity.ApplicationInfo;
 import jdash.client.GDClient;
-import jdash.graphics.SpriteFactory;
 import reactor.core.publisher.Mono;
 import ultimategdbot.service.ExternalServices;
 
@@ -36,9 +35,6 @@ public final class UltimateGDBotExtension implements BotrinoExtension {
                 ServiceDescriptor.builder(ofType(GDClient.class))
                         .setFactoryMethod(externalStaticFactory(ExternalServices.class, "gdClient",
                                 Mono.class, ref(ofType(ConfigContainer.class))))
-                        .build(),
-                ServiceDescriptor.builder(ofType(SpriteFactory.class))
-                        .setFactoryMethod(externalStaticFactory(ExternalServices.class, "spriteFactory", Mono.class))
                         .build()
         );
     }

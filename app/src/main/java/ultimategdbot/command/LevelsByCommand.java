@@ -42,9 +42,9 @@ public final class LevelsByCommand implements ChatInputInteractionListener {
     public Publisher<?> run(ChatInputInteractionContext ctx) {
         return grammar.resolve(ctx.event())
                 .flatMap(args -> userService.stringToUser(ctx, args.gdUsername))
-                .flatMap(gdUser -> levelService.interactiveSearch(ctx,
-                        ctx.translate(Strings.GD, "player_levels", gdUser.name()),
-                        page -> gdClient.browseLevelsByUser(gdUser.playerId(), page)))
+                .flatMap(profile -> levelService.interactiveSearch(ctx,
+                        ctx.translate(Strings.GD, "player_levels", profile.user().name()),
+                        page -> gdClient.findLevelsByUser(profile.user().playerId(), page)))
                 .then();
     }
 

@@ -65,8 +65,6 @@ public final class CheckModCommand implements ChatInputInteractionListener, User
                                 ctx.translate(Strings.GD, "error_checkmod_user_not_specified"))))
                         .map(GdLinkedUser::gdUserId)
                         .flatMap(gdClient::getUserProfile))
-                .flatMap(db.gdLeaderboardDao()::saveStats)
-                .cast(GDUserProfile.class)
                 .flatMap(user -> sendModStatus(ctx, user, false));
     }
 
@@ -78,18 +76,16 @@ public final class CheckModCommand implements ChatInputInteractionListener, User
                         ctx.translate(Strings.GD, "error_no_gd_account"))))
                 .map(GdLinkedUser::gdUserId)
                 .flatMap(gdClient::getUserProfile)
-                .flatMap(db.gdLeaderboardDao()::saveStats)
-                .cast(GDUserProfile.class)
                 .flatMap(user -> sendModStatus(ctx, user, true));
     }
 
-    private Mono<Message> sendModStatus(InteractionContext ctx, GDUserProfile user, boolean ephemeral) {
+    private Mono<Message> sendModStatus(InteractionContext ctx, GDUserProfile profile, boolean ephemeral) {
         return ctx.event()
-                .createFollowup(ctx.translate(Strings.GD, "checking_mod", user.name()) + "\n||" +
-                        (user.role().orElse(Role.USER) == Role.USER
+                .createFollowup(ctx.translate(Strings.GD, "checking_mod", profile.user().name()) + "\n||" +
+                        (profile.user().role().orElse(Role.USER) == Role.USER
                                 ? emoji.get("failed") + ' ' + ctx.translate(Strings.GD, "checkmod_failed")
                                 : emoji.get("success") + ' ' + ctx.translate(Strings.GD, "checkmod_success",
-                                user.role().orElseThrow())) + "||")
+                                profile.user().role().orElseThrow())) + "||")
                 .withEphemeral(ephemeral);
     }
 

@@ -8,14 +8,17 @@ import com.github.alex1304.rdi.finder.annotation.RdiService;
 import discord4j.common.util.Snowflake;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.object.entity.Message;
+import discord4j.core.spec.EmbedCreateSpec;
+import discord4j.core.spec.MessageCreateFields.File;
 import discord4j.core.spec.MessageCreateSpec;
 import discord4j.discordjson.possible.Possible;
 import discord4j.rest.entity.RestChannel;
 import jdash.client.GDClient;
-import jdash.common.entity.GDLevel;
-import jdash.common.entity.GDUser;
 import jdash.events.GDEventLoop;
-import jdash.events.object.*;
+import jdash.events.object.AwardedLevelAdd;
+import jdash.events.object.AwardedLevelRemove;
+import jdash.events.object.AwardedLevelUpdate;
+import jdash.events.object.DailyLevelChange;
 import jdash.events.producer.GDEventProducer;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -28,14 +31,15 @@ import ultimategdbot.service.GDLevelService;
 import ultimategdbot.service.GDUserService;
 import ultimategdbot.util.EmbedType;
 
+import java.io.InputStream;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static botrino.api.util.MessageUtils.toMessageEditSpec;
+import static reactor.function.TupleUtils.function;
 
 @RdiService
 public final class GDEventService {
@@ -67,8 +71,8 @@ public final class GDEventService {
         @Override
         protected Optional<GDEvent<?>> computeValue(Class<?> type) {
             return MatcherFunction.<GDEvent<?>>create()
-                    .matchType(Class.class, AwardedAdd.class::isAssignableFrom, __ -> ImmutableGDEvent
-                            .<AwardedAdd>builder()
+                    .matchType(Class.class, AwardedLevelAdd.class::isAssignableFrom, __ -> ImmutableGDEvent
+                            .<AwardedLevelAdd>builder()
                             .channel(event -> event.addedLevel().isDemon()
                                     ? demonsChannels.isEmpty() ? null :
                                     demonsChannels.get((int) (demonsChannelRotator++ % demonsChannels.size()))
@@ -78,86 +82,80 @@ public final class GDEventService {
                             .recipientAccountId(event -> db.gdAwardedLevelDao().saveEvent(event).then(gdClient
                                     .searchUsers("" + event.addedLevel().creatorPlayerId(), 0)
                                     .next()
-                                    .map(GDUser::accountId)))
+                                    .map(stats -> stats.user().accountId())))
                             .messageTemplateFactory(event -> levelService
                                     .compactEmbed(tr, event.addedLevel(), EmbedType.RATE, null)
-                                    .map(embed -> MessageCreateSpec.create()
+                                    .map(function((embed, inputStream) -> MessageCreateSpec.create()
                                             .withContent(randomString(publicRandomMessages.rates()))
-                                            .withEmbeds(embed)))
+                                            .withEmbeds(embed)
+                                            .withFiles(File.of("difficulty.png", inputStream)))))
                             .congratMessage(event -> randomString(dmRandomMessages.rates()))
                             .isUpdate(false)
                             .build())
-                    .matchType(Class.class, AwardedRemove.class::isAssignableFrom, __ -> ImmutableGDEvent
-                            .<AwardedRemove>builder()
+                    .matchType(Class.class, AwardedLevelRemove.class::isAssignableFrom, __ -> ImmutableGDEvent
+                            .<AwardedLevelRemove>builder()
                             .channel(event -> ratesChannels.isEmpty() ? null :
                                     ratesChannels.get((int) (ratesChannelRotator++ % ratesChannels.size())))
                             .levelIdGetter(event -> Optional.empty())
                             .recipientAccountId(event -> gdClient
                                     .searchUsers("" + event.removedLevel().creatorPlayerId(), 0)
                                     .next()
-                                    .map(GDUser::accountId))
+                                    .map(stats -> stats.user().accountId()))
                             .messageTemplateFactory(event -> levelService
                                     .compactEmbed(tr, event.removedLevel(), EmbedType.UNRATE, null)
-                                    .map(embed -> MessageCreateSpec.create()
+                                    .map(function((embed, inputStream) -> MessageCreateSpec.create()
                                             .withContent(randomString(publicRandomMessages.unrates()))
-                                            .withEmbeds(embed)))
+                                            .withEmbeds(embed)
+                                            .withFiles(File.of("difficulty.png", inputStream)))))
                             .congratMessage(event -> randomString(dmRandomMessages.unrates()))
                             .isUpdate(false)
                             .build())
-                    .matchType(Class.class, AwardedUpdate.class::isAssignableFrom, __ -> ImmutableGDEvent
-                            .<AwardedUpdate>builder()
-                            .channel(event -> { throw new UnsupportedOperationException(); })
+                    .matchType(Class.class, AwardedLevelUpdate.class::isAssignableFrom, __ -> ImmutableGDEvent
+                            .<AwardedLevelUpdate>builder()
+                            .channel(event -> {throw new UnsupportedOperationException();})
                             .levelIdGetter(event -> Optional.of(event.newData().id()))
                             .recipientAccountId(event -> gdClient
                                     .searchUsers("" + event.newData().creatorPlayerId(), 0)
                                     .next()
-                                    .map(GDUser::accountId))
+                                    .map(stats -> stats.user().accountId()))
                             .messageTemplateFactory(event -> levelService
                                     .compactEmbed(tr, event.newData(), EmbedType.RATE, null)
-                                    .map(embed -> MessageCreateSpec.create()
-                                            .withEmbeds(embed)))
-                            .congratMessage(event -> { throw new UnsupportedOperationException(); })
+                                    .map(function((embed, inputStream) -> MessageCreateSpec.create()
+                                            .withEmbeds(embed)
+                                            .withFiles(File.of("difficulty.png", inputStream)))))
+                            .congratMessage(event -> {throw new UnsupportedOperationException();})
                             .isUpdate(true)
                             .build())
                     .matchType(Class.class, DailyLevelChange.class::isAssignableFrom, __ -> ImmutableGDEvent
                             .<DailyLevelChange>builder()
                             .channel(event -> timelyChannel)
                             .levelIdGetter(event -> Optional.empty())
-                            .recipientAccountId(event -> gdClient.downloadDailyLevel()
-                                    .map(GDLevel::creatorPlayerId)
+                            .recipientAccountId(event -> (event.isWeekly() ?
+                                    gdClient.downloadWeeklyDemon() :
+                                    gdClient.downloadDailyLevel())
+                                    .map(dl -> dl.level().creatorPlayerId())
                                     .flatMap(playerId -> gdClient.searchUsers("" + playerId, 0).next())
-                                    .map(GDUser::accountId))
-                            .messageTemplateFactory(event -> gdClient.withWriteOnlyCache().downloadDailyLevel()
-                                    .flatMap(level -> levelService
-                                            .compactEmbed(tr, level, EmbedType.DAILY_LEVEL, event.after())
-                                            .map(embed -> MessageCreateSpec.create()
-                                                    .withContent(randomString(publicRandomMessages.daily()))
-                                                    .withEmbeds(embed))))
-                            .congratMessage(event -> randomString(dmRandomMessages.daily()))
-                            .isUpdate(false)
-                            .build())
-                    .matchType(Class.class, WeeklyDemonChange.class::isAssignableFrom, __ -> ImmutableGDEvent
-                            .<WeeklyDemonChange>builder()
-                            .channel(event -> timelyChannel)
-                            .levelIdGetter(event -> Optional.empty())
-                            .recipientAccountId(event -> gdClient.downloadWeeklyDemon()
-                                    .map(GDLevel::creatorPlayerId)
-                                    .flatMap(playerId -> gdClient.searchUsers("" + playerId, 0).next())
-                                    .map(GDUser::accountId))
-                            .messageTemplateFactory(event -> gdClient.withWriteOnlyCache().downloadWeeklyDemon()
-                                    .flatMap(level -> levelService
-                                            .compactEmbed(tr, level, EmbedType.WEEKLY_DEMON, event.after())
-                                            .map(embed -> MessageCreateSpec.create()
-                                                    .withContent(randomString(publicRandomMessages.weekly()))
-                                                    .withEmbeds(embed))))
-                            .congratMessage(event -> randomString(dmRandomMessages.weekly()))
+                                    .map(stats -> stats.user().accountId()))
+                            .messageTemplateFactory(event -> (event.isWeekly() ?
+                                    gdClient.withWriteOnlyCache().downloadWeeklyDemon() :
+                                    gdClient.withWriteOnlyCache().downloadDailyLevel())
+                                    .flatMap(dl -> levelService
+                                            .compactEmbed(tr, dl.level(), EmbedType.DAILY_LEVEL, event.after())
+                                            .map(function((EmbedCreateSpec embed, InputStream inputStream) -> MessageCreateSpec.create()
+                                                    .withContent(randomString(event.isWeekly() ?
+                                                            publicRandomMessages.weekly() :
+                                                            publicRandomMessages.daily()))
+                                                    .withEmbeds(embed)
+                                                    .withFiles(File.of("difficulty.png", inputStream))))))
+                            .congratMessage(event -> randomString(event.isWeekly() ?
+                                    dmRandomMessages.weekly() : dmRandomMessages.daily()))
                             .isUpdate(false)
                             .build())
                     .matchType(Class.class, ModStatusUpdate.class::isAssignableFrom, __ -> ImmutableGDEvent
                             .<ModStatusUpdate>builder()
                             .channel(event -> modsChannel)
                             .levelIdGetter(event -> Optional.empty())
-                            .recipientAccountId(event -> Mono.just(event.user().accountId()))
+                            .recipientAccountId(event -> Mono.just(event.user().user().accountId()))
                             .messageTemplateFactory(event -> userService
                                     .buildProfile(tr, event.user(), event.type().embedType())
                                     .map(messageTemplate -> messageTemplate.withContent(
@@ -182,10 +180,10 @@ public final class GDEventService {
         final var config = configContainer.get(UltimateGDBotConfig.class).gd().events();
         this.ratesChannels = config.ratesChannelIds().stream()
                 .map(v -> RestChannel.create(gateway.rest(), Snowflake.of(v)))
-                .collect(Collectors.toUnmodifiableList());
+                .toList();
         this.demonsChannels = config.demonsChannelIds().stream()
                 .map(v -> RestChannel.create(gateway.rest(), Snowflake.of(v)))
-                .collect(Collectors.toUnmodifiableList());
+                .toList();
         this.timelyChannel = config.timelyChannelId()
                 .map(v -> RestChannel.create(gateway.rest(), Snowflake.of(v)))
                 .orElse(null);
@@ -198,7 +196,8 @@ public final class GDEventService {
         GDEventLoop.builder(gdClient)
                 .setEventProducers(Set.of(
                         GDEventProducer.awardedLevels(),
-                        GDEventProducer.timelyLevels(),
+                        GDEventProducer.awardedLists(),
+                        GDEventProducer.dailyLevels(),
                         eventProducer))
                 .setInterval(Duration.ofSeconds(config.eventLoopIntervalSeconds()))
                 .buildAndStart()

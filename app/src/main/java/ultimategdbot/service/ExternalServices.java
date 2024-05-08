@@ -7,9 +7,7 @@ import jdash.client.GDClient;
 import jdash.client.cache.GDCache;
 import jdash.client.request.GDRouter;
 import jdash.client.request.RequestLimiter;
-import jdash.graphics.SpriteFactory;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 import reactor.util.Logger;
 import reactor.util.Loggers;
 import ultimategdbot.config.UltimateGDBotConfig;
@@ -42,11 +40,5 @@ public final class ExternalServices {
                 .withCache(GDCache.caffeine(c -> c.expireAfterAccess(Duration.ofSeconds(config.cacheTtlSeconds()))))
                 .login(config.username(), config.password())
                 .doOnNext(client -> LOGGER.debug("Successfully logged into GD account " + config.username()));
-    }
-
-    public static Mono<SpriteFactory> spriteFactory() {
-        return Mono.fromCallable(SpriteFactory::create)
-                .subscribeOn(Schedulers.boundedElastic())
-                .onErrorMap(e -> new RuntimeException("An error occurred when loading the GD icons sprite factory", e));
     }
 }

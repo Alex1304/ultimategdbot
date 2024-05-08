@@ -1,7 +1,7 @@
 package ultimategdbot.util;
 
 import botrino.api.i18n.Translator;
-import jdash.common.AccessPolicy;
+import jdash.common.PrivacySetting;
 import ultimategdbot.Strings;
 
 public final class GDFormatter {
@@ -9,22 +9,14 @@ public final class GDFormatter {
 	private GDFormatter() {
 	}
 	
-	public static String formatPolicy(Translator tr, AccessPolicy policy) {
-        String str;
-        switch (policy) {
-            case NONE:
-                str = "policy_none";
-                break;
-            case FRIENDS_ONLY:
-                str = "policy_friends_only";
-                break;
-            case ALL:
-                str = "policy_all";
-                break;
-            default:
-                throw new AssertionError();
-        }
-		return tr.translate(Strings.GD, str);
+	public static String formatPolicy(Translator tr, PrivacySetting policy) {
+        String str = switch (policy) {
+            case NONE -> "policy_none";
+            case FRIENDS_ONLY -> "policy_friends_only";
+            case ALL -> "policy_all";
+            default -> throw new AssertionError();
+        };
+        return tr.translate(Strings.GD, str);
 	}
 	
 	public static String formatCode(Object val, int n) {

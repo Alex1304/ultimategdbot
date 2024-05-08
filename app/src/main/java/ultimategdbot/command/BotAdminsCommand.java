@@ -12,6 +12,7 @@ import discord4j.common.util.Snowflake;
 import discord4j.core.object.command.ApplicationCommandOption;
 import discord4j.core.object.entity.User;
 import discord4j.discordjson.json.ApplicationCommandOptionData;
+import discord4j.rest.util.Permission;
 import org.reactivestreams.Publisher;
 import ultimategdbot.Strings;
 import ultimategdbot.service.DatabaseService;
@@ -23,7 +24,7 @@ import java.util.List;
 @ChatInputCommand(
         name = "bot-admins",
         description = "Manage users who are granted Bot Administrator permissions (Bot Owner only).",
-        defaultPermission = false,
+        defaultMemberPermissions = Permission.ADMINISTRATOR,
         subcommands = {
                 @Subcommand(
                         name = "grant",

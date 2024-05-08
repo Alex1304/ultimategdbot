@@ -18,9 +18,9 @@ import discord4j.core.object.command.ApplicationCommandOption;
 import discord4j.core.object.entity.ApplicationInfo;
 import discord4j.core.object.entity.User;
 import jdash.client.exception.GDClientException;
+import reactor.core.Exceptions;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
-import reactor.retry.RetryExhaustedException;
 import reactor.util.Logger;
 import reactor.util.Loggers;
 import ultimategdbot.Strings;
@@ -48,12 +48,10 @@ public class UGDBErrorHandler implements InteractionErrorHandler {
 
     private static String formatContext(InteractionContext ctx) {
         final String commandName;
-        if (ctx.event() instanceof ChatInputInteractionEvent) {
-            final var event = ((ChatInputInteractionEvent) ctx.event());
+        if (ctx.event() instanceof final ChatInputInteractionEvent event) {
             commandName = "/" + event.getCommandName() + (event.getOptions().isEmpty() ? "" :
                     ' ' + formatOptions(event.getOptions()));
-        } else if (ctx.event() instanceof ApplicationCommandInteractionEvent) {
-            final var event = ((ApplicationCommandInteractionEvent) ctx.event());
+        } else if (ctx.event() instanceof final ApplicationCommandInteractionEvent event) {
             commandName = "[context menu] " + event.getCommandName();
         } else if (ctx.event() instanceof ComponentInteractionEvent) {
             commandName = "[component] " + ((ComponentInteractionEvent) ctx.event()).getCustomId();
@@ -108,7 +106,7 @@ public class UGDBErrorHandler implements InteractionErrorHandler {
                     return sendErrorMessage(ctx, MatcherFunction.<String>create()
                             .matchType(Sinks.EmissionException.class, __ ->
                                     ctx.translate(Strings.GD, "error_queue_full"))
-                            .matchType(RetryExhaustedException.class, __ ->
+                            .matchType(RuntimeException.class, Exceptions::isRetryExhausted,__ ->
                                     ctx.translate(Strings.GD, "error_retry_exhausted"))
                             .apply(e.getCause())
                             .orElse(ctx.translate(Strings.GD, "error_server", e.getCause().getMessage())));

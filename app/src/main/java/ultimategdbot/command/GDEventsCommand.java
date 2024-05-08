@@ -15,8 +15,9 @@ import com.github.alex1304.rdi.finder.annotation.RdiService;
 import discord4j.core.object.command.ApplicationCommandOption;
 import discord4j.core.spec.MessageCreateSpec;
 import discord4j.discordjson.json.ApplicationCommandOptionData;
+import discord4j.rest.util.Permission;
 import jdash.client.GDClient;
-import jdash.common.LevelBrowseMode;
+import jdash.common.LevelSearchMode;
 import jdash.events.object.*;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
@@ -37,7 +38,7 @@ import static ultimategdbot.util.Interactions.paginationAndConfirmButtons;
 @ChatInputCommand(
         name = "gd-events",
         description = "Manage the GD event announcement system (Bot Owner only).",
-        defaultPermission = false,
+        defaultMemberPermissions = Permission.ADMINISTRATOR,
         subcommands = {
             @Subcommand(
                     name = "dispatch",
@@ -81,11 +82,11 @@ public final class GDEventsCommand {
                         switch (options.eventName) {
                             case Options.DAILY_LEVEL_CHANGED:
                                 eventToDispatch = gdClient.getDailyLevelInfo()
-                                        .map(info -> ImmutableDailyLevelChange.of(info, info));
+                                        .map(info -> new DailyLevelChange(info, info, false));
                                 break;
                             case Options.WEEKLY_DEMON_CHANGED:
                                 eventToDispatch = gdClient.getWeeklyDemonInfo()
-                                        .map(info -> ImmutableWeeklyDemonChange.of(info, info));
+                                        .map(info -> new DailyLevelChange(info, info, true));
                                 break;
                             default:
                                 if (options.levelId == null) {
@@ -95,15 +96,15 @@ public final class GDEventsCommand {
                                 switch (options.eventName) {
                                     case Options.AWARDED_LEVEL_ADDED:
                                         eventToDispatch = gdClient.findLevelById(options.levelId)
-                                                .map(ImmutableAwardedAdd::of);
+                                                .map(AwardedLevelAdd::new);
                                         break;
                                     case Options.AWARDED_LEVEL_REMOVED:
                                         eventToDispatch = gdClient.findLevelById(options.levelId)
-                                                .map(ImmutableAwardedRemove::of);
+                                                .map(AwardedLevelRemove::new);
                                         break;
                                     case Options.AWARDED_LEVEL_UPDATED:
                                         eventToDispatch = gdClient.findLevelById(options.levelId)
-                                                .map(level -> ImmutableAwardedUpdate.of(level, level));
+                                                .map(level -> new AwardedLevelUpdate(level, level));
                                         break;
                                     default:
                                         return Mono.error(new AssertionError());
@@ -192,7 +193,7 @@ public final class GDEventsCommand {
         }
 
         private static MessageCreateSpec paginateEvents(Translator tr, MessagePaginator.State state,
-                                                        List<? extends AwardedAdd> events, String okId,
+                                                        List<AwardedLevelAdd> events, String okId,
                                                         String cancelId) {
             return MessageCreateSpec.create()
                     .withContent(tr.translate(Strings.GD, "dispatch_list") + "\n\n" +
@@ -216,11 +217,11 @@ public final class GDEventsCommand {
                 }
                 return Flux.range(0, (int) (options.maxPage + 1))
                         .concatMap(n -> n <= options.maxPage
-                                ? gdClient.browseLevels(LevelBrowseMode.AWARDED, null, null, n)
+                                ? gdClient.searchLevels(LevelSearchMode.AWARDED, null, null, n)
                                 : Mono.error(new InteractionFailedException(
                                 ctx.translate(Strings.GD, "error_max_page_reached", options.maxPage))))
                         .takeWhile(level -> level.id() != options.fromLevelId)
-                        .map(ImmutableAwardedAdd::of)
+                        .map(AwardedLevelAdd::new)
                         .collectList()
                         .doOnNext(Collections::reverse)
                         .flatMap(events -> {

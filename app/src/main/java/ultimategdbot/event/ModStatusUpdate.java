@@ -33,18 +33,12 @@ public interface ModStatusUpdate {
         }
 
         public List<String> selectList(UltimateGDBotConfig.GD.Events.RandomMessages randomMessages) {
-            switch (this) {
-                case PROMOTED_TO_MOD:
-                    return randomMessages.mod();
-                case PROMOTED_TO_ELDER:
-                    return randomMessages.elderMod();
-                case DEMOTED_FROM_MOD:
-                    return randomMessages.unmod();
-                case DEMOTED_FROM_ELDER:
-                    return randomMessages.elderUnmod();
-                default:
-                    throw new AssertionError();
-            }
+            return switch (this) {
+                case PROMOTED_TO_MOD -> randomMessages.mod();
+                case PROMOTED_TO_ELDER -> randomMessages.elderMod();
+                case DEMOTED_FROM_MOD -> randomMessages.unmod();
+                case DEMOTED_FROM_ELDER -> randomMessages.elderUnmod();
+            };
         }
     }
 }

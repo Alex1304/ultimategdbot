@@ -9,6 +9,7 @@ import com.github.alex1304.rdi.finder.annotation.RdiService;
 import discord4j.core.object.command.ApplicationCommandInteractionOptionValue;
 import discord4j.core.object.command.ApplicationCommandOption;
 import discord4j.discordjson.json.ApplicationCommandOptionData;
+import discord4j.rest.util.Permission;
 import jdash.common.Role;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
@@ -23,14 +24,13 @@ import ultimategdbot.service.GDUserService;
 import ultimategdbot.service.PrivilegeFactory;
 
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static ultimategdbot.event.ModStatusUpdate.Type.*;
 
 @RdiService
 @ChatInputCommand(name = "mod-wave", description = "Trigger moderator promotion/demotion events (Elder Mod only).",
-        defaultPermission = false)
+        defaultMemberPermissions = Permission.ADMINISTRATOR)
 public final class ModWaveCommand implements ChatInputInteractionListener {
 
     private final DatabaseService db;
@@ -55,44 +55,44 @@ public final class ModWaveCommand implements ChatInputInteractionListener {
                 .flatMap(option -> Mono.justOrEmpty(option.getValue())
                         .map(ApplicationCommandInteractionOptionValue::asString)
                         .flatMap(value -> userService.stringToUser(ctx, value)))
-                .flatMap(user ->
+                .flatMap(profile ->
                         ctx.event()
-                        .createFollowup(ctx.translate(Strings.GD, "checking_mod", user.name()) + "\n||" +
-                                (user.role().orElse(Role.USER) == Role.USER
+                        .createFollowup(ctx.translate(Strings.GD, "checking_mod", profile.user().name()) + "\n||" +
+                                (profile.user().role().orElse(Role.USER) == Role.USER
                                 ? emoji.get("failed") + ' ' + ctx.translate(Strings.GD, "checkmod_failed")
                                 : emoji.get("success") + ' ' + ctx.translate(Strings.GD, "checkmod_success",
-                                        user.role().orElseThrow())) + "||")
-                        .then(db.gdModDao().get(user.accountId()))
+                                        profile.user().role().orElseThrow())) + "||")
+                        .then(db.gdModDao().get(profile.user().accountId()))
                         .switchIfEmpty(Mono.defer(() -> {
-                            if (user.role().map(Role.USER::equals).orElse(true)) {
+                            if (profile.user().role().map(Role.USER::equals).orElse(true)) {
                                 return Mono.empty();
                             }
-                            final var isElder = user.role().map(Role.ELDER_MODERATOR::equals).orElse(false);
-                            eventProducer.submit(ImmutableModStatusUpdate.of(user, isElder
+                            final var isElder = profile.user().role().map(Role.ELDER_MODERATOR::equals).orElse(false);
+                            eventProducer.submit(ImmutableModStatusUpdate.of(profile, isElder
                                     ? PROMOTED_TO_ELDER : PROMOTED_TO_MOD));
                             return db.gdModDao()
                                     .save(ImmutableGdMod.builder()
-                                            .accountId(user.accountId())
-                                            .name(user.name())
+                                            .accountId(profile.user().accountId())
+                                            .name(profile.user().name())
                                             .elder(isElder ? 1 : 0)
                                             .build())
                                     .then(Mono.empty());
                         }))
                         .flatMap(gdMod -> {
-                            if (user.role().map(Role.USER::equals).orElse(true)) {
-                                eventProducer.submit(ImmutableModStatusUpdate.of(user, gdMod.isElder()
+                            if (profile.user().role().map(Role.USER::equals).orElse(true)) {
+                                eventProducer.submit(ImmutableModStatusUpdate.of(profile, gdMod.isElder()
                                         ? DEMOTED_FROM_ELDER : DEMOTED_FROM_MOD));
                                 return db.gdModDao().delete(gdMod.accountId());
                             }
                             final var newGdMod = ImmutableGdMod.builder().from(gdMod);
-                            if(user.role().map(Role.MODERATOR::equals).orElse(false) && gdMod.isElder()) {
-                                eventProducer.submit(ImmutableModStatusUpdate.of(user, DEMOTED_FROM_ELDER));
+                            if (profile.user().role().map(Role.MODERATOR::equals).orElse(false) && gdMod.isElder()) {
+                                eventProducer.submit(ImmutableModStatusUpdate.of(profile, DEMOTED_FROM_ELDER));
                                 newGdMod.elder(0);
-                            } else if (user.role().map(Role.ELDER_MODERATOR::equals).orElse(false) && !gdMod.isElder()) {
-                                eventProducer.submit(ImmutableModStatusUpdate.of(user, PROMOTED_TO_ELDER));
+                            } else if (profile.user().role().map(Role.ELDER_MODERATOR::equals).orElse(false) && !gdMod.isElder()) {
+                                eventProducer.submit(ImmutableModStatusUpdate.of(profile, PROMOTED_TO_ELDER));
                                 newGdMod.elder(1);
                             }
-                            newGdMod.name(user.name());
+                            newGdMod.name(profile.user().name());
                             return db.gdModDao().save(newGdMod.build());
                         })
                 )
@@ -102,13 +102,13 @@ public final class ModWaveCommand implements ChatInputInteractionListener {
     @Override
     public List<ApplicationCommandOptionData> options() {
         return IntStream.range(0, 10)
-                .mapToObj(i -> ApplicationCommandOptionData.builder()
+                .<ApplicationCommandOptionData>mapToObj(i -> ApplicationCommandOptionData.builder()
                         .type(ApplicationCommandOption.Type.STRING.getValue())
                         .name("gd-username-" + (i + 1))
                         .description("The GD username of a user in the wave. (" + (i + 1) + ")")
                         .required(i == 0)
                         .build())
-                .collect(Collectors.toUnmodifiableList());
+                .toList();
     }
 
     @Override

@@ -25,7 +25,7 @@ public enum SystemUnit {
 
         convertedValue = Math.round(convertedValue * 100) / 100.0;
 
-        return String.format("%.2f %s", convertedValue, unit.toString());
+        return String.format("%.2f %s", convertedValue, unit);
     }
 
     /**

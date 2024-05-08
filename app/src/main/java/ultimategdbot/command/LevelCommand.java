@@ -11,7 +11,7 @@ import com.github.alex1304.rdi.finder.annotation.RdiService;
 import discord4j.core.object.command.ApplicationCommandOption;
 import discord4j.discordjson.json.ApplicationCommandOptionData;
 import jdash.client.GDClient;
-import jdash.common.LevelBrowseMode;
+import jdash.common.LevelSearchMode;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 import ultimategdbot.Strings;
@@ -44,7 +44,7 @@ public final class LevelCommand implements ChatInputInteractionListener {
                 return Mono.error(new InteractionFailedException(ctx.translate(Strings.GD, "error_invalid_characters")));
             }
             return levelService.interactiveSearch(ctx, ctx.translate(Strings.GD, "search_results", query),
-                    page -> gdClient.browseLevels(LevelBrowseMode.SEARCH, query, null, page));
+                    page -> gdClient.searchLevels(LevelSearchMode.SEARCH, query, null, page));
         }).then();
     }
 

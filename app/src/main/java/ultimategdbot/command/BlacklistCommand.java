@@ -10,6 +10,7 @@ import com.github.alex1304.rdi.finder.annotation.RdiFactory;
 import com.github.alex1304.rdi.finder.annotation.RdiService;
 import discord4j.core.object.command.ApplicationCommandOption;
 import discord4j.discordjson.json.ApplicationCommandOptionData;
+import discord4j.rest.util.Permission;
 import org.reactivestreams.Publisher;
 import ultimategdbot.Strings;
 import ultimategdbot.framework.UGDBEventProcessor;
@@ -17,12 +18,11 @@ import ultimategdbot.service.OutputPaginator;
 import ultimategdbot.service.PrivilegeFactory;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @ChatInputCommand(
         name = "blacklist",
         description = "Manage IDs of users, servers, or channels to be ignored by the bot (Bot Admin only).",
-        defaultPermission = false,
+        defaultMemberPermissions = Permission.ADMINISTRATOR,
         subcommands = {
                 @Subcommand(
                         name = "add",
@@ -126,7 +126,7 @@ public final class BlacklistCommand {
         public Publisher<?> run(ChatInputInteractionContext ctx) {
             return paginator.paginate(ctx, eventProcessor.blacklist().stream()
                     .map(String::valueOf)
-                    .collect(Collectors.toUnmodifiableList()));
+                    .toList());
         }
 
         @Override

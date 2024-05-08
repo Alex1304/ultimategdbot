@@ -41,7 +41,6 @@ import ultimategdbot.service.GDUserService;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import static java.util.function.Predicate.not;
 import static reactor.function.TupleUtils.function;
@@ -89,7 +88,7 @@ public final class AccountCommand {
         public Publisher<?> run(ChatInputInteractionContext ctx) {
             return db.gdLinkedUserDao().getActiveLink(ctx.user().getId().asLong())
                     .flatMap(linkedUser -> gdClient.getUserProfile(linkedUser.gdUserId()))
-                    .map(user -> Tuples.of(true, ctx.translate(Strings.GD, "currently_linked", user.name())))
+                    .map(profile -> Tuples.of(true, ctx.translate(Strings.GD, "currently_linked", profile.user().name())))
                     .defaultIfEmpty(Tuples.of(false, ctx.translate(Strings.GD, "not_yet_linked")))
                     .flatMap(function((isLinked, message) -> ctx.event()
                             .createFollowup(ctx.translate(Strings.GD, "link_intro") + "\n\n" + message + "\n" +
@@ -132,8 +131,8 @@ public final class AccountCommand {
         public Publisher<?> run(ChatInputInteractionContext ctx) {
             return grammar.resolve(ctx.event())
                     .flatMap(args -> userService.stringToUser(ctx, args.gdUsername))
-                    .flatMap(gdUser -> {
-                        if (gdUser.accountId() == 0) {
+                    .flatMap(profile -> {
+                        if (profile.user().accountId() == 0) {
                             return Mono.error(new InteractionFailedException(ctx.translate(Strings.GD,
                                     "error_unregistered_user")));
                         }
@@ -141,7 +140,7 @@ public final class AccountCommand {
                         return db.gdLinkedUserDao().get(authorId)
                                 .defaultIfEmpty(ImmutableGdLinkedUser.builder()
                                         .discordUserId(authorId)
-                                        .gdUserId(gdUser.accountId())
+                                        .gdUserId(profile.user().accountId())
                                         .isLinkActivated(false)
                                         .build())
                                 .filter(not(GdLinkedUser::isLinkActivated))
@@ -149,11 +148,11 @@ public final class AccountCommand {
                                         ctx.translate(Strings.GD, "error_already_linked"))))
                                 .flatMap(linkedUser -> {
                                     final var token = linkedUser.confirmationToken()
-                                            .filter(ct -> linkedUser.gdUserId() == gdUser.accountId())
+                                            .filter(ct -> linkedUser.gdUserId() == profile.user().accountId())
                                             .orElse(GDUserService.generateAlphanumericToken(TOKEN_LENGTH));
                                     return db.gdLinkedUserDao()
                                             .save(ImmutableGdLinkedUser.copyOf(linkedUser)
-                                                    .withGdUserId(gdUser.accountId())
+                                                    .withGdUserId(profile.user().accountId())
                                                     .withConfirmationToken(token))
                                             .thenReturn(token);
                                 })
@@ -168,7 +167,7 @@ public final class AccountCommand {
                                     final var cancelId = UUID.randomUUID().toString();
                                     return ctx.event()
                                             .createFollowup(ctx.translate(Strings.GD, "link_request",
-                                                    gdUser.name()) + '\n')
+                                                    profile.user().name()) + '\n')
                                             .withEmbeds(EmbedCreateSpec.create()
                                                     .withTitle(ctx.translate(Strings.GD, "link_steps"))
                                                     .withDescription(menuEmbedContent))
@@ -182,7 +181,7 @@ public final class AccountCommand {
                                                             ctx.awaitButtonClick(doneId),
                                                             ctx.awaitButtonClick(cancelId))
                                                     .flatMap(clicked -> clicked.equals(doneId) ?
-                                                            handleDone(ctx, token, gdUser) : Mono.empty())
+                                                            handleDone(ctx, token, profile) : Mono.empty())
                                                     .onErrorResume(RetryableInteractionException.class, e -> ctx.event()
                                                             .createFollowup(e.getMessage())
                                                             .withEphemeral(true)
@@ -206,18 +205,18 @@ public final class AccountCommand {
             return commandCooldown.get();
         }
 
-        private Mono<Void> handleDone(InteractionContext ctx, String token, GDUserProfile user) {
+        private Mono<Void> handleDone(InteractionContext ctx, String token, GDUserProfile profile) {
             final var authorId = ctx.user().getId().asLong();
             return db.gdLinkedUserDao().get(authorId)
                     .filter(linkedUser -> !linkedUser.isLinkActivated()
-                            && linkedUser.gdUserId() == user.accountId()
+                            && linkedUser.gdUserId() == profile.user().accountId()
                             && linkedUser.confirmationToken().map(token::equals).orElse(false))
                     .switchIfEmpty(Mono.error(new InteractionFailedException(ctx.translate(Strings.GD,
                             "error_link_check_failed"))))
                     .then(ctx.event().createFollowup(ctx.translate(Strings.GD, "checking_messages")))
                     .map(Message::getId)
                     .flatMap(messageId -> gdClient.withCacheDisabled().getPrivateMessages(0)
-                            .filter(message -> message.userAccountId() == user.accountId()
+                            .filter(message -> message.userAccountId() == profile.user().accountId()
                                     && message.subject().equalsIgnoreCase("confirm"))
                             .switchIfEmpty(Mono.error(new RetryableInteractionException(
                                     ctx.translate(Strings.GD, "error_confirmation_not_found"))))
@@ -229,7 +228,7 @@ public final class AccountCommand {
                             .then(db.gdLinkedUserDao().confirmLink(authorId))
                             .then(ctx.event().editFollowup(messageId)
                                     .withContentOrNull(emoji.get("success") + ' ' +
-                                            ctx.translate(Strings.GD, "link_success", user.name())))
+                                            ctx.translate(Strings.GD, "link_success", profile.user().name())))
                             .onErrorMap(GDClientException.class, e -> new RetryableInteractionException(
                                     ctx.translate(Strings.GD, "error_pm_access")))
                             .onErrorResume(deleteFollowupAndPropagate(ctx, messageId))
@@ -288,13 +287,13 @@ public final class AccountCommand {
                                                                 .of(entry.getValue(), "" + entry.getKey())
                                                                 .withDescription("" + entry.getKey())
                                                                 .withDefault(entry.getKey() == authorId))
-                                                        .collect(Collectors.toUnmodifiableList()))
+                                                        .toList())
                                                 .withMaxValues(tagsByUserId.size())))
                                         .map(Message::getId)
                                         .flatMap(messageId -> ctx.awaitSelectMenuItems(selectId)
                                                 .map(items -> items.stream()
                                                         .map(Snowflake::asLong)
-                                                        .collect(Collectors.toUnmodifiableList()))
+                                                        .toList())
                                                 .flatMap(userIds -> doUnlink(ctx, userIds, true))
                                                 .then(ctx.event().deleteFollowup(messageId))
                                                 .onErrorResume(deleteFollowupAndPropagate(ctx, messageId))));

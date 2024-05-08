@@ -1,6 +1,6 @@
 package ultimategdbot.database;
 
-import jdash.events.object.AwardedAdd;
+import jdash.events.object.AwardedLevelAdd;
 import org.immutables.criteria.backend.Backend;
 import org.immutables.criteria.backend.WriteResult;
 import reactor.core.publisher.Mono;
@@ -15,7 +15,7 @@ public final class GdAwardedLevelDao {
         this.repository = new GdAwardedLevelRepository(backend);
     }
 
-    public Mono<WriteResult> saveEvent(AwardedAdd event) {
+    public Mono<WriteResult> saveEvent(AwardedLevelAdd event) {
         return repository.upsert(ImmutableGdAwardedLevel.builder()
                 .levelId(event.addedLevel().id())
                 .insertDate(Instant.now())
