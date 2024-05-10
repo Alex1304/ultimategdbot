@@ -1,6 +1,5 @@
 package ultimategdbot.event;
 
-
 import com.github.alex1304.rdi.finder.annotation.RdiService;
 import jdash.client.GDClient;
 import jdash.events.producer.GDEventProducer;

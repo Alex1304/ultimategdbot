@@ -30,7 +30,6 @@ import ultimategdbot.util.EmbedType;
 import ultimategdbot.util.GDLevels;
 import ultimategdbot.util.Interactions;
 
-import java.io.InputStream;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
@@ -63,10 +62,12 @@ public final class GDLevelService {
                     ? "user_coin" : "user_coin_unverified"), level.coinCount(), true);
             final var song = level.song().map(s -> formatSong(ctx, s))
                     .orElse(":warning: " + ctx.translate(Strings.GD, "song_unknown"));
-            embed.addField(String.format("`%02d` - %s %s | __**%s**__ by **%s** %s%s",
+            final var difficulty = emoji.get(getDifficultyEmojiForLevel(level));
+            final var quality = getQualityEmojiForLevel(level).map(emoji::get).orElse("");
+            final var reward = emoji.get(level.isPlatformer() ? "moon" : "star");
+            embed.addField(String.format("`%02d` - %s%s | __**%s**__ by **%s** %s%s",
                             i,
-                            emoji.get("play") + (level.rewards() > 0 ?
-                                    " " + emoji.get("star") + " x" + level.rewards() : ""),
+                            quality + difficulty + (level.rewards() > 0 ? reward + " x" + level.rewards() : ""),
                             coins.equals("None") ? "" : ' ' + coins,
                             level.name(),
                             level.creatorName().orElse("-"),
@@ -90,16 +91,16 @@ public final class GDLevelService {
         return embed.build();
     }
 
-    private Mono<Tuple2<EmbedCreateSpec, InputStream>> detailedEmbed(InteractionContext ctx, long levelId,
-                                                                     String creatorName, EmbedType type,
-                                                                     @Nullable GDDailyInfo timelyInfo) {
+    private Mono<Tuple2<EmbedCreateSpec, List<File>>> detailedEmbed(InteractionContext ctx, long levelId,
+                                                                    String creatorName, EmbedType type,
+                                                                    @Nullable GDDailyInfo timelyInfo) {
         return gdClient.downloadLevel(levelId)
                 .zipWhen(dl -> extractSongParts(ctx, dl.level()))
                 .map(function((dl, songParts) -> {
                     final var level = dl.level();
                     final var embed = EmbedCreateSpec.builder();
                     final var suffix = timelyInfo != null ? " #" + timelyInfo.number() : "";
-                    embed.author(type.getAuthorName(ctx) + suffix, null, type.getAuthorIconUrl());
+                    embed.author(type.getAuthorName(ctx) + suffix, null, "attachment://author.png");
                     embed.thumbnail("attachment://difficulty.png");
                     final var title = emoji.get("play") + "  __" + level.name() + "__ by " +
                             level.creatorName().orElse(creatorName);
@@ -142,6 +143,20 @@ public final class GDLevelService {
                             .append(ctx.translate(Strings.GENERAL, "ago", dl.uploadedAgo())).append('\n');
                     extraInfo.append(bold(ctx.translate(Strings.GD, "label_last_updated"))).append(' ')
                             .append(ctx.translate(Strings.GENERAL, "ago", dl.updatedAgo())).append('\n');
+                    extraInfo.append(bold(ctx.translate(Strings.GD, "label_song_count"))).append(' ')
+                            .append(Math.max(dl.songIds().size(), 1)).append('\n');
+                    extraInfo.append(bold(ctx.translate(Strings.GD, "label_sfx_count"))).append(' ')
+                            .append(dl.sfxIds().size()).append('\n');
+                    if (dl.editorTime().isPresent()) {
+                        extraInfo.append(bold(ctx.translate(Strings.GD, "label_editor_time"))).append(' ')
+                                .append(DurationUtils.format(dl.editorTime().orElseThrow())).append('\n');
+                    }
+                    if (dl.editorTimeOnCopies().isPresent()) {
+                        extraInfo.append(bold(ctx.translate(Strings.GD, "label_editor_time_copies"))).append(' ')
+                                .append(DurationUtils.format(dl.editorTimeOnCopies().orElseThrow())).append('\n');
+                    }
+                    extraInfo.append(bold(ctx.translate(Strings.GD, "label_ldm_available"))).append(' ')
+                            .append(ctx.translate(Strings.GENERAL, dl.isLDMAvailable() ? "yes" : "no")).append('\n');
                     if (level.originalLevelId().orElse(0L) > 0) {
                         extraInfo.append(emoji.get("copy")).append(' ')
                                 .append(bold(ctx.translate(Strings.GD, "label_original"))).append(' ')
@@ -158,16 +173,19 @@ public final class GDLevelService {
                     return Tuples.of(dl.level(), embed.build());
                 }))
                 .flatMap(function((level, embed) -> getDifficultyImageForLevel(level)
-                        .map(inputStream -> Tuples.of(embed, inputStream))));
+                        .map(inputStream -> Tuples.of(embed, List.of(
+                                File.of("difficulty.png", inputStream),
+                                File.of("author.png", type.iconInputStream())
+                        )))));
     }
 
-    public Mono<Tuple2<EmbedCreateSpec, InputStream>> compactEmbed(Translator tr, GDLevel level, EmbedType type,
-                                                                   @Nullable GDDailyInfo timelyInfo) {
+    public Mono<Tuple2<EmbedCreateSpec, List<File>>> compactEmbed(Translator tr, GDLevel level, EmbedType type,
+                                                                  @Nullable GDDailyInfo timelyInfo) {
         return Mono.zip(extractSongParts(tr, level).map(Tuple2::getT1), getDifficultyImageForLevel(level))
                 .map(function((songInfo, inputStream) -> {
                     final var embed = EmbedCreateSpec.builder();
                     final var suffix = timelyInfo != null ? " #" + timelyInfo.number() : "";
-                    embed.author(type.getAuthorName(tr) + suffix, null, type.getAuthorIconUrl());
+                    embed.author(type.getAuthorName(tr) + suffix, null, "attachment://author.png");
                     embed.thumbnail("attachment://difficulty.png");
                     final var title =
                             emoji.get("play") + "  __" + level.name() + "__ by " + level.creatorName().orElse("-") +
@@ -178,7 +196,10 @@ public final class GDLevelService {
                     embed.addField(title, downloadLikesLength, false);
                     embed.addField(coins, ":musical_note:   " + songInfo, false);
                     embed.footer(tr.translate(Strings.GD, "label_level_id") + ' ' + level.id(), null);
-                    return Tuples.of(embed.build(), inputStream);
+                    return Tuples.of(embed.build(), List.of(
+                            File.of("difficulty.png", inputStream),
+                            File.of("author.png", type.iconInputStream())
+                    ));
                 }));
     }
 
@@ -221,13 +242,14 @@ public final class GDLevelService {
     private Mono<Snowflake> sendSelectedSearchResult(InteractionContext ctx, GDLevel level,
                                                      @Nullable Snowflake selectionMessageId) {
         return detailedEmbed(ctx, level.id(), level.creatorName().orElse("-"), EmbedType.LEVEL_SEARCH_RESULT, null)
-                .flatMap(function((embed, inputStream) -> selectionMessageId == null ?
+                .flatMap(function((embed, files) -> selectionMessageId == null ?
                         ctx.event().createFollowup()
                                 .withEmbeds(embed)
-                                .withFiles(File.of("difficulty.png", inputStream)) :
+                                .withFiles(files) :
                         ctx.event().editFollowup(selectionMessageId)
                                 .withEmbeds(embed)
-                                .withFiles(File.of("difficulty.png", inputStream))))
+                                .withAttachments()
+                                .withFiles(files)))
                 .map(Message::getId);
     }
 
@@ -238,11 +260,11 @@ public final class GDLevelService {
         final var type = isWeekly ? EmbedType.WEEKLY_DEMON : EmbedType.DAILY_LEVEL;
         return timelyMono
                 .flatMap(timely -> detailedEmbed(ctx, downloadId, "-", type, timely)
-                        .flatMap(function((embed, inputStream) -> ctx.event()
+                        .flatMap(function((embed, files) -> ctx.event()
                                 .createFollowup(ctx.translate(Strings.GD, "timely_of_today",
                                         type.getAuthorName(ctx), DurationUtils.format(timely.nextIn())))
                                 .withEmbeds(embed)
-                                .withFiles(File.of("difficulty.png", inputStream)))))
+                                .withFiles(files))))
                 .onErrorMap(e -> e instanceof GDClientException
                                 && ((GDClientException) e).getRequest().getUri().equals(GDRequests.GET_GJ_DAILY_LEVEL)
                                 && e.getCause() instanceof ActionFailedException,
@@ -256,8 +278,8 @@ public final class GDLevelService {
                 .map(songMono -> songMono.map(s -> Tuples.of(formatSong(tr, s),
                         formatSongExtra(tr, s, emoji.get("play"), emoji.get("download_song")))))
                 .orElseGet(() -> Mono.just(unknownSongParts(tr)))
-                .onErrorReturn(e -> e instanceof GDClientException
-                        && ((GDClientException) e).getRequest().getUri().equals(GDRequests.GET_GJ_SONG_INFO)
+                .onErrorReturn(e -> e instanceof GDClientException gce
+                        && gce.getRequest().getUri().equals(GDRequests.GET_GJ_SONG_INFO)
                         && e.getCause() instanceof ActionFailedException
                         && e.getCause().getMessage().equals("-2"), bannedSongParts(tr))
                 .onErrorReturn(unknownSongParts(tr));

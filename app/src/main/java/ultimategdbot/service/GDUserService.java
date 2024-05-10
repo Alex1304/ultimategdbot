@@ -81,19 +81,20 @@ public final class GDUserService {
                 .map(function((linkedAccounts, iconSet) -> {
                     final var role = user.role().orElse(Role.USER);
                     final var embed = EmbedCreateSpec.builder()
-                            .author(type.getAuthorName(tr), null, type.getAuthorIconUrl())
+                            .author(type.getAuthorName(tr), null, "attachment://author.png")
                             .addField(":chart_with_upwards_trend:  " +
                                             tr.translate(Strings.GD, "player_stats", user.name()),
                                     statEntry("star", stats.stars()) +
+                                            statEntry("moon", stats.moons()) +
                                             statEntry("diamond", stats.diamonds()) +
                                             statEntry("user_coin", stats.userCoins()) +
                                             statEntry("secret_coin", stats.secretCoins()) +
                                             statEntry("demon", stats.demons()) +
                                             statEntry("creator_points", stats.creatorPoints()), false)
-                            .addField("───────────", displayRole(role) +
-                                            infoEntry("global_rank", tr.translate(Strings.GD, "label_global_rank"),
-                                                    profile.globalRank() == 0 ? italic("unranked") :
-                                                            profile.globalRank()) +
+                            .addField(infoEntry("global_rank", tr.translate(Strings.GD, "label_global_rank"),
+                                            profile.globalRank() == 0 ? italic("unranked") :
+                                                    profile.globalRank()) , displayRole(role) +
+                                            "\n" +
                                             infoEntry("youtube", "YouTube:", profile.youtube().isEmpty()
                                                     ? italic(tr.translate(Strings.GD, "not_provided"))
                                                     : '[' + tr.translate(Strings.GD, "open_link") + "]" +
@@ -110,7 +111,7 @@ public final class GDUserService {
                                                     ? italic(tr.translate(Strings.GENERAL, "unknown"))
                                                     : linkedAccounts.stream().map(User::getTag)
                                                     .collect(Collectors.joining(", "))) +
-                                            "\n───────────\n" +
+                                            "\n" +
                                             infoEntry("friends", tr.translate(Strings.GD, "label_friend_requests"),
                                                     (profile.hasFriendRequestsEnabled()
                                                             ? tr.translate(Strings.GD, "enabled")
@@ -123,16 +124,17 @@ public final class GDUserService {
                                     false);
                     embed.footer(tr.translate(Strings.GD, "label_player_id") + ' ' + user.playerId() + " | "
                             + tr.translate(Strings.GD, "label_account_id") + ' ' + user.accountId(), null);
-                    var spec = MessageCreateSpec.create();
+                    var message = MessageCreateSpec.builder();
+                    message.addFile(File.of("author.png", type.iconInputStream()));
                     if (iconSet.inputStream == null) {
                         Objects.requireNonNull(iconSet.error);
                         embed.addField(":warning: " + tr.translate(Strings.GD, "error_icon_set_failed"),
                                 iconSet.error, false);
                     } else {
                         embed.image("attachment://icons.png");
-                        spec = spec.withFiles(File.of("icons.png", iconSet.inputStream));
+                        message.addFile(File.of("icons.png", iconSet.inputStream));
                     }
-                    return spec.withEmbeds(embed.build());
+                    return message.addEmbed(embed.build()).build();
                 }));
     }
 
@@ -162,9 +164,12 @@ public final class GDUserService {
     }
 
     private String displayRole(Role role) {
-        return role == Role.USER ? "" : role == Role.MODERATOR
-                ? emoji.get("mod") + " **MODERATOR**\n"
-                : emoji.get("elder_mod") + " **ELDER MODERATOR**\n";
+        return switch (role) {
+            case USER -> "";
+            case MODERATOR -> emoji.get("mod") + " **MODERATOR**\n";
+            case ELDER_MODERATOR -> emoji.get("elder_mod") + " **ELDER MODERATOR**\n";
+            case LEADERBOARD_MODERATOR -> emoji.get("leaderboard_mod") + " **LEADERBOARD MODERATOR**\n";
+        };
     }
 
     private record GeneratedIconSet(@Nullable ByteArrayInputStream inputStream, @Nullable String error) {}

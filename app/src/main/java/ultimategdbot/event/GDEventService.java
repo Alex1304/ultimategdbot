@@ -8,8 +8,6 @@ import com.github.alex1304.rdi.finder.annotation.RdiService;
 import discord4j.common.util.Snowflake;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.object.entity.Message;
-import discord4j.core.spec.EmbedCreateSpec;
-import discord4j.core.spec.MessageCreateFields.File;
 import discord4j.core.spec.MessageCreateSpec;
 import discord4j.discordjson.possible.Possible;
 import discord4j.rest.entity.RestChannel;
@@ -31,7 +29,6 @@ import ultimategdbot.service.GDLevelService;
 import ultimategdbot.service.GDUserService;
 import ultimategdbot.util.EmbedType;
 
-import java.io.InputStream;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
@@ -85,10 +82,10 @@ public final class GDEventService {
                                     .map(stats -> stats.user().accountId())))
                             .messageTemplateFactory(event -> levelService
                                     .compactEmbed(tr, event.addedLevel(), EmbedType.RATE, null)
-                                    .map(function((embed, inputStream) -> MessageCreateSpec.create()
+                                    .map(function((embed, files) -> MessageCreateSpec.create()
                                             .withContent(randomString(publicRandomMessages.rates()))
                                             .withEmbeds(embed)
-                                            .withFiles(File.of("difficulty.png", inputStream)))))
+                                            .withFiles(files))))
                             .congratMessage(event -> randomString(dmRandomMessages.rates()))
                             .isUpdate(false)
                             .build())
@@ -103,10 +100,10 @@ public final class GDEventService {
                                     .map(stats -> stats.user().accountId()))
                             .messageTemplateFactory(event -> levelService
                                     .compactEmbed(tr, event.removedLevel(), EmbedType.UNRATE, null)
-                                    .map(function((embed, inputStream) -> MessageCreateSpec.create()
+                                    .map(function((embed, files) -> MessageCreateSpec.create()
                                             .withContent(randomString(publicRandomMessages.unrates()))
                                             .withEmbeds(embed)
-                                            .withFiles(File.of("difficulty.png", inputStream)))))
+                                            .withFiles(files))))
                             .congratMessage(event -> randomString(dmRandomMessages.unrates()))
                             .isUpdate(false)
                             .build())
@@ -120,9 +117,9 @@ public final class GDEventService {
                                     .map(stats -> stats.user().accountId()))
                             .messageTemplateFactory(event -> levelService
                                     .compactEmbed(tr, event.newData(), EmbedType.RATE, null)
-                                    .map(function((embed, inputStream) -> MessageCreateSpec.create()
+                                    .map(function((embed, files) -> MessageCreateSpec.create()
                                             .withEmbeds(embed)
-                                            .withFiles(File.of("difficulty.png", inputStream)))))
+                                            .withFiles(files))))
                             .congratMessage(event -> {throw new UnsupportedOperationException();})
                             .isUpdate(true)
                             .build())
@@ -141,12 +138,12 @@ public final class GDEventService {
                                     gdClient.withWriteOnlyCache().downloadDailyLevel())
                                     .flatMap(dl -> levelService
                                             .compactEmbed(tr, dl.level(), EmbedType.DAILY_LEVEL, event.after())
-                                            .map(function((EmbedCreateSpec embed, InputStream inputStream) -> MessageCreateSpec.create()
+                                            .map(function((embed, files) -> MessageCreateSpec.create()
                                                     .withContent(randomString(event.isWeekly() ?
                                                             publicRandomMessages.weekly() :
                                                             publicRandomMessages.daily()))
                                                     .withEmbeds(embed)
-                                                    .withFiles(File.of("difficulty.png", inputStream))))))
+                                                    .withFiles(files)))))
                             .congratMessage(event -> randomString(event.isWeekly() ?
                                     dmRandomMessages.weekly() : dmRandomMessages.daily()))
                             .isUpdate(false)

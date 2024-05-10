@@ -23,8 +23,9 @@
         <plugin.resources.version>3.3.1</plugin.resources.version>
         <plugin.antrun.version>3.1.0</plugin.antrun.version>
         <botrino.version>1.0.6-SNAPSHOT</botrino.version>
-        <logback.version>1.4.12</logback.version>
-        <immutables.version>2.9.1</immutables.version>
+        <logback.version>1.5.6</logback.version>
+        <immutables.version>2.10.1</immutables.version>
+        <reactor.version>2020.0.33</reactor.version>
         <delivery.name>${project.parent.artifactId}-${project.version}</delivery.name>
         <delivery.directory>${project.build.directory}/${delivery.name}</delivery.directory>
         <app.build.directory>${project.basedir}/../app/target</app.build.directory>
@@ -68,6 +69,7 @@
                             <addModule>java.xml</addModule>
                             <addModule>java.naming</addModule>
                             <addModule>java.desktop</addModule>
+                            <addModule>java.scripting</addModule>
                             <addModule>jdk.crypto.ec</addModule>
                             <addModule>jdk.management</addModule>
                             <addModule>java.sql</addModule>
@@ -132,7 +134,8 @@
                                 <target>
                                     <delete dir="${delivery.directory}" />
                                     <delete file="${project.build.directory}/${project.build.finalName}.zip" />
-                                    <move file="${project.build.directory}/maven-jlink" tofile="${delivery.directory}" force="true" />
+                                    <move file="${project.build.directory}/maven-jlink/default"
+                                          tofile="${delivery.directory}" force="true" />
                                     <copy todir="${delivery.directory}/modules">
                                         <fileset dir="${app.build.directory}/dependency" />
                                         <fileset file="${app.build.directory}/*.jar" />
@@ -182,6 +185,13 @@
                 <groupId>org.immutables</groupId>
                 <artifactId>bom</artifactId>
                 <version>${immutables.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.projectreactor</groupId>
+                <artifactId>reactor-bom</artifactId>
+                <version>${reactor.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>

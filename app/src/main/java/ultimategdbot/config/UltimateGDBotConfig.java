@@ -125,10 +125,16 @@ public interface UltimateGDBotConfig {
                 @JsonProperty("elder_mod")
                 List<String> elderMod();
 
+                @JsonProperty("lb_mod")
+                List<String> lbMod();
+
                 List<String> unmod();
 
                 @JsonProperty("elder_unmod")
                 List<String> elderUnmod();
+
+                @JsonProperty("lb_unmod")
+                List<String> lbUnmod();
             }
         }
     }

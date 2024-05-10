@@ -71,12 +71,6 @@
         <dependency>
             <groupId>org.immutables</groupId>
             <artifactId>criteria-reactor</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>io.projectreactor</groupId>
-                    <artifactId>reactor-core</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.immutables</groupId>
@@ -90,22 +84,18 @@
                     <groupId>com.fasterxml.jackson.core</groupId>
                     <artifactId>jackson-databind</artifactId>
                 </exclusion>
-                <exclusion>
-                    <groupId>io.projectreactor</groupId>
-                    <artifactId>reactor-core</artifactId>
-                </exclusion>
             </exclusions>
         </dependency>
 
         <dependency>
             <groupId>com.alex1304.jdash</groupId>
             <artifactId>jdash-events</artifactId>
-            <version>5.0.0</version>
+            <version>5.0.1</version>
         </dependency>
         <dependency>
             <groupId>com.alex1304.jdash</groupId>
             <artifactId>jdash-graphics</artifactId>
-            <version>5.0.0</version>
+            <version>5.0.1</version>
         </dependency>
     </dependencies>
 </project>

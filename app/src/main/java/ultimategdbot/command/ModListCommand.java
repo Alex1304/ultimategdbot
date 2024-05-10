@@ -37,10 +37,17 @@ public final class ModListCommand implements ChatInputInteractionListener {
                         modList.stream()
                                 .sorted(Comparator.comparingInt(GdMod::elder).reversed()
                                         .thenComparing(GdMod::name, String.CASE_INSENSITIVE_ORDER))
-                                .map(gdMod -> (gdMod.isElder() ? emoji.get("elder_mod") : emoji.get("mod")) + ' ' +
-                                        Markdown.bold(gdMod.name()))
+                                .map(gdMod -> emoji.get(badge(gdMod.elder())) + ' ' + Markdown.bold(gdMod.name()))
                                 .toList(),
                         content -> "**__" + ctx.translate(Strings.GD, "mod_list") + "__\n**" +
                                 ctx.translate(Strings.GD, "modlist_intro") + "\n\n" + content));
+    }
+
+    private static String badge(int elder) {
+        return switch (elder) {
+            case 1 -> "elder_mod";
+            case 2 -> "leaderboard_mod";
+            default -> "mod";
+        };
     }
 }

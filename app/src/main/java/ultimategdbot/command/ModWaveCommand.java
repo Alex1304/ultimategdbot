@@ -1,9 +1,12 @@
 package ultimategdbot.command;
 
+import botrino.api.config.ConfigContainer;
 import botrino.interaction.annotation.ChatInputCommand;
+import botrino.interaction.config.InteractionConfig;
 import botrino.interaction.context.ChatInputInteractionContext;
 import botrino.interaction.listener.ChatInputInteractionListener;
 import botrino.interaction.privilege.Privilege;
+import botrino.interaction.privilege.Privileges;
 import com.github.alex1304.rdi.finder.annotation.RdiFactory;
 import com.github.alex1304.rdi.finder.annotation.RdiService;
 import discord4j.core.object.command.ApplicationCommandInteractionOptionValue;
@@ -38,18 +41,22 @@ public final class ModWaveCommand implements ChatInputInteractionListener {
     private final GDUserService userService;
     private final ManualEventProducer eventProducer;
     private final PrivilegeFactory privilegeFactory;
+    private final ConfigContainer configContainer;
 
     @RdiFactory
     public ModWaveCommand(DatabaseService db, EmojiService emoji, GDUserService userService,
-                          ManualEventProducer eventProducer, PrivilegeFactory privilegeFactory) {
+                          ManualEventProducer eventProducer, PrivilegeFactory privilegeFactory,
+                          ConfigContainer configContainer) {
         this.db = db;
         this.emoji = emoji;
         this.userService = userService;
         this.eventProducer = eventProducer;
         this.privilegeFactory = privilegeFactory;
+        this.configContainer = configContainer;
     }
 
     @Override
+    @SuppressWarnings("ReactiveStreamsThrowInOperator")
     public Publisher<?> run(ChatInputInteractionContext ctx) {
         return Flux.fromIterable(ctx.event().getOptions())
                 .flatMap(option -> Mono.justOrEmpty(option.getValue())
@@ -67,30 +74,64 @@ public final class ModWaveCommand implements ChatInputInteractionListener {
                             if (profile.user().role().map(Role.USER::equals).orElse(true)) {
                                 return Mono.empty();
                             }
-                            final var isElder = profile.user().role().map(Role.ELDER_MODERATOR::equals).orElse(false);
-                            eventProducer.submit(ImmutableModStatusUpdate.of(profile, isElder
-                                    ? PROMOTED_TO_ELDER : PROMOTED_TO_MOD));
+                            final var elder = profile.user().role().orElseThrow().ordinal() - 1;
+                            eventProducer.submit(ImmutableModStatusUpdate.of(profile, switch (elder) {
+                                case 0 -> PROMOTED_TO_MOD;
+                                case 1 -> PROMOTED_TO_ELDER;
+                                case 2 -> PROMOTED_TO_LBMOD;
+                                default -> throw new AssertionError();
+                            }));
                             return db.gdModDao()
                                     .save(ImmutableGdMod.builder()
                                             .accountId(profile.user().accountId())
                                             .name(profile.user().name())
-                                            .elder(isElder ? 1 : 0)
+                                            .elder(elder)
                                             .build())
                                     .then(Mono.empty());
                         }))
                         .flatMap(gdMod -> {
                             if (profile.user().role().map(Role.USER::equals).orElse(true)) {
-                                eventProducer.submit(ImmutableModStatusUpdate.of(profile, gdMod.isElder()
-                                        ? DEMOTED_FROM_ELDER : DEMOTED_FROM_MOD));
+                                eventProducer.submit(ImmutableModStatusUpdate.of(profile, switch (gdMod.elder()) {
+                                    case 0 -> DEMOTED_FROM_MOD;
+                                    case 1 -> DEMOTED_FROM_ELDER;
+                                    case 2 -> DEMOTED_FROM_LBMOD;
+                                    default -> throw new AssertionError();
+                                }));
                                 return db.gdModDao().delete(gdMod.accountId());
                             }
                             final var newGdMod = ImmutableGdMod.builder().from(gdMod);
-                            if (profile.user().role().map(Role.MODERATOR::equals).orElse(false) && gdMod.isElder()) {
-                                eventProducer.submit(ImmutableModStatusUpdate.of(profile, DEMOTED_FROM_ELDER));
-                                newGdMod.elder(0);
-                            } else if (profile.user().role().map(Role.ELDER_MODERATOR::equals).orElse(false) && !gdMod.isElder()) {
-                                eventProducer.submit(ImmutableModStatusUpdate.of(profile, PROMOTED_TO_ELDER));
-                                newGdMod.elder(1);
+                            switch (profile.user().role().orElseThrow()) {
+                                case MODERATOR -> {
+                                    final var type = switch (gdMod.elder()) {
+                                        case 1 -> DEMOTED_FROM_ELDER;
+                                        case 2 -> PROMOTED_TO_MOD;
+                                        default -> null;
+                                    };
+                                    if (type != null) {
+                                        eventProducer.submit(ImmutableModStatusUpdate.of(profile, type));
+                                    }
+                                    newGdMod.elder(0);
+                                }
+                                case ELDER_MODERATOR -> {
+                                    final var type = switch (gdMod.elder()) {
+                                        case 0, 2 -> PROMOTED_TO_ELDER;
+                                        default -> null;
+                                    };
+                                    if (type != null) {
+                                        eventProducer.submit(ImmutableModStatusUpdate.of(profile, type));
+                                    }
+                                    newGdMod.elder(1);
+                                }
+                                case LEADERBOARD_MODERATOR -> {
+                                    final var type = switch (gdMod.elder()) {
+                                        case 0, 1 -> PROMOTED_TO_LBMOD;
+                                        default -> null;
+                                    };
+                                    if (type != null) {
+                                        eventProducer.submit(ImmutableModStatusUpdate.of(profile, type));
+                                    }
+                                    newGdMod.elder(2);
+                                }
                             }
                             newGdMod.name(profile.user().name());
                             return db.gdModDao().save(newGdMod.build());
@@ -113,6 +154,9 @@ public final class ModWaveCommand implements ChatInputInteractionListener {
 
     @Override
     public Privilege privilege() {
-        return privilegeFactory.elderMod();
+        // Allow command everywhere if dev/beta, else only allow elder mods
+        return configContainer.get(InteractionConfig.class).applicationCommandsGuildId()
+                .map(__ -> Privileges.allowed())
+                .orElse(privilegeFactory.elderMod());
     }
 }

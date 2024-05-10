@@ -19,16 +19,16 @@ public interface ModStatusUpdate {
     enum Type {
         PROMOTED_TO_MOD,
         PROMOTED_TO_ELDER,
+        PROMOTED_TO_LBMOD,
         DEMOTED_FROM_MOD,
-        DEMOTED_FROM_ELDER;
+        DEMOTED_FROM_ELDER,
+        DEMOTED_FROM_LBMOD;
 
         public EmbedType embedType() {
             if (name().startsWith("PROMOTED")) {
                 return EmbedType.MOD;
-            } else if (name().startsWith("DEMOTED")) {
-                return EmbedType.UNMOD;
             } else {
-                throw new AssertionError();
+                return EmbedType.UNMOD;
             }
         }
 
@@ -36,8 +36,10 @@ public interface ModStatusUpdate {
             return switch (this) {
                 case PROMOTED_TO_MOD -> randomMessages.mod();
                 case PROMOTED_TO_ELDER -> randomMessages.elderMod();
+                case PROMOTED_TO_LBMOD -> randomMessages.lbMod();
                 case DEMOTED_FROM_MOD -> randomMessages.unmod();
                 case DEMOTED_FROM_ELDER -> randomMessages.elderUnmod();
+                case DEMOTED_FROM_LBMOD -> randomMessages.lbUnmod();
             };
         }
     }

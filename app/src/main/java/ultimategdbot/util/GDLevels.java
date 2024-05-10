@@ -1,6 +1,7 @@
 package ultimategdbot.util;
 
 import botrino.api.i18n.Translator;
+import jdash.common.QualityRating;
 import jdash.common.entity.GDLevel;
 import jdash.common.entity.GDSong;
 import jdash.graphics.DifficultyRenderer;
@@ -10,11 +11,9 @@ import reactor.util.function.Tuples;
 import ultimategdbot.Strings;
 
 import java.io.ByteArrayInputStream;
-import java.util.Map;
+import java.util.Optional;
 
 public final class GDLevels {
-
-    public static final Map<Integer, String> GAME_VERSIONS = gameVersions();
 
     private GDLevels() {
         throw new AssertionError();
@@ -25,21 +24,43 @@ public final class GDLevels {
     }
 
     public static Mono<ByteArrayInputStream> getDifficultyImageForLevel(GDLevel level) {
-        return Misc.imageStream(DifficultyRenderer.forLevel(level).render());
+        return Misc.imageStream(DifficultyRenderer.forLevel(level).render()
+                .getSubimage(0, 5, DifficultyRenderer.WIDTH, DifficultyRenderer.HEIGHT - 35));
+    }
+
+    public static String getDifficultyEmojiForLevel(GDLevel level) {
+        final var difficulty = new StringBuilder("icon_");
+        if (level.isDemon()) {
+            difficulty.append("demon_").append(level.demonDifficulty().toString().toLowerCase());
+        } else if (level.isAuto()) {
+            difficulty.append("auto");
+        } else {
+            difficulty.append(level.difficulty().toString().toLowerCase());
+        }
+        return difficulty.toString();
+    }
+
+    public static Optional<String> getQualityEmojiForLevel(GDLevel level) {
+        return Optional.of(level.qualityRating())
+                .filter(qr -> qr != QualityRating.NONE)
+                .map(qr -> qr.name().toLowerCase());
     }
 
     public static String formatGameVersion(int v) {
-        if (v < 10) {
-            return "<1.6";
-        }
-        if (GAME_VERSIONS.containsKey(v)) {
-            return GAME_VERSIONS.get(v);
-        }
-        var vStr = String.format("%02d", v);
-        if (vStr.length() <= 1) {
-            return vStr;
-        }
-        return vStr.substring(0, vStr.length() - 1) + "." + vStr.charAt(vStr.length() - 1);
+        return switch (v) {
+            case 10 -> "1.7";
+            case 11 -> "1.8";
+            default -> {
+                if (v < 10) {
+                    yield "<=1.6";
+                }
+                var vStr = String.format("%02d", v);
+                if (vStr.length() <= 1) {
+                    yield vStr;
+                }
+                yield vStr.substring(0, vStr.length() - 1) + "." + vStr.charAt(vStr.length() - 1);
+            }
+        };
     }
 
     public static String coinsToEmoji(String emoji, int n, boolean shorten) {
@@ -74,7 +95,7 @@ public final class GDLevels {
         final var str = tr.translate(Strings.GD, "label_song_id") + ' ' + song.id() + " - " +
                 tr.translate(Strings.GD, "label_song_size") + ' ' + song.size().orElseThrow() + "MB";
         if (song.isFromMusicLibrary()) {
-            return str;
+            return str + '\n' + tr.translate(Strings.GD, "song_from_music_library");
         }
         return str + '\n' + emojiPlay + " [" + tr.translate(Strings.GD, "play_on_ng") +
                 "](https://www.newgrounds.com/audio/listen/" + song.id() + ")  " + emojiDownload + " [" +
@@ -89,9 +110,5 @@ public final class GDLevels {
     public static Tuple2<String, String> bannedSongParts(Translator tr) {
         return Tuples.of(":warning: " + tr.translate(Strings.GD, "song_banned"),
                 tr.translate(Strings.GD, "song_info_unavailable"));
-    }
-
-    private static Map<Integer, String> gameVersions() {
-        return Map.of(10, "1.7", 11, "1.8");
     }
 }

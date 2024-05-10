@@ -24,6 +24,6 @@ public interface GdMod {
 	int elder();
 	
 	default boolean isElder() {
-	    return elder() > 0;
+	    return elder() == 1;
     }
 }
