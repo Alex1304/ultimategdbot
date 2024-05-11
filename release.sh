@@ -12,12 +12,14 @@ fi
 
 set -e
 
-. ~/.bash_aliases
 mvn versions:set -DnewVersion=$1
-gacp "Release version v$1"
+git add .
+git commit -m "Release version v$1"
 git tag "v$1"
-git push --tags
 ./build-multiplatform-distributions.sh
 scp "delivery/target/distribution/ultimategdbot-$1_linux_x64.zip" alex@alex1304.com:/home/alex/ultimategdbot/deploy
 mvn versions:set -DnewVersion=$2
-gacp "Prepare for next development iteration"
+git add .
+git commit -m "Prepare for next development iteration"
+git push
+git push --tags
