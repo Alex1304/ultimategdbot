@@ -26,6 +26,7 @@ import ultimategdbot.service.GDUserService;
 import ultimategdbot.util.EmbedType;
 
 import java.util.List;
+import java.util.Objects;
 
 @RdiService
 @Acknowledge(Acknowledge.Mode.NONE)
@@ -52,14 +53,19 @@ public final class ProfileCommand implements ChatInputInteractionListener, UserI
     @Override
     public Publisher<?> run(ChatInputInteractionContext ctx) {
         return ctx.event().deferReply().then(grammar.resolve(ctx.event()))
-                .flatMap(options -> Mono.justOrEmpty(options.gdUsername)
-                        .flatMap(username -> userService.stringToUser(ctx, username)))
+                .flatMap(options -> runWithOptions(ctx, options));
+    }
+
+    private Mono<?> runWithOptions(ChatInputInteractionContext ctx, Options options) {
+        return Mono.justOrEmpty(options.gdUsername)
+                .flatMap(username -> userService.stringToUser(ctx, username))
                 .switchIfEmpty(db.gdLinkedUserDao().getActiveLink(ctx.user().getId().asLong())
                         .switchIfEmpty(Mono.error(new InteractionFailedException(
                                 ctx.translate(Strings.GD, "error_profile_user_not_specified"))))
                         .map(GdLinkedUser::gdUserId)
                         .flatMap(gdClient::getUserProfile))
-                .flatMap(user -> userService.buildProfile(ctx, user, EmbedType.USER_PROFILE)
+                .flatMap(user -> userService.buildProfile(ctx, user, EmbedType.USER_PROFILE,
+                                Objects.requireNonNullElse(options.showCompletedLevels, false))
                         .map(MessageUtils::toFollowupCreateSpec)
                         .flatMap(ctx.event()::createFollowup));
     }
@@ -72,7 +78,7 @@ public final class ProfileCommand implements ChatInputInteractionListener, UserI
                         ctx.translate(Strings.GD, "error_no_gd_account"))))
                 .map(GdLinkedUser::gdUserId)
                 .flatMap(gdClient::getUserProfile)
-                .flatMap(user -> userService.buildProfile(ctx, user, EmbedType.USER_PROFILE)
+                .flatMap(user -> userService.buildProfile(ctx, user, EmbedType.USER_PROFILE, false)
                         .map(MessageUtils::toFollowupCreateSpec)
                         .map(spec -> spec.withEphemeral(true))
                         .flatMap(ctx.event()::createFollowup));
@@ -88,12 +94,18 @@ public final class ProfileCommand implements ChatInputInteractionListener, UserI
         return commandCooldown.get();
     }
 
-    private static final class Options {
-        @ChatInputCommandGrammar.Option(
-                type = ApplicationCommandOption.Type.STRING,
-                name = "gd-username",
-                description = "The GD username of the target."
-        )
-        String gdUsername;
-    }
+    private record Options(
+            @ChatInputCommandGrammar.Option(
+                    type = ApplicationCommandOption.Type.STRING,
+                    name = "gd-username",
+                    description = "The GD username of the target."
+            )
+            String gdUsername,
+            @ChatInputCommandGrammar.Option(
+                    type = ApplicationCommandOption.Type.BOOLEAN,
+                    name = "show-completed-levels",
+                    description = "Whether to show completed levels."
+            )
+            Boolean showCompletedLevels
+    ) {}
 }

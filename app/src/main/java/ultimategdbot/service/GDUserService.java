@@ -23,6 +23,7 @@ import ultimategdbot.util.Misc;
 import java.io.ByteArrayInputStream;
 import java.util.Objects;
 import java.util.Random;
+import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
 
 import static botrino.api.util.Markdown.italic;
@@ -71,7 +72,8 @@ public final class GDUserService {
         return new String(result);
     }
 
-    public Mono<MessageCreateSpec> buildProfile(Translator tr, GDUserProfile profile, EmbedType type) {
+    public Mono<MessageCreateSpec> buildProfile(Translator tr, GDUserProfile profile, EmbedType type,
+                                                boolean showFull) {
         final var user = profile.user();
         final var stats = profile.stats();
         return Mono.zip(db.gdLinkedUserDao()
@@ -94,7 +96,7 @@ public final class GDUserService {
                                             statEntry("creator_points", stats.creatorPoints()), false)
                             .addField(infoEntry(rankEmoji, tr.translate(Strings.GD, "label_global_rank"),
                                             profile.globalRank() == 0 ? italic("unranked") :
-                                                    profile.globalRank()) , displayRole(role) +
+                                                    profile.globalRank()), displayRole(role) +
                                             "\n" +
                                             infoEntry("youtube", "YouTube:", profile.youtube().isEmpty()
                                                     ? italic(tr.translate(Strings.GD, "not_provided"))
@@ -123,6 +125,11 @@ public final class GDUserService {
                                                             "label_comment_history"),
                                                     formatPolicy(tr, profile.commentHistoryPrivacy())),
                                     false);
+                    if (showFull) {
+                        appendCompletedLevels(tr, embed, profile.completedClassicLevels().orElse(null),
+                                profile.completedPlatformerLevels().orElse(null));
+                        appendCompletedDemons(tr, embed, profile.completedDemons().orElse(null));
+                    }
                     embed.footer(tr.translate(Strings.GD, "label_player_id") + ' ' + user.playerId() + " | "
                             + tr.translate(Strings.GD, "label_account_id") + ' ' + user.accountId(), null);
                     var message = MessageCreateSpec.builder();
@@ -137,6 +144,70 @@ public final class GDUserService {
                     }
                     return message.addEmbed(embed.build()).build();
                 }));
+    }
+
+    private void appendCompletedLevels(Translator tr, EmbedCreateSpec.Builder embed,
+                                       @Nullable GDUserProfile.CompletedClassicLevels classic,
+                                       @Nullable GDUserProfile.CompletedPlatformerLevels platformer) {
+        if (classic == null && platformer == null) return;
+        final var sb = new StringBuilder();
+        completedLevelEntry(sb, "icon_auto",
+                classic, GDUserProfile.CompletedClassicLevels::auto,
+                platformer, GDUserProfile.CompletedPlatformerLevels::auto);
+        completedLevelEntry(sb, "icon_easy",
+                classic, GDUserProfile.CompletedClassicLevels::easy,
+                platformer, GDUserProfile.CompletedPlatformerLevels::easy);
+        completedLevelEntry(sb, "icon_normal",
+                classic, GDUserProfile.CompletedClassicLevels::normal,
+                platformer, GDUserProfile.CompletedPlatformerLevels::normal);
+        completedLevelEntry(sb, "icon_hard",
+                classic, GDUserProfile.CompletedClassicLevels::hard,
+                platformer, GDUserProfile.CompletedPlatformerLevels::hard);
+        completedLevelEntry(sb, "icon_harder",
+                classic, GDUserProfile.CompletedClassicLevels::harder,
+                platformer, GDUserProfile.CompletedPlatformerLevels::harder);
+        completedLevelEntry(sb, "icon_insane",
+                classic, GDUserProfile.CompletedClassicLevels::insane,
+                platformer, GDUserProfile.CompletedPlatformerLevels::insane);
+        completedLevelEntry(sb, "daily",
+                classic, GDUserProfile.CompletedClassicLevels::daily,
+                null, __ -> 0);
+        completedLevelEntry(sb, "gauntlet",
+                classic, GDUserProfile.CompletedClassicLevels::gauntlet,
+                platformer, GDUserProfile.CompletedPlatformerLevels::gauntlet);
+        final var totalClassic = classic == null ? 0 : classic.total();
+        final var totalPlatformer = platformer == null ? 0 : platformer.total();
+        embed.addField(tr.translate(Strings.GD, "completed_levels", totalClassic, totalPlatformer), sb.toString(),
+                false);
+    }
+
+    private void appendCompletedDemons(Translator tr, EmbedCreateSpec.Builder embed,
+                                       @Nullable GDUserProfile.CompletedDemons demons) {
+        if (demons == null) return;
+        final var sb = new StringBuilder();
+        completedLevelEntry(sb, "icon_demon_easy",
+                demons, GDUserProfile.CompletedDemons::easyClassic,
+                demons, GDUserProfile.CompletedDemons::easyPlatformer);
+        completedLevelEntry(sb, "icon_demon_medium",
+                demons, GDUserProfile.CompletedDemons::mediumClassic,
+                demons, GDUserProfile.CompletedDemons::mediumPlatformer);
+        completedLevelEntry(sb, "icon_demon_hard",
+                demons, GDUserProfile.CompletedDemons::hardClassic,
+                demons, GDUserProfile.CompletedDemons::hardPlatformer);
+        completedLevelEntry(sb, "icon_demon_insane",
+                demons, GDUserProfile.CompletedDemons::insaneClassic,
+                demons, GDUserProfile.CompletedDemons::insanePlatformer);
+        completedLevelEntry(sb, "icon_demon_extreme",
+                demons, GDUserProfile.CompletedDemons::extremeClassic,
+                demons, GDUserProfile.CompletedDemons::extremePlatformer);
+        completedLevelEntry(sb, "weekly",
+                demons, GDUserProfile.CompletedDemons::weekly,
+                null, __ -> 0);
+        completedLevelEntry(sb, "gauntlet",
+                demons, GDUserProfile.CompletedDemons::gauntlet,
+                demons, GDUserProfile.CompletedDemons::gauntlet);
+        embed.addField(tr.translate(Strings.GD, "completed_demons", demons.totalClassic(), demons.totalPlatformer()),
+                sb.toString(), false);
     }
 
     private String getRankEmoji(int rank) {
@@ -174,6 +245,22 @@ public final class GDUserService {
 
     private String infoEntry(String emojiName, String label, Object value) {
         return emoji.get(emojiName) + "  **" + label + "** " + value + '\n';
+    }
+
+    private <T, U> void completedLevelEntry(StringBuilder sb, String emojiName,
+                                            @Nullable T classic, ToIntFunction<T> classicV,
+                                            @Nullable U platformer, ToIntFunction<U> platformerV) {
+        sb.append(emoji.get(emojiName)).append("  ");
+        if (classic != null) {
+            sb.append("C: ").append(formatCode(classicV.applyAsInt(classic), 6));
+            if (platformer != null) {
+                sb.append("  ");
+            }
+        }
+        if (platformer != null) {
+            sb.append("P: ").append(formatCode(platformerV.applyAsInt(platformer), 6));
+        }
+        sb.append('\n');
     }
 
     private String displayRole(Role role) {

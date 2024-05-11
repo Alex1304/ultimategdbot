@@ -154,7 +154,7 @@ public final class GDEventService {
                             .levelIdGetter(event -> Optional.empty())
                             .recipientAccountId(event -> Mono.just(event.user().user().accountId()))
                             .messageTemplateFactory(event -> userService
-                                    .buildProfile(tr, event.user(), event.type().embedType())
+                                    .buildProfile(tr, event.user(), event.type().embedType(), false)
                                     .map(messageTemplate -> messageTemplate.withContent(
                                             randomString(event.type().selectList(publicRandomMessages)))))
                             .congratMessage(event -> randomString(event.type().selectList(dmRandomMessages)))
@@ -189,7 +189,7 @@ public final class GDEventService {
                 .orElse(null);
         this.crosspostQueue = config.crosspost() ? new CrosspostQueue(tr) : null;
         this.publicRandomMessages = config.publicRandomMessages();
-        this.dmRandomMessages = config.dmRandomMessages();
+        this.dmRandomMessages = config.dmRandomMessages().orElse(null);
         GDEventLoop.builder(gdClient)
                 .setEventProducers(Set.of(
                         GDEventProducer.awardedLevels(),
@@ -240,7 +240,7 @@ public final class GDEventService {
                         crosspostQueue.submit(msg, event);
                     }
                 });
-        final var sendDm = gdEvent.recipientAccountId(event)
+        final var sendDm = dmRandomMessages == null ? Flux.<Message>empty() : gdEvent.recipientAccountId(event)
                 .flatMapMany(db.gdLinkedUserDao()::getDiscordAccountsForGDUser)
                 .flatMap(userId -> gateway.getUserById(Snowflake.of(userId)))
                 .flatMap(user -> user.getPrivateChannel()

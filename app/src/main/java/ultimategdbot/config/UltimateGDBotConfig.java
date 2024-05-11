@@ -106,7 +106,7 @@ public interface UltimateGDBotConfig {
             RandomMessages publicRandomMessages();
 
             @JsonProperty("dm_random_messages")
-            RandomMessages dmRandomMessages();
+            Optional<RandomMessages> dmRandomMessages();
 
             @Value.Immutable
             @JsonDeserialize(as = ImmutableRandomMessages.class)
