@@ -48,12 +48,16 @@ public final class GDLevels {
 
     public static String formatGameVersion(int v) {
         return switch (v) {
+            case 1 -> "1.0";
+            case 2 -> "1.1";
+            case 3 -> "1.2";
+            case 4 -> "1.3";
+            case 5 -> "1.4";
+            case 6 -> "1.5";
+            case 7 -> "1.6";
             case 10 -> "1.7";
             case 11 -> "1.8";
             default -> {
-                if (v < 10) {
-                    yield "<=1.6";
-                }
                 var vStr = String.format("%02d", v);
                 if (vStr.length() <= 1) {
                     yield vStr;

@@ -65,15 +65,21 @@ public final class GDLevelService {
             final var difficulty = emoji.get(getDifficultyEmojiForLevel(level));
             final var quality = getQualityEmojiForLevel(level).map(emoji::get).orElse("");
             final var reward = emoji.get(level.isPlatformer() ? "moon" : "star");
-            embed.addField(String.format("`%02d` - %s%s | __**%s**__ by **%s** %s%s",
+            embed.addField(String.format("`%02d` - %s%s | %d",
                             i,
                             quality + difficulty + (level.rewards() > 0 ? reward + " x" + level.rewards() : ""),
                             coins.equals("None") ? "" : ' ' + coins,
+                            level.id()),
+                    String.format("""
+                                    %s __**%s**__ by **%s** %s%s
+                                    %s %d \t\t %s %d \t\t %s %s
+                                    :musical_note: **%s**
+                                     _ _""",
+                            emoji.get("play"),
                             level.name(),
                             level.creatorName().orElse("-"),
                             level.originalLevelId().orElse(0L) > 0 ? emoji.get("copy") : "",
-                            level.objectCount() > 40_000 ? emoji.get("object_overflow") : ""),
-                    String.format("%s %d \t\t %s %d \t\t %s %s\n:musical_note:  **%s**\n _ _",
+                            level.objectCount() > 40_000 ? emoji.get("object_overflow") : "",
                             emoji.get("downloads"),
                             level.downloads(),
                             emoji.get(level.likes() >= 0 ? "like" : "dislike"),
@@ -128,6 +134,12 @@ public final class GDLevelService {
                     extraInfo.append(bold(ctx.translate(Strings.GD, "label_game_version"))).append(' ')
                             .append(formatGameVersion(level.gameVersion())).append('\n');
                     extraInfo.append(objCount);
+                    if (level.objectCount() > 40_000) {
+                        extraInfo.append(emoji.get("object_overflow")).append(' ')
+                                .append(bold(ctx.translate(Strings.GD, "lag_notice"))).append('\n');
+                    }
+                    extraInfo.append(bold(ctx.translate(Strings.GD, "label_ldm_available"))).append(' ')
+                            .append(ctx.translate(Strings.GENERAL, dl.isLDMAvailable() ? "yes" : "no")).append('\n');
                     var pass = "";
                     if (dl.copyPasscode().isEmpty() && dl.isCopyable()) {
                         pass = ctx.translate(Strings.GD, "free_to_copy");
@@ -155,16 +167,12 @@ public final class GDLevelService {
                         extraInfo.append(bold(ctx.translate(Strings.GD, "label_editor_time_copies"))).append(' ')
                                 .append(DurationUtils.format(dl.editorTimeOnCopies().orElseThrow())).append('\n');
                     }
-                    extraInfo.append(bold(ctx.translate(Strings.GD, "label_ldm_available"))).append(' ')
-                            .append(ctx.translate(Strings.GENERAL, dl.isLDMAvailable() ? "yes" : "no")).append('\n');
+                    extraInfo.append(bold(ctx.translate(Strings.GD, "label_two_player"))).append(' ')
+                            .append(ctx.translate(Strings.GENERAL, level.isTwoPlayer() ? "yes" : "no")).append('\n');
                     if (level.originalLevelId().orElse(0L) > 0) {
                         extraInfo.append(emoji.get("copy")).append(' ')
                                 .append(bold(ctx.translate(Strings.GD, "label_original"))).append(' ')
                                 .append(level.originalLevelId().orElseThrow()).append('\n');
-                    }
-                    if (level.objectCount() > 40_000) {
-                        extraInfo.append(emoji.get("object_overflow")).append(' ')
-                                .append(bold(ctx.translate(Strings.GD, "lag_notice"))).append('\n');
                     }
                     embed.addField(title, desc, false);
                     embed.addField(coins, downloadLikesLength + "\n_ _", false);

@@ -4,6 +4,7 @@ import botrino.api.i18n.Translator;
 import botrino.api.util.Markdown;
 import botrino.interaction.InteractionFailedException;
 import botrino.interaction.annotation.ChatInputCommand;
+import botrino.interaction.annotation.PrivateCommand;
 import botrino.interaction.annotation.Subcommand;
 import botrino.interaction.context.ChatInputInteractionContext;
 import botrino.interaction.grammar.ChatInputCommandGrammar;
@@ -35,6 +36,7 @@ import java.util.stream.Collectors;
 
 import static ultimategdbot.util.Interactions.paginationAndConfirmButtons;
 
+@PrivateCommand
 @ChatInputCommand(
         name = "gd-events",
         description = "Manage the GD event announcement system (Bot Owner only).",

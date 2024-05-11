@@ -80,6 +80,7 @@ public final class GDUserService {
                         .collectList(), makeIconSet(profile))
                 .map(function((linkedAccounts, iconSet) -> {
                     final var role = user.role().orElse(Role.USER);
+                    final var rankEmoji = getRankEmoji(profile.globalRank());
                     final var embed = EmbedCreateSpec.builder()
                             .author(type.getAuthorName(tr), null, "attachment://author.png")
                             .addField(":chart_with_upwards_trend:  " +
@@ -91,7 +92,7 @@ public final class GDUserService {
                                             statEntry("secret_coin", stats.secretCoins()) +
                                             statEntry("demon", stats.demons()) +
                                             statEntry("creator_points", stats.creatorPoints()), false)
-                            .addField(infoEntry("global_rank", tr.translate(Strings.GD, "label_global_rank"),
+                            .addField(infoEntry(rankEmoji, tr.translate(Strings.GD, "label_global_rank"),
                                             profile.globalRank() == 0 ? italic("unranked") :
                                                     profile.globalRank()) , displayRole(role) +
                                             "\n" +
@@ -136,6 +137,18 @@ public final class GDUserService {
                     }
                     return message.addEmbed(embed.build()).build();
                 }));
+    }
+
+    private String getRankEmoji(int rank) {
+        if (rank <= 0) return "global_rank";
+        if (rank == 1) return "top_1";
+        if (rank <= 10) return "top_10";
+        if (rank <= 50) return "top_50";
+        if (rank <= 100) return "top_100";
+        if (rank <= 200) return "top_200";
+        if (rank <= 500) return "top_500";
+        if (rank <= 1000) return "top_1000";
+        return "global_rank";
     }
 
     private Mono<GeneratedIconSet> makeIconSet(GDUserProfile user) {

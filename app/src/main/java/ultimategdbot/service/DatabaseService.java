@@ -36,16 +36,8 @@ public final class DatabaseService {
         this.backend = new MongoBackend(MongoSetup.of(db));
     }
 
-    public GuildConfigDao guildConfigDao() {
-        return new GuildConfigDao(backend);
-    }
-
     public BlacklistDao blacklistDao() {
         return new BlacklistDao(backend);
-    }
-
-    public BotAdminDao botAdminDao() {
-        return new BotAdminDao(backend);
     }
 
     public GdLinkedUserDao gdLinkedUserDao() {

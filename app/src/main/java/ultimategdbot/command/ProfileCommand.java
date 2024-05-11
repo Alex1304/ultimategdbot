@@ -16,7 +16,6 @@ import com.github.alex1304.rdi.finder.annotation.RdiService;
 import discord4j.core.object.command.ApplicationCommandOption;
 import discord4j.discordjson.json.ApplicationCommandOptionData;
 import jdash.client.GDClient;
-import jdash.common.entity.GDUserProfile;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 import ultimategdbot.Strings;
@@ -60,7 +59,6 @@ public final class ProfileCommand implements ChatInputInteractionListener, UserI
                                 ctx.translate(Strings.GD, "error_profile_user_not_specified"))))
                         .map(GdLinkedUser::gdUserId)
                         .flatMap(gdClient::getUserProfile))
-                .cast(GDUserProfile.class)
                 .flatMap(user -> userService.buildProfile(ctx, user, EmbedType.USER_PROFILE)
                         .map(MessageUtils::toFollowupCreateSpec)
                         .flatMap(ctx.event()::createFollowup));
@@ -74,7 +72,6 @@ public final class ProfileCommand implements ChatInputInteractionListener, UserI
                         ctx.translate(Strings.GD, "error_no_gd_account"))))
                 .map(GdLinkedUser::gdUserId)
                 .flatMap(gdClient::getUserProfile)
-                .cast(GDUserProfile.class)
                 .flatMap(user -> userService.buildProfile(ctx, user, EmbedType.USER_PROFILE)
                         .map(MessageUtils::toFollowupCreateSpec)
                         .map(spec -> spec.withEphemeral(true))

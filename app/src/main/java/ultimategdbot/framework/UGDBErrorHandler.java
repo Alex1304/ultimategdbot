@@ -17,6 +17,7 @@ import discord4j.core.object.command.ApplicationCommandInteractionOptionValue;
 import discord4j.core.object.command.ApplicationCommandOption;
 import discord4j.core.object.entity.ApplicationInfo;
 import discord4j.core.object.entity.User;
+import jdash.client.exception.ActionFailedException;
 import jdash.client.exception.GDClientException;
 import reactor.core.Exceptions;
 import reactor.core.publisher.Mono;
@@ -24,7 +25,9 @@ import reactor.core.publisher.Sinks;
 import reactor.util.Logger;
 import reactor.util.Loggers;
 import ultimategdbot.Strings;
-import ultimategdbot.exception.*;
+import ultimategdbot.exception.BotOwnerPrivilegeException;
+import ultimategdbot.exception.ElderModPrivilegeException;
+import ultimategdbot.exception.ManageWebhooksPrivilegeException;
 import ultimategdbot.service.EmojiService;
 
 import java.util.List;
@@ -86,10 +89,6 @@ public class UGDBErrorHandler implements InteractionErrorHandler {
         return MatcherFunction.<Mono<Void>>create()
                 .matchType(BotOwnerPrivilegeException.class, __ -> sendErrorMessage(ctx,
                         ctx.translate(Strings.GENERAL, "error_privilege_bot_owner")))
-                .matchType(BotAdminPrivilegeException.class, __ -> sendErrorMessage(ctx,
-                        ctx.translate(Strings.GENERAL, "error_privilege_bot_admin")))
-                .matchType(GuildAdminPrivilegeException.class, __ -> sendErrorMessage(ctx,
-                        ctx.translate(Strings.GENERAL, "error_privilege_guild_admin")))
                 .matchType(ManageWebhooksPrivilegeException.class, __ -> sendErrorMessage(ctx,
                         ctx.translate(Strings.GENERAL, "error_privilege_manage_webhooks")))
                 .matchType(ElderModPrivilegeException.class, __ -> sendErrorMessage(ctx,
@@ -104,6 +103,7 @@ public class UGDBErrorHandler implements InteractionErrorHandler {
                 .matchType(GDClientException.class, e -> {
                     LOGGER.error("Error executing request to GD servers", e);
                     return sendErrorMessage(ctx, MatcherFunction.<String>create()
+                            .matchType(ActionFailedException.class, __ -> ctx.translate(Strings.GD, "no_results"))
                             .matchType(Sinks.EmissionException.class, __ ->
                                     ctx.translate(Strings.GD, "error_queue_full"))
                             .matchType(RuntimeException.class, Exceptions::isRetryExhausted,__ ->

@@ -1,17 +1,13 @@
 package ultimategdbot.service;
 
 import botrino.interaction.privilege.Privilege;
-import botrino.interaction.privilege.Privileges;
 import com.github.alex1304.rdi.finder.annotation.RdiFactory;
 import com.github.alex1304.rdi.finder.annotation.RdiService;
 import discord4j.core.object.entity.ApplicationInfo;
-import discord4j.rest.util.Permission;
 import reactor.core.publisher.Mono;
 import ultimategdbot.database.GdMod;
-import ultimategdbot.exception.BotAdminPrivilegeException;
 import ultimategdbot.exception.BotOwnerPrivilegeException;
 import ultimategdbot.exception.ElderModPrivilegeException;
-import ultimategdbot.exception.GuildAdminPrivilegeException;
 
 @RdiService
 public final class PrivilegeFactory {
@@ -29,19 +25,6 @@ public final class PrivilegeFactory {
         return ctx -> ctx.event().getInteraction().getUser().getId().asLong() == ownerId
                 ? Mono.empty()
                 : Mono.error(new BotOwnerPrivilegeException());
-    }
-
-    public Privilege botAdmin() {
-        return botOwner().or(ctx -> db.botAdminDao()
-                .exists(ctx.event().getInteraction().getUser().getId().asLong())
-                .filter(Boolean::booleanValue)
-                .switchIfEmpty(Mono.error(BotAdminPrivilegeException::new))
-                .then(), (a, b) -> b);
-    }
-
-    public Privilege guildAdmin() {
-        return botAdmin().or(Privileges.checkPermissions(ctx -> new GuildAdminPrivilegeException(),
-                perms -> perms.contains(Permission.ADMINISTRATOR)), (a, b) -> b);
     }
 
     public Privilege elderMod() {

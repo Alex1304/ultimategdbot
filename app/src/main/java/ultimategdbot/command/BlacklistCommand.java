@@ -1,6 +1,7 @@
 package ultimategdbot.command;
 
 import botrino.interaction.annotation.ChatInputCommand;
+import botrino.interaction.annotation.PrivateCommand;
 import botrino.interaction.annotation.Subcommand;
 import botrino.interaction.context.ChatInputInteractionContext;
 import botrino.interaction.grammar.ChatInputCommandGrammar;
@@ -19,6 +20,7 @@ import ultimategdbot.service.PrivilegeFactory;
 
 import java.util.List;
 
+@PrivateCommand
 @ChatInputCommand(
         name = "blacklist",
         description = "Manage IDs of users, servers, or channels to be ignored by the bot (Bot Admin only).",
@@ -72,7 +74,7 @@ public final class BlacklistCommand {
 
         @Override
         public Privilege privilege() {
-            return privilegeFactory.botAdmin();
+            return privilegeFactory.botOwner();
         }
     }
 
@@ -103,7 +105,7 @@ public final class BlacklistCommand {
 
         @Override
         public Privilege privilege() {
-            return privilegeFactory.botAdmin();
+            return privilegeFactory.botOwner();
         }
     }
 
@@ -131,7 +133,7 @@ public final class BlacklistCommand {
 
         @Override
         public Privilege privilege() {
-            return privilegeFactory.botAdmin();
+            return privilegeFactory.botOwner();
         }
     }
 

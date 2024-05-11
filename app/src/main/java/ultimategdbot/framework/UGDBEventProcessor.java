@@ -6,14 +6,11 @@ import com.github.alex1304.rdi.finder.annotation.RdiService;
 import discord4j.common.util.Snowflake;
 import discord4j.core.event.domain.interaction.InteractionCreateEvent;
 import reactor.core.publisher.Mono;
-import reactor.function.TupleUtils;
-import ultimategdbot.database.GuildConfig;
 import ultimategdbot.service.DatabaseService;
 
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @RdiService
@@ -30,11 +27,9 @@ public class UGDBEventProcessor implements InteractionEventProcessor {
 
     @RdiFactory
     public static Mono<UGDBEventProcessor> create(DatabaseService db) {
-        return Mono.zip(
-                    db.guildConfigDao().getAll().collect(Collectors.toMap(GuildConfig::guildId, Function.identity())),
-                    db.blacklistDao().getAllIds().collect(Collectors.toSet()))
-                .map(TupleUtils.function((guildConfigCache, blacklistCache) ->
-                        new UGDBEventProcessor(db, Collections.synchronizedSet(new HashSet<>(blacklistCache)))));
+        return db.blacklistDao().getAllIds().collect(Collectors.toSet())
+                .map((blacklistCache) -> new UGDBEventProcessor(db,
+                        Collections.synchronizedSet(new HashSet<>(blacklistCache))));
     }
 
     @Override
@@ -43,8 +38,8 @@ public class UGDBEventProcessor implements InteractionEventProcessor {
         var authorId = event.getInteraction().getUser().getId().asLong();
         var channelId = event.getInteraction().getChannelId().asLong();
         return Mono.just((guildId == null || !blacklistCache.contains(guildId))
-                        && !blacklistCache.contains(authorId)
-                        && !blacklistCache.contains(channelId));
+                && !blacklistCache.contains(authorId)
+                && !blacklistCache.contains(channelId));
     }
 
     public Mono<Void> addToBlacklist(long id) {

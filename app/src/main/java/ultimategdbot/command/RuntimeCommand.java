@@ -3,6 +3,7 @@ package ultimategdbot.command;
 import botrino.api.i18n.Translator;
 import botrino.api.util.DurationUtils;
 import botrino.interaction.annotation.ChatInputCommand;
+import botrino.interaction.annotation.PrivateCommand;
 import botrino.interaction.context.ChatInputInteractionContext;
 import botrino.interaction.listener.ChatInputInteractionListener;
 import com.sun.management.GarbageCollectionNotificationInfo;
@@ -23,6 +24,7 @@ import java.time.Instant;
 import java.util.Optional;
 import java.util.function.Function;
 
+@PrivateCommand
 @ChatInputCommand(name = "runtime", description = "Display runtime information on the bot.")
 public final class RuntimeCommand implements ChatInputInteractionListener {
 
