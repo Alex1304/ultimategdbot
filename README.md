@@ -13,15 +13,15 @@ The most popular Discord bot for Geometry Dash players!
 * Search for a custom level
 * Get info on current Daily levels and Weekly Demons
 * Check whether a user is an in-game moderator and view the full GD moderator list
-* Link your Geometry Dash account to the bot so you can view server-wide Geometry Dash leaderboards
+* Link your Geometry Dash account to the bot and show off your own in-game profile with your Discord username on it
 * Receive notifications in your server when new levels are being rated, when the Daily level or Weekly demon changes or when there are updates to the Geometry Dash moderator list.
 * More coming soon™
 
 ## About UltimateGDBot
 
-UltimateGDBot is a Discord bot owned by **Alex1304#9704** and designed for Geometry Dash players. It is written in **Java 11** and uses [Discord4J](https://discord4j.com) and [Botrino](https://botrino.alex1304.com).
+UltimateGDBot is a Discord bot owned by **alex1304** and designed for Geometry Dash players. It is written in **Java 17** and uses [Discord4J](https://discord4j.com) and [Botrino](https://botrino.alex1304.com).
 
-UltimateGDBot is currently operating in more than 13,000 servers. You can invite UltimateGDBot to your own server using the following authorization link: https://discord.com/oauth2/authorize?client_id=358598636436979713&scope=bot+applications.commands&permissions=379904
+UltimateGDBot is currently operating in more than 21,000 servers. You can invite UltimateGDBot to your own server using the following authorization link: https://discord.com/oauth2/authorize?client_id=358598636436979713&scope=bot+applications.commands&permissions=379904
 
 You have a suggestion, a bug to report, or need help? Join the official server: https://discord.gg/VpVdKvg
 
@@ -44,6 +44,6 @@ This project is released under the MIT license.
 
 E-mail: ultimategdbot@gmail.com
 
-Discord: `Alex1304#9704` (Server [https://discord.gg/VpVdKvg](https://discord.gg/VpVdKvg))
+Discord: `alex1304` (Server [https://discord.gg/VpVdKvg](https://discord.gg/VpVdKvg))
 
 Twitter: [@gd_alex1304](https://twitter.com/gd_alex1304)
