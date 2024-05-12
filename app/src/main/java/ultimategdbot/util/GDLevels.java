@@ -101,9 +101,12 @@ public final class GDLevels {
         if (song.isFromMusicLibrary()) {
             return str + '\n' + tr.translate(Strings.GD, "song_from_music_library");
         }
-        return str + '\n' + emojiPlay + " [" + tr.translate(Strings.GD, "play_on_ng") +
-                "](https://www.newgrounds.com/audio/listen/" + song.id() + ")  " + emojiDownload + " [" +
-                tr.translate(Strings.GD, "download_mp3") + "](" + song.downloadUrl().orElseThrow() + ')';
+        if (song.isFromNewgrounds() && song.downloadUrl().isPresent()) {
+            return str + '\n' + emojiPlay + " [" + tr.translate(Strings.GD, "play_on_ng") +
+                    "](https://www.newgrounds.com/audio/listen/" + song.id() + ")  " + emojiDownload + " [" +
+                    tr.translate(Strings.GD, "download_mp3") + "](" + song.downloadUrl().orElseThrow() + ')';
+        }
+        return str;
     }
 
     public static Tuple2<String, String> unknownSongParts(Translator tr) {

@@ -174,7 +174,7 @@ public final class GDUserService {
                 null, __ -> 0);
         completedLevelEntry(sb, "gauntlet",
                 classic, GDUserProfile.CompletedClassicLevels::gauntlet,
-                platformer, GDUserProfile.CompletedPlatformerLevels::gauntlet);
+                null, __ -> 0);
         final var totalClassic = classic == null ? 0 : classic.total();
         final var totalPlatformer = platformer == null ? 0 : platformer.total();
         embed.addField(tr.translate(Strings.GD, "completed_levels", totalClassic, totalPlatformer), sb.toString(),
@@ -205,7 +205,7 @@ public final class GDUserService {
                 null, __ -> 0);
         completedLevelEntry(sb, "gauntlet",
                 demons, GDUserProfile.CompletedDemons::gauntlet,
-                demons, GDUserProfile.CompletedDemons::gauntlet);
+                null, __ -> 0);
         embed.addField(tr.translate(Strings.GD, "completed_demons", demons.totalClassic(), demons.totalPlatformer()),
                 sb.toString(), false);
     }

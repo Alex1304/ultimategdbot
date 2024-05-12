@@ -18,10 +18,13 @@ import jdash.client.GDClient;
 import jdash.client.exception.ActionFailedException;
 import jdash.client.exception.GDClientException;
 import jdash.client.request.GDRequests;
+import jdash.common.Length;
 import jdash.common.entity.GDDailyInfo;
 import jdash.common.entity.GDLevel;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.Logger;
+import reactor.util.Loggers;
 import reactor.util.annotation.Nullable;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
@@ -42,6 +45,8 @@ import static ultimategdbot.util.GDLevels.*;
 
 @RdiService
 public final class GDLevelService {
+
+    private static final Logger LOGGER = Loggers.getLogger(GDLevelService.class);
 
     private final EmojiService emoji;
     private final GDClient gdClient;
@@ -85,7 +90,7 @@ public final class GDLevelService {
                             emoji.get(level.likes() >= 0 ? "like" : "dislike"),
                             level.likes(),
                             emoji.get("length"),
-                            level.length(),
+                            level.length() == Length.PLATFORMER ? "PLAT." : level.length().name(),
                             song), false);
             i++;
         }
@@ -160,12 +165,16 @@ public final class GDLevelService {
                     extraInfo.append(bold(ctx.translate(Strings.GD, "label_sfx_count"))).append(' ')
                             .append(dl.sfxIds().size()).append('\n');
                     if (dl.editorTime().isPresent()) {
+                        final var duration = dl.editorTime().orElseThrow();
                         extraInfo.append(bold(ctx.translate(Strings.GD, "label_editor_time"))).append(' ')
-                                .append(DurationUtils.format(dl.editorTime().orElseThrow())).append('\n');
+                                .append(duration.isZero() ? "0s" : DurationUtils.format(duration))
+                                .append('\n');
                     }
                     if (dl.editorTimeOnCopies().isPresent()) {
+                        final var duration = dl.editorTimeOnCopies().orElseThrow();
                         extraInfo.append(bold(ctx.translate(Strings.GD, "label_editor_time_copies"))).append(' ')
-                                .append(DurationUtils.format(dl.editorTimeOnCopies().orElseThrow())).append('\n');
+                                .append(duration.isZero() ? "0s" : DurationUtils.format(duration))
+                                .append('\n');
                     }
                     extraInfo.append(bold(ctx.translate(Strings.GD, "label_two_player"))).append(' ')
                             .append(ctx.translate(Strings.GENERAL, level.isTwoPlayer() ? "yes" : "no")).append('\n');
@@ -290,6 +299,7 @@ public final class GDLevelService {
                         && gce.getRequest().getUri().equals(GDRequests.GET_GJ_SONG_INFO)
                         && e.getCause() instanceof ActionFailedException
                         && e.getCause().getMessage().equals("-2"), bannedSongParts(tr))
+                .doOnError(e -> LOGGER.error("Error when extracting song parts", e))
                 .onErrorReturn(unknownSongParts(tr));
     }
 
@@ -305,7 +315,7 @@ public final class GDLevelService {
                 formatCode(level.downloads(), width) + '\n' +
                 emoji.get(level.likes() >= 0 ? "like" : "dislike") + ' ' +
                 formatCode(level.likes(), width) + '\n' + emoji.get("length") + ' ' +
-                formatCode(level.length(), width);
+                formatCode(level.length() == Length.PLATFORMER ? "PLAT." : level.length().name(), width);
     }
 
 }

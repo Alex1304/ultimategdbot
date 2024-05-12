@@ -23,6 +23,7 @@ import reactor.core.publisher.Mono;
 import reactor.util.Logger;
 import reactor.util.Loggers;
 import ultimategdbot.config.UltimateGDBotConfig;
+import ultimategdbot.event.BroadcastResultCache.MessageId;
 import ultimategdbot.service.DatabaseService;
 import ultimategdbot.service.DefaultTranslator;
 import ultimategdbot.service.GDLevelService;
@@ -216,19 +217,19 @@ public final class GDEventService {
             return Mono.justOrEmpty(gdEvent.levelId(event).flatMap(broadcastResultCache::get))
                     .flatMapMany(Flux::fromIterable)
                     .flatMap(old -> gdEvent.createMessageTemplate(event)
-                            .map(msg -> {
+                            .map(spec -> {
                                 // Make sure NOT to remove message content when editing only the embed
-                                final var editSpec = toMessageEditSpec(msg);
+                                final var editSpec = toMessageEditSpec(spec);
                                 //noinspection ConstantConditions
                                 if (editSpec.contentOrElse(null) == null) {
                                     return editSpec.withContent(Possible.absent());
                                 }
                                 return editSpec;
                             })
-                            .flatMapMany(old::edit))
+                            .flatMap(spec -> old.toMessage(gateway).flatMap(msg -> msg.edit(spec))))
                     .collectList()
                     .filter(results -> !results.isEmpty())
-                    .doOnNext(results -> gdEvent.levelId(event).ifPresent(id -> broadcastResultCache.put(id, results)))
+                    .doOnNext(results -> gdEvent.levelId(event).ifPresent(id -> cacheMessage(id, results)))
                     .then();
         }
         final var sendGuild = gdEvent.createMessageTemplate(event)
@@ -250,7 +251,18 @@ public final class GDEventService {
                 .onErrorResume(e -> Mono.fromRunnable(() -> LOGGER.debug("Could not DM user for GD event", e)));
         return Flux.concat(sendGuild, sendDm)
                 .collectList()
-                .doOnNext(results -> gdEvent.levelId(event).ifPresent(id -> broadcastResultCache.put(id, results)))
+                .doOnNext(results -> gdEvent.levelId(event)
+                        .ifPresent(id -> cacheMessage(id, results)))
                 .then();
+    }
+
+    public void cacheMessage(long levelId, Snowflake channelId, Snowflake messageId) {
+        broadcastResultCache.put(levelId, List.of(new MessageId(channelId, messageId)));
+    }
+
+    private void cacheMessage(long levelId, List<Message> results) {
+        broadcastResultCache.put(levelId, results.stream()
+                .map(msg -> new MessageId(msg.getChannelId(), msg.getId()))
+                .toList());
     }
 }

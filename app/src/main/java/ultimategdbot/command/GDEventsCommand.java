@@ -13,17 +13,23 @@ import botrino.interaction.privilege.Privilege;
 import botrino.interaction.util.MessagePaginator;
 import com.github.alex1304.rdi.finder.annotation.RdiFactory;
 import com.github.alex1304.rdi.finder.annotation.RdiService;
+import discord4j.common.util.Snowflake;
 import discord4j.core.object.command.ApplicationCommandOption;
 import discord4j.core.spec.MessageCreateSpec;
 import discord4j.discordjson.json.ApplicationCommandOptionData;
 import discord4j.rest.util.Permission;
 import jdash.client.GDClient;
 import jdash.common.LevelSearchMode;
-import jdash.events.object.*;
+import jdash.events.object.AwardedLevelAdd;
+import jdash.events.object.AwardedLevelRemove;
+import jdash.events.object.AwardedLevelUpdate;
+import jdash.events.object.DailyLevelChange;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.annotation.Nullable;
 import ultimategdbot.Strings;
+import ultimategdbot.event.GDEventService;
 import ultimategdbot.event.ManualEventProducer;
 import ultimategdbot.service.EmojiService;
 import ultimategdbot.service.PrivilegeFactory;
@@ -42,17 +48,17 @@ import static ultimategdbot.util.Interactions.paginationAndConfirmButtons;
         description = "Manage the GD event announcement system (Bot Owner only).",
         defaultMemberPermissions = Permission.ADMINISTRATOR,
         subcommands = {
-            @Subcommand(
-                    name = "dispatch",
-                    description = "Manually dispatch a new GD event.",
-                    listener = GDEventsCommand.Dispatch.class
-            ),
-            @Subcommand(
-                    name = "dispatch-all",
-                    description = "Dispatch new awarded events for all levels that have been rated after the " +
-                            "specified one.",
-                    listener = GDEventsCommand.DispatchAll.class
-            )
+                @Subcommand(
+                        name = "dispatch",
+                        description = "Manually dispatch a new GD event.",
+                        listener = GDEventsCommand.Dispatch.class
+                ),
+                @Subcommand(
+                        name = "dispatch-all",
+                        description = "Dispatch new awarded events for all levels that have been rated after the " +
+                                "specified one.",
+                        listener = GDEventsCommand.DispatchAll.class
+                )
         }
 )
 public final class GDEventsCommand {
@@ -64,16 +70,18 @@ public final class GDEventsCommand {
         private final ManualEventProducer eventProducer;
         private final EmojiService emoji;
         private final PrivilegeFactory privilegeFactory;
+        private final GDEventService eventService;
 
         private final ChatInputCommandGrammar<Options> grammar = ChatInputCommandGrammar.of(Options.class);
 
         @RdiFactory
         public Dispatch(GDClient gdClient, ManualEventProducer eventProducer, EmojiService emoji,
-                        PrivilegeFactory privilegeFactory) {
+                        PrivilegeFactory privilegeFactory, GDEventService eventService) {
             this.gdClient = gdClient;
             this.eventProducer = eventProducer;
             this.emoji = emoji;
             this.privilegeFactory = privilegeFactory;
+            this.eventService = eventService;
         }
 
         @Override
@@ -82,35 +90,35 @@ public final class GDEventsCommand {
                     .flatMap(options -> {
                         Mono<Object> eventToDispatch;
                         switch (options.eventName) {
-                            case Options.DAILY_LEVEL_CHANGED:
-                                eventToDispatch = gdClient.getDailyLevelInfo()
-                                        .map(info -> new DailyLevelChange(info, info, false));
-                                break;
-                            case Options.WEEKLY_DEMON_CHANGED:
-                                eventToDispatch = gdClient.getWeeklyDemonInfo()
-                                        .map(info -> new DailyLevelChange(info, info, true));
-                                break;
-                            default:
+                            case Options.DAILY_LEVEL_CHANGED -> eventToDispatch = gdClient.getDailyLevelInfo()
+                                    .map(info -> new DailyLevelChange(info, info, false));
+                            case Options.WEEKLY_DEMON_CHANGED -> eventToDispatch = gdClient.getWeeklyDemonInfo()
+                                    .map(info -> new DailyLevelChange(info, info, true));
+                            default -> {
                                 if (options.levelId == null) {
                                     return Mono.error(new InteractionFailedException(
                                             ctx.translate(Strings.GD, "error_id_not_specified")));
                                 }
                                 switch (options.eventName) {
-                                    case Options.AWARDED_LEVEL_ADDED:
-                                        eventToDispatch = gdClient.findLevelById(options.levelId)
-                                                .map(AwardedLevelAdd::new);
-                                        break;
-                                    case Options.AWARDED_LEVEL_REMOVED:
-                                        eventToDispatch = gdClient.findLevelById(options.levelId)
-                                                .map(AwardedLevelRemove::new);
-                                        break;
-                                    case Options.AWARDED_LEVEL_UPDATED:
+                                    case Options.AWARDED_LEVEL_ADDED ->
+                                            eventToDispatch = gdClient.findLevelById(options.levelId)
+                                                    .map(AwardedLevelAdd::new);
+                                    case Options.AWARDED_LEVEL_REMOVED ->
+                                            eventToDispatch = gdClient.findLevelById(options.levelId)
+                                                    .map(AwardedLevelRemove::new);
+                                    case Options.AWARDED_LEVEL_UPDATED -> {
+                                        if (options.channelId != null && options.messageId != null) {
+                                            eventService.cacheMessage(options.levelId, Snowflake.of(options.channelId),
+                                                    Snowflake.of(options.messageId));
+                                        }
                                         eventToDispatch = gdClient.findLevelById(options.levelId)
                                                 .map(level -> new AwardedLevelUpdate(level, level));
-                                        break;
-                                    default:
+                                    }
+                                    default -> {
                                         return Mono.error(new AssertionError());
+                                    }
                                 }
+                            }
                         }
                         return eventToDispatch.doOnNext(eventProducer::submit)
                                 .then(ctx.event().createFollowup(emoji.get("success") + ' ' +
@@ -128,50 +136,61 @@ public final class GDEventsCommand {
             return privilegeFactory.botOwner();
         }
 
-        private static final class Options {
-
+        private record Options(
+                @ChatInputCommandGrammar.Option(
+                        type = ApplicationCommandOption.Type.STRING,
+                        name = "event-name",
+                        description = "The name of the event to dispatch.",
+                        required = true,
+                        choices = {
+                                @ChatInputCommandGrammar.Choice(
+                                        name = "Daily Level Changed",
+                                        stringValue = DAILY_LEVEL_CHANGED
+                                ),
+                                @ChatInputCommandGrammar.Choice(
+                                        name = "Weekly Demon Changed",
+                                        stringValue = WEEKLY_DEMON_CHANGED
+                                ),
+                                @ChatInputCommandGrammar.Choice(
+                                        name = "Awarded Level Added",
+                                        stringValue = AWARDED_LEVEL_ADDED
+                                ),
+                                @ChatInputCommandGrammar.Choice(
+                                        name = "Awarded Level Removed",
+                                        stringValue = AWARDED_LEVEL_REMOVED
+                                ),
+                                @ChatInputCommandGrammar.Choice(
+                                        name = "Awarded Level Updated",
+                                        stringValue = AWARDED_LEVEL_UPDATED
+                                )
+                        }
+                )
+                String eventName,
+                @ChatInputCommandGrammar.Option(
+                        type = ApplicationCommandOption.Type.INTEGER,
+                        name = "level-id",
+                        description = "The ID of the level concerned by the event, if applicable."
+                )
+                @Nullable Long levelId,
+                @ChatInputCommandGrammar.Option(
+                        type = ApplicationCommandOption.Type.STRING,
+                        name = "channel-id",
+                        description = "If dispatching an Update event, the ID of the channel that contains the " +
+                                "message to edit."
+                )
+                @Nullable String channelId,
+                @ChatInputCommandGrammar.Option(
+                        type = ApplicationCommandOption.Type.STRING,
+                        name = "message-id",
+                        description = "If dispatching an Update event, the ID of the message to edit."
+                )
+                @Nullable String messageId
+        ) {
             private static final String DAILY_LEVEL_CHANGED = "daily_level_changed";
             private static final String WEEKLY_DEMON_CHANGED = "weekly_demon_changed";
             private static final String AWARDED_LEVEL_ADDED = "awarded_level_added";
             private static final String AWARDED_LEVEL_REMOVED = "awarded_level_removed";
             private static final String AWARDED_LEVEL_UPDATED = "awarded_level_updated";
-
-            @ChatInputCommandGrammar.Option(
-                    type = ApplicationCommandOption.Type.STRING,
-                    name = "event-name",
-                    description = "The name of the event to dispatch.",
-                    required = true,
-                    choices = {
-                            @ChatInputCommandGrammar.Choice(
-                                    name = "Daily Level Changed",
-                                    stringValue = DAILY_LEVEL_CHANGED
-                            ),
-                            @ChatInputCommandGrammar.Choice(
-                                    name = "Weekly Demon Changed",
-                                    stringValue = WEEKLY_DEMON_CHANGED
-                            ),
-                            @ChatInputCommandGrammar.Choice(
-                                    name = "Awarded Level Added",
-                                    stringValue = AWARDED_LEVEL_ADDED
-                            ),
-                            @ChatInputCommandGrammar.Choice(
-                                    name = "Awarded Level Removed",
-                                    stringValue = AWARDED_LEVEL_REMOVED
-                            ),
-                            @ChatInputCommandGrammar.Choice(
-                                    name = "Awarded Level Updated",
-                                    stringValue = AWARDED_LEVEL_UPDATED
-                            )
-                    }
-            )
-            String eventName;
-
-            @ChatInputCommandGrammar.Option(
-                    type = ApplicationCommandOption.Type.INTEGER,
-                    name = "level-id",
-                    description = "The ID of the level concerned by the event, if applicable."
-            )
-            Long levelId;
         }
     }
 
