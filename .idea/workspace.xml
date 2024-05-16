@@ -7,19 +7,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="75a132b0-0d85-411d-b7f6-d4b42a67b31e" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/resources/GDStrings_cs.properties" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/resources/GDStrings_cs.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/resources/GDStrings_de.properties" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/resources/GDStrings_de.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/resources/GDStrings_es.properties" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/resources/GDStrings_es.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/resources/GDStrings_fr.properties" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/resources/GDStrings_fr.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/resources/GDStrings_it.properties" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/resources/GDStrings_it.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/resources/GDStrings_ko.properties" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/resources/GDStrings_ko.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/resources/GDStrings_pl.properties" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/resources/GDStrings_pl.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/resources/GDStrings_pt.properties" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/resources/GDStrings_pt.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/resources/GDStrings_ru.properties" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/resources/GDStrings_ru.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/resources/GDStrings_tr.properties" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/resources/GDStrings_tr.properties" afterDir="false" />
-    </list>
+    <list default="true" id="75a132b0-0d85-411d-b7f6-d4b42a67b31e" name="Default Changelist" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -252,7 +240,7 @@
       <workItem from="1715441529883" duration="1277000" />
       <workItem from="1715519304756" duration="15446000" />
       <workItem from="1715695745211" duration="17000" />
-      <workItem from="1715886397592" duration="9187000" />
+      <workItem from="1715886397592" duration="9490000" />
     </task>
     <servers />
   </component>
