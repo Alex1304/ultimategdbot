@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AnalysisUIOptions">
+    <option name="SPLITTER_PROPORTION" value="0.42666668" />
+  </component>
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="75a132b0-0d85-411d-b7f6-d4b42a67b31e" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/exception/CreateMessage500Exception.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/event/GDEventService.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/event/GDEventService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/framework/UltimateGDBotLoginHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/framework/UltimateGDBotLoginHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/resources/GDStrings.properties" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/resources/GDStrings.properties" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="CodeStyleSettingsInfer">
+    <option name="done" value="true" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Interface" />
+        <option value="Enum" />
+        <option value="AnnotationType" />
+        <option value="package-info" />
+        <option value="Class" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitSEFilterConfiguration">
+    <file-type-list>
+      <filtered-out-file-type name="LOCAL_BRANCH" />
+      <filtered-out-file-type name="REMOTE_BRANCH" />
+      <filtered-out-file-type name="TAG" />
+      <filtered-out-file-type name="COMMIT_BY_MESSAGE" />
+    </file-type-list>
+  </component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="file://$PROJECT_DIR$/app/pom.xml" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/AboutCommand.java" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/BlacklistCommand.java" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/app/src/main/java/ultimategdbot/framework/UGDBErrorHandler.java" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/app/src/main/java/ultimategdbot/framework/UGDBEventProcessor.java" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/pom.xml" root0="FORCE_HIGHLIGHTING" />
+  </component>
+  <component name="KotlinCodeInsightWorkspaceSettings">
+    <option name="optimizeImportsOnTheFly" value="true" />
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
+  <component name="MavenImportPreferences">
+    <option name="generalSettings">
+      <MavenGeneralSettings>
+        <option name="alwaysUpdateSnapshots" value="true" />
+      </MavenGeneralSettings>
+    </option>
+  </component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="CurrentFile" />
+  </component>
+  <component name="ProjectCodeStyleSettingsMigration">
+    <option name="version" value="2" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;customColor&quot;: &quot;&quot;,
+  &quot;associatedIndex&quot;: 3
+}</component>
+  <component name="ProjectId" id="1niFQKvE2rINeCe50LmfGVKfSNC" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
+  <component name="ProjectViewState">
+    <option name="autoscrollFromSource" value="true" />
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Application.Main.executor": "Run",
+    "Maven.ultimategdbot [clean,package].executor": "Run",
+    "Maven.ultimategdbot [clean].executor": "Run",
+    "Maven.ultimategdbot [package].executor": "Run",
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "WebServerToolWindowFactoryState": "false",
+    "git-widget-placeholder": "master",
+    "kotlin-language-version-configured": "true",
+    "last_directory_selection": "/home/alexandre/dev/ultimategdbot/app/src/main/java/ultimategdbot/exception",
+    "last_opened_file_path": "/home/alexandre/dev/ultimategdbot/app/src/main/resources/authorIcons",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "project.structure.last.edited": "Project",
+    "project.structure.proportion": "0.0",
+    "project.structure.side.proportion": "0.0",
+    "run.code.analysis.last.selected.profile": "pProject Default",
+    "settings.editor.selected.configurable": "reference.settingsdialog.IDE.editor.colors.General",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="ReactorSettings">
+    <option name="notificationShown" value="true" />
+  </component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/app/src/main/resources/authorIcons" />
+      <recent name="$PROJECT_DIR$/app/src/main/resources/icons" />
+      <recent name="$PROJECT_DIR$/app/src/main/java/ultimategdbot/event" />
+      <recent name="$PROJECT_DIR$/app/src/main/java/ultimategdbot/database" />
+      <recent name="$PROJECT_DIR$/app/src/main/resources" />
+    </key>
+    <key name="MoveMembersDialog.RECENTS_KEY">
+      <recent name="ultimategdbot.util.Misc" />
+      <recent name="ultimategdbot.util.Leaderboards" />
+    </key>
+    <key name="MoveInnerDialog.RECENTS_KEY">
+      <recent name="ultimategdbot.exception" />
+    </key>
+    <key name="CopyClassDialog.RECENTS_KEY">
+      <recent name="ultimategdbot.exception" />
+      <recent name="ultimategdbot.command" />
+      <recent name="ultimategdbot.database" />
+      <recent name="ultimategdbot.util" />
+    </key>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-9f38398b9061-39b83d9b5494-intellij.indexing.shared.core-IU-241.15989.150" />
+        <option value="bundled-js-predefined-1d06a55b98c1-91d5c284f522-JavaScript-IU-241.15989.150" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="75a132b0-0d85-411d-b7f6-d4b42a67b31e" name="Default Changelist" comment="" />
+      <created>1611864998662</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1611864998662</updated>
+      <workItem from="1611864999973" duration="832000" />
+      <workItem from="1612447239737" duration="748000" />
+      <workItem from="1612714547716" duration="29000" />
+      <workItem from="1612714589752" duration="56000" />
+      <workItem from="1613227883892" duration="61000" />
+      <workItem from="1613758031386" duration="1837000" />
+      <workItem from="1614881047126" duration="636000" />
+      <workItem from="1614951027233" duration="16000" />
+      <workItem from="1615397351870" duration="4016000" />
+      <workItem from="1616172147543" duration="351000" />
+      <workItem from="1616172967980" duration="51000" />
+      <workItem from="1616175184992" duration="3943000" />
+      <workItem from="1616244454029" duration="2640000" />
+      <workItem from="1616517744833" duration="16000" />
+      <workItem from="1616517775616" duration="4913000" />
+      <workItem from="1617297830346" duration="3785000" />
+      <workItem from="1617370785455" duration="7326000" />
+      <workItem from="1617641595625" duration="4186000" />
+      <workItem from="1618153309434" duration="11885000" />
+      <workItem from="1618180809699" duration="791000" />
+      <workItem from="1618220044580" duration="18835000" />
+      <workItem from="1618422149340" duration="808000" />
+      <workItem from="1618487607475" duration="13947000" />
+      <workItem from="1618576141641" duration="2219000" />
+      <workItem from="1618669951945" duration="7837000" />
+      <workItem from="1618766749410" duration="724000" />
+      <workItem from="1618767491581" duration="1142000" />
+      <workItem from="1619277687469" duration="3466000" />
+      <workItem from="1619618816478" duration="2009000" />
+      <workItem from="1622657888194" duration="2121000" />
+      <workItem from="1622667595290" duration="6767000" />
+      <workItem from="1622704589559" duration="2132000" />
+      <workItem from="1622710436097" duration="4001000" />
+      <workItem from="1622718614450" duration="21965000" />
+      <workItem from="1622801590560" duration="8647000" />
+      <workItem from="1622845306039" duration="5025000" />
+      <workItem from="1622897120714" duration="18517000" />
+      <workItem from="1622984576743" duration="14738000" />
+      <workItem from="1623050372907" duration="36805000" />
+      <workItem from="1623136498338" duration="49918000" />
+      <workItem from="1623231292200" duration="20513000" />
+      <workItem from="1623313511693" duration="21100000" />
+      <workItem from="1623361333160" duration="5184000" />
+      <workItem from="1623494730803" duration="739000" />
+      <workItem from="1623509827870" duration="479000" />
+      <workItem from="1623606263307" duration="2873000" />
+      <workItem from="1623706480836" duration="266000" />
+      <workItem from="1625927665723" duration="1209000" />
+      <workItem from="1626694209399" duration="1387000" />
+      <workItem from="1626780020209" duration="1226000" />
+      <workItem from="1626978171382" duration="2726000" />
+      <workItem from="1627132392663" duration="1596000" />
+      <workItem from="1627859310966" duration="3912000" />
+      <workItem from="1627893663598" duration="1208000" />
+      <workItem from="1634409249745" duration="2542000" />
+      <workItem from="1634425212237" duration="3601000" />
+      <workItem from="1634473469843" duration="24644000" />
+      <workItem from="1634563186855" duration="12193000" />
+      <workItem from="1634679172624" duration="8940000" />
+      <workItem from="1634690870301" duration="50000" />
+      <workItem from="1634731287228" duration="22746000" />
+      <workItem from="1634822274473" duration="2347000" />
+      <workItem from="1634835843402" duration="604000" />
+      <workItem from="1634996328010" duration="475000" />
+      <workItem from="1634999356951" duration="4709000" />
+      <workItem from="1635091417819" duration="9867000" />
+      <workItem from="1635521724130" duration="902000" />
+      <workItem from="1635689832278" duration="138000" />
+      <workItem from="1635701007477" duration="1345000" />
+      <workItem from="1636214465263" duration="17910000" />
+      <workItem from="1636393048254" duration="7574000" />
+      <workItem from="1636568428725" duration="5333000" />
+      <workItem from="1636821669940" duration="12000" />
+      <workItem from="1639843217974" duration="830000" />
+      <workItem from="1640709367602" duration="5222000" />
+      <workItem from="1641043335304" duration="11633000" />
+      <workItem from="1641161364276" duration="1344000" />
+      <workItem from="1645646144595" duration="628000" />
+      <workItem from="1645655268239" duration="91000" />
+      <workItem from="1658584094153" duration="2365000" />
+      <workItem from="1662053747637" duration="308000" />
+      <workItem from="1662059063826" duration="781000" />
+      <workItem from="1668186055474" duration="1079000" />
+      <workItem from="1671724502061" duration="236000" />
+      <workItem from="1671724745729" duration="2134000" />
+      <workItem from="1715118171532" duration="6723000" />
+      <workItem from="1715125091725" duration="2879000" />
+      <workItem from="1715169077763" duration="2855000" />
+      <workItem from="1715193018240" duration="3111000" />
+      <workItem from="1715260105976" duration="24216000" />
+      <workItem from="1715330296295" duration="13540000" />
+      <workItem from="1715425860538" duration="6329000" />
+      <workItem from="1715441529883" duration="1277000" />
+      <workItem from="1715519304756" duration="15446000" />
+      <workItem from="1715695745211" duration="17000" />
+      <workItem from="1715886397592" duration="7990000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <option name="ADD_EXTERNAL_FILES_SILENTLY" value="true" />
+  </component>
+</project>

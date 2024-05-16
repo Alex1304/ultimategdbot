@@ -22,8 +22,10 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.Logger;
 import reactor.util.Loggers;
+import reactor.util.retry.Retry;
 import ultimategdbot.config.UltimateGDBotConfig;
 import ultimategdbot.event.BroadcastResultCache.MessageId;
+import ultimategdbot.exception.CreateMessage500Exception;
 import ultimategdbot.service.DatabaseService;
 import ultimategdbot.service.DefaultTranslator;
 import ultimategdbot.service.GDLevelService;
@@ -138,7 +140,9 @@ public final class GDEventService {
                                     gdClient.withWriteOnlyCache().downloadWeeklyDemon() :
                                     gdClient.withWriteOnlyCache().downloadDailyLevel())
                                     .flatMap(dl -> levelService
-                                            .compactEmbed(tr, dl.level(), EmbedType.DAILY_LEVEL, event.after())
+                                            .compactEmbed(tr, dl.level(), event.isWeekly() ?
+                                                            EmbedType.WEEKLY_DEMON : EmbedType.DAILY_LEVEL,
+                                                    event.after())
                                             .map(function((embed, files) -> MessageCreateSpec.create()
                                                     .withContent(randomString(event.isWeekly() ?
                                                             publicRandomMessages.weekly() :
@@ -232,10 +236,12 @@ public final class GDEventService {
                     .doOnNext(results -> gdEvent.levelId(event).ifPresent(id -> cacheMessage(id, results)))
                     .then();
         }
-        final var sendGuild = gdEvent.createMessageTemplate(event)
+        final var sendGuild = Mono.defer(() -> gdEvent.createMessageTemplate(event))
                 .flatMap(msg -> Mono.justOrEmpty(gdEvent.channel(event))
                         .flatMap(channel -> channel.createMessage(msg.asRequest()))
                         .map(data -> new Message(gateway, data)))
+                .retryWhen(Retry.backoff(5, Duration.ofSeconds(2))
+                        .filter(CreateMessage500Exception.class::isInstance))
                 .doOnNext(msg -> {
                     if (crosspostQueue != null) {
                         crosspostQueue.submit(msg, event);
@@ -265,4 +271,5 @@ public final class GDEventService {
                 .map(msg -> new MessageId(msg.getChannelId(), msg.getId()))
                 .toList());
     }
+
 }
