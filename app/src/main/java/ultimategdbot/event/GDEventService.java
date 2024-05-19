@@ -24,9 +24,10 @@ import reactor.util.Logger;
 import reactor.util.Loggers;
 import reactor.util.retry.Retry;
 import ultimategdbot.config.UltimateGDBotConfig;
+import ultimategdbot.database.GdAwardedLevelDao;
+import ultimategdbot.database.GdLinkedUserDao;
 import ultimategdbot.event.BroadcastResultCache.MessageId;
 import ultimategdbot.exception.CreateMessage500Exception;
-import ultimategdbot.service.DatabaseService;
 import ultimategdbot.service.DefaultTranslator;
 import ultimategdbot.service.GDLevelService;
 import ultimategdbot.service.GDUserService;
@@ -50,7 +51,8 @@ public final class GDEventService {
     private final GDClient gdClient;
     private final GDLevelService levelService;
     private final GDUserService userService;
-    private final DatabaseService db;
+    private final GdLinkedUserDao gdLinkedUserDao;
+    private final GdAwardedLevelDao gdAwardedLevelDao;
     private final GatewayDiscordClient gateway;
     private final Translator tr;
 
@@ -79,7 +81,7 @@ public final class GDEventService {
                                     : ratesChannels.isEmpty() ? null :
                                     ratesChannels.get((int) (ratesChannelRotator++ % ratesChannels.size())))
                             .levelIdGetter(event -> Optional.of(event.addedLevel().id()))
-                            .recipientAccountId(event -> db.gdAwardedLevelDao().saveEvent(event).then(gdClient
+                            .recipientAccountId(event -> gdAwardedLevelDao.saveEvent(event).then(gdClient
                                     .searchUsers("" + event.addedLevel().creatorPlayerId(), 0)
                                     .next()
                                     .map(stats -> stats.user().accountId())))
@@ -171,12 +173,15 @@ public final class GDEventService {
 
     @RdiFactory
     public GDEventService(GDClient gdClient, GDLevelService levelService, GDUserService userService,
-                          ConfigContainer configContainer, DatabaseService db, GatewayDiscordClient gateway,
+                          GdLinkedUserDao gdLinkedUserDao,
+                          GdAwardedLevelDao gdAwardedLevelDao,
+                          ConfigContainer configContainer, GatewayDiscordClient gateway,
                           DefaultTranslator tr, ManualEventProducer eventProducer) {
         this.gdClient = gdClient;
         this.levelService = levelService;
         this.userService = userService;
-        this.db = db;
+        this.gdLinkedUserDao = gdLinkedUserDao;
+        this.gdAwardedLevelDao = gdAwardedLevelDao;
         this.gateway = gateway;
         this.tr = tr;
         final var config = configContainer.get(UltimateGDBotConfig.class).gd().events();
@@ -248,7 +253,7 @@ public final class GDEventService {
                     }
                 });
         final var sendDm = dmRandomMessages == null ? Flux.<Message>empty() : gdEvent.recipientAccountId(event)
-                .flatMapMany(db.gdLinkedUserDao()::getDiscordAccountsForGDUser)
+                .flatMapMany(gdLinkedUserDao::getDiscordAccountsForGDUser)
                 .flatMap(userId -> gateway.getUserById(Snowflake.of(userId)))
                 .flatMap(user -> user.getPrivateChannel()
                         .flatMap(channel -> gdEvent.createMessageTemplate(event)

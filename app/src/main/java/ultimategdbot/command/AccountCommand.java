@@ -33,8 +33,8 @@ import reactor.util.retry.Retry;
 import ultimategdbot.Strings;
 import ultimategdbot.config.UltimateGDBotConfig;
 import ultimategdbot.database.GdLinkedUser;
+import ultimategdbot.database.GdLinkedUserDao;
 import ultimategdbot.database.ImmutableGdLinkedUser;
-import ultimategdbot.service.DatabaseService;
 import ultimategdbot.service.EmojiService;
 import ultimategdbot.service.GDCommandCooldown;
 import ultimategdbot.service.GDUserService;
@@ -73,20 +73,20 @@ public final class AccountCommand {
     @RdiService
     public static final class Status implements ChatInputInteractionListener {
 
-        private final DatabaseService db;
+        private final GdLinkedUserDao gdLinkedUserDao;
         private final GDClient gdClient;
         private final GDCommandCooldown commandCooldown;
 
         @RdiFactory
-        public Status(DatabaseService db, GDClient gdClient, GDCommandCooldown commandCooldown) {
-            this.db = db;
+        public Status(GdLinkedUserDao gdLinkedUserDao, GDClient gdClient, GDCommandCooldown commandCooldown) {
+            this.gdLinkedUserDao = gdLinkedUserDao;
             this.gdClient = gdClient;
             this.commandCooldown = commandCooldown;
         }
 
         @Override
         public Publisher<?> run(ChatInputInteractionContext ctx) {
-            return db.gdLinkedUserDao().getActiveLink(ctx.user().getId().asLong())
+            return gdLinkedUserDao.getActiveLink(ctx.user().getId().asLong())
                     .flatMap(linkedUser -> gdClient.getUserProfile(linkedUser.gdUserId()))
                     .map(profile -> Tuples.of(true, ctx.translate(Strings.GD, "currently_linked", profile.user().name())))
                     .defaultIfEmpty(Tuples.of(false, ctx.translate(Strings.GD, "not_yet_linked")))
@@ -108,7 +108,7 @@ public final class AccountCommand {
 
         private static final int TOKEN_LENGTH = 6;
 
-        private final DatabaseService db;
+        private final GdLinkedUserDao gdLinkedUserDao;
         private final GDClient gdClient;
         private final EmojiService emoji;
         private final String botGdName;
@@ -117,9 +117,9 @@ public final class AccountCommand {
         private final ChatInputCommandGrammar<Options> grammar = ChatInputCommandGrammar.of(Options.class);
 
         @RdiFactory
-        public Link(DatabaseService db, GDClient gdClient, EmojiService emoji, ConfigContainer configContainer,
-                    GDCommandCooldown commandCooldown, GDUserService userService) {
-            this.db = db;
+        public Link(GdLinkedUserDao gdLinkedUserDao, GDClient gdClient, EmojiService emoji,
+                    ConfigContainer configContainer, GDCommandCooldown commandCooldown, GDUserService userService) {
+            this.gdLinkedUserDao = gdLinkedUserDao;
             this.gdClient = gdClient;
             this.emoji = emoji;
             this.botGdName = configContainer.get(UltimateGDBotConfig.class).gd().client().username();
@@ -137,7 +137,7 @@ public final class AccountCommand {
                                     "error_unregistered_user")));
                         }
                         final var authorId = ctx.user().getId().asLong();
-                        return db.gdLinkedUserDao().get(authorId)
+                        return gdLinkedUserDao.get(authorId)
                                 .defaultIfEmpty(ImmutableGdLinkedUser.builder()
                                         .discordUserId(authorId)
                                         .gdUserId(profile.user().accountId())
@@ -150,7 +150,7 @@ public final class AccountCommand {
                                     final var token = linkedUser.confirmationToken()
                                             .filter(ct -> linkedUser.gdUserId() == profile.user().accountId())
                                             .orElse(GDUserService.generateAlphanumericToken(TOKEN_LENGTH));
-                                    return db.gdLinkedUserDao()
+                                    return gdLinkedUserDao
                                             .save(ImmutableGdLinkedUser.copyOf(linkedUser)
                                                     .withGdUserId(profile.user().accountId())
                                                     .withConfirmationToken(token))
@@ -207,7 +207,7 @@ public final class AccountCommand {
 
         private Mono<Void> handleDone(InteractionContext ctx, String token, GDUserProfile profile) {
             final var authorId = ctx.user().getId().asLong();
-            return db.gdLinkedUserDao().get(authorId)
+            return gdLinkedUserDao.get(authorId)
                     .filter(linkedUser -> !linkedUser.isLinkActivated()
                             && linkedUser.gdUserId() == profile.user().accountId()
                             && linkedUser.confirmationToken().map(token::equals).orElse(false))
@@ -225,7 +225,7 @@ public final class AccountCommand {
                             .filter(messageDownload -> messageDownload.body().equals(token))
                             .switchIfEmpty(Mono.error(new RetryableInteractionException(
                                     ctx.translate(Strings.GD, "error_confirmation_mismatch"))))
-                            .then(db.gdLinkedUserDao().confirmLink(authorId))
+                            .then(gdLinkedUserDao.confirmLink(authorId))
                             .then(ctx.event().editFollowup(messageId)
                                     .withContentOrNull(emoji.get("success") + ' ' +
                                             ctx.translate(Strings.GD, "link_success", profile.user().name())))
@@ -250,19 +250,19 @@ public final class AccountCommand {
     @RdiService
     public static final class Unlink implements ChatInputInteractionListener {
 
-        private final DatabaseService db;
+        private final GdLinkedUserDao gdLinkedUserDao;
         private final EmojiService emoji;
 
         @RdiFactory
-        public Unlink(DatabaseService db, EmojiService emoji) {
-            this.db = db;
+        public Unlink(GdLinkedUserDao gdLinkedUserDao, EmojiService emoji) {
+            this.gdLinkedUserDao = gdLinkedUserDao;
             this.emoji = emoji;
         }
 
         @Override
         public Publisher<?> run(ChatInputInteractionContext ctx) {
             final var authorId = ctx.user().getId().asLong();
-            return db.gdLinkedUserDao().getAllActiveLinks(authorId)
+            return gdLinkedUserDao.getAllActiveLinks(authorId)
                     .switchIfEmpty(Mono.error(new InteractionFailedException(
                             ctx.translate(Strings.GD, "error_not_linked"))))
                     .collectList()
@@ -311,7 +311,7 @@ public final class AccountCommand {
                     .flatMap(messageId -> Mono.firstWithValue(ctx.awaitButtonClick(yesId), ctx.awaitButtonClick(noId))
                             .flatMap(clicked -> clicked.equals(noId) ? ctx.event().deleteFollowup(messageId) : Flux
                                     .fromIterable(discordUserIds)
-                                    .flatMap(db.gdLinkedUserDao()::delete)
+                                    .flatMap(gdLinkedUserDao::delete)
                                     .then(ctx.event().editFollowup(messageId)
                                             .withContentOrNull(emoji.get("success") + ' ' +
                                                     ctx.translate(Strings.GD, isMany ? "unlink_success" :

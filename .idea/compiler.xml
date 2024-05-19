@@ -21,6 +21,14 @@
           <entry name="$MAVEN_REPOSITORY$/org/immutables/value/2.10.1/value-2.10.1.jar" />
         </processorPath>
         <module name="ultimategdbot-launcher" />
+      </profile>
+      <profile name="Annotation profile for ultimategdbot-app" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="false">
+          <entry name="$MAVEN_REPOSITORY$/org/immutables/value/2.10.1/value-2.10.1.jar" />
+        </processorPath>
         <module name="ultimategdbot-app" />
       </profile>
     </annotationProcessing>

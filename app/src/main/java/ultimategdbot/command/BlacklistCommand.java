@@ -14,7 +14,7 @@ import discord4j.discordjson.json.ApplicationCommandOptionData;
 import discord4j.rest.util.Permission;
 import org.reactivestreams.Publisher;
 import ultimategdbot.Strings;
-import ultimategdbot.framework.UGDBEventProcessor;
+import ultimategdbot.service.BlacklistService;
 import ultimategdbot.service.OutputPaginator;
 import ultimategdbot.service.PrivilegeFactory;
 
@@ -51,18 +51,17 @@ public final class BlacklistCommand {
     public static final class Add implements ChatInputInteractionListener {
 
         private final PrivilegeFactory privilegeFactory;
-        private final UGDBEventProcessor eventProcessor;
+        private final BlacklistService blacklist;
 
         @RdiFactory
-        public Add(PrivilegeFactory privilegeFactory,
-                   UGDBEventProcessor eventProcessor) {
+        public Add(PrivilegeFactory privilegeFactory, BlacklistService blacklist) {
             this.privilegeFactory = privilegeFactory;
-            this.eventProcessor = eventProcessor;
+            this.blacklist = blacklist;
         }
 
         @Override
         public Publisher<?> run(ChatInputInteractionContext ctx) {
-            return GRAMMAR.resolve(ctx.event()).flatMap(options -> eventProcessor.addToBlacklist(options.id)
+            return GRAMMAR.resolve(ctx.event()).flatMap(options -> blacklist.addToBlacklist(options.id)
                     .then(ctx.event().createFollowup(
                             ctx.translate(Strings.GENERAL, "item_add_success", options.id))));
         }
@@ -82,18 +81,17 @@ public final class BlacklistCommand {
     public static final class Remove implements ChatInputInteractionListener {
 
         private final PrivilegeFactory privilegeFactory;
-        private final UGDBEventProcessor eventProcessor;
+        private final BlacklistService blacklist;
 
         @RdiFactory
-        public Remove(PrivilegeFactory privilegeFactory,
-                      UGDBEventProcessor eventProcessor) {
+        public Remove(PrivilegeFactory privilegeFactory, BlacklistService blacklist) {
             this.privilegeFactory = privilegeFactory;
-            this.eventProcessor = eventProcessor;
+            this.blacklist = blacklist;
         }
 
         @Override
         public Publisher<?> run(ChatInputInteractionContext ctx) {
-            return GRAMMAR.resolve(ctx.event()).flatMap(options -> eventProcessor.removeFromBlacklist(options.id)
+            return GRAMMAR.resolve(ctx.event()).flatMap(options -> blacklist.removeFromBlacklist(options.id)
                     .then(ctx.event().createFollowup(
                             ctx.translate(Strings.GENERAL, "item_remove_success", options.id))));
         }
@@ -113,20 +111,19 @@ public final class BlacklistCommand {
     public static final class View implements ChatInputInteractionListener {
 
         private final PrivilegeFactory privilegeFactory;
-        private final UGDBEventProcessor eventProcessor;
+        private final BlacklistService blacklist;
         private final OutputPaginator paginator;
 
         @RdiFactory
-        public View(PrivilegeFactory privilegeFactory,
-                    UGDBEventProcessor eventProcessor, OutputPaginator paginator) {
+        public View(PrivilegeFactory privilegeFactory, BlacklistService blacklist, OutputPaginator paginator) {
             this.privilegeFactory = privilegeFactory;
-            this.eventProcessor = eventProcessor;
+            this.blacklist = blacklist;
             this.paginator = paginator;
         }
 
         @Override
         public Publisher<?> run(ChatInputInteractionContext ctx) {
-            return paginator.paginate(ctx, eventProcessor.blacklist().stream()
+            return paginator.paginate(ctx, blacklist.blacklist().stream()
                     .map(String::valueOf)
                     .toList());
         }
@@ -137,14 +134,13 @@ public final class BlacklistCommand {
         }
     }
 
-    private static final class Options {
-
-        @ChatInputCommandGrammar.Option(
-                type = ApplicationCommandOption.Type.INTEGER,
-                name = "id",
-                description = "The user, channel or guild ID.",
-                required = true
-        )
-        long id;
-    }
+    private record Options(
+            @ChatInputCommandGrammar.Option(
+                    type = ApplicationCommandOption.Type.INTEGER,
+                    name = "id",
+                    description = "The user, channel or guild ID.",
+                    required = true
+            )
+            long id
+    ) {}
 }

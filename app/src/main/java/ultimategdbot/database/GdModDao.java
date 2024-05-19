@@ -1,18 +1,22 @@
 package ultimategdbot.database;
 
-import org.immutables.criteria.backend.Backend;
+import com.github.alex1304.rdi.finder.annotation.RdiFactory;
+import com.github.alex1304.rdi.finder.annotation.RdiService;
 import org.immutables.criteria.backend.WriteResult;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import ultimategdbot.service.DatabaseService;
 
 import static ultimategdbot.database.GdModCriteria.gdMod;
 
+@RdiService
 public final class GdModDao {
 
     private final GdModRepository repository;
 
-    public GdModDao(Backend backend) {
-        this.repository = new GdModRepository(backend);
+    @RdiFactory
+    public GdModDao(DatabaseService db) {
+        this.repository = new GdModRepository(db.getBackend());
     }
 
     public Mono<GdMod> get(long accountId) {

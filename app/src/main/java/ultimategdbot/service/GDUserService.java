@@ -17,6 +17,7 @@ import jdash.graphics.IconSetFactory;
 import reactor.core.publisher.Mono;
 import reactor.util.annotation.Nullable;
 import ultimategdbot.Strings;
+import ultimategdbot.database.GdLinkedUserDao;
 import ultimategdbot.util.EmbedType;
 import ultimategdbot.util.Misc;
 
@@ -35,15 +36,15 @@ import static ultimategdbot.util.GDFormatter.formatPolicy;
 @RdiService
 public final class GDUserService {
 
-    private final DatabaseService db;
+    private final GdLinkedUserDao gdLinkedUserDao;
     private final EmojiService emoji;
     private final GDClient gdClient;
     private final GatewayDiscordClient gateway;
 
     @RdiFactory
-    public GDUserService(DatabaseService db, EmojiService emoji, GDClient gdClient,
+    public GDUserService(GdLinkedUserDao gdLinkedUserDao, EmojiService emoji, GDClient gdClient,
                          GatewayDiscordClient gateway) {
-        this.db = db;
+        this.gdLinkedUserDao = gdLinkedUserDao;
         this.emoji = emoji;
         this.gdClient = gdClient;
         this.gateway = gateway;
@@ -76,7 +77,7 @@ public final class GDUserService {
                                                 boolean showFull) {
         final var user = profile.user();
         final var stats = profile.stats();
-        return Mono.zip(db.gdLinkedUserDao()
+        return Mono.zip(gdLinkedUserDao
                         .getDiscordAccountsForGDUser(user.accountId())
                         .flatMap(id -> gateway.withRetrievalStrategy(STORE_FALLBACK_REST).getUserById(Snowflake.of(id)))
                         .collectList(), makeIconSet(profile))

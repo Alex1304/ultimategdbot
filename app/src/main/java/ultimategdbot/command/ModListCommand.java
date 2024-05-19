@@ -9,7 +9,7 @@ import com.github.alex1304.rdi.finder.annotation.RdiService;
 import org.reactivestreams.Publisher;
 import ultimategdbot.Strings;
 import ultimategdbot.database.GdMod;
-import ultimategdbot.service.DatabaseService;
+import ultimategdbot.database.GdModDao;
 import ultimategdbot.service.EmojiService;
 import ultimategdbot.service.OutputPaginator;
 
@@ -20,19 +20,19 @@ import java.util.Comparator;
 public final class ModListCommand implements ChatInputInteractionListener {
 
     private final EmojiService emoji;
-    private final DatabaseService db;
+    private final GdModDao gdModDao;
     private final OutputPaginator paginator;
 
     @RdiFactory
-    public ModListCommand(EmojiService emoji, DatabaseService db, OutputPaginator paginator) {
+    public ModListCommand(EmojiService emoji, GdModDao gdModDao, OutputPaginator paginator) {
         this.emoji = emoji;
-        this.db = db;
+        this.gdModDao = gdModDao;
         this.paginator = paginator;
     }
 
     @Override
     public Publisher<?> run(ChatInputInteractionContext ctx) {
-        return db.gdModDao().getAll().collectList()
+        return gdModDao.getAll().collectList()
                 .flatMap(modList -> paginator.paginate(ctx,
                         modList.stream()
                                 .sorted(Comparator.comparingInt(GdMod::elder).reversed()

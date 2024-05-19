@@ -1,17 +1,21 @@
 package ultimategdbot.database;
 
-import org.immutables.criteria.backend.Backend;
+import com.github.alex1304.rdi.finder.annotation.RdiFactory;
+import com.github.alex1304.rdi.finder.annotation.RdiService;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import ultimategdbot.service.DatabaseService;
 
 import static ultimategdbot.database.BlacklistCriteria.blacklist;
 
+@RdiService
 public final class BlacklistDao {
 
     private final BlacklistRepository repository;
 
-    public BlacklistDao(Backend backend) {
-        this.repository = new BlacklistRepository(backend);
+    @RdiFactory
+    public BlacklistDao(DatabaseService db) {
+        this.repository = new BlacklistRepository(db.getBackend());
     }
 
     public Flux<Long> getAllIds() {

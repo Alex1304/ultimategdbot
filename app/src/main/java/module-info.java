@@ -9,6 +9,7 @@ open module ultimategdbot {
 
     requires botrino.api;
     requires botrino.interaction;
+    requires discord4j.discordjson.encoding;
     requires java.desktop;
     requires java.sql;
     requires jdash.events;
@@ -20,6 +21,7 @@ open module ultimategdbot {
     requires org.immutables.criteria.reactor;
     requires org.mongodb.bson;
     requires org.mongodb.driver.core;
-    requires static org.immutables.value;
     requires org.apache.commons.lang3;
+
+    requires static org.immutables.value;
 }

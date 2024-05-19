@@ -14,7 +14,6 @@ import org.immutables.criteria.mongo.bson4jackson.BsonModule;
 import org.immutables.criteria.mongo.bson4jackson.IdAnnotationModule;
 import org.immutables.criteria.mongo.bson4jackson.JacksonCodecs;
 import ultimategdbot.config.MongoDBConfig;
-import ultimategdbot.database.*;
 
 @RdiService
 public final class DatabaseService {
@@ -36,19 +35,7 @@ public final class DatabaseService {
         this.backend = new MongoBackend(MongoSetup.of(db));
     }
 
-    public BlacklistDao blacklistDao() {
-        return new BlacklistDao(backend);
-    }
-
-    public GdLinkedUserDao gdLinkedUserDao() {
-        return new GdLinkedUserDao(backend);
-    }
-
-    public GdModDao gdModDao() {
-        return new GdModDao(backend);
-    }
-
-    public GdAwardedLevelDao gdAwardedLevelDao() {
-        return new GdAwardedLevelDao(backend);
+    public Backend getBackend() {
+        return backend;
     }
 }
