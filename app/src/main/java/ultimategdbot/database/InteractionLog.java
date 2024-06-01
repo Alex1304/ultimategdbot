@@ -3,7 +3,10 @@ package ultimategdbot.database;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import discord4j.discordjson.Id;
 import discord4j.discordjson.json.ApplicationCommandInteractionData;
+import discord4j.discordjson.json.MemberData;
+import discord4j.discordjson.json.UserData;
 import org.immutables.criteria.Criteria;
 import org.immutables.criteria.reactor.ReactorReadable;
 import org.immutables.criteria.reactor.ReactorWritable;
@@ -21,11 +24,21 @@ public interface InteractionLog {
 
     @Criteria.Id
     @JsonProperty("_id")
-	long id();
+    Id id();
 
     Instant date();
 
-    String locale();
+    String userLocale();
 
-    Optional<ApplicationCommandInteractionData> commandData();
+    Optional<String> guildLocale();
+
+    Optional<Id> guildId();
+
+    Optional<MemberData> member();
+
+    UserData user();
+
+    Id channelId();
+
+    Optional<ApplicationCommandInteractionData> command();
 }

@@ -8,32 +8,26 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="75a132b0-0d85-411d-b7f6-d4b42a67b31e" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/database/InteractionLog.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/database/InteractionLogDao.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/service/BlacklistService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/service/InteractionLogService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/account/LinkSubcommand.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/account/SettingsSubcommand.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/account/StatusSubcommand.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/account/UnlinkSubcommand.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/account/package-info.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/database/UserSettings.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/database/UserSettingsDao.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.run/Main.run.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.run/Main.run.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/pom.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/module-info.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/module-info.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/AccountCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/AccountCommand.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/BlacklistCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/BlacklistCommand.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/CheckModCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/CheckModCommand.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/FollowCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/FollowCommand.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/ModListCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/ModListCommand.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/ModWaveCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/ModWaveCommand.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/ProfileCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/ProfileCommand.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/database/BlacklistDao.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/database/BlacklistDao.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/database/GdAwardedLevelDao.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/database/GdAwardedLevelDao.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/database/GdLinkedUserDao.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/database/GdLinkedUserDao.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/database/GdModDao.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/database/GdModDao.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/AccountCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/account/AccountCommand.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/database/InteractionLog.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/database/InteractionLog.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/database/InteractionLogDao.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/database/InteractionLogDao.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/database/package-info.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/database/package-info.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/event/GDEventService.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/event/GDEventService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/framework/UGDBErrorHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/framework/UGDBErrorHandler.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/framework/UGDBEventProcessor.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/framework/UGDBEventProcessor.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/event/BroadcastResultCache.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/event/BroadcastResultCache.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/service/DatabaseService.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/service/DatabaseService.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/service/GDUserService.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/service/GDUserService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/service/PrivilegeFactory.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/service/PrivilegeFactory.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -57,6 +51,12 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;Alex1304&quot;
+  }
+}</component>
   <component name="GitSEFilterConfiguration">
     <file-type-list>
       <filtered-out-file-type name="LOCAL_BRANCH" />
@@ -65,6 +65,12 @@
       <filtered-out-file-type name="COMMIT_BY_MESSAGE" />
     </file-type-list>
   </component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;git@github.com:Alex1304/ultimategdbot.git&quot;,
+    &quot;accountId&quot;: &quot;69efd40f-9e9c-43a4-b279-e904233f5a81&quot;
+  }
+}</component>
   <component name="HighlightingSettingsPerFile">
     <setting file="file://$PROJECT_DIR$/app/pom.xml" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/AboutCommand.java" root0="FORCE_HIGHLIGHTING" />
@@ -87,7 +93,7 @@
     </option>
   </component>
   <component name="ProblemsViewState">
-    <option name="selectedTabId" value="CurrentFile" />
+    <option name="selectedTabId" value="ProjectErrors" />
   </component>
   <component name="ProjectCodeStyleSettingsMigration">
     <option name="version" value="2" />
@@ -105,32 +111,33 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Application.Main.executor": "Run",
-    "Maven.ultimategdbot [clean,package].executor": "Run",
-    "Maven.ultimategdbot [clean].executor": "Run",
-    "Maven.ultimategdbot [package].executor": "Run",
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "WebServerToolWindowFactoryState": "false",
-    "git-widget-placeholder": "feature/privacy",
-    "kotlin-language-version-configured": "true",
-    "last_directory_selection": "/home/alexandre/dev/ultimategdbot/app/src/main/java/ultimategdbot/exception",
-    "last_opened_file_path": "/home/alexandre/dev/ultimategdbot/app/src/main/java/ultimategdbot/database",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "project.structure.last.edited": "Project",
-    "project.structure.proportion": "0.0",
-    "project.structure.side.proportion": "0.0",
-    "run.code.analysis.last.selected.profile": "pProject Default",
-    "settings.editor.selected.configurable": "reference.settingsdialog.IDE.editor.colors.General",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Application.Main.executor&quot;: &quot;Run&quot;,
+    &quot;Maven.ultimategdbot [clean,package].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.ultimategdbot [clean].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.ultimategdbot [dependency:copy-dependencies].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.ultimategdbot [package].executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;feature/privacy&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_directory_selection&quot;: &quot;/home/alexandre/dev/ultimategdbot/app/src/main/java/ultimategdbot/exception&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/home/alexandre/dev/ultimategdbot/app/src/main/java/ultimategdbot/database&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Project&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
+    &quot;run.code.analysis.last.selected.profile&quot;: &quot;pProject Default&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="ReactorSettings">
     <option name="notificationShown" value="true" />
   </component>
@@ -147,6 +154,7 @@
       <recent name="ultimategdbot.util.Leaderboards" />
     </key>
     <key name="MoveInnerDialog.RECENTS_KEY">
+      <recent name="ultimategdbot.command.account" />
       <recent name="ultimategdbot.exception" />
     </key>
     <key name="CopyClassDialog.RECENTS_KEY">
@@ -156,11 +164,16 @@
       <recent name="ultimategdbot.util" />
     </key>
   </component>
+  <component name="RunAnythingCache">
+    <option name="myCommands">
+      <command value="mvn clean package" />
+    </option>
+  </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-jdk-9f38398b9061-39b83d9b5494-intellij.indexing.shared.core-IU-241.15989.150" />
-        <option value="bundled-js-predefined-1d06a55b98c1-91d5c284f522-JavaScript-IU-241.15989.150" />
+        <option value="bundled-jdk-9f38398b9061-39b83d9b5494-intellij.indexing.shared.core-IU-241.17011.79" />
+        <option value="bundled-js-predefined-1d06a55b98c1-0b3e54e931b4-JavaScript-IU-241.17011.79" />
       </set>
     </attachedChunks>
   </component>
@@ -268,7 +281,13 @@
       <workItem from="1715519304756" duration="15446000" />
       <workItem from="1715695745211" duration="17000" />
       <workItem from="1715886397592" duration="10084000" />
-      <workItem from="1716046585410" duration="13382000" />
+      <workItem from="1716046585410" duration="13650000" />
+      <workItem from="1716200745423" duration="2000" />
+      <workItem from="1716208037281" duration="8789000" />
+      <workItem from="1716835303984" duration="202000" />
+      <workItem from="1716835539848" duration="3000" />
+      <workItem from="1716835586259" duration="2694000" />
+      <workItem from="1717251457175" duration="9633000" />
     </task>
     <servers />
   </component>

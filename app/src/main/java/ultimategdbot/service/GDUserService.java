@@ -16,12 +16,16 @@ import jdash.common.entity.GDUserProfile;
 import jdash.graphics.IconSetFactory;
 import reactor.core.publisher.Mono;
 import reactor.util.annotation.Nullable;
+import reactor.util.function.Tuple2;
 import ultimategdbot.Strings;
 import ultimategdbot.database.GdLinkedUserDao;
+import ultimategdbot.database.UserSettings;
+import ultimategdbot.database.UserSettingsDao;
 import ultimategdbot.util.EmbedType;
 import ultimategdbot.util.Misc;
 
 import java.io.ByteArrayInputStream;
+import java.util.List;
 import java.util.Objects;
 import java.util.Random;
 import java.util.function.ToIntFunction;
@@ -30,6 +34,7 @@ import java.util.stream.Collectors;
 import static botrino.api.util.Markdown.italic;
 import static discord4j.core.retriever.EntityRetrievalStrategy.STORE_FALLBACK_REST;
 import static reactor.function.TupleUtils.function;
+import static reactor.function.TupleUtils.predicate;
 import static ultimategdbot.util.GDFormatter.formatCode;
 import static ultimategdbot.util.GDFormatter.formatPolicy;
 
@@ -37,14 +42,16 @@ import static ultimategdbot.util.GDFormatter.formatPolicy;
 public final class GDUserService {
 
     private final GdLinkedUserDao gdLinkedUserDao;
+    private final UserSettingsDao userSettingsDao;
     private final EmojiService emoji;
     private final GDClient gdClient;
     private final GatewayDiscordClient gateway;
 
     @RdiFactory
-    public GDUserService(GdLinkedUserDao gdLinkedUserDao, EmojiService emoji, GDClient gdClient,
-                         GatewayDiscordClient gateway) {
+    public GDUserService(GdLinkedUserDao gdLinkedUserDao, UserSettingsDao userSettingsDao, EmojiService emoji,
+                         GDClient gdClient, GatewayDiscordClient gateway) {
         this.gdLinkedUserDao = gdLinkedUserDao;
+        this.userSettingsDao = userSettingsDao;
         this.emoji = emoji;
         this.gdClient = gdClient;
         this.gateway = gateway;
@@ -79,10 +86,11 @@ public final class GDUserService {
         final var stats = profile.stats();
         return Mono.zip(gdLinkedUserDao
                         .getDiscordAccountsForGDUser(user.accountId())
-                        .flatMap(id -> gateway.withRetrievalStrategy(STORE_FALLBACK_REST).getUserById(Snowflake.of(id)))
+                        .flatMap(id -> gateway.withRetrievalStrategy(STORE_FALLBACK_REST)
+                                .getUserById(Snowflake.of(id))
+                                .zipWhen(discordUser -> userSettingsDao.getById(discordUser.getId().asLong())))
                         .collectList(), makeIconSet(profile))
-                .map(function((linkedAccounts, iconSet) -> {
-                    final var role = user.role().orElse(Role.USER);
+                .map(function((linkedAccountsWithSettings, iconSet) -> {
                     final var rankEmoji = getRankEmoji(profile.globalRank());
                     final var embed = EmbedCreateSpec.builder()
                             .author(type.getAuthorName(tr), null, "attachment://author.png")
@@ -97,35 +105,8 @@ public final class GDUserService {
                                             statEntry("creator_points", stats.creatorPoints()), false)
                             .addField(infoEntry(rankEmoji, tr.translate(Strings.GD, "label_global_rank"),
                                             profile.globalRank() == 0 ? italic("unranked") :
-                                                    profile.globalRank()), displayRole(role) +
-                                            "\n" +
-                                            infoEntry("youtube", "YouTube:", profile.youtube().isEmpty()
-                                                    ? italic(tr.translate(Strings.GD, "not_provided"))
-                                                    : '[' + tr.translate(Strings.GD, "open_link") + "]" +
-                                                    "(https://www.youtube.com/channel/" + profile.youtube() + ')') +
-                                            infoEntry("twitch", "Twitch:", profile.twitch().isEmpty()
-                                                    ? italic(tr.translate(Strings.GD, "not_provided")) :
-                                                    "[@" + profile.twitch() + "](https://www.twitch.tv/" + profile.twitch() +
-                                                            ')') +
-                                            infoEntry("twitter", "Twitter:", profile.twitter().isEmpty()
-                                                    ? italic(tr.translate(Strings.GD, "not_provided"))
-                                                    : "[@" + profile.twitter() + "](https://www.twitter.com/" +
-                                                    profile.twitter() + ')') +
-                                            infoEntry("discord", "Discord:", linkedAccounts.isEmpty()
-                                                    ? italic(tr.translate(Strings.GENERAL, "unknown"))
-                                                    : linkedAccounts.stream().map(User::getTag)
-                                                    .collect(Collectors.joining(", "))) +
-                                            "\n" +
-                                            infoEntry("friends", tr.translate(Strings.GD, "label_friend_requests"),
-                                                    (profile.hasFriendRequestsEnabled()
-                                                            ? tr.translate(Strings.GD, "enabled")
-                                                            : tr.translate(Strings.GD, "disabled"))) +
-                                            infoEntry("messages", tr.translate(Strings.GD, "label_private_messages"),
-                                                    formatPolicy(tr, profile.privateMessagePrivacy())) +
-                                            infoEntry("comment_history", tr.translate(Strings.GD,
-                                                            "label_comment_history"),
-                                                    formatPolicy(tr, profile.commentHistoryPrivacy())),
-                                    false);
+                                                    profile.globalRank()),
+                                    formatSocialLinks(linkedAccountsWithSettings, tr, profile), false);
                     if (showFull) {
                         appendCompletedLevels(tr, embed, profile.completedClassicLevels().orElse(null),
                                 profile.completedPlatformerLevels().orElse(null));
@@ -145,6 +126,39 @@ public final class GDUserService {
                     }
                     return message.addEmbed(embed.build()).build();
                 }));
+    }
+
+    private String formatSocialLinks(List<Tuple2<User, UserSettings>> linkedAccountsWithSettings, Translator tr,
+                                     GDUserProfile profile) {
+        final var role = profile.user().role().orElse(Role.USER);
+        final var shownAccounts = linkedAccountsWithSettings.stream()
+                .filter(predicate((acc, settings) -> settings.showDiscordOnProfile()))
+                .map(function((acc, settings) -> acc.getTag()))
+                .collect(Collectors.joining(", "));
+        return displayRole(role) + "\n" +
+                infoEntry("youtube", "YouTube:", profile.youtube().isEmpty()
+                        ? italic(tr.translate(Strings.GD, "not_provided"))
+                        : '[' + tr.translate(Strings.GD, "open_link") + "]" +
+                        "(https://www.youtube.com/channel/" + profile.youtube() + ')') +
+                infoEntry("twitch", "Twitch:", profile.twitch().isEmpty()
+                        ? italic(tr.translate(Strings.GD, "not_provided")) :
+                        "[@" + profile.twitch() + "](https://www.twitch.tv/" + profile.twitch() +
+                                ')') +
+                infoEntry("twitter", "Twitter:", profile.twitter().isEmpty()
+                        ? italic(tr.translate(Strings.GD, "not_provided"))
+                        : "[@" + profile.twitter() + "](https://www.twitter.com/" +
+                        profile.twitter() + ')') +
+                (shownAccounts.isEmpty() ? "" : infoEntry("discord", "Discord:", shownAccounts)) +
+                "\n" +
+                infoEntry("friends", tr.translate(Strings.GD, "label_friend_requests"),
+                        (profile.hasFriendRequestsEnabled()
+                                ? tr.translate(Strings.GD, "enabled")
+                                : tr.translate(Strings.GD, "disabled"))) +
+                infoEntry("messages", tr.translate(Strings.GD, "label_private_messages"),
+                        formatPolicy(tr, profile.privateMessagePrivacy())) +
+                infoEntry("comment_history", tr.translate(Strings.GD,
+                                "label_comment_history"),
+                        formatPolicy(tr, profile.commentHistoryPrivacy()));
     }
 
     private void appendCompletedLevels(Translator tr, EmbedCreateSpec.Builder embed,

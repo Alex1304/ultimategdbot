@@ -97,10 +97,5 @@
             <artifactId>jdash-graphics</artifactId>
             <version>5.0.2</version>
         </dependency>
-        <dependency>
-            <groupId>com.discord4j</groupId>
-            <artifactId>discord-json-encoding</artifactId>
-            <version>1.6.18</version>
-        </dependency>
     </dependencies>
 </project>
