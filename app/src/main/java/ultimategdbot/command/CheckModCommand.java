@@ -23,7 +23,7 @@ import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 import ultimategdbot.Strings;
 import ultimategdbot.database.GdLinkedUser;
-import ultimategdbot.service.DatabaseService;
+import ultimategdbot.database.GdLinkedUserDao;
 import ultimategdbot.service.EmojiService;
 import ultimategdbot.service.GDCommandCooldown;
 import ultimategdbot.service.GDUserService;
@@ -38,7 +38,7 @@ import java.util.List;
 public final class CheckModCommand implements ChatInputInteractionListener, UserInteractionListener {
 
     private final GDCommandCooldown commandCooldown;
-    private final DatabaseService db;
+    private final GdLinkedUserDao gdLinkedUserDao;
     private final EmojiService emoji;
     private final GDClient gdClient;
     private final GDUserService userService;
@@ -46,10 +46,10 @@ public final class CheckModCommand implements ChatInputInteractionListener, User
     private final ChatInputCommandGrammar<Options> grammar = ChatInputCommandGrammar.of(Options.class);
 
     @RdiFactory
-    public CheckModCommand(GDCommandCooldown commandCooldown, DatabaseService db, EmojiService emoji,
+    public CheckModCommand(GDCommandCooldown commandCooldown, GdLinkedUserDao gdLinkedUserDao, EmojiService emoji,
                            GDUserService userService, GDClient gdClient) {
         this.commandCooldown = commandCooldown;
-        this.db = db;
+        this.gdLinkedUserDao = gdLinkedUserDao;
         this.emoji = emoji;
         this.userService = userService;
         this.gdClient = gdClient.withWriteOnlyCache();
@@ -60,7 +60,7 @@ public final class CheckModCommand implements ChatInputInteractionListener, User
         return ctx.event().deferReply().then(grammar.resolve(ctx.event()))
                 .flatMap(options -> Mono.justOrEmpty(options.gdUsername)
                         .flatMap(username -> userService.stringToUser(ctx, username)))
-                .switchIfEmpty(db.gdLinkedUserDao().getActiveLink(ctx.user().getId().asLong())
+                .switchIfEmpty(gdLinkedUserDao.getActiveLink(ctx.user().getId().asLong())
                         .switchIfEmpty(Mono.error(new InteractionFailedException(
                                 ctx.translate(Strings.GD, "error_checkmod_user_not_specified"))))
                         .map(GdLinkedUser::gdUserId)
@@ -71,7 +71,7 @@ public final class CheckModCommand implements ChatInputInteractionListener, User
     @Override
     public Publisher<?> run(UserInteractionContext ctx) {
         return ctx.event().deferReply().withEphemeral(true)
-                .then(db.gdLinkedUserDao().getActiveLink(ctx.event().getTargetId().asLong()))
+                .then(gdLinkedUserDao.getActiveLink(ctx.event().getTargetId().asLong()))
                 .switchIfEmpty(Mono.error(new InteractionFailedException(
                         ctx.translate(Strings.GD, "error_no_gd_account"))))
                 .map(GdLinkedUser::gdUserId)

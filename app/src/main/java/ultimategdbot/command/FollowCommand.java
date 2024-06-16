@@ -6,7 +6,6 @@ import botrino.interaction.annotation.ChatInputCommand;
 import botrino.interaction.context.ChatInputInteractionContext;
 import botrino.interaction.grammar.ChatInputCommandGrammar;
 import botrino.interaction.listener.ChatInputInteractionListener;
-import botrino.interaction.privilege.Privilege;
 import com.github.alex1304.rdi.finder.annotation.RdiFactory;
 import com.github.alex1304.rdi.finder.annotation.RdiService;
 import discord4j.common.util.Snowflake;
@@ -14,7 +13,6 @@ import discord4j.core.GatewayDiscordClient;
 import discord4j.core.object.command.ApplicationCommandOption;
 import discord4j.core.object.entity.channel.Channel;
 import discord4j.core.object.entity.channel.GuildChannel;
-import discord4j.core.object.entity.channel.GuildMessageChannel;
 import discord4j.core.object.entity.channel.NewsChannel;
 import discord4j.discordjson.json.ApplicationCommandOptionData;
 import discord4j.rest.http.client.ClientException;
@@ -26,7 +24,6 @@ import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 import ultimategdbot.Strings;
 import ultimategdbot.config.UltimateGDBotConfig;
-import ultimategdbot.exception.ManageWebhooksPrivilegeException;
 import ultimategdbot.service.EmojiService;
 
 import java.util.List;
@@ -39,7 +36,8 @@ import static reactor.function.TupleUtils.function;
 @RdiService
 @ChatInputCommand(
         name = "follow",
-        description = "Receive news in your server about in-game events and bot announcements."
+        description = "Receive news in your server about in-game events and bot announcements.",
+        defaultMemberPermissions = Permission.MANAGE_WEBHOOKS
 )
 public final class FollowCommand implements ChatInputInteractionListener {
 
@@ -99,20 +97,6 @@ public final class FollowCommand implements ChatInputInteractionListener {
     @Override
     public List<ApplicationCommandOptionData> options() {
         return grammar.toOptions();
-    }
-
-    @Override
-    public Privilege privilege() {
-        return ctx -> ((ChatInputInteractionContext) ctx).event().getOption("target-channel")
-                .orElseThrow(AssertionError::new)
-                .getValue()
-                .orElseThrow(AssertionError::new)
-                .asChannel()
-                .ofType(GuildMessageChannel.class)
-                .filterWhen(channel -> channel.getEffectivePermissions(ctx.user().getId())
-                        .map(perms -> perms.contains(Permission.MANAGE_WEBHOOKS)))
-                .switchIfEmpty(Mono.error(ManageWebhooksPrivilegeException::new))
-                .then();
     }
 
     private static final class Options {

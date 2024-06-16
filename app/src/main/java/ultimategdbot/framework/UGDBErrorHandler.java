@@ -36,7 +36,7 @@ import java.util.concurrent.TimeoutException;
 import static java.util.stream.Collectors.joining;
 
 @RdiService
-public class UGDBErrorHandler implements InteractionErrorHandler {
+public final class UGDBErrorHandler implements InteractionErrorHandler {
 
     private static final Logger LOGGER = Loggers.getLogger(UGDBErrorHandler.class);
 

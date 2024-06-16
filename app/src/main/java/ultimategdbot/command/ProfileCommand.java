@@ -20,7 +20,7 @@ import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 import ultimategdbot.Strings;
 import ultimategdbot.database.GdLinkedUser;
-import ultimategdbot.service.DatabaseService;
+import ultimategdbot.database.GdLinkedUserDao;
 import ultimategdbot.service.GDCommandCooldown;
 import ultimategdbot.service.GDUserService;
 import ultimategdbot.util.EmbedType;
@@ -35,17 +35,17 @@ import java.util.Objects;
 public final class ProfileCommand implements ChatInputInteractionListener, UserInteractionListener {
 
     private final GDCommandCooldown commandCooldown;
-    private final DatabaseService db;
+    private final GdLinkedUserDao gdLinkedUserDao;
     private final GDClient gdClient;
     private final GDUserService userService;
 
     private final ChatInputCommandGrammar<Options> grammar = ChatInputCommandGrammar.of(Options.class);
 
     @RdiFactory
-    public ProfileCommand(GDCommandCooldown commandCooldown, DatabaseService db, GDUserService userService,
+    public ProfileCommand(GDCommandCooldown commandCooldown, GdLinkedUserDao gdLinkedUserDao, GDUserService userService,
                           GDClient gdClient) {
         this.commandCooldown = commandCooldown;
-        this.db = db;
+        this.gdLinkedUserDao = gdLinkedUserDao;
         this.userService = userService;
         this.gdClient = gdClient.withWriteOnlyCache();
     }
@@ -59,7 +59,7 @@ public final class ProfileCommand implements ChatInputInteractionListener, UserI
     private Mono<?> runWithOptions(ChatInputInteractionContext ctx, Options options) {
         return Mono.justOrEmpty(options.gdUsername)
                 .flatMap(username -> userService.stringToUser(ctx, username))
-                .switchIfEmpty(db.gdLinkedUserDao().getActiveLink(ctx.user().getId().asLong())
+                .switchIfEmpty(gdLinkedUserDao.getActiveLink(ctx.user().getId().asLong())
                         .switchIfEmpty(Mono.error(new InteractionFailedException(
                                 ctx.translate(Strings.GD, "error_profile_user_not_specified"))))
                         .map(GdLinkedUser::gdUserId)
@@ -73,7 +73,7 @@ public final class ProfileCommand implements ChatInputInteractionListener, UserI
     @Override
     public Publisher<?> run(UserInteractionContext ctx) {
         return ctx.event().deferReply().withEphemeral(true)
-                .then(db.gdLinkedUserDao().getActiveLink(ctx.event().getTargetId().asLong()))
+                .then(gdLinkedUserDao.getActiveLink(ctx.event().getTargetId().asLong()))
                 .switchIfEmpty(Mono.error(new InteractionFailedException(
                         ctx.translate(Strings.GD, "error_no_gd_account"))))
                 .map(GdLinkedUser::gdUserId)

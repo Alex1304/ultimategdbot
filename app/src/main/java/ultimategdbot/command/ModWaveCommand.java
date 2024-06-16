@@ -18,10 +18,10 @@ import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ultimategdbot.Strings;
+import ultimategdbot.database.GdModDao;
 import ultimategdbot.database.ImmutableGdMod;
 import ultimategdbot.event.ImmutableModStatusUpdate;
 import ultimategdbot.event.ManualEventProducer;
-import ultimategdbot.service.DatabaseService;
 import ultimategdbot.service.EmojiService;
 import ultimategdbot.service.GDUserService;
 import ultimategdbot.service.PrivilegeFactory;
@@ -36,7 +36,7 @@ import static ultimategdbot.event.ModStatusUpdate.Type.*;
         defaultMemberPermissions = Permission.ADMINISTRATOR)
 public final class ModWaveCommand implements ChatInputInteractionListener {
 
-    private final DatabaseService db;
+    private final GdModDao gdModDao;
     private final EmojiService emoji;
     private final GDUserService userService;
     private final ManualEventProducer eventProducer;
@@ -44,10 +44,10 @@ public final class ModWaveCommand implements ChatInputInteractionListener {
     private final ConfigContainer configContainer;
 
     @RdiFactory
-    public ModWaveCommand(DatabaseService db, EmojiService emoji, GDUserService userService,
+    public ModWaveCommand(GdModDao gdModDao, EmojiService emoji, GDUserService userService,
                           ManualEventProducer eventProducer, PrivilegeFactory privilegeFactory,
                           ConfigContainer configContainer) {
-        this.db = db;
+        this.gdModDao = gdModDao;
         this.emoji = emoji;
         this.userService = userService;
         this.eventProducer = eventProducer;
@@ -69,7 +69,7 @@ public final class ModWaveCommand implements ChatInputInteractionListener {
                                 ? emoji.get("failed") + ' ' + ctx.translate(Strings.GD, "checkmod_failed")
                                 : emoji.get("success") + ' ' + ctx.translate(Strings.GD, "checkmod_success",
                                         profile.user().role().orElseThrow())) + "||")
-                        .then(db.gdModDao().get(profile.user().accountId()))
+                        .then(gdModDao.get(profile.user().accountId()))
                         .switchIfEmpty(Mono.defer(() -> {
                             if (profile.user().role().map(Role.USER::equals).orElse(true)) {
                                 return Mono.empty();
@@ -81,7 +81,7 @@ public final class ModWaveCommand implements ChatInputInteractionListener {
                                 case 2 -> PROMOTED_TO_LBMOD;
                                 default -> throw new AssertionError();
                             }));
-                            return db.gdModDao()
+                            return gdModDao
                                     .save(ImmutableGdMod.builder()
                                             .accountId(profile.user().accountId())
                                             .name(profile.user().name())
@@ -97,7 +97,7 @@ public final class ModWaveCommand implements ChatInputInteractionListener {
                                     case 2 -> DEMOTED_FROM_LBMOD;
                                     default -> throw new AssertionError();
                                 }));
-                                return db.gdModDao().delete(gdMod.accountId());
+                                return gdModDao.delete(gdMod.accountId());
                             }
                             final var newGdMod = ImmutableGdMod.builder().from(gdMod);
                             switch (profile.user().role().orElseThrow()) {
@@ -134,7 +134,7 @@ public final class ModWaveCommand implements ChatInputInteractionListener {
                                 }
                             }
                             newGdMod.name(profile.user().name());
-                            return db.gdModDao().save(newGdMod.build());
+                            return gdModDao.save(newGdMod.build());
                         })
                 )
                 .then();

@@ -5,7 +5,9 @@ import com.github.alex1304.rdi.finder.annotation.RdiFactory;
 import com.github.alex1304.rdi.finder.annotation.RdiService;
 import discord4j.core.object.entity.ApplicationInfo;
 import reactor.core.publisher.Mono;
+import ultimategdbot.database.GdLinkedUserDao;
 import ultimategdbot.database.GdMod;
+import ultimategdbot.database.GdModDao;
 import ultimategdbot.exception.BotOwnerPrivilegeException;
 import ultimategdbot.exception.ElderModPrivilegeException;
 
@@ -13,12 +15,14 @@ import ultimategdbot.exception.ElderModPrivilegeException;
 public final class PrivilegeFactory {
 
     private final long ownerId;
-    private final DatabaseService db;
+    private final GdLinkedUserDao gdLinkedUserDao;
+    private final GdModDao gdModDao;
 
     @RdiFactory
-    public PrivilegeFactory(ApplicationInfo applicationInfo, DatabaseService db) {
+    public PrivilegeFactory(ApplicationInfo applicationInfo, GdLinkedUserDao gdLinkedUserDao, GdModDao gdModDao) {
         this.ownerId = applicationInfo.getOwnerId().asLong();
-        this.db = db;
+        this.gdLinkedUserDao = gdLinkedUserDao;
+        this.gdModDao = gdModDao;
     }
 
     public Privilege botOwner() {
@@ -28,9 +32,9 @@ public final class PrivilegeFactory {
     }
 
     public Privilege elderMod() {
-        return botOwner().or(ctx -> db.gdLinkedUserDao()
+        return botOwner().or(ctx -> gdLinkedUserDao
                 .getActiveLink(ctx.event().getInteraction().getUser().getId().asLong())
-                .flatMap(linkedUser -> db.gdModDao().get(linkedUser.gdUserId()).map(GdMod::isElder))
+                .flatMap(linkedUser -> gdModDao.get(linkedUser.gdUserId()).map(GdMod::isElder))
                 .filter(Boolean::booleanValue)
                 .switchIfEmpty(Mono.error(ElderModPrivilegeException::new))
                 .then(), (a, b) -> b);

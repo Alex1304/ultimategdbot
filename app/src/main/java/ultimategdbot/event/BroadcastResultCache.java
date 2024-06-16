@@ -7,6 +7,7 @@ import discord4j.core.GatewayDiscordClient;
 import discord4j.core.object.entity.Message;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -16,7 +17,7 @@ import static java.util.Objects.requireNonNull;
 class BroadcastResultCache {
 	
 	private final Cache<Long, List<MessageId>> results = Caffeine.newBuilder()
-			.maximumSize(50)
+			.expireAfterWrite(Duration.ofDays(3))
 			.build();
 	
 	void put(long levelId, List<MessageId> messages) {

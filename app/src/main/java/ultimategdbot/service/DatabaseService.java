@@ -1,12 +1,17 @@
 package ultimategdbot.service;
 
 import botrino.api.config.ConfigContainer;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.github.alex1304.rdi.finder.annotation.RdiFactory;
 import com.github.alex1304.rdi.finder.annotation.RdiService;
 import com.mongodb.reactivestreams.client.MongoClients;
 import discord4j.common.jackson.UnknownPropertyHandler;
+import discord4j.discordjson.possible.PossibleFilter;
+import discord4j.discordjson.possible.PossibleModule;
 import org.immutables.criteria.backend.Backend;
 import org.immutables.criteria.mongo.MongoBackend;
 import org.immutables.criteria.mongo.MongoSetup;
@@ -14,7 +19,6 @@ import org.immutables.criteria.mongo.bson4jackson.BsonModule;
 import org.immutables.criteria.mongo.bson4jackson.IdAnnotationModule;
 import org.immutables.criteria.mongo.bson4jackson.JacksonCodecs;
 import ultimategdbot.config.MongoDBConfig;
-import ultimategdbot.database.*;
 
 @RdiService
 public final class DatabaseService {
@@ -28,6 +32,11 @@ public final class DatabaseService {
                 .registerModule(new BsonModule())
                 .registerModule(new Jdk8Module())
                 .registerModule(new IdAnnotationModule())
+                .registerModule(new PossibleModule())
+                .setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.NONE)
+                .setVisibility(PropertyAccessor.GETTER, JsonAutoDetect.Visibility.PUBLIC_ONLY)
+                .setDefaultPropertyInclusion(JsonInclude.Value.construct(JsonInclude.Include.CUSTOM,
+                        JsonInclude.Include.ALWAYS, PossibleFilter.class, null))
                 .addHandler(new UnknownPropertyHandler(true));
         @SuppressWarnings("UnstableApiUsage")
         final var registry = JacksonCodecs.registryFromMapper(mapper);
@@ -36,19 +45,7 @@ public final class DatabaseService {
         this.backend = new MongoBackend(MongoSetup.of(db));
     }
 
-    public BlacklistDao blacklistDao() {
-        return new BlacklistDao(backend);
-    }
-
-    public GdLinkedUserDao gdLinkedUserDao() {
-        return new GdLinkedUserDao(backend);
-    }
-
-    public GdModDao gdModDao() {
-        return new GdModDao(backend);
-    }
-
-    public GdAwardedLevelDao gdAwardedLevelDao() {
-        return new GdAwardedLevelDao(backend);
+    public Backend getBackend() {
+        return backend;
     }
 }

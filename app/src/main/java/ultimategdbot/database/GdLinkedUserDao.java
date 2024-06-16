@@ -1,20 +1,24 @@
 package ultimategdbot.database;
 
-import org.immutables.criteria.backend.Backend;
+import com.github.alex1304.rdi.finder.annotation.RdiFactory;
+import com.github.alex1304.rdi.finder.annotation.RdiService;
 import org.immutables.criteria.backend.WriteResult;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import ultimategdbot.service.DatabaseService;
 
 import java.util.List;
 
 import static ultimategdbot.database.GdLinkedUserCriteria.gdLinkedUser;
 
+@RdiService
 public final class GdLinkedUserDao {
 
     private final GdLinkedUserRepository repository;
 
-    public GdLinkedUserDao(Backend backend) {
-        this.repository = new GdLinkedUserRepository(backend);
+    @RdiFactory
+    public GdLinkedUserDao(DatabaseService db) {
+        this.repository = new GdLinkedUserRepository(db.getBackend());
     }
 
     public Flux<Long> getDiscordAccountsForGDUser(long gdUserId) {

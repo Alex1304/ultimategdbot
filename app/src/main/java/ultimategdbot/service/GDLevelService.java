@@ -65,7 +65,7 @@ public final class GDLevelService {
         for (final var level : results) {
             final var coins = coinsToEmoji(emoji.get(level.hasCoinsVerified()
                     ? "user_coin" : "user_coin_unverified"), level.coinCount(), true);
-            final var song = level.song().map(s -> formatSong(ctx, s))
+            final var song = level.song().map(s -> formatSong(ctx, s, emoji.get("ncs1") + emoji.get("ncs2")))
                     .orElse(":warning: " + ctx.translate(Strings.GD, "song_unknown"));
             final var difficulty = emoji.get(getDifficultyEmojiForLevel(level));
             final var quality = getQualityEmojiForLevel(level).map(emoji::get).orElse("");
@@ -292,13 +292,13 @@ public final class GDLevelService {
     private Mono<Tuple2<String, String>> extractSongParts(Translator tr, GDLevel level) {
         return level.song().map(Mono::just)
                 .or(() -> level.songId().map(gdClient::getSongInfo))
-                .map(songMono -> songMono.map(s -> Tuples.of(formatSong(tr, s),
+                .map(songMono -> songMono.map(s -> Tuples.of(formatSong(tr, s, emoji.get("ncs1") + emoji.get("ncs2")),
                         formatSongExtra(tr, s, emoji.get("play"), emoji.get("download_song")))))
                 .orElseGet(() -> Mono.just(unknownSongParts(tr)))
                 .onErrorReturn(e -> e instanceof GDClientException gce
                         && gce.getRequest().getUri().equals(GDRequests.GET_GJ_SONG_INFO)
-                        && e.getCause() instanceof ActionFailedException
-                        && e.getCause().getMessage().equals("-2"), bannedSongParts(tr))
+                        && e.getCause() instanceof ActionFailedException afe
+                        && afe.getResponse().equals("-2"), bannedSongParts(tr))
                 .doOnError(e -> LOGGER.error("Error when extracting song parts", e))
                 .onErrorReturn(unknownSongParts(tr));
     }
