@@ -31,6 +31,12 @@ public final class UltimateGDBotLoginHandler implements LoginHandler {
                         return mono -> mono.onErrorMap(ClientException.isStatusCode(500, 502, 503, 504, 520),
                                 e -> new CreateMessage500Exception());
                     }
+                    if (RouteMatcher.route(Routes.WEBHOOK_MESSAGE_EDIT).matches(request)) {
+                        return mono -> mono.onErrorResume(ClientException.isStatusCode(401), e -> Mono.empty());
+                    }
+                    if (RouteMatcher.route(Routes.INTERACTION_RESPONSE_CREATE).matches(request)) {
+                        return mono -> mono.onErrorResume(ClientException.isStatusCode(400), e -> Mono.empty());
+                    }
                     return Function.identity();
                 })
                 .build();

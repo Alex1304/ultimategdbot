@@ -88,8 +88,8 @@ public final class GDLevels {
         return output.toString();
     }
 
-    public static String formatSong(Translator tr, GDSong song) {
-        return "__" + song.title() + "__ by " + song.artist();
+    public static String formatSong(Translator tr, GDSong song, String emojiNcs) {
+        return (song.isNCS() ? emojiNcs + ' ' : "") + "__" + song.title() + "__ by " + song.artist();
     }
 
     public static String formatSongExtra(Translator tr, GDSong song, String emojiPlay, String emojiDownload) {

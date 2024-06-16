@@ -16,15 +16,17 @@ import org.immutables.value.Value;
 public interface UserSettings {
 
     @Criteria.Id
+    @Value.Parameter
     @JsonProperty("_id")
     long userId();
 
-    boolean showDiscordOnProfile();
+    @Value.Default
+    default boolean hideDiscordFromProfile() {
+        return false;
+    }
 
-    static UserSettings defaultSettings(long userId) {
-        return ImmutableUserSettings.builder()
-                .userId(userId)
-                .showDiscordOnProfile(false)
-                .build();
+    @Value.Default
+    default boolean receiveDmOnEvent() {
+        return true;
     }
 }

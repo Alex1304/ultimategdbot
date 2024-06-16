@@ -17,7 +17,7 @@ import static java.util.Objects.requireNonNull;
 class BroadcastResultCache {
 	
 	private final Cache<Long, List<MessageId>> results = Caffeine.newBuilder()
-			.expireAfterAccess(Duration.ofDays(3))
+			.expireAfterWrite(Duration.ofDays(3))
 			.build();
 	
 	void put(long levelId, List<MessageId> messages) {

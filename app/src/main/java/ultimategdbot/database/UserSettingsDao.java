@@ -21,7 +21,7 @@ public final class UserSettingsDao {
     public Mono<UserSettings> getById(long id) {
         return repository.find(userSettings.userId.is(id))
                 .oneOrNone()
-                .switchIfEmpty(Mono.just(UserSettings.defaultSettings(id)));
+                .switchIfEmpty(Mono.just(ImmutableUserSettings.of(id)));
     }
 
     public Mono<WriteResult> save(UserSettings userSettings) {

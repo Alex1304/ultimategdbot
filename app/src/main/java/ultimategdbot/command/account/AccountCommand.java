@@ -25,7 +25,7 @@ import botrino.interaction.annotation.Subcommand;
                 @Subcommand(
                         name = "settings",
                         description = "View or modify settings that are applied to your account.",
-                        listener = UnlinkSubcommand.class
+                        listener = SettingsSubcommand.class
                 )
         }
 )

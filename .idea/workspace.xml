@@ -8,26 +8,22 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="75a132b0-0d85-411d-b7f6-d4b42a67b31e" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/account/LinkSubcommand.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/account/SettingsSubcommand.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/account/StatusSubcommand.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/account/UnlinkSubcommand.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/account/package-info.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/database/UserSettings.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/database/UserSettingsDao.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/CommandWithOptions.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.run/Main.run.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.run/Main.run.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/module-info.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/module-info.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/AccountCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/account/AccountCommand.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/database/InteractionLog.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/database/InteractionLog.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/database/InteractionLogDao.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/database/InteractionLogDao.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/database/package-info.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/database/package-info.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/account/AccountCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/account/AccountCommand.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/account/SettingsSubcommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/account/SettingsSubcommand.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/database/UserSettings.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/database/UserSettings.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/database/UserSettingsDao.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/database/UserSettingsDao.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/event/BroadcastResultCache.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/event/BroadcastResultCache.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/service/DatabaseService.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/service/DatabaseService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/event/GDEventService.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/event/GDEventService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/framework/UltimateGDBotLoginHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/framework/UltimateGDBotLoginHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/service/GDLevelService.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/service/GDLevelService.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/service/GDUserService.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/service/GDUserService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/util/GDLevels.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/util/GDLevels.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/resources/GeneralStrings.properties" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/resources/GeneralStrings.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/resources/GeneralStrings_fr.properties" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/resources/GeneralStrings_fr.properties" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -158,9 +154,9 @@
       <recent name="ultimategdbot.exception" />
     </key>
     <key name="CopyClassDialog.RECENTS_KEY">
+      <recent name="ultimategdbot.command" />
       <recent name="ultimategdbot.database" />
       <recent name="ultimategdbot.exception" />
-      <recent name="ultimategdbot.command" />
       <recent name="ultimategdbot.util" />
     </key>
   </component>
@@ -172,8 +168,8 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-jdk-9f38398b9061-39b83d9b5494-intellij.indexing.shared.core-IU-241.17011.79" />
-        <option value="bundled-js-predefined-1d06a55b98c1-0b3e54e931b4-JavaScript-IU-241.17011.79" />
+        <option value="bundled-jdk-9f38398b9061-39b83d9b5494-intellij.indexing.shared.core-IU-241.17890.1" />
+        <option value="bundled-js-predefined-1d06a55b98c1-0b3e54e931b4-JavaScript-IU-241.17890.1" />
       </set>
     </attachedChunks>
   </component>
@@ -287,7 +283,9 @@
       <workItem from="1716835303984" duration="202000" />
       <workItem from="1716835539848" duration="3000" />
       <workItem from="1716835586259" duration="2694000" />
-      <workItem from="1717251457175" duration="9633000" />
+      <workItem from="1717251457175" duration="11237000" />
+      <workItem from="1717614244262" duration="450000" />
+      <workItem from="1718556430357" duration="10152000" />
     </task>
     <servers />
   </component>

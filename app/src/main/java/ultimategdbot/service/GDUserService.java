@@ -132,7 +132,7 @@ public final class GDUserService {
                                      GDUserProfile profile) {
         final var role = profile.user().role().orElse(Role.USER);
         final var shownAccounts = linkedAccountsWithSettings.stream()
-                .filter(predicate((acc, settings) -> settings.showDiscordOnProfile()))
+                .filter(predicate((acc, settings) -> !settings.hideDiscordFromProfile()))
                 .map(function((acc, settings) -> acc.getTag()))
                 .collect(Collectors.joining(", "));
         return displayRole(role) + "\n" +
