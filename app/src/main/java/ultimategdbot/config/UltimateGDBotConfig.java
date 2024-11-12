@@ -120,6 +120,8 @@ public interface UltimateGDBotConfig {
 
                 List<String> weekly();
 
+                List<String> event();
+
                 List<String> mod();
 
                 @JsonProperty("elder_mod")

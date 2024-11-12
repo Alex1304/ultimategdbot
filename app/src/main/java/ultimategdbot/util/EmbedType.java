@@ -12,6 +12,7 @@ public enum EmbedType {
     LEVEL_SEARCH_RESULT(tr -> tr.translate(Strings.GD, "search_result")),
     DAILY_LEVEL(tr -> tr.translate(Strings.GD, "daily")),
     WEEKLY_DEMON(tr -> tr.translate(Strings.GD, "weekly")),
+    EVENT_LEVEL(tr -> tr.translate(Strings.GD, "event")),
     RATE(tr -> tr.translate(Strings.GD, "gdevents_title_rate")),
     UNRATE(tr -> tr.translate(Strings.GD, "gdevents_title_unrate")),
     MOD(tr -> tr.translate(Strings.GD, "gdevents_title_promoted")),

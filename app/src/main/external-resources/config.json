@@ -54,6 +54,9 @@
                     "weekly": [
                         "There is a new Weekly demon on Geometry Dash!!!"
                     ],
+                    "event": [
+                        "There is a new Event level on Geometry Dash!!!"
+                    ],
                     "mod": [
                         "A user has been promoted to Geometry Dash moderator!"
                     ],
@@ -85,6 +88,9 @@
                     ],
                     "weekly": [
                         "Congratulations for getting the Weekly demon!"
+                    ],
+                    "event": [
+                        "Congratulations for getting the Event level!"
                     ],
                     "mod": [
                         "Congratulations! You have been promoted to Geometry Dash moderator!"

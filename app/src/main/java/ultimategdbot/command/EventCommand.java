@@ -12,21 +12,21 @@ import ultimategdbot.service.GDLevelService;
 import ultimategdbot.util.EmbedType;
 
 @RdiService
-@ChatInputCommand(name = "daily", description = "Displays info on the current Daily level.")
-public final class DailyCommand implements ChatInputInteractionListener {
+@ChatInputCommand(name = "event", description = "Displays info on the current Event level.")
+public final class EventCommand implements ChatInputInteractionListener {
 
     private final GDCommandCooldown commandCooldown;
     private final GDLevelService levelService;
 
     @RdiFactory
-    public DailyCommand(GDCommandCooldown commandCooldown, GDLevelService levelService) {
+    public EventCommand(GDCommandCooldown commandCooldown, GDLevelService levelService) {
         this.commandCooldown = commandCooldown;
         this.levelService = levelService;
     }
 
     @Override
     public Publisher<?> run(ChatInputInteractionContext ctx) {
-        return levelService.sendTimelyInfo(ctx, EmbedType.DAILY_LEVEL).then();
+        return levelService.sendTimelyInfo(ctx, EmbedType.EVENT_LEVEL).then();
     }
 
     @Override

@@ -20,10 +20,7 @@ import discord4j.discordjson.json.ApplicationCommandOptionData;
 import discord4j.rest.util.Permission;
 import jdash.client.GDClient;
 import jdash.common.LevelSearchMode;
-import jdash.events.object.AwardedLevelAdd;
-import jdash.events.object.AwardedLevelRemove;
-import jdash.events.object.AwardedLevelUpdate;
-import jdash.events.object.DailyLevelChange;
+import jdash.events.object.*;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -94,6 +91,8 @@ public final class GDEventsCommand {
                                     .map(info -> new DailyLevelChange(info, info, false));
                             case Options.WEEKLY_DEMON_CHANGED -> eventToDispatch = gdClient.getWeeklyDemonInfo()
                                     .map(info -> new DailyLevelChange(info, info, true));
+                            case Options.EVENT_LEVEL_CHANGED -> eventToDispatch = gdClient.getEventLevelInfo()
+                                    .map(info -> new EventLevelChange(info, info));
                             default -> {
                                 if (options.levelId == null) {
                                     return Mono.error(new InteractionFailedException(
@@ -152,6 +151,10 @@ public final class GDEventsCommand {
                                         stringValue = WEEKLY_DEMON_CHANGED
                                 ),
                                 @ChatInputCommandGrammar.Choice(
+                                        name = "Event Level Changed",
+                                        stringValue = EVENT_LEVEL_CHANGED
+                                ),
+                                @ChatInputCommandGrammar.Choice(
                                         name = "Awarded Level Added",
                                         stringValue = AWARDED_LEVEL_ADDED
                                 ),
@@ -188,6 +191,7 @@ public final class GDEventsCommand {
         ) {
             private static final String DAILY_LEVEL_CHANGED = "daily_level_changed";
             private static final String WEEKLY_DEMON_CHANGED = "weekly_demon_changed";
+            private static final String EVENT_LEVEL_CHANGED = "event_level_changed";
             private static final String AWARDED_LEVEL_ADDED = "awarded_level_added";
             private static final String AWARDED_LEVEL_REMOVED = "awarded_level_removed";
             private static final String AWARDED_LEVEL_UPDATED = "awarded_level_updated";

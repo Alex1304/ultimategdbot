@@ -8,9 +8,20 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="75a132b0-0d85-411d-b7f6-d4b42a67b31e" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/EventCommand.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/resources/authorIcons/event_level.png" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/util/GDLevels.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/util/GDLevels.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/external-resources/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/external-resources/config.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/DailyCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/DailyCommand.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/GDEventsCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/GDEventsCommand.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/WeeklyCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/WeeklyCommand.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/config/UltimateGDBotConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/config/UltimateGDBotConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/event/GDEventService.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/event/GDEventService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/service/GDLevelService.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/service/GDLevelService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/util/EmbedType.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/util/EmbedType.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/resources/GDStrings.properties" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/resources/GDStrings.properties" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -117,7 +128,7 @@
     &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
     &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
     &quot;run.code.analysis.last.selected.profile&quot;: &quot;pProject Default&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;vcs.Git&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
 }</component>
@@ -136,6 +147,9 @@
       <recent name="ultimategdbot.util.Misc" />
       <recent name="ultimategdbot.util.Leaderboards" />
     </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/app/src/main/resources/authorIcons" />
+    </key>
     <key name="MoveInnerDialog.RECENTS_KEY">
       <recent name="ultimategdbot.command.account" />
       <recent name="ultimategdbot.exception" />
@@ -152,11 +166,18 @@
       <command value="mvn clean package" />
     </option>
   </component>
+  <component name="RunManager">
+    <configuration default="true" type="JetRunConfigurationType">
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+  </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-jdk-9f38398b9061-39b83d9b5494-intellij.indexing.shared.core-IU-241.17890.1" />
-        <option value="bundled-js-predefined-1d06a55b98c1-0b3e54e931b4-JavaScript-IU-241.17890.1" />
+        <option value="bundled-jdk-9823dce3aa75-28b599e66164-intellij.indexing.shared.core-IU-242.23726.103" />
+        <option value="bundled-js-predefined-d6986cc7102b-5c90d61e3bab-JavaScript-IU-242.23726.103" />
       </set>
     </attachedChunks>
   </component>
@@ -274,6 +295,9 @@
       <workItem from="1717614244262" duration="450000" />
       <workItem from="1718556430357" duration="10152000" />
       <workItem from="1718823349834" duration="631000" />
+      <workItem from="1731335949499" duration="4610000" />
+      <workItem from="1731430647902" duration="4000" />
+      <workItem from="1731437846602" duration="2638000" />
     </task>
     <servers />
   </component>

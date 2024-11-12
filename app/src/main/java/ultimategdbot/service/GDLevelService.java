@@ -270,16 +270,26 @@ public final class GDLevelService {
                 .map(Message::getId);
     }
 
-    public Mono<Message> sendTimelyInfo(InteractionContext ctx, boolean isWeekly) {
+    public Mono<Message> sendTimelyInfo(InteractionContext ctx, EmbedType type) {
         final var gdClient = this.gdClient.withCacheDisabled();
-        final var timelyMono = isWeekly ? gdClient.getWeeklyDemonInfo() : gdClient.getDailyLevelInfo();
-        final var downloadId = isWeekly ? -2 : -1;
-        final var type = isWeekly ? EmbedType.WEEKLY_DEMON : EmbedType.DAILY_LEVEL;
+        final var timelyMono = switch (type) {
+            case DAILY_LEVEL -> gdClient.getDailyLevelInfo();
+            case WEEKLY_DEMON -> gdClient.getWeeklyDemonInfo();
+            case EVENT_LEVEL -> gdClient.getEventLevelInfo();
+            default -> throw new IllegalArgumentException();
+        };
+        final var downloadId = switch (type) {
+            case DAILY_LEVEL -> -1;
+            case WEEKLY_DEMON -> -2;
+            case EVENT_LEVEL -> -3;
+            default -> throw new IllegalArgumentException();
+        };
         return timelyMono
                 .flatMap(timely -> detailedEmbed(ctx, downloadId, "-", type, timely)
                         .flatMap(function((embed, files) -> ctx.event()
                                 .createFollowup(ctx.translate(Strings.GD, "timely_of_today",
-                                        type.getAuthorName(ctx), DurationUtils.format(timely.nextIn())))
+                                        type.getAuthorName(ctx),
+                                        type == EmbedType.EVENT_LEVEL ? "???" : DurationUtils.format(timely.nextIn())))
                                 .withEmbeds(embed)
                                 .withFiles(files))))
                 .onErrorMap(e -> e instanceof GDClientException

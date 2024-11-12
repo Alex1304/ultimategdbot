@@ -13,10 +13,7 @@ import discord4j.discordjson.possible.Possible;
 import discord4j.rest.entity.RestChannel;
 import jdash.client.GDClient;
 import jdash.events.GDEventLoop;
-import jdash.events.object.AwardedLevelAdd;
-import jdash.events.object.AwardedLevelRemove;
-import jdash.events.object.AwardedLevelUpdate;
-import jdash.events.object.DailyLevelChange;
+import jdash.events.object.*;
 import jdash.events.producer.GDEventProducer;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -159,6 +156,26 @@ public final class GDEventService {
                                                     .withFiles(files)))))
                             .congratMessage(event -> randomString(event.isWeekly() ?
                                     dmRandomMessages.weekly() : dmRandomMessages.daily()))
+                            .isUpdate(false)
+                            .build())
+                    .matchType(Class.class, EventLevelChange.class::isAssignableFrom, __ -> ImmutableGDEvent
+                            .<EventLevelChange>builder()
+                            .channel(event -> timelyChannel)
+                            .levelIdGetter(event -> Optional.empty())
+                            .recipientAccountId(event -> (gdClient.downloadEventLevel())
+                                    .map(dl -> dl.level().creatorPlayerId())
+                                    .flatMap(playerId -> gdClient.searchUsers("" + playerId, 0).next())
+                                    .map(stats -> stats.user().accountId()))
+                            .messageTemplateFactory(event ->
+                                    gdClient.withWriteOnlyCache().downloadEventLevel()
+                                            .flatMap(dl -> levelService
+                                                    .compactEmbed(tr, dl.level(), EmbedType.EVENT_LEVEL,
+                                                            event.after())
+                                                    .map(function((embed, files) -> MessageCreateSpec.create()
+                                                            .withContent(randomString(publicRandomMessages.event()))
+                                                            .withEmbeds(embed)
+                                                            .withFiles(files)))))
+                            .congratMessage(event -> randomString(dmRandomMessages.event()))
                             .isUpdate(false)
                             .build())
                     .matchType(Class.class, ModStatusUpdate.class::isAssignableFrom, __ -> ImmutableGDEvent

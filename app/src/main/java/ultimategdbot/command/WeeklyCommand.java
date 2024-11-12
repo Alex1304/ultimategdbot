@@ -9,6 +9,7 @@ import com.github.alex1304.rdi.finder.annotation.RdiService;
 import org.reactivestreams.Publisher;
 import ultimategdbot.service.GDCommandCooldown;
 import ultimategdbot.service.GDLevelService;
+import ultimategdbot.util.EmbedType;
 
 @RdiService
 @ChatInputCommand(name = "weekly", description = "Displays info on the current Weekly demon.")
@@ -25,7 +26,7 @@ public final class WeeklyCommand implements ChatInputInteractionListener {
 
     @Override
     public Publisher<?> run(ChatInputInteractionContext ctx) {
-        return levelService.sendTimelyInfo(ctx, true).then();
+        return levelService.sendTimelyInfo(ctx, EmbedType.WEEKLY_DEMON).then();
     }
 
     @Override
