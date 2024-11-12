@@ -8,20 +8,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="75a132b0-0d85-411d-b7f6-d4b42a67b31e" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/EventCommand.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/resources/authorIcons/event_level.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/external-resources/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/external-resources/config.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/DailyCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/DailyCommand.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/GDEventsCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/GDEventsCommand.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/WeeklyCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/WeeklyCommand.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/config/UltimateGDBotConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/config/UltimateGDBotConfig.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/event/GDEventService.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/event/GDEventService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/service/GDLevelService.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/service/GDLevelService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/util/EmbedType.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/util/EmbedType.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/resources/GDStrings.properties" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/resources/GDStrings.properties" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -297,7 +284,7 @@
       <workItem from="1718823349834" duration="631000" />
       <workItem from="1731335949499" duration="4610000" />
       <workItem from="1731430647902" duration="4000" />
-      <workItem from="1731437846602" duration="2638000" />
+      <workItem from="1731437846602" duration="2784000" />
     </task>
     <servers />
   </component>

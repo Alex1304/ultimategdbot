@@ -229,6 +229,7 @@ public final class GDEventService {
                         GDEventProducer.awardedLevels(),
                         //GDEventProducer.awardedLists(),
                         GDEventProducer.dailyLevels(),
+                        GDEventProducer.eventLevels(),
                         eventProducer))
                 .setInterval(Duration.ofSeconds(config.eventLoopIntervalSeconds()))
                 .buildAndStart()
