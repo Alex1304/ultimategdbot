@@ -1,4 +1,4 @@
 @NullMarked
-package ultimategdbot.framework;
+package ultimategdbot.util;
 
 import org.jspecify.annotations.NullMarked;

@@ -16,16 +16,16 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>17</java.version>
         <plugin.compiler.version>3.13.0</plugin.compiler.version>
-        <plugin.install.version>3.1.1</plugin.install.version>
-        <plugin.deploy.version>3.1.1</plugin.deploy.version>
+        <plugin.install.version>4.0.0-beta-2</plugin.install.version>
+        <plugin.deploy.version>4.0.0-beta-2</plugin.deploy.version>
         <plugin.jlink.version>3.2.0</plugin.jlink.version>
         <plugin.dependency.version>3.6.1</plugin.dependency.version>
         <plugin.resources.version>3.3.1</plugin.resources.version>
         <plugin.antrun.version>3.1.0</plugin.antrun.version>
-        <botrino.version>1.1.1</botrino.version>
-        <logback.version>1.5.6</logback.version>
-        <immutables.version>2.10.1</immutables.version>
-        <reactor.version>2020.0.33</reactor.version>
+        <botrino.version>1.2.0</botrino.version>
+        <logback.version>1.5.23</logback.version>
+        <immutables.version>2.12.0</immutables.version>
+        <reactor.version>2025.0.1</reactor.version>
         <delivery.name>${project.parent.artifactId}-${project.version}</delivery.name>
         <delivery.directory>${project.build.directory}/${delivery.name}</delivery.directory>
         <app.build.directory>${project.basedir}/../app/target</app.build.directory>

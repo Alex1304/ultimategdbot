@@ -107,6 +107,7 @@ public final class FollowCommand implements ChatInputInteractionListener {
         private static final String NEW_DAILY_WEEKLY_LEVELS = "New Daily/Weekly Levels";
         private static final String NEW_GD_MODERATOR_PROMOTIONS_DEMOTIONS = "New GD Moderator Promotions/Demotions";
 
+        @SuppressWarnings("NotNullFieldNotInitialized")
         @ChatInputCommandGrammar.Option(
                 type = ApplicationCommandOption.Type.STRING,
                 name = "news-feed",
@@ -132,6 +133,7 @@ public final class FollowCommand implements ChatInputInteractionListener {
         )
         String newsFeed;
 
+        @SuppressWarnings("NotNullFieldNotInitialized")
         @ChatInputCommandGrammar.Option(
                 type = ApplicationCommandOption.Type.CHANNEL,
                 name = "target-channel",

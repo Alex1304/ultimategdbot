@@ -17,38 +17,13 @@ public interface UltimateGDBotConfig {
     @JsonProperty("pagination_max_entries")
     int paginationMaxEntries();
 
-    @JsonProperty("emoji_guild_ids")
-    Set<Long> emojiGuildIds();
-
     @JsonProperty("command_cooldown")
     Optional<Limiter> commandCooldown();
-
-    @JsonProperty("legacy_command_redirect_prefix")
-    Optional<String> legacyCommandRedirectPrefix();
-
-    @Value.Default
-    @JsonProperty("command_permissions")
-    default List<CommandPermission> commandPermissions() {
-        return List.of();
-    }
 
     @Value.Default
     @JsonProperty("bot_announcements_channel_ids")
     default Set<Long> botAnnouncementsChannelIds() {
         return Set.of();
-    }
-
-    @Value.Immutable
-    @JsonDeserialize(as = ImmutableCommandPermission.class)
-    interface CommandPermission {
-
-        String name();
-
-        @JsonProperty("guild_id")
-        long guildId();
-
-        @JsonProperty("role_id")
-        long roleId();
     }
 
     GD gd();

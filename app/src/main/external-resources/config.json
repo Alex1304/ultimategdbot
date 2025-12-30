@@ -15,12 +15,10 @@
     },
     "ultimategdbot": {
         "pagination_max_entries": 30,
-        "emoji_guild_ids": [],
         "command_cooldown": {
             "limit": 2,
             "interval_seconds": 30
         },
-        "command_permissions": [],
         "bot_announcements_channel_ids": [],
         "gd": {
             "client": {

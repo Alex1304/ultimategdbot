@@ -3,6 +3,7 @@ package ultimategdbot.service;
 import botrino.interaction.privilege.Privilege;
 import com.github.alex1304.rdi.finder.annotation.RdiFactory;
 import com.github.alex1304.rdi.finder.annotation.RdiService;
+import discord4j.common.util.Snowflake;
 import discord4j.core.object.entity.ApplicationInfo;
 import reactor.core.publisher.Mono;
 import ultimategdbot.database.GdLinkedUserDao;
@@ -20,7 +21,7 @@ public final class PrivilegeFactory {
 
     @RdiFactory
     public PrivilegeFactory(ApplicationInfo applicationInfo, GdLinkedUserDao gdLinkedUserDao, GdModDao gdModDao) {
-        this.ownerId = applicationInfo.getOwnerId().asLong();
+        this.ownerId = applicationInfo.getOwnerId().map(Snowflake::asLong).orElse(0L);
         this.gdLinkedUserDao = gdLinkedUserDao;
         this.gdModDao = gdModDao;
     }

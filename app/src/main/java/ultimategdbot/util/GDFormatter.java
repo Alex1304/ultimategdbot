@@ -14,7 +14,6 @@ public final class GDFormatter {
             case NONE -> "policy_none";
             case FRIENDS_ONLY -> "policy_friends_only";
             case ALL -> "policy_all";
-            default -> throw new AssertionError();
         };
         return tr.translate(Strings.GD, str);
 	}

@@ -25,7 +25,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.Logger;
 import reactor.util.Loggers;
-import reactor.util.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 import ultimategdbot.Strings;
@@ -34,6 +34,7 @@ import ultimategdbot.util.GDLevels;
 import ultimategdbot.util.Interactions;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.IntFunction;
@@ -222,8 +223,8 @@ public final class GDLevelService {
 
     public Mono<Void> interactiveSearch(InteractionContext ctx, String title,
                                         IntFunction<? extends Flux<? extends GDLevel>> searchFunction) {
-        final var resultsOfCurrentPage = new AtomicReference<List<? extends GDLevel>>();
-        final var selectionMessageId = new AtomicReference<Snowflake>();
+        final var resultsOfCurrentPage = new AtomicReference<@Nullable List<? extends GDLevel>>();
+        final var selectionMessageId = new AtomicReference<@Nullable Snowflake>();
         final var selectMenuId = UUID.randomUUID().toString();
         return searchFunction.apply(0).collectList()
                 .doOnNext(resultsOfCurrentPage::set)
@@ -245,7 +246,7 @@ public final class GDLevelService {
                                         ))
                                 )),
                         ctx.awaitSelectMenuItems(selectMenuId)
-                                .map(items -> resultsOfCurrentPage.get().stream()
+                                .map(items -> Objects.requireNonNull(resultsOfCurrentPage.get()).stream()
                                         .filter(level -> level.id() == Long.parseLong(items.get(0)))
                                         .findAny()
                                         .orElseThrow())

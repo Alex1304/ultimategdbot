@@ -1,4 +1,4 @@
-@NonNullApi
+@NullMarked
 package ultimategdbot.service;
 
-import reactor.util.annotation.NonNullApi;
+import org.jspecify.annotations.NullMarked;

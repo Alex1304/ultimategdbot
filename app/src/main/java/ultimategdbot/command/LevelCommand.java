@@ -60,6 +60,7 @@ public final class LevelCommand implements ChatInputInteractionListener {
 
     private static final class Options {
 
+        @SuppressWarnings("NotNullFieldNotInitialized")
         @ChatInputCommandGrammar.Option(
                 type = ApplicationCommandOption.Type.STRING,
                 name = "query",

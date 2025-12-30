@@ -17,7 +17,11 @@ git add .
 git commit -m "Release version v$1"
 git tag "v$1"
 ./build-multiplatform-distributions.sh
-scp "delivery/target/distribution/ultimategdbot-$1_linux_x64.zip" alex@alex1304.com:/home/alex/ultimategdbot/deploy
+zipdir="/home/alex/bots/ultimategdbot-stable"
+configdir="/home/alex/bots/configs/ultimategdbot-stable"
+zipfile="ultimategdbot-$1_linux_x64.zip"
+scp "delivery/target/distribution/$zipfile" alex@alex1304.com:$zipdir
+ssh alex@alex1304.com "bash -s" < ./deploy.sh $zipdir $zipfile $configdir
 mvn versions:set -DnewVersion=$2
 git add .
 git commit -m "Prepare for next development iteration"

@@ -16,6 +16,7 @@ import com.github.alex1304.rdi.finder.annotation.RdiService;
 import discord4j.core.object.command.ApplicationCommandOption;
 import discord4j.discordjson.json.ApplicationCommandOptionData;
 import jdash.client.GDClient;
+import org.jspecify.annotations.Nullable;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 import ultimategdbot.Strings;
@@ -100,12 +101,12 @@ public final class ProfileCommand implements ChatInputInteractionListener, UserI
                     name = "gd-username",
                     description = "The GD username of the target."
             )
-            String gdUsername,
+            @Nullable String gdUsername,
             @ChatInputCommandGrammar.Option(
                     type = ApplicationCommandOption.Type.BOOLEAN,
                     name = "show-completed-levels",
                     description = "Whether to show completed levels."
             )
-            Boolean showCompletedLevels
+            @Nullable Boolean showCompletedLevels
     ) {}
 }

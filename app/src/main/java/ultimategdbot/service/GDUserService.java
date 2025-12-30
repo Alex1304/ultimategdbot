@@ -15,7 +15,7 @@ import jdash.common.Role;
 import jdash.common.entity.GDUserProfile;
 import jdash.graphics.IconSetFactory;
 import reactor.core.publisher.Mono;
-import reactor.util.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import reactor.util.function.Tuple2;
 import ultimategdbot.Strings;
 import ultimategdbot.database.GdLinkedUserDao;
@@ -162,8 +162,8 @@ public final class GDUserService {
     }
 
     private void appendCompletedLevels(Translator tr, EmbedCreateSpec.Builder embed,
-                                       @Nullable GDUserProfile.CompletedClassicLevels classic,
-                                       @Nullable GDUserProfile.CompletedPlatformerLevels platformer) {
+                                       GDUserProfile.@Nullable CompletedClassicLevels classic,
+                                       GDUserProfile.@Nullable CompletedPlatformerLevels platformer) {
         if (classic == null && platformer == null) return;
         final var sb = new StringBuilder();
         completedLevelEntry(sb, "icon_auto",
@@ -197,7 +197,7 @@ public final class GDUserService {
     }
 
     private void appendCompletedDemons(Translator tr, EmbedCreateSpec.Builder embed,
-                                       @Nullable GDUserProfile.CompletedDemons demons) {
+                                       GDUserProfile.@Nullable CompletedDemons demons) {
         if (demons == null) return;
         final var sb = new StringBuilder();
         completedLevelEntry(sb, "icon_demon_easy",

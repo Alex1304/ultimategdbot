@@ -60,6 +60,7 @@ public final class LevelsByCommand implements ChatInputInteractionListener {
 
     private static final class Options {
 
+        @SuppressWarnings("NotNullFieldNotInitialized")
         @ChatInputCommandGrammar.Option(
                 type = ApplicationCommandOption.Type.STRING,
                 name = "gd-username",

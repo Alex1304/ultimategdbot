@@ -19,6 +19,7 @@ import discord4j.discordjson.json.ApplicationCommandOptionData;
 import jdash.client.GDClient;
 import jdash.common.Role;
 import jdash.common.entity.GDUserProfile;
+import org.jspecify.annotations.Nullable;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 import ultimategdbot.Strings;
@@ -105,6 +106,6 @@ public final class CheckModCommand implements ChatInputInteractionListener, User
                 name = "gd-username",
                 description = "The GD username of the target."
         )
-        String gdUsername;
+        @Nullable String gdUsername;
     }
 }

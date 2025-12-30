@@ -8,7 +8,37 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="75a132b0-0d85-411d-b7f6-d4b42a67b31e" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/util/package-info.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/external-resources/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/external-resources/config.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/CheckModCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/CheckModCommand.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/FollowCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/FollowCommand.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/GDEventsCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/GDEventsCommand.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/LevelCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/LevelCommand.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/LevelsByCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/LevelsByCommand.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/ProfileCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/ProfileCommand.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/account/SettingsSubcommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/account/SettingsSubcommand.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/account/package-info.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/account/package-info.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/package-info.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/package-info.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/config/UltimateGDBotConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/config/UltimateGDBotConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/config/package-info.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/config/package-info.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/database/package-info.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/database/package-info.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/event/GDEventService.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/event/GDEventService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/event/GDEventSubscriber.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/event/GDEventSubscriber.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/event/package-info.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/event/package-info.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/framework/package-info.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/framework/package-info.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/service/EmojiService.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/service/EmojiService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/service/GDLevelService.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/service/GDLevelService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/service/GDUserService.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/service/GDUserService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/service/PrivilegeFactory.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/service/PrivilegeFactory.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/service/ReactionEmojiFormatter.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/service/package-info.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/service/package-info.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/util/GDFormatter.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/util/GDFormatter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/release.sh" beforeDir="false" afterPath="$PROJECT_DIR$/release.sh" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -24,8 +54,8 @@
         <option value="Interface" />
         <option value="Enum" />
         <option value="AnnotationType" />
-        <option value="package-info" />
         <option value="Class" />
+        <option value="package-info" />
       </list>
     </option>
   </component>
@@ -63,6 +93,10 @@
   <component name="KotlinCodeInsightWorkspaceSettings">
     <option name="optimizeImportsOnTheFly" value="true" />
   </component>
+  <component name="KubernetesApiPersistence">{}</component>
+  <component name="KubernetesApiProvider">{
+  &quot;isMigrated&quot;: true
+}</component>
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
   </component>
@@ -92,33 +126,36 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Application.Main.executor&quot;: &quot;Run&quot;,
-    &quot;Maven.ultimategdbot [clean,package].executor&quot;: &quot;Run&quot;,
-    &quot;Maven.ultimategdbot [clean].executor&quot;: &quot;Run&quot;,
-    &quot;Maven.ultimategdbot [dependency:copy-dependencies].executor&quot;: &quot;Run&quot;,
-    &quot;Maven.ultimategdbot [package].executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_directory_selection&quot;: &quot;/home/alexandre/dev/ultimategdbot/app/src/main/java/ultimategdbot/exception&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/home/alexandre/dev/ultimategdbot/app/src/main/java/ultimategdbot/database&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;project.structure.last.edited&quot;: &quot;Project&quot;,
-    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
-    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
-    &quot;run.code.analysis.last.selected.profile&quot;: &quot;pProject Default&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;vcs.Git&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Application.Main.executor": "Run",
+    "Maven.ultimategdbot [clean,package].executor": "Run",
+    "Maven.ultimategdbot [clean].executor": "Run",
+    "Maven.ultimategdbot [dependency:copy-dependencies].executor": "Run",
+    "Maven.ultimategdbot [package].executor": "Run",
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "SHELLCHECK.PATH": "/home/alexandre/.local/share/JetBrains/IntelliJIdea2024.1/Shell Script/shellcheck",
+    "WebServerToolWindowFactoryState": "false",
+    "git-widget-placeholder": "v8.1.0",
+    "kotlin-language-version-configured": "true",
+    "last_directory_selection": "/home/alexandre/dev/ultimategdbot/app/src/main/java/ultimategdbot/exception",
+    "last_opened_file_path": "/home/alexandre/dev/rdi",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "project.structure.last.edited": "Project",
+    "project.structure.proportion": "0.0",
+    "project.structure.side.proportion": "0.0",
+    "run.code.analysis.last.selected.profile": "pProject Default",
+    "settings.editor.selected.configurable": "vcs.Git",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="ReactorSettings">
     <option name="notificationShown" value="true" />
   </component>
@@ -152,21 +189,6 @@
     <option name="myCommands">
       <command value="mvn clean package" />
     </option>
-  </component>
-  <component name="RunManager">
-    <configuration default="true" type="JetRunConfigurationType">
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
-  </component>
-  <component name="SharedIndexes">
-    <attachedChunks>
-      <set>
-        <option value="bundled-jdk-9823dce3aa75-28b599e66164-intellij.indexing.shared.core-IU-242.23726.103" />
-        <option value="bundled-js-predefined-d6986cc7102b-5c90d61e3bab-JavaScript-IU-242.23726.103" />
-      </set>
-    </attachedChunks>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
@@ -284,7 +306,10 @@
       <workItem from="1718823349834" duration="631000" />
       <workItem from="1731335949499" duration="4610000" />
       <workItem from="1731430647902" duration="4000" />
-      <workItem from="1731437846602" duration="2784000" />
+      <workItem from="1731437846602" duration="3441000" />
+      <workItem from="1736708627714" duration="123000" />
+      <workItem from="1750600391493" duration="2155000" />
+      <workItem from="1762804923965" duration="8000" />
     </task>
     <servers />
   </component>

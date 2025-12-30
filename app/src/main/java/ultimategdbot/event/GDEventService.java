@@ -15,6 +15,7 @@ import jdash.client.GDClient;
 import jdash.events.GDEventLoop;
 import jdash.events.object.*;
 import jdash.events.producer.GDEventProducer;
+import org.jspecify.annotations.Nullable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.Logger;
@@ -33,10 +34,7 @@ import ultimategdbot.service.GDUserService;
 import ultimategdbot.util.EmbedType;
 
 import java.time.Duration;
-import java.util.List;
-import java.util.Optional;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 
 import static botrino.api.util.MessageUtils.toMessageEditSpec;
 import static reactor.function.TupleUtils.function;
@@ -57,14 +55,14 @@ public final class GDEventService {
     private final Translator tr;
 
     private final BroadcastResultCache broadcastResultCache = new BroadcastResultCache();
-    private final CrosspostQueue crosspostQueue;
+    private final @Nullable CrosspostQueue crosspostQueue;
 
     private final List<RestChannel> ratesChannels;
     private final List<RestChannel> demonsChannels;
-    private final RestChannel timelyChannel;
-    private final RestChannel modsChannel;
+    private final @Nullable RestChannel timelyChannel;
+    private final @Nullable RestChannel modsChannel;
     private final UltimateGDBotConfig.GD.Events.RandomMessages publicRandomMessages;
-    private final UltimateGDBotConfig.GD.Events.RandomMessages dmRandomMessages;
+    private final UltimateGDBotConfig.GD.Events.@Nullable RandomMessages dmRandomMessages;
 
     private long ratesChannelRotator;
     private long demonsChannelRotator;
@@ -91,7 +89,7 @@ public final class GDEventService {
                                             .withContent(randomString(publicRandomMessages.rates()))
                                             .withEmbeds(embed)
                                             .withFiles(files))))
-                            .congratMessage(event -> randomString(dmRandomMessages.rates()))
+                            .congratMessage(event -> randomString(Objects.requireNonNull(dmRandomMessages).rates()))
                             .isUpdate(false)
                             .build())
                     .matchType(Class.class, AwardedLevelRemove.class::isAssignableFrom, __ -> ImmutableGDEvent
@@ -112,7 +110,7 @@ public final class GDEventService {
                                             .withContent(randomString(publicRandomMessages.unrates()))
                                             .withEmbeds(embed)
                                             .withFiles(files))))
-                            .congratMessage(event -> randomString(dmRandomMessages.unrates()))
+                            .congratMessage(event -> randomString(Objects.requireNonNull(dmRandomMessages).unrates()))
                             .isUpdate(false)
                             .build())
                     .matchType(Class.class, AwardedLevelUpdate.class::isAssignableFrom, __ -> ImmutableGDEvent
@@ -155,7 +153,8 @@ public final class GDEventService {
                                                     .withEmbeds(embed)
                                                     .withFiles(files)))))
                             .congratMessage(event -> randomString(event.isWeekly() ?
-                                    dmRandomMessages.weekly() : dmRandomMessages.daily()))
+                                    Objects.requireNonNull(dmRandomMessages).weekly() :
+                                    Objects.requireNonNull(dmRandomMessages).daily()))
                             .isUpdate(false)
                             .build())
                     .matchType(Class.class, EventLevelChange.class::isAssignableFrom, __ -> ImmutableGDEvent
@@ -175,7 +174,7 @@ public final class GDEventService {
                                                             .withContent(randomString(publicRandomMessages.event()))
                                                             .withEmbeds(embed)
                                                             .withFiles(files)))))
-                            .congratMessage(event -> randomString(dmRandomMessages.event()))
+                            .congratMessage(event -> randomString(Objects.requireNonNull(dmRandomMessages).event()))
                             .isUpdate(false)
                             .build())
                     .matchType(Class.class, ModStatusUpdate.class::isAssignableFrom, __ -> ImmutableGDEvent
@@ -187,7 +186,7 @@ public final class GDEventService {
                                     .buildProfile(tr, event.user(), event.type().embedType(), false)
                                     .map(messageTemplate -> messageTemplate.withContent(
                                             randomString(event.type().selectList(publicRandomMessages)))))
-                            .congratMessage(event -> randomString(event.type().selectList(dmRandomMessages)))
+                            .congratMessage(event -> randomString(event.type().selectList(Objects.requireNonNull(dmRandomMessages))))
                             .isUpdate(false)
                             .build())
                     .apply(type);
@@ -248,7 +247,7 @@ public final class GDEventService {
             return Mono.empty();
         }
         if (gdEvent.isUpdate()) {
-            return Mono.justOrEmpty(gdEvent.levelId(event).flatMap(broadcastResultCache::get))
+            final var doUpdate = Mono.justOrEmpty(gdEvent.levelId(event).flatMap(broadcastResultCache::get))
                     .flatMapMany(Flux::fromIterable)
                     .flatMap(old -> gdEvent.createMessageTemplate(event)
                             .map(spec -> {
@@ -265,6 +264,9 @@ public final class GDEventService {
                     .filter(results -> !results.isEmpty())
                     .doOnNext(results -> gdEvent.levelId(event).ifPresent(id -> cacheMessage(id, results)))
                     .then();
+            return Mono.fromRunnable(() -> doUpdate.subscribe(null,
+                    t -> LOGGER.error("Unable to update message for event " + event, t),
+                    () -> LOGGER.info("Successfully updated message for event {}", event)));
         }
         final var sendGuild = Mono.defer(() -> gdEvent.createMessageTemplate(event))
                 .flatMap(msg -> Mono.justOrEmpty(gdEvent.channel(event))

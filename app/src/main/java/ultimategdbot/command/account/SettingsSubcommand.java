@@ -10,7 +10,7 @@ import com.github.alex1304.rdi.finder.annotation.RdiService;
 import discord4j.core.object.command.ApplicationCommandOption;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
-import reactor.util.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import ultimategdbot.Strings;
 import ultimategdbot.command.CommandWithOptions;
 import ultimategdbot.database.ImmutableUserSettings;

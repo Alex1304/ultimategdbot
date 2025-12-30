@@ -1,6 +1,6 @@
-@NonNullApi
+@NullMarked
 @ImmutablesStyle
 package ultimategdbot.config;
 
-import reactor.util.annotation.NonNullApi;
+import org.jspecify.annotations.NullMarked;
 import ultimategdbot.util.ImmutablesStyle;
