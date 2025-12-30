@@ -7,39 +7,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="75a132b0-0d85-411d-b7f6-d4b42a67b31e" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/util/package-info.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/external-resources/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/external-resources/config.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/CheckModCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/CheckModCommand.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/FollowCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/FollowCommand.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/GDEventsCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/GDEventsCommand.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/LevelCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/LevelCommand.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/LevelsByCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/LevelsByCommand.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/ProfileCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/ProfileCommand.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/account/SettingsSubcommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/account/SettingsSubcommand.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/account/package-info.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/account/package-info.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/package-info.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/package-info.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/config/UltimateGDBotConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/config/UltimateGDBotConfig.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/config/package-info.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/config/package-info.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/database/package-info.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/database/package-info.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/event/GDEventService.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/event/GDEventService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/event/GDEventSubscriber.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/event/GDEventSubscriber.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/event/package-info.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/event/package-info.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/framework/package-info.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/framework/package-info.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/service/EmojiService.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/service/EmojiService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/service/GDLevelService.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/service/GDLevelService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/service/GDUserService.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/service/GDUserService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/service/PrivilegeFactory.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/service/PrivilegeFactory.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/service/ReactionEmojiFormatter.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/service/package-info.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/service/package-info.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/util/GDFormatter.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/util/GDFormatter.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/release.sh" beforeDir="false" afterPath="$PROJECT_DIR$/release.sh" afterDir="false" />
-    </list>
+    <list default="true" id="75a132b0-0d85-411d-b7f6-d4b42a67b31e" name="Default Changelist" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -139,7 +107,7 @@
     "RunOnceActivity.git.unshallow": "true",
     "SHELLCHECK.PATH": "/home/alexandre/.local/share/JetBrains/IntelliJIdea2024.1/Shell Script/shellcheck",
     "WebServerToolWindowFactoryState": "false",
-    "git-widget-placeholder": "v8.1.0",
+    "git-widget-placeholder": "master",
     "kotlin-language-version-configured": "true",
     "last_directory_selection": "/home/alexandre/dev/ultimategdbot/app/src/main/java/ultimategdbot/exception",
     "last_opened_file_path": "/home/alexandre/dev/rdi",
