@@ -13,22 +13,22 @@ import discord4j.core.object.component.SelectMenu;
 import discord4j.core.object.entity.Message;
 import discord4j.core.spec.EmbedCreateSpec;
 import discord4j.core.spec.MessageCreateFields.File;
-import discord4j.core.spec.MessageCreateSpec;
 import jdash.client.GDClient;
 import jdash.client.exception.ActionFailedException;
 import jdash.client.exception.GDClientException;
 import jdash.client.request.GDRequests;
-import jdash.common.Length;
 import jdash.common.entity.GDDailyInfo;
 import jdash.common.entity.GDLevel;
+import org.jspecify.annotations.Nullable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.Logger;
 import reactor.util.Loggers;
-import org.jspecify.annotations.Nullable;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 import ultimategdbot.Strings;
+import ultimategdbot.component.LevelSearchResultsComponent;
+import ultimategdbot.util.ComponentsV2Composer;
 import ultimategdbot.util.EmbedType;
 import ultimategdbot.util.GDLevels;
 import ultimategdbot.util.Interactions;
@@ -41,7 +41,6 @@ import java.util.function.IntFunction;
 
 import static botrino.api.util.Markdown.*;
 import static reactor.function.TupleUtils.function;
-import static ultimategdbot.util.GDFormatter.formatCode;
 import static ultimategdbot.util.GDLevels.*;
 
 @RdiService
@@ -56,51 +55,6 @@ public final class GDLevelService {
     public GDLevelService(EmojiService emoji, GDClient gdClient) {
         this.emoji = emoji;
         this.gdClient = gdClient;
-    }
-
-    public EmbedCreateSpec searchResultsEmbed(InteractionContext ctx, Iterable<? extends GDLevel> results, String title,
-                                              int page) {
-        final var embed = EmbedCreateSpec.builder();
-        embed.title(title);
-        var i = 1;
-        for (final var level : results) {
-            final var coins = coinsToEmoji(emoji.get(level.hasCoinsVerified()
-                    ? "user_coin" : "user_coin_unverified"), level.coinCount(), true);
-            final var song = level.song().map(s -> formatSong(ctx, s, emoji.get("ncs1") + emoji.get("ncs2")))
-                    .orElse(":warning: " + ctx.translate(Strings.GD, "song_unknown"));
-            final var difficulty = emoji.get(getDifficultyEmojiForLevel(level));
-            final var quality = getQualityEmojiForLevel(level).map(emoji::get).orElse("");
-            final var reward = emoji.get(level.isPlatformer() ? "moon" : "star");
-            embed.addField(String.format("`%02d` - %s%s | %d",
-                            i,
-                            quality + difficulty + (level.rewards() > 0 ? reward + " x" + level.rewards() : ""),
-                            coins.equals("None") ? "" : ' ' + coins,
-                            level.id()),
-                    String.format("""
-                                    %s __**%s**__ by **%s** %s%s
-                                    %s %d \t\t %s %d \t\t %s %s
-                                    :musical_note: **%s**
-                                     _ _""",
-                            emoji.get("play"),
-                            level.name(),
-                            level.creatorName().orElse("-"),
-                            level.originalLevelId().orElse(0L) > 0 ? emoji.get("copy") : "",
-                            level.objectCount() > 40_000 ? emoji.get("object_overflow") : "",
-                            emoji.get("downloads"),
-                            level.downloads(),
-                            emoji.get(level.likes() >= 0 ? "like" : "dislike"),
-                            level.likes(),
-                            emoji.get("length"),
-                            level.length() == Length.PLATFORMER ? "PLAT." : level.length().name(),
-                            song), false);
-            i++;
-        }
-        if (i == 1) {
-            embed.description(italic(ctx.translate(Strings.GD, "no_results")));
-        }
-        embed.addField(ctx.translate(Strings.GENERAL, "page_number", page + 1),
-                ctx.translate(Strings.GENERAL, "page_instructions"), false);
-        return embed.build();
     }
 
     private Mono<Tuple2<EmbedCreateSpec, List<File>>> detailedEmbed(InteractionContext ctx, long levelId,
@@ -120,8 +74,8 @@ public final class GDLevelService {
                             (level.description().isEmpty()
                                     ? italic('(' + ctx.translate(Strings.GD, "no_description") + ')')
                                     : escape(level.description()));
-                    final var coins = formatCoins(ctx, level);
-                    final var downloadLikesLength = formatDownloadsLikesLength(level);
+                    final var coins = formatCoins(emoji, ctx, level);
+                    final var downloadLikesLength = formatDownloadsLikesLength(emoji, level);
                     var objCount = bold(ctx.translate(Strings.GD, "label_object_count")) + ' ';
                     if (level.objectCount() > 0 || level.levelVersion() >= 21) {
                         if (level.objectCount() == 65535) {
@@ -190,7 +144,7 @@ public final class GDLevelService {
                             songParts.getT2() + "\n_ _\n" + extraInfo, false);
                     return Tuples.of(dl.level(), embed.build());
                 }))
-                .flatMap(function((level, embed) -> getDifficultyImageForLevel(level)
+                .flatMap(function((level, embed) -> getDifficultyImageForLevel(level, false)
                         .map(inputStream -> Tuples.of(embed, List.of(
                                 File.of("difficulty.png", inputStream),
                                 File.of("author.png", type.iconInputStream())
@@ -199,18 +153,15 @@ public final class GDLevelService {
 
     public Mono<Tuple2<EmbedCreateSpec, List<File>>> compactEmbed(Translator tr, GDLevel level, EmbedType type,
                                                                   @Nullable GDDailyInfo timelyInfo) {
-        return Mono.zip(extractSongParts(tr, level).map(Tuple2::getT1), getDifficultyImageForLevel(level))
+        return Mono.zip(extractSongParts(tr, level).map(Tuple2::getT1), getDifficultyImageForLevel(level, false))
                 .map(function((songInfo, inputStream) -> {
                     final var embed = EmbedCreateSpec.builder();
                     final var suffix = timelyInfo != null ? " #" + timelyInfo.number() : "";
                     embed.author(type.getAuthorName(tr) + suffix, null, "attachment://author.png");
                     embed.thumbnail("attachment://difficulty.png");
-                    final var title =
-                            emoji.get("play") + "  __" + level.name() + "__ by " + level.creatorName().orElse("-") +
-                                    (level.originalLevelId().orElse(0L) > 0 ? ' ' + emoji.get("copy") : "") +
-                                    (level.objectCount() > 40_000 ? ' ' + emoji.get("object_overflow") : "");
-                    final var coins = formatCoins(tr, level);
-                    final var downloadLikesLength = formatDownloadsLikesLength(level);
+                    final var title = formatLevelHeader(emoji, level);
+                    final var coins = formatCoins(emoji, tr, level);
+                    final var downloadLikesLength = formatDownloadsLikesLength(emoji, level);
                     embed.addField(title, downloadLikesLength, false);
                     embed.addField(coins, ":musical_note:   " + songInfo, false);
                     embed.footer(tr.translate(Strings.GD, "label_level_id") + ' ' + level.id(), null);
@@ -226,26 +177,32 @@ public final class GDLevelService {
         final var resultsOfCurrentPage = new AtomicReference<@Nullable List<? extends GDLevel>>();
         final var selectionMessageId = new AtomicReference<@Nullable Snowflake>();
         final var selectMenuId = UUID.randomUUID().toString();
-        return searchFunction.apply(0).collectList()
+        final var splitSearchFunction = GDLevels.splittingSearchFunction(searchFunction, 2);
+        return splitSearchFunction.apply(0).collectList()
                 .doOnNext(resultsOfCurrentPage::set)
                 .flatMap(results -> results.size() == 1 ? sendSelectedSearchResult(ctx, results.get(0), null).then()
                         : Mono.firstWithSignal(
-                        MessagePaginator.paginate(ctx, Integer.MAX_VALUE, state -> searchFunction
+                        MessagePaginator.paginate(ctx, Integer.MAX_VALUE, state -> splitSearchFunction
                                 .apply(state.getPage())
+                                .onErrorResume(e -> Flux.empty())
                                 .collectList()
                                 .doOnNext(resultsOfCurrentPage::set)
-                                .map(newResults -> MessageCreateSpec.create()
-                                        .withEmbeds(searchResultsEmbed(ctx, newResults, title, state.getPage()))
-                                        .withComponents(Interactions.paginationButtons(ctx, state), ActionRow.of(
-                                                SelectMenu.of(selectMenuId, newResults.stream()
+                                .flatMap(newResults -> ComponentsV2Composer.composeMessage(
+                                        new LevelSearchResultsComponent(ctx, emoji, title, newResults,
+                                                state),
+                                        () -> ActionRow.of(SelectMenu.of(selectMenuId,
+                                                        Objects.requireNonNull(resultsOfCurrentPage.get())
+                                                                .stream()
                                                                 .map(level -> SelectMenu.Option.of(
-                                                                        GDLevels.format(level).replaceAll("_", ""),
+                                                                        GDLevels.format(level)
+                                                                                .replaceAll("_", ""),
                                                                         level.id() + ""))
                                                                 .toList())
-                                                        .disabled(!state.isActive())
-                                        ))
-                                )),
-                        ctx.awaitSelectMenuItems(selectMenuId)
+                                                .disabled(!state.isActive())
+                                        ),
+                                        () -> Interactions.paginationButtons(ctx, state)
+                                ))),
+                        Mono.defer(() -> ctx.awaitSelectMenuItems(selectMenuId))
                                 .map(items -> Objects.requireNonNull(resultsOfCurrentPage.get()).stream()
                                         .filter(level -> level.id() == Long.parseLong(items.get(0)))
                                         .findAny()
@@ -312,21 +269,6 @@ public final class GDLevelService {
                         && afe.getResponse().equals("-2"), bannedSongParts(tr))
                 .doOnError(e -> LOGGER.error("Error when extracting song parts", e))
                 .onErrorReturn(unknownSongParts(tr));
-    }
-
-    private String formatCoins(Translator tr, GDLevel level) {
-        return tr.translate(Strings.GD, "label_coins") + ' ' +
-                coinsToEmoji(emoji.get(level.hasCoinsVerified()
-                        ? "user_coin" : "user_coin_unverified"), level.coinCount(), false);
-    }
-
-    private String formatDownloadsLikesLength(GDLevel level) {
-        final var width = 9;
-        return emoji.get("downloads") + ' ' +
-                formatCode(level.downloads(), width) + '\n' +
-                emoji.get(level.likes() >= 0 ? "like" : "dislike") + ' ' +
-                formatCode(level.likes(), width) + '\n' + emoji.get("length") + ' ' +
-                formatCode(level.length() == Length.PLATFORMER ? "PLAT." : level.length().name(), width);
     }
 
 }

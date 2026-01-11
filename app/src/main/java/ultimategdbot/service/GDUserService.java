@@ -22,7 +22,7 @@ import ultimategdbot.database.GdLinkedUserDao;
 import ultimategdbot.database.UserSettings;
 import ultimategdbot.database.UserSettingsDao;
 import ultimategdbot.util.EmbedType;
-import ultimategdbot.util.Misc;
+import ultimategdbot.util.ImageUtils;
 
 import java.io.ByteArrayInputStream;
 import java.util.List;
@@ -240,7 +240,7 @@ public final class GDUserService {
     private Mono<GeneratedIconSet> makeIconSet(GDUserProfile user) {
         return Mono.defer(() -> {
             final var iconSet = IconSetFactory.forUser(user).createIconSet();
-            return Misc.imageStream(iconSet).map(inputStream -> new GeneratedIconSet(inputStream, null));
+            return ImageUtils.imageStream(iconSet).map(inputStream -> new GeneratedIconSet(inputStream, null));
         }).onErrorResume(e -> Mono.just(new GeneratedIconSet(null, e.getMessage())));
     }
 
@@ -255,7 +255,7 @@ public final class GDUserService {
     }
 
     private String statEntry(String emojiName, int stat) {
-        return emoji.get(emojiName) + "  " + formatCode(stat, 9) + '\n';
+        return emoji.get(emojiName) + "  " + formatCode(String.format("%,d", stat), 9) + '\n';
     }
 
     private String infoEntry(String emojiName, String label, Object value) {
@@ -267,13 +267,13 @@ public final class GDUserService {
                                             @Nullable U platformer, ToIntFunction<U> platformerV) {
         sb.append(emoji.get(emojiName)).append("  ");
         if (classic != null) {
-            sb.append("C: ").append(formatCode(classicV.applyAsInt(classic), 6));
+            sb.append("C: ").append(formatCode(String.format("%,d", classicV.applyAsInt(classic)), 6));
             if (platformer != null) {
                 sb.append("  ");
             }
         }
         if (platformer != null) {
-            sb.append("P: ").append(formatCode(platformerV.applyAsInt(platformer), 6));
+            sb.append("P: ").append(formatCode(String.format("%,d", platformerV.applyAsInt(platformer)), 6));
         }
         sb.append('\n');
     }

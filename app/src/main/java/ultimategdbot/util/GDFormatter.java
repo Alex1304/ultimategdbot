@@ -26,4 +26,29 @@ public final class GDFormatter {
 		sb.insert(0, '`').append('`');
 		return sb.toString();
 	}
+
+    public static String formatHumanReadable(long number) {
+        final var units = new char[] {'K', 'M', 'B', 'T'};
+
+        if (Math.abs(number) < 1000) {
+            return String.valueOf(number);
+        }
+
+        var value = (double) number;
+        var unitIndex = -1;
+
+        while (Math.abs(value) >= 1000 && unitIndex < units.length - 1) {
+            value /= 1000;
+            unitIndex++;
+        }
+
+        final var intPart = (long) value;
+        final var hasDecimal = Math.abs(intPart) < 10;
+
+        if (hasDecimal) {
+            return String.format("%.1f%c", Math.floor(value * 10) / 10, units[unitIndex]);
+        } else {
+            return String.format("%.0f%c", Math.floor(value), units[unitIndex]);
+        }
+    }
 }

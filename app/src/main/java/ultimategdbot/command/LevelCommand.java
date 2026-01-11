@@ -41,7 +41,8 @@ public final class LevelCommand implements ChatInputInteractionListener {
     public Publisher<?> run(ChatInputInteractionContext ctx) {
         return grammar.resolve(ctx.event()).map(args -> args.query).flatMap(query -> {
             if (!query.matches("[a-zA-Z0-9 _-]+")) {
-                return Mono.error(new InteractionFailedException(ctx.translate(Strings.GD, "error_invalid_characters")));
+                return Mono.error(new InteractionFailedException(ctx.translate(Strings.GD,
+                        "error_invalid_characters")));
             }
             return levelService.interactiveSearch(ctx, ctx.translate(Strings.GD, "search_results", query),
                     page -> gdClient.searchLevels(LevelSearchMode.SEARCH, query, null, page));
@@ -58,15 +59,13 @@ public final class LevelCommand implements ChatInputInteractionListener {
         return commandCooldown.get();
     }
 
-    private static final class Options {
-
-        @SuppressWarnings("NotNullFieldNotInitialized")
-        @ChatInputCommandGrammar.Option(
-                type = ApplicationCommandOption.Type.STRING,
-                name = "query",
-                description = "The search query.",
-                required = true
-        )
-        String query;
-    }
+    private record Options(
+            @ChatInputCommandGrammar.Option(
+                    type = ApplicationCommandOption.Type.STRING,
+                    name = "query",
+                    description = "The search query.",
+                    required = true
+            )
+            String query
+    ) {}
 }

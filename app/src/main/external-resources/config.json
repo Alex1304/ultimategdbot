@@ -16,7 +16,7 @@
     "ultimategdbot": {
         "pagination_max_entries": 30,
         "command_cooldown": {
-            "limit": 2,
+            "limit": 3,
             "interval_seconds": 30
         },
         "bot_announcements_channel_ids": [],
@@ -28,12 +28,12 @@
                 "cache_ttl_seconds": 3600,
                 "request_timeout_seconds": 120,
                 "request_limiter": {
-                    "limit": 10,
-                    "interval_seconds": 60
+                    "limit": 30,
+                    "interval_seconds": 10
                 }
             },
             "events": {
-                "event_loop_interval_seconds": 60,
+                "event_loop_interval_seconds": 30,
                 "rates_channel_ids": [],
                 "demons_channel_ids": [],
                 "timely_channel_id": null,

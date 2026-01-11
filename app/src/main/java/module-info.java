@@ -1,7 +1,9 @@
 import botrino.api.annotation.BotModule;
 import botrino.api.extension.BotrinoExtension;
+import org.jspecify.annotations.NullMarked;
 import ultimategdbot.framework.UltimateGDBotExtension;
 
+@NullMarked
 @BotModule
 open module ultimategdbot {
 
@@ -23,4 +25,7 @@ open module ultimategdbot {
     requires org.apache.commons.lang3;
 
     requires static org.immutables.value;
+    requires discord4j.discordjson;
+    requires discord4j.core;
+    requires jdash.common;
 }

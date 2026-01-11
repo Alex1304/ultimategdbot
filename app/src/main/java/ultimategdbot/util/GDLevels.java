@@ -1,17 +1,21 @@
 package ultimategdbot.util;
 
 import botrino.api.i18n.Translator;
-import jdash.common.QualityRating;
+import jdash.common.Length;
 import jdash.common.entity.GDLevel;
 import jdash.common.entity.GDSong;
 import jdash.graphics.DifficultyRenderer;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 import ultimategdbot.Strings;
+import ultimategdbot.service.EmojiService;
 
 import java.io.ByteArrayInputStream;
-import java.util.Optional;
+import java.util.function.IntFunction;
+
+import static ultimategdbot.util.GDFormatter.formatCode;
 
 public final class GDLevels {
 
@@ -23,27 +27,31 @@ public final class GDLevels {
         return "__" + level.name() + "__ by " + level.creatorName().orElse("-") + " (" + level.id() + ")";
     }
 
-    public static Mono<ByteArrayInputStream> getDifficultyImageForLevel(GDLevel level) {
-        return Misc.imageStream(DifficultyRenderer.forLevel(level).render()
-                .getSubimage(0, 5, DifficultyRenderer.WIDTH, DifficultyRenderer.HEIGHT - 35));
-    }
-
-    public static String getDifficultyEmojiForLevel(GDLevel level) {
-        final var difficulty = new StringBuilder("icon_");
-        if (level.isDemon()) {
-            difficulty.append("demon_").append(level.demonDifficulty().toString().toLowerCase());
-        } else if (level.isAuto()) {
-            difficulty.append("auto");
+    public static Mono<ByteArrayInputStream> getDifficultyImageForLevel(GDLevel level, boolean forComponentsV2) {
+        var image = DifficultyRenderer.forLevel(level).render();
+        if (forComponentsV2) {
+            image = ImageUtils.makeSquare(image);
         } else {
-            difficulty.append(level.difficulty().toString().toLowerCase());
+            image = image.getSubimage(0, 5, DifficultyRenderer.WIDTH, DifficultyRenderer.HEIGHT - 35);
         }
-        return difficulty.toString();
+        return ImageUtils.imageStream(image);
     }
 
-    public static Optional<String> getQualityEmojiForLevel(GDLevel level) {
-        return Optional.of(level.qualityRating())
-                .filter(qr -> qr != QualityRating.NONE)
-                .map(qr -> qr.name().toLowerCase());
+    public static String difficultySignatureForLevel(GDLevel level) {
+        return (level.isDemon() ? level.demonDifficulty().name() : level.difficulty().name()) + "_"
+                + level.rewards() + "_" + level.qualityRating().name();
+    }
+
+    public static String formatLevelHeader(EmojiService emoji, GDLevel level) {
+        return emoji.get("play") + "  __" + level.name() + "__ by " + level.creatorName().orElse("-") +
+                (level.originalLevelId().orElse(0L) > 0 ? ' ' + emoji.get("copy") : "") +
+                (level.objectCount() > 40_000 ? ' ' + emoji.get("object_overflow") : "");
+    }
+
+    public static String formatCoins(EmojiService emoji, Translator tr, GDLevel level) {
+        return tr.translate(Strings.GD, "label_coins") + ' ' +
+                coinsToEmoji(emoji.get(level.hasCoinsVerified()
+                        ? "user_coin" : "user_coin_unverified"), level.coinCount(), false);
     }
 
     public static String formatGameVersion(int v) {
@@ -119,4 +127,26 @@ public final class GDLevels {
         return Tuples.of(":warning: " + tr.translate(Strings.GD, "song_banned"),
                 tr.translate(Strings.GD, "song_info_unavailable"));
     }
+
+    public static String formatDownloadsLikesLength(EmojiService emoji, GDLevel level) {
+        final var width = 9;
+        return emoji.get("downloads") + ' ' +
+                formatCode(String.format("%,d", level.downloads()), width) + '\n' +
+                emoji.get(level.likes() >= 0 ? "like" : "dislike") + ' ' +
+                formatCode(String.format("%,d", level.likes()), width) + '\n' + emoji.get("length") + ' ' +
+                formatCode(level.length() == Length.PLATFORMER ? "PLAT." : level.length().name(), width);
+    }
+
+    public static IntFunction<Flux<? extends GDLevel>> splittingSearchFunction(IntFunction<? extends Flux<?
+            extends GDLevel>> original, int splitFactor) {
+        return page -> original.apply(page / splitFactor)
+                .collectList()
+                .flatMapMany(list -> {
+                    final var newPageLimit = (list.size() / splitFactor);
+                    return Flux.fromIterable(list)
+                            .skip((long) (page % splitFactor) * newPageLimit)
+                            .take(newPageLimit);
+                });
+    }
+
 }

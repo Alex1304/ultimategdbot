@@ -7,7 +7,31 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="75a132b0-0d85-411d-b7f6-d4b42a67b31e" name="Default Changelist" comment="" />
+    <list default="true" id="75a132b0-0d85-411d-b7f6-d4b42a67b31e" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/component/CustomMessageComponent.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/component/LevelSearchResultsComponent.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/util/ComponentsV2Composer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/external-resources/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/external-resources/config.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/module-info.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/module-info.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/LevelCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/LevelCommand.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/package-info.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/command/package-info.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/config/package-info.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/config/package-info.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/database/package-info.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/database/package-info.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/event/GDEventService.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/event/GDEventService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/event/package-info.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/event/package-info.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/framework/package-info.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/framework/package-info.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/service/GDLevelService.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/service/GDLevelService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/service/GDUserService.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/service/GDUserService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/service/package-info.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/service/package-info.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/util/GDFormatter.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/util/GDFormatter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/util/GDLevels.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/util/GDLevels.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/util/Misc.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/util/ImageUtils.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/util/package-info.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/ultimategdbot/util/package-info.java" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -19,11 +43,12 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
-        <option value="Interface" />
         <option value="Enum" />
         <option value="AnnotationType" />
-        <option value="Class" />
         <option value="package-info" />
+        <option value="Record" />
+        <option value="Interface" />
+        <option value="Class" />
       </list>
     </option>
   </component>
@@ -94,36 +119,36 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Application.Main.executor": "Run",
-    "Maven.ultimategdbot [clean,package].executor": "Run",
-    "Maven.ultimategdbot [clean].executor": "Run",
-    "Maven.ultimategdbot [dependency:copy-dependencies].executor": "Run",
-    "Maven.ultimategdbot [package].executor": "Run",
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "SHELLCHECK.PATH": "/home/alexandre/.local/share/JetBrains/IntelliJIdea2024.1/Shell Script/shellcheck",
-    "WebServerToolWindowFactoryState": "false",
-    "git-widget-placeholder": "master",
-    "kotlin-language-version-configured": "true",
-    "last_directory_selection": "/home/alexandre/dev/ultimategdbot/app/src/main/java/ultimategdbot/exception",
-    "last_opened_file_path": "/home/alexandre/dev/rdi",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "project.structure.last.edited": "Project",
-    "project.structure.proportion": "0.0",
-    "project.structure.side.proportion": "0.0",
-    "run.code.analysis.last.selected.profile": "pProject Default",
-    "settings.editor.selected.configurable": "vcs.Git",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Application.Main.executor&quot;: &quot;Run&quot;,
+    &quot;Maven.ultimategdbot [clean,package].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.ultimategdbot [clean].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.ultimategdbot [dependency:copy-dependencies].executor&quot;: &quot;Run&quot;,
+    &quot;Maven.ultimategdbot [package].executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;SHELLCHECK.PATH&quot;: &quot;/home/alexandre/.local/share/JetBrains/IntelliJIdea2024.1/Shell Script/shellcheck&quot;,
+    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_directory_selection&quot;: &quot;/home/alexandre/dev/ultimategdbot/app/src/main/java/ultimategdbot/exception&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/home/alexandre/dev/rdi&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Project&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
+    &quot;run.code.analysis.last.selected.profile&quot;: &quot;pProject Default&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;vcs.Git&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="ReactorSettings">
     <option name="notificationShown" value="true" />
   </component>
@@ -136,6 +161,8 @@
       <recent name="$PROJECT_DIR$/app/src/main/resources" />
     </key>
     <key name="MoveMembersDialog.RECENTS_KEY">
+      <recent name="ultimategdbot.util.GDFormatter" />
+      <recent name="ultimategdbot.util.GDLevels" />
       <recent name="ultimategdbot.util.Misc" />
       <recent name="ultimategdbot.util.Leaderboards" />
     </key>
@@ -297,5 +324,16 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="ADD_EXTERNAL_FILES_SILENTLY" value="true" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>jar://$MAVEN_REPOSITORY$/com/discord4j/discord4j-core/3.3.0/discord4j-core-3.3.0-sources.jar!/discord4j/core/spec/MessageEditSpecGenerator.java</url>
+          <line>67</line>
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
 </project>
