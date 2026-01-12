@@ -138,11 +138,11 @@ public final class GDLevels {
     }
 
     public static IntFunction<Flux<? extends GDLevel>> splittingSearchFunction(IntFunction<? extends Flux<?
-            extends GDLevel>> original, int splitFactor) {
+            extends GDLevel>> original, int splitFactor, int limitPerPage) {
         return page -> original.apply(page / splitFactor)
                 .collectList()
                 .flatMapMany(list -> {
-                    final var newPageLimit = (list.size() / splitFactor);
+                    final var newPageLimit = Math.max(limitPerPage, list.size() / splitFactor);
                     return Flux.fromIterable(list)
                             .skip((long) (page % splitFactor) * newPageLimit)
                             .take(newPageLimit);

@@ -3,15 +3,6 @@
   <component name="CompilerConfiguration">
     <annotationProcessing>
       <profile default="true" name="Default" enabled="true" />
-      <profile name="Annotation profile for ultimategdbot" enabled="true">
-        <sourceOutputDir name="target/generated-sources/annotations" />
-        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
-        <outputRelativeToContentRoot value="true" />
-        <processorPath useClasspath="false">
-          <entry name="$MAVEN_REPOSITORY$/org/immutables/value/2.12.0/value-2.12.0.jar" />
-        </processorPath>
-        <module name="ultimategdbot-delivery" />
-      </profile>
       <profile name="Annotation profile for ultimategdbot-app" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
@@ -31,6 +22,15 @@
           <entry name="$MAVEN_REPOSITORY$/org/immutables/value/2.12.0/value-2.12.0.jar" />
         </processorPath>
         <module name="ultimategdbot-launcher" />
+      </profile>
+      <profile name="Annotation profile for ultimategdbot" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="false">
+          <entry name="$MAVEN_REPOSITORY$/org/immutables/value/2.12.0/value-2.12.0.jar" />
+        </processorPath>
+        <module name="ultimategdbot-delivery" />
       </profile>
     </annotationProcessing>
   </component>

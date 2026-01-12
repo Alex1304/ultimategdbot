@@ -40,6 +40,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.IntFunction;
 
 import static botrino.api.util.Markdown.*;
+import static java.util.function.Predicate.not;
 import static reactor.function.TupleUtils.function;
 import static ultimategdbot.util.GDLevels.*;
 
@@ -177,15 +178,15 @@ public final class GDLevelService {
         final var resultsOfCurrentPage = new AtomicReference<@Nullable List<? extends GDLevel>>();
         final var selectionMessageId = new AtomicReference<@Nullable Snowflake>();
         final var selectMenuId = UUID.randomUUID().toString();
-        final var splitSearchFunction = GDLevels.splittingSearchFunction(searchFunction, 2);
+        final var splitSearchFunction = GDLevels.splittingSearchFunction(searchFunction, 2, 5);
         return splitSearchFunction.apply(0).collectList()
                 .doOnNext(resultsOfCurrentPage::set)
                 .flatMap(results -> results.size() == 1 ? sendSelectedSearchResult(ctx, results.get(0), null).then()
                         : Mono.firstWithSignal(
                         MessagePaginator.paginate(ctx, Integer.MAX_VALUE, state -> splitSearchFunction
                                 .apply(state.getPage())
-                                .onErrorResume(e -> Flux.empty())
                                 .collectList()
+                                .filter(not(List::isEmpty))
                                 .doOnNext(resultsOfCurrentPage::set)
                                 .flatMap(newResults -> ComponentsV2Composer.composeMessage(
                                         new LevelSearchResultsComponent(ctx, emoji, title, newResults,
