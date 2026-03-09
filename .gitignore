@@ -45,6 +45,7 @@ hs_err_pid*
 !/.circleci/
 !.run/
 !/.idea/
+!/.claude/
 
 *Backup
 /release.properties
