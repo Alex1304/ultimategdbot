@@ -22,10 +22,12 @@
         <plugin.dependency.version>3.6.1</plugin.dependency.version>
         <plugin.resources.version>3.3.1</plugin.resources.version>
         <plugin.antrun.version>3.1.0</plugin.antrun.version>
-        <botrino.version>1.2.0</botrino.version>
+        <plugin.surefire.version>3.2.5</plugin.surefire.version>
+        <botrino.version>1.2.1-SNAPSHOT</botrino.version>
         <logback.version>1.5.23</logback.version>
         <immutables.version>2.12.0</immutables.version>
         <reactor.version>2025.0.1</reactor.version>
+        <junit.version>5.11.4</junit.version>
         <delivery.name>${project.parent.artifactId}-${project.version}</delivery.name>
         <delivery.directory>${project.build.directory}/${delivery.name}</delivery.directory>
         <app.build.directory>${project.basedir}/../app/target</app.build.directory>
@@ -48,6 +50,10 @@
                             </annotationProcessorPath>
                         </annotationProcessorPaths>
                     </configuration>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>${plugin.surefire.version}</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-install-plugin</artifactId>
@@ -195,6 +201,20 @@
                 <version>${reactor.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+
+            <!-- Test dependencies -->
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter</artifactId>
+                <version>${junit.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.projectreactor</groupId>
+                <artifactId>reactor-test</artifactId>
+                <version>3.8.1</version>
+                <scope>test</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>

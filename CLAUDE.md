@@ -15,11 +15,16 @@ mvn clean package
 # Build with a specific JDK (for jlink packaging)
 mvn clean package -Djlink.jdk="/path/to/jdk17"
 
+# Run unit tests
+mvn test -pl app
+
 # Release (sets version, builds multi-platform, deploys, bumps to next snapshot)
 ./release.sh <release-version> <next-snapshot-version>
 ```
 
-There is no test suite — the project has no unit or integration tests configured in Maven.
+## Testing
+
+Tests cover the **service layer** only — Discord4J entities are not mocked. The stack is JUnit 5 + `StepVerifier` (Reactor Test) + a `GDRouter` lambda test double injected via `GDClient.create().withRouter(router)`. Services are instantiated directly (bypassing RDI), passing `null` for any dependency the method under test doesn't use. See `.claude/rules/testing.md` for full details.
 
 ## Architecture
 
@@ -36,10 +41,16 @@ ultimategdbot (parent pom)
 
 - **Framework:** [Botrino](https://botrino.alex1304.com) — a Discord4J wrapper providing DI (RDI), slash commands, and lifecycle management
 - **Discord:** Discord4J via Botrino
-- **GD API:** JDash (custom library by alex1304) — `jdash-events` for polling, `jdash-graphics` for rendering
+- **GD API:** JDash — `jdash-events` for polling, `jdash-graphics` for rendering
 - **Database:** MongoDB with Immutables Criteria ORM (reactive, type-safe, generated repositories)
 - **Reactive:** Project Reactor (`Mono`/`Flux`) used pervasively — all I/O is non-blocking
 - **Code Generation:** Immutables (`@Value.Immutable`) for value objects and DB entities; run `mvn generate-sources` to regenerate
+
+### Linked projects
+
+Jdash and Botrino, which UltimateGDBot depends on, are both projects that are self-maintained by alex1304 along with this one. Their respective git repository is cloned in the parent directory of this project. When appropriate, you may choose to go and edit files in these projects, by preferable spawning a separate agent in that directory that will load rule files in a fresh context.
+
+A clone of Discord4J may also be present, but it is only there for alex1304 to contribute to D4J via PRs, it is irrelevant for us and should not be explored unless explicitly told otherwise.
 
 ### App Module Package Layout (`app/src/main/java/ultimategdbot/`)
 
