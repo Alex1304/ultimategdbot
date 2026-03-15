@@ -24,9 +24,11 @@ public interface Foo {
 
 ## Immutables-generated code
 
-Never edit `Immutable*`, `*Criteria`, or `*Repository` classes — they are generated from `target/generated-sources/`. To modify them, change the source interface.
+Never edit `Immutable*`, `*Criteria`, or `*Repository` classes — they are generated from `target/generated-sources/`. To
+modify them, change the source interface.
 
 To construct or copy entities, always use the generated builder:
+
 ```java
 ImmutableFoo.builder().fieldA(x).fieldB(y).build()
 ImmutableFoo.copyOf(existing).withFieldA(newValue)

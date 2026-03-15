@@ -65,11 +65,9 @@ public final class GDEventService {
     private final @Nullable RestChannel modsChannel;
     private final UltimateGDBotConfig.GD.Events.RandomMessages publicRandomMessages;
     private final UltimateGDBotConfig.GD.Events.@Nullable RandomMessages dmRandomMessages;
-
+    private final GDEventMapper eventMapper = new GDEventMapper();
     private long ratesChannelRotator;
     private long demonsChannelRotator;
-
-    private final GDEventMapper eventMapper = new GDEventMapper();
 
     @RdiFactory
     public GDEventService(GDClient gdClient, GDLevelService levelService, GDUserService userService,

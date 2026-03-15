@@ -17,7 +17,7 @@ import java.util.Optional;
 
 @Value.Immutable
 @Criteria
-@Criteria.Repository(facets = { ReactorReadable.class, ReactorWritable.class })
+@Criteria.Repository(facets = {ReactorReadable.class, ReactorWritable.class})
 @JsonSerialize(as = ImmutableInteractionLog.class)
 @JsonDeserialize(as = ImmutableInteractionLog.class)
 public interface InteractionLog {

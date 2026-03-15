@@ -12,18 +12,18 @@ import java.util.Optional;
 
 @Value.Immutable
 @Criteria
-@Criteria.Repository(facets = { ReactorReadable.class, ReactorWritable.class })
+@Criteria.Repository(facets = {ReactorReadable.class, ReactorWritable.class})
 @JsonSerialize(as = ImmutableGdLinkedUser.class)
 @JsonDeserialize(as = ImmutableGdLinkedUser.class)
 public interface GdLinkedUser {
 
     @Criteria.Id
     @JsonProperty("_id")
-	long discordUserId();
-	
-	long gdUserId();
-	
-	boolean isLinkActivated();
-	
-	Optional<String> confirmationToken();
+    long discordUserId();
+
+    long gdUserId();
+
+    boolean isLinkActivated();
+
+    Optional<String> confirmationToken();
 }

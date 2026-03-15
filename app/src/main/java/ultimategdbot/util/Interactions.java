@@ -28,7 +28,8 @@ public final class Interactions {
         );
     }
 
-    public static ActionRow paginationAndConfirmButtons(Translator tr, MessagePaginator.State state, String okId, String cancelId) {
+    public static ActionRow paginationAndConfirmButtons(Translator tr, MessagePaginator.State state, String okId,
+                                                        String cancelId) {
         return ActionRow.of(
                 state.previousButton(customId -> Button.secondary(customId,
                         "<< " + tr.translate(Strings.GENERAL, "pagination_previous"))),

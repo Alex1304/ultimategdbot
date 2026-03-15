@@ -8,9 +8,9 @@ import botrino.interaction.grammar.ChatInputCommandGrammar;
 import com.github.alex1304.rdi.finder.annotation.RdiFactory;
 import com.github.alex1304.rdi.finder.annotation.RdiService;
 import discord4j.core.object.command.ApplicationCommandOption;
+import org.jspecify.annotations.Nullable;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
-import org.jspecify.annotations.Nullable;
 import ultimategdbot.Strings;
 import ultimategdbot.command.CommandWithOptions;
 import ultimategdbot.database.ImmutableUserSettings;
@@ -33,6 +33,18 @@ public final class SettingsSubcommand extends CommandWithOptions<SettingsSubcomm
         this.emoji = emoji;
     }
 
+    private static String formatSettings(Translator tr, UserSettings settings) {
+        return tr.translate(Strings.GENERAL, "settings_intro") + "\n\n" +
+                Markdown.bold(tr.translate(Strings.GENERAL, "settings_hide_discord_from_profile") + ": ") +
+                formatBoolean(tr, settings.hideDiscordFromProfile()) + '\n' +
+                Markdown.bold(tr.translate(Strings.GENERAL, "settings_receive_dm_on_event") + ": ") +
+                formatBoolean(tr, settings.receiveDmOnEvent());
+    }
+
+    private static String formatBoolean(Translator tr, boolean bool) {
+        return tr.translate(Strings.GENERAL, bool ? "yes" : "no");
+    }
+
     @Override
     protected Class<Options> optionClass() {
         return Options.class;
@@ -50,18 +62,6 @@ public final class SettingsSubcommand extends CommandWithOptions<SettingsSubcomm
                                         .withEphemeral(true)))
                                 .thenReturn(settings))
                 .flatMap(settings -> ctx.event().createFollowup(formatSettings(ctx, settings)).withEphemeral(true));
-    }
-
-    private static String formatSettings(Translator tr, UserSettings settings) {
-        return tr.translate(Strings.GENERAL, "settings_intro") + "\n\n" +
-                Markdown.bold(tr.translate(Strings.GENERAL, "settings_hide_discord_from_profile") + ": ") +
-                formatBoolean(tr, settings.hideDiscordFromProfile()) + '\n' +
-                Markdown.bold(tr.translate(Strings.GENERAL, "settings_receive_dm_on_event") + ": ") +
-                formatBoolean(tr, settings.receiveDmOnEvent());
-    }
-
-    private static String formatBoolean(Translator tr, boolean bool) {
-        return tr.translate(Strings.GENERAL, bool ? "yes" : "no");
     }
 
     protected record Options(

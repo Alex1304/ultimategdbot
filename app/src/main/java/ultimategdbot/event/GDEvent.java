@@ -34,17 +34,17 @@ public interface GDEvent<E> {
     }
 
     @SuppressWarnings("unchecked")
-	default Mono<Long> recipientAccountId(Object event) {
-		return recipientAccountId().apply((E) event);
-	}
+    default Mono<Long> recipientAccountId(Object event) {
+        return recipientAccountId().apply((E) event);
+    }
 
-	@SuppressWarnings("unchecked")
-	default Mono<MessageCreateSpec> createMessageTemplate(Object event) {
-		return messageTemplateFactory().apply((E) event);
-	}
+    @SuppressWarnings("unchecked")
+    default Mono<MessageCreateSpec> createMessageTemplate(Object event) {
+        return messageTemplateFactory().apply((E) event);
+    }
 
-	@SuppressWarnings("unchecked")
-	default String congratMessage(Object event) {
-		return congratMessage().apply((E) event);
-	}
+    @SuppressWarnings("unchecked")
+    default String congratMessage(Object event) {
+        return congratMessage().apply((E) event);
+    }
 }

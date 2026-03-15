@@ -29,11 +29,14 @@ public final class FooService {
 
 - Async operations return `Mono<T>` or `Flux<T>` — never a plain `T` that requires blocking.
 - Synchronous helpers (pure computation, no I/O) may return plain types.
-- Use `@Nullable` (from `org.jspecify.annotations.Nullable`) for parameters that may be null; do not use `Optional` as a parameter type. Note: `reactor.util.annotation.Nullable` is deprecated.
+- Use `@Nullable` (from `org.jspecify.annotations.Nullable`) for parameters that may be null; do not use `Optional` as a
+  parameter type. Note: `reactor.util.annotation.Nullable` is deprecated.
 
 ## Registration
 
-Services annotated with `@RdiService` are auto-discovered. Services that cannot use `@RdiService` (e.g., external library types like `GDClient`, `ApplicationInfo`) must be manually registered as `ServiceDescriptor` entries in `UltimateGDBotExtension.provideExtraServices()` using `externalStaticFactory`.
+Services annotated with `@RdiService` are auto-discovered. Services that cannot use `@RdiService` (e.g., external
+library types like `GDClient`, `ApplicationInfo`) must be manually registered as `ServiceDescriptor` entries in
+`UltimateGDBotExtension.provideExtraServices()` using `externalStaticFactory`.
 
 ## Background processing
 

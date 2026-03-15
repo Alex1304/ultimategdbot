@@ -13,29 +13,28 @@ import java.util.Objects;
 class GDEventSubscriber extends BaseSubscriber<Object> {
 
     private static final Logger LOGGER = Loggers.getLogger(GDEventSubscriber.class);
-	
-	private volatile @Nullable Subscription subscription;
-	private final GDEventService gdEventService;
-	private final Scheduler scheduler = Schedulers.boundedElastic();
-	
-	GDEventSubscriber(GDEventService gdEventService) {
-		this.gdEventService = gdEventService;
-	}
+    private final GDEventService gdEventService;
+    private final Scheduler scheduler = Schedulers.boundedElastic();
+    private volatile @Nullable Subscription subscription;
 
-	@Override
-	public void hookOnSubscribe(Subscription s) {
-		this.subscription = s;
-		s.request(1);
-	}
+    GDEventSubscriber(GDEventService gdEventService) {
+        this.gdEventService = gdEventService;
+    }
 
-	@Override
-	public void hookOnNext(Object t) {
+    @Override
+    public void hookOnSubscribe(Subscription s) {
+        this.subscription = s;
+        s.request(1);
+    }
+
+    @Override
+    public void hookOnNext(Object t) {
         LOGGER.info("GD event fired: {}", t);
-		gdEventService.process(t)
-				.subscribeOn(scheduler)
-				.doFinally(__ -> Objects.requireNonNull(subscription).request(1))
-				.subscribe(null,
+        gdEventService.process(t)
+                .subscribeOn(scheduler)
+                .doFinally(__ -> Objects.requireNonNull(subscription).request(1))
+                .subscribe(null,
                         e -> LOGGER.error("An error occurred while dispatching GD event", e),
                         () -> LOGGER.info("Successfully processed event {}", t));
-	}
+    }
 }

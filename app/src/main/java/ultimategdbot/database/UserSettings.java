@@ -10,7 +10,7 @@ import org.immutables.value.Value;
 
 @Value.Immutable
 @Criteria
-@Criteria.Repository(facets = { ReactorReadable.class, ReactorWritable.class })
+@Criteria.Repository(facets = {ReactorReadable.class, ReactorWritable.class})
 @JsonSerialize(as = ImmutableUserSettings.class)
 @JsonDeserialize(as = ImmutableUserSettings.class)
 public interface UserSettings {

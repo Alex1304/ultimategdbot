@@ -30,6 +30,14 @@ public final class ModListCommand implements ChatInputInteractionListener {
         this.paginator = paginator;
     }
 
+    private static String badge(int elder) {
+        return switch (elder) {
+            case 1 -> "elder_mod";
+            case 2 -> "leaderboard_mod";
+            default -> "mod";
+        };
+    }
+
     @Override
     public Publisher<?> run(ChatInputInteractionContext ctx) {
         return gdModDao.getAll().collectList()
@@ -41,13 +49,5 @@ public final class ModListCommand implements ChatInputInteractionListener {
                                 .toList(),
                         content -> "**__" + ctx.translate(Strings.GD, "mod_list") + "__\n**" +
                                 ctx.translate(Strings.GD, "modlist_intro") + "\n\n" + content));
-    }
-
-    private static String badge(int elder) {
-        return switch (elder) {
-            case 1 -> "elder_mod";
-            case 2 -> "leaderboard_mod";
-            default -> "mod";
-        };
     }
 }

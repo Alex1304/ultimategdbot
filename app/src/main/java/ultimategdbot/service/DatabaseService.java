@@ -38,8 +38,7 @@ public final class DatabaseService {
                 .setDefaultPropertyInclusion(JsonInclude.Value.construct(JsonInclude.Include.CUSTOM,
                         JsonInclude.Include.ALWAYS, PossibleFilter.class, null))
                 .addHandler(new UnknownPropertyHandler(true));
-        @SuppressWarnings("UnstableApiUsage")
-        final var registry = JacksonCodecs.registryFromMapper(mapper);
+        @SuppressWarnings("UnstableApiUsage") final var registry = JacksonCodecs.registryFromMapper(mapper);
         final var client = MongoClients.create(config.connectionString());
         final var db = client.getDatabase(config.databaseName()).withCodecRegistry(registry);
         this.backend = new MongoBackend(MongoSetup.of(db));

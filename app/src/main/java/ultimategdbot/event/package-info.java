@@ -1,4 +1,3 @@
-
 @ImmutablesStyle
 package ultimategdbot.event;
 

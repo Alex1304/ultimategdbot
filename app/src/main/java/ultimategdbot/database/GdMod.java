@@ -10,20 +10,20 @@ import org.immutables.value.Value;
 
 @Value.Immutable
 @Criteria
-@Criteria.Repository(facets = { ReactorReadable.class, ReactorWritable.class })
+@Criteria.Repository(facets = {ReactorReadable.class, ReactorWritable.class})
 @JsonSerialize(as = ImmutableGdMod.class)
 @JsonDeserialize(as = ImmutableGdMod.class)
 public interface GdMod {
 
     @Criteria.Id
     @JsonProperty("_id")
-	long accountId();
-	
-	String name();
+    long accountId();
 
-	int elder();
-	
-	default boolean isElder() {
-	    return elder() == 1;
+    String name();
+
+    int elder();
+
+    default boolean isElder() {
+        return elder() == 1;
     }
 }

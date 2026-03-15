@@ -106,7 +106,7 @@ public final class UGDBErrorHandler implements InteractionErrorHandler {
                             .matchType(ActionFailedException.class, __ -> ctx.translate(Strings.GD, "no_results"))
                             .matchType(Sinks.EmissionException.class, __ ->
                                     ctx.translate(Strings.GD, "error_queue_full"))
-                            .matchType(RuntimeException.class, Exceptions::isRetryExhausted,__ ->
+                            .matchType(RuntimeException.class, Exceptions::isRetryExhausted, __ ->
                                     ctx.translate(Strings.GD, "error_retry_exhausted"))
                             .apply(e.getCause())
                             .orElse(ctx.translate(Strings.GD, "error_server", e.getCause().getMessage())));

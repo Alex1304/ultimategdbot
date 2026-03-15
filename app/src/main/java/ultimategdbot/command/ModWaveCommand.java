@@ -64,78 +64,82 @@ public final class ModWaveCommand implements ChatInputInteractionListener {
                         .flatMap(value -> userService.stringToUser(ctx, value)))
                 .flatMap(profile ->
                         ctx.event()
-                        .createFollowup(ctx.translate(Strings.GD, "checking_mod", profile.user().name()) + "\n||" +
-                                (profile.user().role().orElse(Role.USER) == Role.USER
-                                ? emoji.get("failed") + ' ' + ctx.translate(Strings.GD, "checkmod_failed")
-                                : emoji.get("success") + ' ' + ctx.translate(Strings.GD, "checkmod_success",
-                                        profile.user().role().orElseThrow())) + "||")
-                        .then(gdModDao.get(profile.user().accountId()))
-                        .switchIfEmpty(Mono.defer(() -> {
-                            if (profile.user().role().map(Role.USER::equals).orElse(true)) {
-                                return Mono.empty();
-                            }
-                            final var elder = profile.user().role().orElseThrow().ordinal() - 1;
-                            eventProducer.submit(ImmutableModStatusUpdate.of(profile, switch (elder) {
-                                case 0 -> PROMOTED_TO_MOD;
-                                case 1 -> PROMOTED_TO_ELDER;
-                                case 2 -> PROMOTED_TO_LBMOD;
-                                default -> throw new AssertionError();
-                            }));
-                            return gdModDao
-                                    .save(ImmutableGdMod.builder()
-                                            .accountId(profile.user().accountId())
-                                            .name(profile.user().name())
-                                            .elder(elder)
-                                            .build())
-                                    .then(Mono.empty());
-                        }))
-                        .flatMap(gdMod -> {
-                            if (profile.user().role().map(Role.USER::equals).orElse(true)) {
-                                eventProducer.submit(ImmutableModStatusUpdate.of(profile, switch (gdMod.elder()) {
-                                    case 0 -> DEMOTED_FROM_MOD;
-                                    case 1 -> DEMOTED_FROM_ELDER;
-                                    case 2 -> DEMOTED_FROM_LBMOD;
-                                    default -> throw new AssertionError();
-                                }));
-                                return gdModDao.delete(gdMod.accountId());
-                            }
-                            final var newGdMod = ImmutableGdMod.builder().from(gdMod);
-                            switch (profile.user().role().orElseThrow()) {
-                                case MODERATOR -> {
-                                    final var type = switch (gdMod.elder()) {
-                                        case 1 -> DEMOTED_FROM_ELDER;
-                                        case 2 -> PROMOTED_TO_MOD;
-                                        default -> null;
-                                    };
-                                    if (type != null) {
-                                        eventProducer.submit(ImmutableModStatusUpdate.of(profile, type));
+                                .createFollowup(ctx.translate(Strings.GD, "checking_mod", profile.user().name()) +
+                                        "\n||" +
+                                        (profile.user().role().orElse(Role.USER) == Role.USER
+                                                ? emoji.get("failed") + ' ' + ctx.translate(Strings.GD,
+                                                "checkmod_failed")
+                                                : emoji.get("success") + ' ' + ctx.translate(Strings.GD,
+                                                "checkmod_success",
+                                                profile.user().role().orElseThrow())) + "||")
+                                .then(gdModDao.get(profile.user().accountId()))
+                                .switchIfEmpty(Mono.defer(() -> {
+                                    if (profile.user().role().map(Role.USER::equals).orElse(true)) {
+                                        return Mono.empty();
                                     }
-                                    newGdMod.elder(0);
-                                }
-                                case ELDER_MODERATOR -> {
-                                    final var type = switch (gdMod.elder()) {
-                                        case 0, 2 -> PROMOTED_TO_ELDER;
-                                        default -> null;
-                                    };
-                                    if (type != null) {
-                                        eventProducer.submit(ImmutableModStatusUpdate.of(profile, type));
+                                    final var elder = profile.user().role().orElseThrow().ordinal() - 1;
+                                    eventProducer.submit(ImmutableModStatusUpdate.of(profile, switch (elder) {
+                                        case 0 -> PROMOTED_TO_MOD;
+                                        case 1 -> PROMOTED_TO_ELDER;
+                                        case 2 -> PROMOTED_TO_LBMOD;
+                                        default -> throw new AssertionError();
+                                    }));
+                                    return gdModDao
+                                            .save(ImmutableGdMod.builder()
+                                                    .accountId(profile.user().accountId())
+                                                    .name(profile.user().name())
+                                                    .elder(elder)
+                                                    .build())
+                                            .then(Mono.empty());
+                                }))
+                                .flatMap(gdMod -> {
+                                    if (profile.user().role().map(Role.USER::equals).orElse(true)) {
+                                        eventProducer.submit(ImmutableModStatusUpdate.of(profile,
+                                                switch (gdMod.elder()) {
+                                            case 0 -> DEMOTED_FROM_MOD;
+                                            case 1 -> DEMOTED_FROM_ELDER;
+                                            case 2 -> DEMOTED_FROM_LBMOD;
+                                            default -> throw new AssertionError();
+                                        }));
+                                        return gdModDao.delete(gdMod.accountId());
                                     }
-                                    newGdMod.elder(1);
-                                }
-                                case LEADERBOARD_MODERATOR -> {
-                                    final var type = switch (gdMod.elder()) {
-                                        case 0, 1 -> PROMOTED_TO_LBMOD;
-                                        default -> null;
-                                    };
-                                    if (type != null) {
-                                        eventProducer.submit(ImmutableModStatusUpdate.of(profile, type));
+                                    final var newGdMod = ImmutableGdMod.builder().from(gdMod);
+                                    switch (profile.user().role().orElseThrow()) {
+                                        case MODERATOR -> {
+                                            final var type = switch (gdMod.elder()) {
+                                                case 1 -> DEMOTED_FROM_ELDER;
+                                                case 2 -> PROMOTED_TO_MOD;
+                                                default -> null;
+                                            };
+                                            if (type != null) {
+                                                eventProducer.submit(ImmutableModStatusUpdate.of(profile, type));
+                                            }
+                                            newGdMod.elder(0);
+                                        }
+                                        case ELDER_MODERATOR -> {
+                                            final var type = switch (gdMod.elder()) {
+                                                case 0, 2 -> PROMOTED_TO_ELDER;
+                                                default -> null;
+                                            };
+                                            if (type != null) {
+                                                eventProducer.submit(ImmutableModStatusUpdate.of(profile, type));
+                                            }
+                                            newGdMod.elder(1);
+                                        }
+                                        case LEADERBOARD_MODERATOR -> {
+                                            final var type = switch (gdMod.elder()) {
+                                                case 0, 1 -> PROMOTED_TO_LBMOD;
+                                                default -> null;
+                                            };
+                                            if (type != null) {
+                                                eventProducer.submit(ImmutableModStatusUpdate.of(profile, type));
+                                            }
+                                            newGdMod.elder(2);
+                                        }
                                     }
-                                    newGdMod.elder(2);
-                                }
-                            }
-                            newGdMod.name(profile.user().name());
-                            return gdModDao.save(newGdMod.build());
-                        })
+                                    newGdMod.name(profile.user().name());
+                                    return gdModDao.save(newGdMod.build());
+                                })
                 )
                 .then();
     }

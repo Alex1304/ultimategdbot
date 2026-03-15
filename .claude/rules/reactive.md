@@ -1,17 +1,19 @@
 ---
 description: Reactive programming rules that apply across all Java source files
-globs: ["**/ultimategdbot/**/*.java"]
+globs: ["**/*.java"]
 ---
 
 # Reactive Programming Rules
 
 ## Never block
 
-Never call `.block()`, `.blockFirst()`, `.blockLast()`, or any synchronous blocking API inside the `app` module. All I/O is non-blocking.
+Never call `.block()`, `.blockFirst()`, `.blockLast()`, or any synchronous blocking API inside the `app` module. All I/O
+is non-blocking.
 
 ## Lazy evaluation
 
-Wrap computations that must be deferred (especially those that allocate resources or have side effects) in `Mono.defer()`:
+Wrap computations that must be deferred (especially those that allocate resources or have side effects) in
+`Mono.defer()`:
 
 ```java
 Mono.defer(() -> {
@@ -59,7 +61,8 @@ Use `.onErrorResume()` only when recovery is genuinely possible; otherwise use `
 
 ## Logging in reactive chains
 
-Log inside `.doOnError()` or inside `.onErrorResume()` via `Mono.fromRunnable()` — do not use side-effecting lambdas in `.map()` for logging:
+Log inside `.doOnError()` or inside `.onErrorResume()` via `Mono.fromRunnable()` — do not use side-effecting lambdas in
+`.map()` for logging:
 
 ```java
 .onErrorResume(e -> Mono.fromRunnable(() -> LOGGER.error("Failed to process", e)))

@@ -22,7 +22,8 @@ public final class FooCommand implements ChatInputInteractionListener {
 
 ## Subcommands
 
-When a command has subcommands, the outer class has **no** `@RdiService` — each subcommand is a `@RdiService public static final class` inside it:
+When a command has subcommands, the outer class has **no** `@RdiService` — each subcommand is a
+`@RdiService public static final class` inside it:
 
 ```java
 @ChatInputCommand(name = "foo", description = "...", subcommands = {
@@ -41,12 +42,14 @@ public final class FooCommand {
 - Return type is always `Publisher<?>`.
 - For `ChatInputInteractionListener`, always start with `ctx.event().deferReply()`:
   ```java
-  @Override
-  public Publisher<?> run(ChatInputInteractionContext ctx) {
-      return ctx.event().deferReply().then(grammar.resolve(ctx.event()))
-              .flatMap(options -> ...);
-  }
-  ```
+
+@Override
+public Publisher<?> run(ChatInputInteractionContext ctx) {
+return ctx.event().deferReply().then(grammar.resolve(ctx.event()))
+.flatMap(options -> ...)
+}
+
+```
 - For `UserInteractionListener`, use `ctx.event().deferReply().withEphemeral(true)`.
 - Send the response with `ctx.event().createFollowup(...)` (not `reply`).
 
@@ -76,12 +79,16 @@ Override `options()` to return `grammar.toOptions()`. Required options use `requ
 
 ## Cooldown and i18n
 
-- Inject `GDCommandCooldown` and override `cooldown()` to return `commandCooldown.get()` **only for commands that call the GD API via jdash** — the GD API has strict rate limits and this prevents users from triggering them too often. Commands that don't hit the GD API do not need a cooldown.
-- All user-facing strings go through `ctx.translate(Strings.GD, "key")` or `ctx.translate(Strings.GENERAL, "key")` — no hardcoded strings.
+- Inject `GDCommandCooldown` and override `cooldown()` to return `commandCooldown.get()` **only for commands that call
+  the GD API via jdash** — the GD API has strict rate limits and this prevents users from triggering them too often.
+  Commands that don't hit the GD API do not need a cooldown.
+- All user-facing strings go through `ctx.translate(Strings.GD, "key")` or `ctx.translate(Strings.GENERAL, "key")` — no
+  hardcoded strings.
 
 ## Component interactions (buttons, select menus)
 
 - Generate IDs with `UUID.randomUUID().toString()`.
 - Await with `ctx.awaitButtonClick(id)` or `ctx.awaitSelectMenuItems(id)`.
 - Apply `.timeout(ctx.getAwaitComponentTimeout())` to the await call.
-- Clean up the followup message on both success and timeout: `.then(ctx.event().deleteFollowup(messageId)).onErrorResume(deleteFollowupAndPropagate(ctx, messageId))`.
+- Clean up the followup message on both success and timeout:
+  `.then(ctx.event().deleteFollowup(messageId)).onErrorResume(deleteFollowupAndPropagate(ctx, messageId))`.

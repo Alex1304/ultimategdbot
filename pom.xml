@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.alex1304.ultimategdbot</groupId>
     <artifactId>ultimategdbot</artifactId>
@@ -139,18 +140,19 @@
                             </goals>
                             <configuration>
                                 <target>
-                                    <delete dir="${delivery.directory}" />
-                                    <delete file="${project.build.directory}/${project.build.finalName}.zip" />
+                                    <delete dir="${delivery.directory}"/>
+                                    <delete file="${project.build.directory}/${project.build.finalName}.zip"/>
                                     <move file="${project.build.directory}/maven-jlink/default"
-                                          tofile="${delivery.directory}" force="true" />
+                                          tofile="${delivery.directory}" force="true"/>
                                     <copy todir="${delivery.directory}/modules">
-                                        <fileset dir="${app.build.directory}/dependency" />
-                                        <fileset file="${app.build.directory}/*.jar" />
+                                        <fileset dir="${app.build.directory}/dependency"/>
+                                        <fileset file="${app.build.directory}/*.jar"/>
                                     </copy>
                                     <copy todir="${delivery.directory}">
-                                        <fileset dir="${app.build.directory}/resources" />
+                                        <fileset dir="${app.build.directory}/resources"/>
                                     </copy>
-                                    <zip basedir="${delivery.directory}/.." includes="${delivery.name}/**/*" destfile="${delivery.directory}.zip" />
+                                    <zip basedir="${delivery.directory}/.." includes="${delivery.name}/**/*"
+                                         destfile="${delivery.directory}.zip"/>
                                 </target>
                             </configuration>
                         </execution>
@@ -214,6 +216,18 @@
                 <groupId>io.projectreactor</groupId>
                 <artifactId>reactor-test</artifactId>
                 <version>3.8.1</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-core</artifactId>
+                <version>5.15.2</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-junit-jupiter</artifactId>
+                <version>5.15.2</version>
                 <scope>test</scope>
             </dependency>
         </dependencies>

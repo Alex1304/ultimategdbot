@@ -1,8 +1,10 @@
 Create a new MongoDB database entity and its DAO in this project.
 
 Ask the user for:
+
 1. The entity name (PascalCase, e.g. `GdFoo`)
-2. The fields: for each field, ask for the name, type, whether it's the `@Criteria.Id` field, and whether it's nullable (`Optional<T>`)
+2. The fields: for each field, ask for the name, type, whether it's the `@Criteria.Id` field, and whether it's
+   nullable (`Optional<T>`)
 3. What DAO query methods are needed (e.g. find by X, get all by Y, save, delete)
 
 Then generate two files:
@@ -68,6 +70,9 @@ public final class GdFooDao {
 ```
 
 After generating the files, remind the user that:
-1. `ImmutableGdFoo`, `GdFooCriteria`, and `GdFooRepository` are generated automatically by Immutables — do NOT create them manually. Run `mvn generate-sources` to regenerate if the interface changes.
+
+1. `ImmutableGdFoo`, `GdFooCriteria`, and `GdFooRepository` are generated automatically by Immutables — do NOT create
+   them manually. Run `mvn generate-sources` to regenerate if the interface changes.
 2. The DAO is auto-discovered via `@RdiService` and can be injected into any other service or command.
-3. The new MongoDB collection name will default to the lowercase class name — verify this matches the intended collection name in the database.
+3. The new MongoDB collection name will default to the lowercase class name — verify this matches the intended
+   collection name in the database.

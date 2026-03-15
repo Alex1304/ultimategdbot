@@ -12,18 +12,18 @@ import java.time.Instant;
 
 @Value.Immutable
 @Criteria
-@Criteria.Repository(facets = { ReactorReadable.class, ReactorWritable.class })
+@Criteria.Repository(facets = {ReactorReadable.class, ReactorWritable.class})
 @JsonSerialize(as = ImmutableGdAwardedLevel.class)
 @JsonDeserialize(as = ImmutableGdAwardedLevel.class)
 public interface GdAwardedLevel {
 
     @Criteria.Id
     @JsonProperty("_id")
-	long levelId();
-	
-	Instant insertDate();
-	
-	int downloads();
-	
-	int likes();
+    long levelId();
+
+    Instant insertDate();
+
+    int downloads();
+
+    int likes();
 }

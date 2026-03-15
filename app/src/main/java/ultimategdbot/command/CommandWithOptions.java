@@ -25,5 +25,6 @@ public abstract class CommandWithOptions<O> implements ChatInputInteractionListe
     }
 
     protected abstract Class<O> optionClass();
+
     protected abstract Publisher<?> runWithOptions(ChatInputInteractionContext ctx, O options);
 }

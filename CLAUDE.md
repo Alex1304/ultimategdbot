@@ -4,7 +4,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-UltimateGDBot is a Discord bot for Geometry Dash players, running in 21,000+ servers. It is a Java 17, Maven multi-module project using reactive programming (Project Reactor) throughout.
+UltimateGDBot is a Discord bot for Geometry Dash players, running in 21,000+ servers. It is a Java 17, Maven
+multi-module project using reactive programming (Project Reactor) throughout.
 
 ## Build Commands
 
@@ -24,7 +25,10 @@ mvn test -pl app
 
 ## Testing
 
-Tests cover the **service layer** only — Discord4J entities are not mocked. The stack is JUnit 5 + `StepVerifier` (Reactor Test) + a `GDRouter` lambda test double injected via `GDClient.create().withRouter(router)`. Services are instantiated directly (bypassing RDI), passing `null` for any dependency the method under test doesn't use. See `.claude/rules/testing.md` for full details.
+Tests cover the **service layer** only — Discord4J entities are not mocked. The stack is JUnit 5 + `StepVerifier` (
+Reactor Test) + a `GDRouter` lambda test double injected via `GDClient.create().withRouter(router)`. Services are
+instantiated directly (bypassing RDI), passing `null` for any dependency the method under test doesn't use. See
+`.claude/rules/testing.md` for full details.
 
 ## Architecture
 
@@ -39,37 +43,46 @@ ultimategdbot (parent pom)
 
 ### Technology Stack
 
-- **Framework:** [Botrino](https://botrino.alex1304.com) — a Discord4J wrapper providing DI (RDI), slash commands, and lifecycle management
+- **Framework:** [Botrino](https://botrino.alex1304.com) — a Discord4J wrapper providing DI (RDI), slash commands, and
+  lifecycle management
 - **Discord:** Discord4J via Botrino
 - **GD API:** JDash — `jdash-events` for polling, `jdash-graphics` for rendering
 - **Database:** MongoDB with Immutables Criteria ORM (reactive, type-safe, generated repositories)
 - **Reactive:** Project Reactor (`Mono`/`Flux`) used pervasively — all I/O is non-blocking
-- **Code Generation:** Immutables (`@Value.Immutable`) for value objects and DB entities; run `mvn generate-sources` to regenerate
+- **Code Generation:** Immutables (`@Value.Immutable`) for value objects and DB entities; run `mvn generate-sources` to
+  regenerate
 
 ### Linked projects
 
-Jdash and Botrino, which UltimateGDBot depends on, are both projects that are self-maintained by alex1304 along with this one. Their respective git repository is cloned in the parent directory of this project. When appropriate, you may choose to go and edit files in these projects, by preferable spawning a separate agent in that directory that will load rule files in a fresh context.
+Jdash and Botrino, which UltimateGDBot depends on, are both projects that are self-maintained by alex1304 along with
+this one. Their respective git repository is cloned in the parent directory of this project. When appropriate, you may
+choose to go and edit files in these projects, by preferable spawning a separate agent in that directory that will load
+rule files in a fresh context.
 
-A clone of Discord4J may also be present, but it is only there for alex1304 to contribute to D4J via PRs, it is irrelevant for us and should not be explored unless explicitly told otherwise.
+A clone of Discord4J may also be present, but it is only there for alex1304 to contribute to D4J via PRs, it is
+irrelevant for us and should not be explored unless explicitly told otherwise.
 
 ### App Module Package Layout (`app/src/main/java/ultimategdbot/`)
 
-| Package | Responsibility |
-|---|---|
-| `command/` | Discord slash command handlers (14 commands) |
-| `service/` | Business logic: GD data, blacklisting, logging, rate limiting, i18n, pagination |
-| `database/` | MongoDB entity interfaces + generated Immutable implementations |
-| `config/` | `UltimateGDBotConfig` — reads `config.json`; also `MongoDBConfig` |
-| `event/` | GD event polling loop, Discord channel subscriptions, crosspost queue |
-| `framework/` | Botrino extension (`UltimateGDBotExtension`), login handler, error handler |
-| `util/` | Formatting helpers, embed templates, Discord interaction utilities |
+| Package      | Responsibility                                                                  |
+|--------------|---------------------------------------------------------------------------------|
+| `command/`   | Discord slash command handlers (14 commands)                                    |
+| `service/`   | Business logic: GD data, blacklisting, logging, rate limiting, i18n, pagination |
+| `database/`  | MongoDB entity interfaces + generated Immutable implementations                 |
+| `config/`    | `UltimateGDBotConfig` — reads `config.json`; also `MongoDBConfig`               |
+| `event/`     | GD event polling loop, Discord channel subscriptions, crosspost queue           |
+| `framework/` | Botrino extension (`UltimateGDBotExtension`), login handler, error handler      |
+| `util/`      | Formatting helpers, embed templates, Discord interaction utilities              |
 
 ### Key Architectural Patterns
 
 - **Dependency Injection:** Services are registered in `UltimateGDBotExtension` using Botrino's RDI framework.
-- **Immutables:** All DB entities and config classes are `@Value.Immutable` interfaces. Generated sources appear in `target/generated-sources/`. Do not edit generated `Immutable*` classes directly.
-- **Event Pipeline:** `GDEventService` polls the GD API on a configurable interval; events fan out through `GDEventSubscriber` to subscribed Discord channels, with crosspost support via `CrosspostQueue`.
-- **i18n:** 11 locales via `ResourceBundle` properties files in `app/src/main/resources/`. Crowdin manages translations (`crowdin.yml`). String keys are accessed through `Strings.java`.
+- **Immutables:** All DB entities and config classes are `@Value.Immutable` interfaces. Generated sources appear in
+  `target/generated-sources/`. Do not edit generated `Immutable*` classes directly.
+- **Event Pipeline:** `GDEventService` polls the GD API on a configurable interval; events fan out through
+  `GDEventSubscriber` to subscribed Discord channels, with crosspost support via `CrosspostQueue`.
+- **i18n:** 11 locales via `ResourceBundle` properties files in `app/src/main/resources/`. Crowdin manages
+  translations (`crowdin.yml`). String keys are accessed through `Strings.java`.
 
 ### Runtime Flow
 
@@ -80,7 +93,9 @@ A clone of Discord4J may also be present, but it is only there for alex1304 to c
 
 ### Configuration
 
-Runtime configuration lives in `app/src/main/external-resources/config.json` (template with `${placeholder}` values for secrets). Key sections:
+Runtime configuration lives in `app/src/main/external-resources/config.json` (template with `${placeholder}` values for
+secrets). Key sections:
+
 - `bot.token` — Discord bot token
 - `mongodb` — connection string and database name
 - `ultimategdbot.gd.client` — GD API credentials, cache TTL, rate limits

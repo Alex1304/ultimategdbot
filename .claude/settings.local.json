@@ -4,7 +4,14 @@
       "Bash(ls:*)",
       "Bash(git:*)",
       "Bash(mvn compile:*)",
-      "Bash(find:*)"
+      "Bash(mvn package:*)",
+      "Bash(find:*)",
+      "Bash(mvn test:*)"
+    ],
+    "deny": [
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(mvn release:*)"
     ]
   }
 }
