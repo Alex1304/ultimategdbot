@@ -43,8 +43,7 @@ class GDUserServiceTest {
             case GDRequests.GET_GJ_USER_INFO_20 -> Mono.just(GET_USER_PROFILE_RESPONSE);
             default -> Mono.error(new RuntimeException("Unexpected request: " + request.getUri()));
         };
-        GDClient gdClient = GDClient.create().withRouter(router);
-        service = new GDUserService(null, null, null, gdClient, null);
+        service = new GDUserService(null, null, null, GDClient.create().withRouter(router), null);
     }
 
     @Test
@@ -69,8 +68,7 @@ class GDUserServiceTest {
         // accountId = 0 means unregistered account — should be filtered out
         GDRouter router = request -> Mono.just(
                 "1:UnregisteredUser:2:12345:13:0:17:0:6::9:0:52:0:10:0:11:0:14:0:15:0:16:0:3:0:8:0:4:0#1:0:0");
-        GDClient gdClient = GDClient.create().withRouter(router);
-        service = new GDUserService(null, null, null, gdClient, null);
+        service = new GDUserService(null, null, null, GDClient.create().withRouter(router), null);
 
         StepVerifier.create(service.stringToUser(translator, "UnregisteredUser"))
                 .verifyComplete();
@@ -103,8 +101,7 @@ class GDUserServiceTest {
     void stringToUser_gdApiError_propagatesError() {
         var expectedException = new RuntimeException("GD server unreachable");
         GDRouter router = request -> Mono.error(expectedException);
-        GDClient gdClient = GDClient.create().withRouter(router);
-        service = new GDUserService(null, null, null, gdClient, null);
+        service = new GDUserService(null, null, null, GDClient.create().withRouter(router), null);
 
         StepVerifier.create(service.stringToUser(translator, "Alex1304"))
                 .expectErrorMatches(e -> e.getCause() == expectedException)

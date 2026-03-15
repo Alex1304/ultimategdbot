@@ -8,11 +8,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="75a132b0-0d85-411d-b7f6-d4b42a67b31e" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/app/src/test/java/ultimategdbot/service/BlacklistServiceTest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/test/java/ultimategdbot/service/GDLevelServiceTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.claude/rules/reactive.md" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/rules/reactive.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.claude/rules/testing.md" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/rules/testing.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.claude/settings.local.json" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/settings.local.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/test/resources/logback-test.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/pom.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/test/java/ultimategdbot/service/GDUserServiceTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/test/java/ultimategdbot/service/GDUserServiceTest.java" afterDir="false" />
